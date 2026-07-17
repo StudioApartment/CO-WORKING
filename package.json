@@ -1,0 +1,9 @@
+{
+  "name": "co-working",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CO—WORKING public landing site",
+  "scripts": {
+    "dev": "npx --yes serve -l 4444"
+  }
+}
