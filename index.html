@@ -62,11 +62,18 @@
       opacity: 1;
     }
 
-    .channel img,
     .channel video {
       width: 100%;
       height: 100%;
       object-fit: cover;
+    }
+
+    .channel img {
+      width: 100%;
+      height: auto;
+      position: absolute;
+      bottom: 0;
+      left: 0;
     }
 
     .channel-video video {
@@ -299,12 +306,12 @@
 
       <!-- Channel 2: Hero Scan Image -->
       <div class="channel channel-image" data-channel="2">
-        <img src="images/hero-scan.png?v=2" alt="">
+        <img loading="lazy" src="images/hero-scan.png?v=2" alt="">
       </div>
 
       <!-- Channel 3: Type Study 01 -->
       <div class="channel channel-image" data-channel="3">
-        <img src="images/study-01-device.png" alt="">
+        <img loading="lazy" src="images/study-01-device.png" alt="">
       </div>
 
       <!-- Channel 4: Static/Noise -->
@@ -312,17 +319,17 @@
 
       <!-- Channel 5: Type Study 02 -->
       <div class="channel channel-image" data-channel="5">
-        <img src="images/study-02-badge.png" alt="">
+        <img loading="lazy" src="images/study-02-badge.png" alt="">
       </div>
 
       <!-- Channel 6: Type Study 03 -->
       <div class="channel channel-image" data-channel="6">
-        <img src="images/study-03-type.png" alt="">
+        <img loading="lazy" src="images/study-03-type.png" alt="">
       </div>
 
       <!-- Channel 7: Flowchart -->
       <div class="channel channel-image" data-channel="7">
-        <img src="images/flowchart.png?v=3" alt="">
+        <img loading="lazy" src="images/flowchart.png?v=3" alt="">
       </div>
 
       <!-- Channel 9: Servant Service Clip -->
@@ -388,6 +395,263 @@
         </video>
       </div>
 
+      <!-- Channel 18: Watermark 01 -->
+      <div class="channel channel-video" data-channel="18">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-watermark-01.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Channel 19: Watermark 03 -->
+      <div class="channel channel-video" data-channel="19">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-watermark-03.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Channel 20: Watermark 04 -->
+      <div class="channel channel-video" data-channel="20">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-watermark-04.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Channel 21: Watermark 05 -->
+      <div class="channel channel-video" data-channel="21">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-watermark-05.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Channel 22: Watermark 06 -->
+      <div class="channel channel-video" data-channel="22">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-watermark-06.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Channel 23: Watermark 07 -->
+      <div class="channel channel-video" data-channel="23">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-watermark-07.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Channel 24: Watermark 09 -->
+      <div class="channel channel-video" data-channel="24">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-watermark-09.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Channel 25: Watermark 10 -->
+      <div class="channel channel-video" data-channel="25">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-watermark-10.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Channel 26: Watermark 13 -->
+      <div class="channel channel-video" data-channel="26">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-watermark-13.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Channel 27: Watermark 14 -->
+      <div class="channel channel-video" data-channel="27">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-watermark-14.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Channel 28-39: Tyler clips -->
+      <div class="channel channel-video" data-channel="28">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-tyler-01.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="channel channel-video" data-channel="29">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-tyler-02.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="channel channel-video" data-channel="30">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-tyler-03.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="channel channel-video" data-channel="31">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-tyler-04.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="channel channel-video" data-channel="32">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-tyler-05.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="channel channel-video" data-channel="33">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-tyler-06.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="channel channel-video" data-channel="34">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-tyler-07.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="channel channel-video" data-channel="35">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-tyler-08.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="channel channel-video" data-channel="36">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-tyler-09.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="channel channel-video" data-channel="37">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-tyler-10.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="channel channel-video" data-channel="38">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-tyler-11.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="channel channel-video" data-channel="39">
+        <video autoplay muted loop playsinline>
+          <source src="images/clip-tyler-12.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Channels 40-58: Retro Images -->
+      <div class="channel channel-image" data-channel="40">
+        <img loading="lazy" src="images/img-retro-01.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="41">
+        <img loading="lazy" src="images/img-retro-02.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="42">
+        <img loading="lazy" src="images/img-retro-03.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="43">
+        <img loading="lazy" src="images/img-retro-04.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="44">
+        <img loading="lazy" src="images/img-retro-05.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="45">
+        <img loading="lazy" src="images/img-retro-06.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="46">
+        <img loading="lazy" src="images/img-retro-07.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="47">
+        <img loading="lazy" src="images/img-retro-08.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="48">
+        <img loading="lazy" src="images/img-retro-09.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="49">
+        <img loading="lazy" src="images/img-retro-10.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="50">
+        <img loading="lazy" src="images/img-retro-11.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="51">
+        <img loading="lazy" src="images/img-retro-12.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="52">
+        <img loading="lazy" src="images/img-retro-13.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="53">
+        <img loading="lazy" src="images/img-retro-14.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="54">
+        <img loading="lazy" src="images/img-retro-15.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="55">
+        <img loading="lazy" src="images/img-retro-16.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="56">
+        <img loading="lazy" src="images/img-retro-17.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="57">
+        <img loading="lazy" src="images/img-retro-18.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="58">
+        <img loading="lazy" src="images/img-retro-19.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="59">
+        <img loading="lazy" src="images/img-retro-20.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="60">
+        <img loading="lazy" src="images/img-retro-21.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="61">
+        <img loading="lazy" src="images/img-retro-22.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="62">
+        <img loading="lazy" src="images/img-retro-23.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="63">
+        <img loading="lazy" src="images/img-retro-24.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="64">
+        <img loading="lazy" src="images/img-retro-25.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="65">
+        <img loading="lazy" src="images/img-retro-26.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="66">
+        <img loading="lazy" src="images/img-retro-27.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="67">
+        <img loading="lazy" src="images/img-retro-28.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="68">
+        <img loading="lazy" src="images/img-retro-29.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="69">
+        <img loading="lazy" src="images/img-retro-30.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="70">
+        <img loading="lazy" src="images/img-retro-31.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="71">
+        <img loading="lazy" src="images/img-retro-32.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="72">
+        <img loading="lazy" src="images/img-retro-33.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="73">
+        <img loading="lazy" src="images/img-retro-34.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="74">
+        <img loading="lazy" src="images/img-retro-35.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="75">
+        <img loading="lazy" src="images/img-retro-36.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="76">
+        <img loading="lazy" src="images/img-retro-37.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="77">
+        <img loading="lazy" src="images/img-retro-38.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="78">
+        <img loading="lazy" src="images/img-retro-39.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="79">
+        <img loading="lazy" src="images/img-retro-40.png" alt="">
+      </div>
+      <div class="channel channel-image" data-channel="80">
+        <img loading="lazy" src="images/img-retro-41.png" alt="">
+      </div>
+
       <!-- CRT Effects -->
       <div class="scanlines"></div>
       <div class="vignette"></div>
@@ -416,24 +680,72 @@
       const indicator = document.querySelector('.channel-indicator');
       const video = document.getElementById('office-video');
       
-      // Check if video loaded successfully
-      let videoAvailable = false;
-      video.addEventListener('canplay', function() {
-        videoAvailable = true;
-      });
-      video.addEventListener('error', function() {
-        videoAvailable = false;
-      });
-
-      // Channel sequence mixing video clips with images and static
-      const channelOrderWithVideo = [1, 9, 2, 10, 3, 14, 4, 11, 15, 1, 12, 2, 6, 16, 4, 13, 7, 17, 2, 1];
-      const channelOrderNoVideo = [9, 10, 2, 11, 3, 14, 4, 12, 15, 9, 13, 2, 6, 16, 4, 17, 7, 2, 10, 9];
+      // All available channels
+      const imageChannels = [2, 3, 5, 6, 7, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80];
+      const videoChannels = [1, 9, 10, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39];
+      const staticChannels = [4, 8];
       
+      // Shuffle array (Fisher-Yates)
+      function shuffle(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+      
+      // Pick random subset: ~12 videos, ~18 images, 1 static = ~31 items per session
+      const sessionVideos = shuffle(videoChannels).slice(0, 12);
+      const sessionImages = shuffle(imageChannels).slice(0, 18);
+      const sessionStatic = shuffle(staticChannels).slice(0, 1);
+      
+      // Combine and shuffle for final random order
+      let sessionOrder = shuffle([...sessionVideos, ...sessionImages, ...sessionStatic]);
+      
+      // Track loaded channels
+      const loadedChannels = new Set([4, 8]); // Static channels are always ready
+      let activeOrder = []; // Channels ready to display
       let currentIndex = 0;
       let indicatorTimeout;
+      let flipTimeout;
+      let isRunning = false;
 
-      function getChannelOrder() {
-        return videoAvailable ? channelOrderWithVideo : channelOrderNoVideo;
+      // Preload an image and mark channel as loaded
+      function preloadChannel(channelNum) {
+        const channelEl = document.querySelector(`[data-channel="${channelNum}"]`);
+        if (!channelEl) return Promise.resolve();
+        
+        const img = channelEl.querySelector('img');
+        const vid = channelEl.querySelector('video');
+        
+        if (img) {
+          return new Promise(resolve => {
+            if (img.complete && img.naturalHeight > 0) {
+              loadedChannels.add(channelNum);
+              resolve();
+            } else {
+              img.onload = () => { loadedChannels.add(channelNum); resolve(); };
+              img.onerror = () => { resolve(); }; // Skip broken images
+            }
+          });
+        } else if (vid) {
+          return new Promise(resolve => {
+            if (vid.readyState >= 2) {
+              loadedChannels.add(channelNum);
+              resolve();
+            } else {
+              vid.oncanplay = () => { loadedChannels.add(channelNum); resolve(); };
+              vid.onerror = () => { resolve(); };
+              // Timeout for slow videos
+              setTimeout(() => { loadedChannels.add(channelNum); resolve(); }, 3000);
+            }
+          });
+        } else {
+          // Static channel
+          loadedChannels.add(channelNum);
+          return Promise.resolve();
+        }
       }
 
       function showChannel(channelNum) {
@@ -442,7 +754,6 @@
           ch.classList.toggle('is-active', isTarget);
         });
 
-        // Show channel number
         indicator.textContent = 'FIG. ' + String(channelNum).padStart(2, '0');
         indicator.classList.add('is-visible');
 
@@ -451,36 +762,66 @@
           indicator.classList.remove('is-visible');
         }, 400);
       }
-
-      // Video channels stay longer (1800ms), images/static are faster (600ms)
-      const videoChannels = [1, 9, 10, 11, 12, 13, 14, 15, 16, 17];
       
       function getIntervalForChannel(channelNum) {
         return videoChannels.includes(channelNum) ? 1800 : 600;
       }
 
-      let flipTimeout;
-
       function flipChannel() {
-        const order = getChannelOrder();
-        const channelNum = order[currentIndex];
-        showChannel(channelNum);
-        currentIndex = (currentIndex + 1) % order.length;
+        if (activeOrder.length === 0) {
+          // Show static while waiting for content
+          showChannel(4);
+          flipTimeout = setTimeout(flipChannel, 500);
+          return;
+        }
         
-        // Schedule next flip with variable timing
+        const channelNum = activeOrder[currentIndex];
+        showChannel(channelNum);
+        currentIndex = (currentIndex + 1) % activeOrder.length;
+        
         const nextInterval = getIntervalForChannel(channelNum);
         flipTimeout = setTimeout(flipChannel, nextInterval);
       }
 
-      // Start after a brief delay to check video
-      setTimeout(function() {
-        flipChannel();
-      }, 100);
+      // Progressive loading: load in batches
+      async function loadChannels() {
+        // First batch: load 6 items quickly to start showing content
+        const firstBatch = sessionOrder.slice(0, 6);
+        await Promise.all(firstBatch.map(preloadChannel));
+        
+        // Add loaded channels to active order
+        activeOrder = firstBatch.filter(ch => loadedChannels.has(ch));
+        
+        // Start the carousel once we have content
+        if (!isRunning && activeOrder.length > 0) {
+          isRunning = true;
+          flipChannel();
+        }
+        
+        // Load remaining channels in background batches
+        const remaining = sessionOrder.slice(6);
+        for (let i = 0; i < remaining.length; i += 4) {
+          const batch = remaining.slice(i, i + 4);
+          await Promise.all(batch.map(preloadChannel));
+          
+          // Add newly loaded channels to rotation
+          batch.forEach(ch => {
+            if (loadedChannels.has(ch) && !activeOrder.includes(ch)) {
+              // Insert at random position for variety
+              const pos = Math.floor(Math.random() * (activeOrder.length + 1));
+              activeOrder.splice(pos, 0, ch);
+            }
+          });
+        }
+      }
+
+      // Start loading
+      loadChannels();
 
       document.addEventListener('visibilitychange', function() {
         if (document.hidden) {
           clearTimeout(flipTimeout);
-        } else {
+        } else if (isRunning) {
           flipChannel();
         }
       });
