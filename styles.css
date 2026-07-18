@@ -1156,6 +1156,10 @@ main > .section:last-child {
     max-width: 100%;
   }
 
+  .hero-bottom {
+    margin-top: 1.25rem;
+  }
+
   .hero-tagline {
     font-size: 0.62rem;
     margin-bottom: 1rem;
