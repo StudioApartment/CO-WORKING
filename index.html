@@ -54,8 +54,9 @@
       background: #000;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
+      padding: 2rem;
       z-index: 100;
       transition: opacity 0.4s ease;
     }
@@ -65,37 +66,22 @@
       pointer-events: none;
     }
 
-    .loader-count {
-      font-family: "IBM Plex Mono", monospace;
-      font-size: clamp(3rem, 10vw, 6rem);
-      font-weight: 500;
+    .loader-text {
+      font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
+      font-size: clamp(2rem, 8vw, 5rem);
+      font-weight: 700;
       letter-spacing: -0.02em;
       color: #fff;
+      line-height: 1.1;
     }
 
-    .loader-label {
+    .loader-count {
       font-family: "IBM Plex Mono", monospace;
       font-size: 0.68rem;
       font-weight: 500;
       letter-spacing: 0.06em;
-      text-transform: uppercase;
       color: rgba(255,255,255,0.5);
-      margin-top: 1rem;
-    }
-
-    .loader-bar {
-      width: min(200px, 50vw);
-      height: 2px;
-      background: rgba(255,255,255,0.15);
-      margin-top: 2rem;
-      overflow: hidden;
-    }
-
-    .loader-bar-fill {
-      height: 100%;
-      background: #fff;
-      width: 0%;
-      transition: width 0.2s ease;
+      margin-top: 1.5rem;
     }
 
     .tv-screen {
@@ -350,11 +336,8 @@
 <body>
   <!-- Loading Screen -->
   <div class="loader" id="loader">
-    <div class="loader-count" id="loader-count">0%</div>
-    <div class="loader-label">Loading assets</div>
-    <div class="loader-bar">
-      <div class="loader-bar-fill" id="loader-bar-fill"></div>
-    </div>
+    <div class="loader-text">we are<br>loading...</div>
+    <div class="loader-count" id="loader-count">0</div>
   </div>
 
   <div class="tv-container">
@@ -746,7 +729,6 @@
       const tvContainer = document.querySelector('.tv-container');
       const loader = document.getElementById('loader');
       const loaderCount = document.getElementById('loader-count');
-      const loaderBarFill = document.getElementById('loader-bar-fill');
       
       // All available channels
       const imageChannels = [2, 3, 5, 6, 7, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80];
@@ -784,8 +766,7 @@
       // Update loader progress
       function updateLoader() {
         const percent = Math.round((loadedCount / totalToLoad) * 100);
-        loaderCount.textContent = percent + '%';
-        loaderBarFill.style.width = percent + '%';
+        loaderCount.textContent = percent;
       }
 
       // Hide loader and show content
