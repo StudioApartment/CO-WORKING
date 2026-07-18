@@ -52,11 +52,6 @@
       position: fixed;
       inset: 0;
       background: #000;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 2rem;
       z-index: 100;
       transition: opacity 0.4s ease;
     }
@@ -66,13 +61,31 @@
       pointer-events: none;
     }
 
-    .loader-text {
+    .loader-content {
+      position: absolute;
+      top: 2rem;
+      left: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .loader-we-are {
       font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
-      font-size: clamp(2rem, 8vw, 5rem);
+      font-size: clamp(1.5rem, 5vw, 3rem);
       font-weight: 700;
       letter-spacing: -0.02em;
       color: #fff;
-      line-height: 1.1;
+      margin-bottom: 0.75rem;
+    }
+
+    .loader-status {
+      font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
+      font-size: clamp(1.5rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+      opacity: 0.4;
     }
 
     .loader-count {
@@ -82,6 +95,18 @@
       letter-spacing: 0.06em;
       color: rgba(255,255,255,0.5);
       margin-top: 1.5rem;
+    }
+
+    @media (max-width: 600px) {
+      .loader-content {
+        top: 1rem;
+        left: 1rem;
+      }
+
+      .loader-we-are,
+      .loader-status {
+        font-size: 1.25rem;
+      }
     }
 
     .tv-screen {
@@ -336,8 +361,11 @@
 <body>
   <!-- Loading Screen -->
   <div class="loader" id="loader">
-    <div class="loader-text">we are<br>loading...</div>
-    <div class="loader-count" id="loader-count">0</div>
+    <div class="loader-content">
+      <p class="loader-we-are">we are</p>
+      <p class="loader-status">loading...</p>
+      <div class="loader-count" id="loader-count">0</div>
+    </div>
   </div>
 
   <div class="tv-container">
