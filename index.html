@@ -40,6 +40,62 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .tv-container.is-loaded {
+      opacity: 1;
+    }
+
+    .loader {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: opacity 0.4s ease;
+    }
+
+    .loader.is-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loader-count {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: clamp(3rem, 10vw, 6rem);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    .loader-label {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin-top: 1rem;
+    }
+
+    .loader-bar {
+      width: min(200px, 50vw);
+      height: 2px;
+      background: rgba(255,255,255,0.15);
+      margin-top: 2rem;
+      overflow: hidden;
+    }
+
+    .loader-bar-fill {
+      height: 100%;
+      background: #fff;
+      width: 0%;
+      transition: width 0.2s ease;
     }
 
     .tv-screen {
@@ -292,6 +348,15 @@
   </style>
 </head>
 <body>
+  <!-- Loading Screen -->
+  <div class="loader" id="loader">
+    <div class="loader-count" id="loader-count">0%</div>
+    <div class="loader-label">Loading assets</div>
+    <div class="loader-bar">
+      <div class="loader-bar-fill" id="loader-bar-fill"></div>
+    </div>
+  </div>
+
   <div class="tv-container">
     <div class="tv-screen">
       <!-- Channel 1: 90s Office Video (falls back to static if video unavailable) -->
@@ -678,7 +743,10 @@
     (function() {
       const channels = document.querySelectorAll('.channel');
       const indicator = document.querySelector('.channel-indicator');
-      const video = document.getElementById('office-video');
+      const tvContainer = document.querySelector('.tv-container');
+      const loader = document.getElementById('loader');
+      const loaderCount = document.getElementById('loader-count');
+      const loaderBarFill = document.getElementById('loader-bar-fill');
       
       // All available channels
       const imageChannels = [2, 3, 5, 6, 7, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80];
@@ -695,13 +763,15 @@
         return a;
       }
       
-      // Pick random subset: ~12 videos, ~18 images, 1 static = ~31 items per session
-      const sessionVideos = shuffle(videoChannels).slice(0, 12);
-      const sessionImages = shuffle(imageChannels).slice(0, 18);
+      // Pick random subset: ~10 videos, ~15 images, 1 static = ~26 items per session
+      const sessionVideos = shuffle(videoChannels).slice(0, 10);
+      const sessionImages = shuffle(imageChannels).slice(0, 15);
       const sessionStatic = shuffle(staticChannels).slice(0, 1);
       
       // Combine and shuffle for final random order
       let sessionOrder = shuffle([...sessionVideos, ...sessionImages, ...sessionStatic]);
+      const totalToLoad = sessionOrder.length;
+      let loadedCount = 0;
       
       // Track loaded channels
       const loadedChannels = new Set([4, 8]); // Static channels are always ready
@@ -711,39 +781,79 @@
       let flipTimeout;
       let isRunning = false;
 
+      // Update loader progress
+      function updateLoader() {
+        const percent = Math.round((loadedCount / totalToLoad) * 100);
+        loaderCount.textContent = percent + '%';
+        loaderBarFill.style.width = percent + '%';
+      }
+
+      // Hide loader and show content
+      function hideLoader() {
+        loader.classList.add('is-hidden');
+        tvContainer.classList.add('is-loaded');
+      }
+
       // Preload an image and mark channel as loaded
       function preloadChannel(channelNum) {
         const channelEl = document.querySelector(`[data-channel="${channelNum}"]`);
-        if (!channelEl) return Promise.resolve();
+        if (!channelEl) {
+          loadedCount++;
+          updateLoader();
+          return Promise.resolve();
+        }
         
         const img = channelEl.querySelector('img');
         const vid = channelEl.querySelector('video');
         
         if (img) {
+          // Force load by removing lazy attribute and setting src
+          img.removeAttribute('loading');
           return new Promise(resolve => {
             if (img.complete && img.naturalHeight > 0) {
               loadedChannels.add(channelNum);
+              loadedCount++;
+              updateLoader();
               resolve();
             } else {
-              img.onload = () => { loadedChannels.add(channelNum); resolve(); };
-              img.onerror = () => { resolve(); }; // Skip broken images
+              img.onload = () => { 
+                loadedChannels.add(channelNum); 
+                loadedCount++;
+                updateLoader();
+                resolve(); 
+              };
+              img.onerror = () => { 
+                loadedCount++;
+                updateLoader();
+                resolve(); 
+              };
             }
           });
         } else if (vid) {
           return new Promise(resolve => {
             if (vid.readyState >= 2) {
               loadedChannels.add(channelNum);
+              loadedCount++;
+              updateLoader();
               resolve();
             } else {
-              vid.oncanplay = () => { loadedChannels.add(channelNum); resolve(); };
-              vid.onerror = () => { resolve(); };
-              // Timeout for slow videos
-              setTimeout(() => { loadedChannels.add(channelNum); resolve(); }, 3000);
+              const done = () => { 
+                loadedChannels.add(channelNum); 
+                loadedCount++;
+                updateLoader();
+                resolve(); 
+              };
+              vid.oncanplay = done;
+              vid.onerror = () => { loadedCount++; updateLoader(); resolve(); };
+              // Timeout for slow videos - don't wait forever
+              setTimeout(done, 2000);
             }
           });
         } else {
           // Static channel
           loadedChannels.add(channelNum);
+          loadedCount++;
+          updateLoader();
           return Promise.resolve();
         }
       }
@@ -768,12 +878,7 @@
       }
 
       function flipChannel() {
-        if (activeOrder.length === 0) {
-          // Show static while waiting for content
-          showChannel(4);
-          flipTimeout = setTimeout(flipChannel, 500);
-          return;
-        }
+        if (activeOrder.length === 0) return;
         
         const channelNum = activeOrder[currentIndex];
         showChannel(channelNum);
@@ -783,36 +888,26 @@
         flipTimeout = setTimeout(flipChannel, nextInterval);
       }
 
-      // Progressive loading: load in batches
+      // Load all assets, show progress, then start
       async function loadChannels() {
-        // First batch: load 6 items quickly to start showing content
-        const firstBatch = sessionOrder.slice(0, 6);
-        await Promise.all(firstBatch.map(preloadChannel));
+        // Load all session channels with progress tracking
+        await Promise.all(sessionOrder.map(preloadChannel));
         
-        // Add loaded channels to active order
-        activeOrder = firstBatch.filter(ch => loadedChannels.has(ch));
+        // Build active order from loaded channels
+        activeOrder = sessionOrder.filter(ch => loadedChannels.has(ch));
         
-        // Start the carousel once we have content
-        if (!isRunning && activeOrder.length > 0) {
+        // Ensure we have content
+        if (activeOrder.length === 0) {
+          activeOrder = [4]; // Fallback to static
+        }
+        
+        // Hide loader and start carousel
+        hideLoader();
+        
+        setTimeout(() => {
           isRunning = true;
           flipChannel();
-        }
-        
-        // Load remaining channels in background batches
-        const remaining = sessionOrder.slice(6);
-        for (let i = 0; i < remaining.length; i += 4) {
-          const batch = remaining.slice(i, i + 4);
-          await Promise.all(batch.map(preloadChannel));
-          
-          // Add newly loaded channels to rotation
-          batch.forEach(ch => {
-            if (loadedChannels.has(ch) && !activeOrder.includes(ch)) {
-              // Insert at random position for variety
-              const pos = Math.floor(Math.random() * (activeOrder.length + 1));
-              activeOrder.splice(pos, 0, ch);
-            }
-          });
-        }
+        }, 100);
       }
 
       // Start loading
