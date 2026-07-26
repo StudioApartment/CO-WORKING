@@ -810,9 +810,9 @@
         return a;
       }
       
-      // Pick random subset: ~10 videos, ~15 images, 1 static = ~26 items per session
-      const sessionVideos = shuffle(videoChannels).slice(0, 10);
-      const sessionImages = shuffle(imageChannels).slice(0, 15);
+      // Pick random subset: ~20 videos, ~25 images, 1 static = ~46 items per session
+      const sessionVideos = shuffle(videoChannels).slice(0, 20);
+      const sessionImages = shuffle(imageChannels).slice(0, 25);
       const sessionStatic = shuffle(staticChannels).slice(0, 1);
       
       // Combine and shuffle for final random order
@@ -938,7 +938,13 @@
         
         const channelNum = activeOrder[currentIndex];
         showChannel(channelNum);
-        currentIndex = (currentIndex + 1) % activeOrder.length;
+        currentIndex++;
+        
+        // Re-shuffle when we've shown all items
+        if (currentIndex >= activeOrder.length) {
+          activeOrder = shuffle(activeOrder);
+          currentIndex = 0;
+        }
         
         const nextInterval = getIntervalForChannel(channelNum);
         flipTimeout = setTimeout(flipChannel, nextInterval);
