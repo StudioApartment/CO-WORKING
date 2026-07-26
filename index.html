@@ -363,7 +363,7 @@
   <div class="loader" id="loader">
     <div class="loader-content">
       <p class="loader-we-are">we are</p>
-      <p class="loader-status">loading...</p>
+      <p class="loader-status" id="loader-status">LOADING...</p>
       <div class="loader-count" id="loader-count">0</div>
     </div>
   </div>
@@ -752,6 +752,33 @@
       const tvContainer = document.querySelector('.tv-container');
       const loader = document.getElementById('loader');
       const loaderCount = document.getElementById('loader-count');
+      const loaderStatus = document.getElementById('loader-status');
+      
+      // Loading status messages
+      const loadingMessages = [
+        'LOADING...',
+        'LOADING TPS REPORTS...',
+        'UPDATING TIMESHEETS...',
+        'REFRESHING CALENDARS...',
+        'SYNCING SPREADSHEETS...',
+        'COMPILING MEMOS...',
+        'INITIALIZING WORKFLOWS...',
+        'CHECKING VOICEMAILS...',
+        'SCHEDULING MEETINGS...',
+        'ORGANIZING FOLDERS...',
+        'REVIEWING POLICIES...',
+        'PROCESSING INVOICES...',
+        'CONFIGURING PRINTERS...',
+        'DEFRAGMENTING DRIVES...',
+        'ARCHIVING EMAILS...',
+        'CALIBRATING MONITORS...',
+        'OPTIMIZING DATABASES...',
+        'AUTHENTICATING USERS...',
+        'ESTABLISHING UPLINK...',
+        'CONNECTING TO MAINFRAME...',
+        'READY.'
+      ];
+      let messageIndex = 0;
       
       // All available channels
       const imageChannels = [2, 5, 6, 7, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80];
@@ -790,6 +817,16 @@
       function updateLoader() {
         const percent = Math.round((loadedCount / totalToLoad) * 100);
         loaderCount.textContent = percent;
+        
+        // Cycle through messages based on progress
+        const newIndex = Math.min(
+          Math.floor((percent / 100) * (loadingMessages.length - 1)),
+          loadingMessages.length - 1
+        );
+        if (newIndex !== messageIndex) {
+          messageIndex = newIndex;
+          loaderStatus.textContent = loadingMessages[messageIndex];
+        }
       }
 
       // Hide loader and show content
