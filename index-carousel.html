@@ -143,15 +143,36 @@
 
     .channel video::-webkit-media-controls {
       display: none !important;
+      -webkit-appearance: none;
+      opacity: 0;
+      pointer-events: none;
     }
 
     .channel video::-webkit-media-controls-start-playback-button {
       display: none !important;
       -webkit-appearance: none;
+      opacity: 0;
+      pointer-events: none;
     }
 
     .channel video::-webkit-media-controls-panel {
       display: none !important;
+      -webkit-appearance: none;
+      opacity: 0;
+    }
+
+    .channel video::-webkit-media-controls-play-button {
+      display: none !important;
+      -webkit-appearance: none;
+      opacity: 0;
+    }
+
+    .channel video::-moz-media-controls {
+      display: none !important;
+    }
+
+    .channel video {
+      pointer-events: none;
     }
 
     .channel img {
@@ -1073,7 +1094,23 @@
       function hideLoader() {
         loader.classList.add('is-hidden');
         tvContainer.classList.add('is-loaded');
+        
+        // Try to autoplay all videos (iOS requires this)
+        document.querySelectorAll('video').forEach(v => {
+          v.play().catch(() => {});
+        });
       }
+      
+      // iOS: attempt to play videos on first touch
+      function unlockVideos() {
+        document.querySelectorAll('video').forEach(v => {
+          v.play().catch(() => {});
+        });
+        document.removeEventListener('touchstart', unlockVideos);
+        document.removeEventListener('click', unlockVideos);
+      }
+      document.addEventListener('touchstart', unlockVideos, { once: true });
+      document.addEventListener('click', unlockVideos, { once: true });
 
       // Preload an image and mark channel as loaded
       function preloadChannel(channelNum) {
@@ -1143,6 +1180,14 @@
         channels.forEach(ch => {
           const isTarget = parseInt(ch.dataset.channel) === channelNum;
           ch.classList.toggle('is-active', isTarget);
+          
+          // Force play video when channel becomes active
+          if (isTarget) {
+            const video = ch.querySelector('video');
+            if (video) {
+              video.play().catch(() => {});
+            }
+          }
         });
 
         indicator.textContent = 'FIG. ' + String(channelNum).padStart(2, '0');

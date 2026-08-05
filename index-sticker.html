@@ -206,12 +206,19 @@
       let x = Math.random() * (window.innerWidth - stickerWidth);
       let y = Math.random() * (window.innerHeight - stickerHeight);
       
-      const baseSpeed = 2.5;
+      // Speed as percentage of screen per second (consistent across devices)
+      const speedPercent = 15; // 15% of screen width per second
+      let lastTime = performance.now();
+      
+      function getBaseSpeed() {
+        return (Math.min(window.innerWidth, window.innerHeight) * speedPercent) / 100 / 60;
+      }
+      
+      let baseSpeed = getBaseSpeed();
       let vx = baseSpeed * (Math.random() > 0.5 ? 1 : -1);
       let vy = baseSpeed * (Math.random() > 0.5 ? 1 : -1);
       
       let cornerThreshold = 60;
-      let lastCornerCheck = { x: null, y: null };
       
       function isNearCorner(x, y, w, h, screenW, screenH) {
         const nearLeft = x < cornerThreshold;
@@ -227,6 +234,7 @@
         const h = stickerHeight;
         const screenW = window.innerWidth;
         const screenH = window.innerHeight;
+        const nudge = baseSpeed * 0.2;
         
         const nearLeft = x < cornerThreshold;
         const nearRight = x + w > screenW - cornerThreshold;
@@ -234,17 +242,17 @@
         const nearBottom = y + h > screenH - cornerThreshold;
         
         if (nearLeft && nearTop) {
-          if (Math.abs(vx) < Math.abs(vy)) vx = Math.abs(vx) + 0.5;
-          else vy = Math.abs(vy) + 0.5;
+          if (Math.abs(vx) < Math.abs(vy)) vx = Math.abs(vx) + nudge;
+          else vy = Math.abs(vy) + nudge;
         } else if (nearRight && nearTop) {
-          if (Math.abs(vx) < Math.abs(vy)) vx = -Math.abs(vx) - 0.5;
-          else vy = Math.abs(vy) + 0.5;
+          if (Math.abs(vx) < Math.abs(vy)) vx = -Math.abs(vx) - nudge;
+          else vy = Math.abs(vy) + nudge;
         } else if (nearLeft && nearBottom) {
-          if (Math.abs(vx) < Math.abs(vy)) vx = Math.abs(vx) + 0.5;
-          else vy = -Math.abs(vy) - 0.5;
+          if (Math.abs(vx) < Math.abs(vy)) vx = Math.abs(vx) + nudge;
+          else vy = -Math.abs(vy) - nudge;
         } else if (nearRight && nearBottom) {
-          if (Math.abs(vx) < Math.abs(vy)) vx = -Math.abs(vx) - 0.5;
-          else vy = -Math.abs(vy) - 0.5;
+          if (Math.abs(vx) < Math.abs(vy)) vx = -Math.abs(vx) - nudge;
+          else vy = -Math.abs(vy) - nudge;
         }
         
         const maxSpeed = baseSpeed * 1.8;
@@ -252,14 +260,17 @@
         vy = Math.max(-maxSpeed, Math.min(maxSpeed, vy));
       }
       
-      function animate() {
+      function animate(currentTime) {
+        const deltaTime = (currentTime - lastTime) / (1000 / 60); // Normalize to 60fps
+        lastTime = currentTime;
+        
         const w = stickerWidth;
         const h = stickerHeight;
         const screenW = window.innerWidth;
         const screenH = window.innerHeight;
         
-        x += vx;
-        y += vy;
+        x += vx * deltaTime;
+        y += vy * deltaTime;
         
         if (x <= 0) {
           x = 0;
@@ -282,7 +293,7 @@
         } else {
           const speedMag = Math.sqrt(vx * vx + vy * vy);
           if (speedMag > baseSpeed) {
-            const decay = 0.995;
+            const decay = Math.pow(0.995, deltaTime);
             vx *= decay;
             vy *= decay;
           }
@@ -298,6 +309,7 @@
       window.addEventListener('resize', () => {
         const screenW = window.innerWidth;
         const screenH = window.innerHeight;
+        baseSpeed = getBaseSpeed();
         if (x + stickerWidth > screenW) x = screenW - stickerWidth;
         if (y + stickerHeight > screenH) y = screenH - stickerHeight;
         if (x < 0) x = 0;
