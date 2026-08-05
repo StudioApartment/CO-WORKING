@@ -318,7 +318,8 @@
       font-size: clamp(1.5rem, 5vw, 3rem);
       font-weight: 700;
       letter-spacing: -0.02em;
-      margin-bottom: 0.75rem;
+      color: #fff;
+      margin-bottom: 0.25rem;
     }
 
     .logo-main {
@@ -445,6 +446,7 @@
         flex-direction: column;
         align-items: flex-start;
         padding: 1.5rem;
+        padding-top: calc(1.5rem + 7px);
         gap: 0.5rem;
       }
 
@@ -1126,7 +1128,6 @@
       }
 
       const tapToStart = document.getElementById('tap-to-start');
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
       // Unlock and play all videos
       function unlockVideos() {
@@ -1139,28 +1140,34 @@
       // Hide loader and show content
       function hideLoader() {
         loader.classList.add('is-hidden');
+        tvContainer.classList.add('is-loaded');
         
-        // On mobile, show tap-to-start overlay
-        if (isMobile) {
-          tapToStart.classList.remove('is-hidden');
+        // Try to autoplay - if it fails (low power mode), show tap-to-start
+        const testVideo = document.querySelector('video');
+        if (testVideo) {
+          const playPromise = testVideo.play();
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              // Autoplay worked, play all videos
+              unlockVideos();
+            }).catch(() => {
+              // Autoplay blocked (low power mode), show tap-to-start
+              tapToStart.classList.remove('is-hidden');
+            });
+          }
         } else {
-          tvContainer.classList.add('is-loaded');
           unlockVideos();
         }
       }
       
-      // Handle tap to start on mobile
-      tapToStart.addEventListener('click', function() {
+      // Handle tap to start
+      function handleTapToStart() {
         tapToStart.classList.add('is-hidden');
-        tvContainer.classList.add('is-loaded');
         unlockVideos();
-      });
+      }
       
-      tapToStart.addEventListener('touchstart', function() {
-        tapToStart.classList.add('is-hidden');
-        tvContainer.classList.add('is-loaded');
-        unlockVideos();
-      }, { passive: true });
+      tapToStart.addEventListener('click', handleTapToStart);
+      tapToStart.addEventListener('touchstart', handleTapToStart, { passive: true });
 
       // Preload an image and mark channel as loaded
       function preloadChannel(channelNum) {

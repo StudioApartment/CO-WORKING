@@ -23,9 +23,14 @@
       padding: 0;
     }
 
-    html, body {
+    html {
       height: 100%;
-      overflow: hidden;
+    }
+
+    body {
+      min-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
 
     body {
@@ -132,7 +137,7 @@
       .logo-overlay {
         top: 50%;
         left: 1.5rem;
-        transform: translateY(-50%);
+        transform: translateY(calc(-50% + 7px));
       }
 
       .logo-we-are {
@@ -148,7 +153,7 @@
         top: 50%;
         left: 1.5rem;
         right: auto;
-        transform: translateY(calc(-50% + 4.5rem));
+        transform: translateY(calc(-50% + 4.5rem + 7px));
         gap: 0.75rem;
         justify-content: flex-start;
       }
@@ -159,6 +164,115 @@
 
       .nav-cta {
         padding: 0.35rem 0.55rem;
+      }
+    }
+
+    /* ——— Scroll Spacer ——— */
+    .scroll-spacer {
+      height: 100vh;
+      pointer-events: none;
+    }
+
+    /* ——— Footer ——— */
+    .site-footer {
+      position: relative;
+      z-index: 30;
+      background: transparent;
+      padding: 1.5rem clamp(1.25rem, 4vw, 2.5rem) 2rem;
+      color: #fff;
+    }
+
+    .footer-inner {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+      text-align: left;
+    }
+
+    .footer-brand {
+      text-align: left;
+      justify-self: start;
+    }
+
+    .footer-position {
+      margin: 0;
+      font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
+      font-size: 0.8rem;
+      color: #fff;
+      opacity: 0.7;
+    }
+
+    .footer-label {
+      margin: 0 0 0.5rem;
+      font-family: "IBM Plex Mono", "SF Mono", Menlo, Consolas, "Courier New", monospace;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .footer-team ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .footer-team li {
+      margin-bottom: 0.35rem;
+      font-size: 0.9rem;
+      color: #fff;
+    }
+
+    .footer-meta {
+      text-align: right;
+      font-family: "IBM Plex Mono", "SF Mono", Menlo, Consolas, "Courier New", monospace;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .footer-meta p {
+      margin: 0 0 0.5rem;
+    }
+
+    .footer-meta a {
+      font-family: inherit;
+      font-size: inherit;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .footer-meta a:hover {
+      text-decoration: underline;
+      color: #fff;
+    }
+
+    @media (max-width: 900px) {
+      .footer-inner {
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      .footer-brand {
+        grid-column: 1 / -1;
+      }
+
+      .footer-meta {
+        text-align: left;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .scroll-spacer {
+        height: 110vh;
+      }
+
+      .footer-inner {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -195,5 +309,29 @@
     <a href="/events.html" style="display: none;">Panel Discussions</a>
     <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
   </nav>
+
+  <!-- Spacer to enable footer scroll -->
+  <div class="scroll-spacer"></div>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <p class="footer-position">Productivity Through Atmosphere.</p>
+      </div>
+      <div class="footer-team">
+        <p class="footer-label">Department Heads</p>
+        <ul>
+          <li><strong>Sky Bruno</strong> — Internal Systems</li>
+          <li><strong>Ty Allen</strong> — Spatial Operations</li>
+          <li><strong>Gage Salzano</strong> — Culture</li>
+        </ul>
+      </div>
+      <div class="footer-meta">
+        <p>CO—WORKING © 2026</p>
+        <p>NEW YORK, NY</p>
+        <a href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">EMPLOYEE PORTAL →</a>
+      </div>
+    </div>
+  </footer>
 </body>
 </html>
