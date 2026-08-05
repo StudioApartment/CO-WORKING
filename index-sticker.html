@@ -214,6 +214,11 @@
     .scroll-spacer {
       height: 100vh;
       pointer-events: none;
+      position: relative;
+    }
+
+    .scroll-content {
+      display: none;
     }
 
     /* ——— Footer ——— */
@@ -310,7 +315,53 @@
 
     @media (max-width: 600px) {
       .scroll-spacer {
-        height: 110vh;
+        height: auto;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        pointer-events: auto;
+      }
+
+      .scroll-content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1.5rem;
+        padding-top: calc(1.5rem + 13px);
+        gap: 0.5rem;
+      }
+
+      .scroll-content .logo-we-are {
+        font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #fff;
+        margin: 0 0 0.85rem 0;
+      }
+
+      .scroll-content .logo-main {
+        max-width: 70vw;
+        height: auto;
+      }
+
+      .scroll-content .nav-cta {
+        margin-top: 1rem;
+        font-family: "IBM Plex Mono", "SF Mono", "Cascadia Mono", monospace;
+        font-size: 0.62rem;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        text-decoration: none;
+        color: #000;
+        border: 1px solid #fff;
+        padding: 0.35rem 0.55rem;
+        background: #fff;
+      }
+
+      .logo-overlay,
+      .site-nav {
+        display: none;
       }
 
       .footer-inner {
@@ -357,7 +408,16 @@
   </script>
 
   <!-- Spacer to enable footer scroll -->
-  <div class="scroll-spacer"></div>
+  <div class="scroll-spacer">
+    <!-- Mobile-only scrollable content -->
+    <div class="scroll-content">
+      <a href="index-carousel.html" style="text-decoration: none; color: inherit;">
+        <p class="logo-we-are">we are</p>
+        <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
+      </a>
+      <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
+    </div>
+  </div>
 
   <footer class="site-footer">
     <div class="footer-inner">
