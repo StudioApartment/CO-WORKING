@@ -419,15 +419,15 @@
         top: 1rem;
         right: calc(1rem + 4px);
         left: auto;
-        z-index: 100;
+        z-index: 9999;
         gap: 1rem;
-        pointer-events: auto;
       }
 
       .page-nav-btn {
         font-size: 2.2rem;
-        padding: 0.5rem;
-        pointer-events: auto;
+        padding: 0.75rem;
+        -webkit-tap-highlight-color: rgba(255,255,255,0.2);
+        touch-action: manipulation;
       }
 
       .channel-indicator {
@@ -1033,30 +1033,30 @@
     <!-- Channel Indicator -->
     <div class="channel-indicator">FIG. 01</div>
 
-    <!-- Page Nav -->
-    <div class="page-nav">
-      <button class="page-nav-btn" onclick="goToPrevPage()">‹</button>
-      <button class="page-nav-btn" onclick="goToNextPage()">›</button>
-    </div>
-
     <!-- Site Nav -->
     <nav class="site-nav">
       <a href="/events.html" style="display: none;">Panel Discussions</a>
       <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
     </nav>
-    <script>
-      const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html'];
-      const currentIndex = 0;
-      function goToPrevPage() {
-        const prev = (currentIndex - 1 + pages.length) % pages.length;
-        window.location.href = pages[prev];
-      }
-      function goToNextPage() {
-        const next = (currentIndex + 1) % pages.length;
-        window.location.href = pages[next];
-      }
-    </script>
   </div>
+
+  <!-- Page Nav (outside tv-container for mobile tap) -->
+  <div class="page-nav">
+    <button class="page-nav-btn" onclick="goToPrevPage()">‹</button>
+    <button class="page-nav-btn" onclick="goToNextPage()">›</button>
+  </div>
+  <script>
+    const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html'];
+    const currentIndex = 0;
+    function goToPrevPage() {
+      const prev = (currentIndex - 1 + pages.length) % pages.length;
+      window.location.href = pages[prev];
+    }
+    function goToNextPage() {
+      const next = (currentIndex + 1) % pages.length;
+      window.location.href = pages[next];
+    }
+  </script>
 
   <!-- Spacer to enable footer scroll -->
   <div class="scroll-spacer">
