@@ -13,15 +13,7 @@
     }
   </style>
   <script>
-    const pages = [
-      'index-carousel.html',
-      'index-sticker.html',
-      'index-video-bg.html'
-    ];
-    const exclude = new URLSearchParams(window.location.search).get('exclude');
-    const available = exclude ? pages.filter(p => p !== exclude) : pages;
-    const randomPage = available[Math.floor(Math.random() * available.length)];
-    window.location.replace(randomPage);
+    window.location.replace('index-carousel.html');
   </script>
 </head>
 <body>

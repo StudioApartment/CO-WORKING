@@ -127,7 +127,36 @@
       text-decoration: none !important;
     }
 
+    .page-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .page-nav-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+      font-family: system-ui, sans-serif;
+    }
+
+    .page-nav-btn:hover {
+      opacity: 1;
+    }
+
     @media (max-width: 600px) {
+      .page-nav {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 30;
+      }
+
       .logo-overlay {
         top: 50%;
         left: 1.5rem;
@@ -283,30 +312,32 @@
   </div>
 
   <!-- Logo Overlay -->
-  <a href="#" class="logo-overlay" onclick="goToRandomIndex(event)">
+  <a href="index-carousel.html" class="logo-overlay">
     <p class="logo-we-are">we are</p>
     <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
   </a>
-  <script>
-    (function() {
-      const current = 'index-sticker.html';
-      const nav = performance.getEntriesByType('navigation')[0];
-      if (nav && nav.type === 'reload') {
-        window.location.replace('index.html?exclude=' + current);
-        return;
-      }
-      window.goToRandomIndex = function(e) {
-        e.preventDefault();
-        window.location.href = 'index.html?exclude=' + current;
-      };
-    })();
-  </script>
 
   <!-- Site Nav -->
   <nav class="site-nav">
     <a href="/events.html" style="display: none;">Panel Discussions</a>
+    <div class="page-nav">
+      <button class="page-nav-btn" onclick="goToPrevPage()">←</button>
+      <button class="page-nav-btn" onclick="goToNextPage()">→</button>
+    </div>
     <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
   </nav>
+  <script>
+    const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html'];
+    const currentIndex = 1;
+    function goToPrevPage() {
+      const prev = (currentIndex - 1 + pages.length) % pages.length;
+      window.location.href = pages[prev];
+    }
+    function goToNextPage() {
+      const next = (currentIndex + 1) % pages.length;
+      window.location.href = pages[next];
+    }
+  </script>
 
   <!-- Spacer to enable footer scroll -->
   <div class="scroll-spacer"></div>
