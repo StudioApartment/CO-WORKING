@@ -66,6 +66,37 @@
       pointer-events: none;
     }
 
+    .tap-to-start {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 99;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+
+    .tap-to-start.is-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .tap-to-start-text {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
     .loader-content {
       position: absolute;
       top: 2rem;
@@ -565,6 +596,10 @@
       <p class="loader-status" id="loader-status">LOADING...</p>
       <div class="loader-count" id="loader-count">0</div>
     </div>
+  </div>
+
+  <div class="tap-to-start is-hidden" id="tap-to-start">
+    <span class="tap-to-start-text">Tap to start</span>
   </div>
 
   <div class="tv-container">
@@ -1090,27 +1125,42 @@
         }
       }
 
-      // Hide loader and show content
-      function hideLoader() {
-        loader.classList.add('is-hidden');
-        tvContainer.classList.add('is-loaded');
-        
-        // Try to autoplay all videos (iOS requires this)
+      const tapToStart = document.getElementById('tap-to-start');
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      // Unlock and play all videos
+      function unlockVideos() {
         document.querySelectorAll('video').forEach(v => {
+          v.load();
           v.play().catch(() => {});
         });
       }
       
-      // iOS: attempt to play videos on first touch
-      function unlockVideos() {
-        document.querySelectorAll('video').forEach(v => {
-          v.play().catch(() => {});
-        });
-        document.removeEventListener('touchstart', unlockVideos);
-        document.removeEventListener('click', unlockVideos);
+      // Hide loader and show content
+      function hideLoader() {
+        loader.classList.add('is-hidden');
+        
+        // On mobile, show tap-to-start overlay
+        if (isMobile) {
+          tapToStart.classList.remove('is-hidden');
+        } else {
+          tvContainer.classList.add('is-loaded');
+          unlockVideos();
+        }
       }
-      document.addEventListener('touchstart', unlockVideos, { once: true });
-      document.addEventListener('click', unlockVideos, { once: true });
+      
+      // Handle tap to start on mobile
+      tapToStart.addEventListener('click', function() {
+        tapToStart.classList.add('is-hidden');
+        tvContainer.classList.add('is-loaded');
+        unlockVideos();
+      });
+      
+      tapToStart.addEventListener('touchstart', function() {
+        tapToStart.classList.add('is-hidden');
+        tvContainer.classList.add('is-loaded');
+        unlockVideos();
+      }, { passive: true });
 
       // Preload an image and mark channel as loaded
       function preloadChannel(channelNum) {

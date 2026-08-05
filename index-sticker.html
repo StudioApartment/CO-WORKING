@@ -206,9 +206,8 @@
       let x = Math.random() * (window.innerWidth - stickerWidth);
       let y = Math.random() * (window.innerHeight - stickerHeight);
       
-      // Speed as percentage of screen per second (consistent across devices)
-      const speedPercent = 15; // 15% of screen width per second
-      let lastTime = performance.now();
+      // Speed as percentage of screen per second
+      const speedPercent = 18;
       
       function getBaseSpeed() {
         return (Math.min(window.innerWidth, window.innerHeight) * speedPercent) / 100 / 60;
@@ -225,7 +224,6 @@
         const nearRight = x + w > screenW - cornerThreshold;
         const nearTop = y < cornerThreshold;
         const nearBottom = y + h > screenH - cornerThreshold;
-        
         return (nearLeft || nearRight) && (nearTop || nearBottom);
       }
       
@@ -260,9 +258,15 @@
         vy = Math.max(-maxSpeed, Math.min(maxSpeed, vy));
       }
       
-      function animate(currentTime) {
-        const deltaTime = (currentTime - lastTime) / (1000 / 60); // Normalize to 60fps
-        lastTime = currentTime;
+      // Use setInterval as fallback for low power mode (less throttled than rAF)
+      let lastTime = performance.now();
+      const targetFPS = 60;
+      const interval = 1000 / targetFPS;
+      
+      function update() {
+        const now = performance.now();
+        const deltaTime = Math.min((now - lastTime) / interval, 3); // Cap delta to prevent jumps
+        lastTime = now;
         
         const w = stickerWidth;
         const h = stickerHeight;
@@ -272,21 +276,11 @@
         x += vx * deltaTime;
         y += vy * deltaTime;
         
-        if (x <= 0) {
-          x = 0;
-          vx = Math.abs(vx);
-        } else if (x + w >= screenW) {
-          x = screenW - w;
-          vx = -Math.abs(vx);
-        }
+        if (x <= 0) { x = 0; vx = Math.abs(vx); }
+        else if (x + w >= screenW) { x = screenW - w; vx = -Math.abs(vx); }
         
-        if (y <= 0) {
-          y = 0;
-          vy = Math.abs(vy);
-        } else if (y + h >= screenH) {
-          y = screenH - h;
-          vy = -Math.abs(vy);
-        }
+        if (y <= 0) { y = 0; vy = Math.abs(vy); }
+        else if (y + h >= screenH) { y = screenH - h; vy = -Math.abs(vy); }
         
         if (isNearCorner(x, y, w, h, screenW, screenH)) {
           nudgeAwayFromCorner();
@@ -300,11 +294,19 @@
         }
         
         sticker.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-        
-        requestAnimationFrame(animate);
       }
       
       sticker.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      
+      // Use both rAF and setInterval for best coverage
+      function animateRAF() {
+        update();
+        requestAnimationFrame(animateRAF);
+      }
+      
+      // setInterval runs even in low power mode (though slower)
+      setInterval(update, interval);
+      requestAnimationFrame(animateRAF);
       
       window.addEventListener('resize', () => {
         const screenW = window.innerWidth;
@@ -315,8 +317,6 @@
         if (x < 0) x = 0;
         if (y < 0) y = 0;
       });
-      
-      requestAnimationFrame(animate);
     })();
   </script>
 </body>
