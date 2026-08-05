@@ -134,6 +134,10 @@
     }
 
     .page-nav {
+      position: absolute;
+      top: 2rem;
+      right: calc(2rem + 10rem);
+      z-index: 25;
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -161,6 +165,7 @@
         position: fixed;
         top: 1rem;
         right: 1rem;
+        left: auto;
         z-index: 30;
       }
 
@@ -320,13 +325,15 @@
     <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
   </a>
 
+  <!-- Page Nav -->
+  <div class="page-nav">
+    <button class="page-nav-btn" onclick="goToPrevPage()">‹</button>
+    <button class="page-nav-btn" onclick="goToNextPage()">›</button>
+  </div>
+
   <!-- Site Nav -->
   <nav class="site-nav">
     <a href="/events.html" style="display: none;">Panel Discussions</a>
-    <div class="page-nav">
-      <button class="page-nav-btn" onclick="goToPrevPage()">‹</button>
-      <button class="page-nav-btn" onclick="goToNextPage()">›</button>
-    </div>
     <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
   </nav>
   <script>
