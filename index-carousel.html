@@ -417,15 +417,17 @@
       .page-nav {
         position: fixed;
         top: 1rem;
-        right: 1rem;
+        right: calc(1rem + 4px);
         left: auto;
-        z-index: 30;
+        z-index: 100;
         gap: 1rem;
+        pointer-events: auto;
       }
 
       .page-nav-btn {
         font-size: 2.2rem;
         padding: 0.5rem;
+        pointer-events: auto;
       }
 
       .channel-indicator {
