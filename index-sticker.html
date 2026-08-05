@@ -124,8 +124,9 @@
 
     @media (max-width: 600px) {
       .logo-overlay {
-        top: 1rem;
-        left: 1rem;
+        top: 50%;
+        left: 1.5rem;
+        transform: translateY(-50%);
       }
 
       .logo-we-are {
@@ -137,9 +138,13 @@
       }
 
       .site-nav {
-        top: 1rem;
-        right: 1rem;
+        position: absolute;
+        top: 50%;
+        left: 1.5rem;
+        right: auto;
+        transform: translateY(calc(-50% + 4.5rem));
         gap: 0.75rem;
+        justify-content: flex-start;
       }
 
       .site-nav a {
@@ -169,13 +174,18 @@
     <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
   </a>
   <script>
-    function goToRandomIndex(e) {
-      e.preventDefault();
-      const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html'];
+    (function() {
       const current = 'index-sticker.html';
-      const others = pages.filter(p => p !== current);
-      window.location.href = others[Math.floor(Math.random() * others.length)];
-    }
+      const nav = performance.getEntriesByType('navigation')[0];
+      if (nav && nav.type === 'reload') {
+        window.location.replace('index.html?exclude=' + current);
+        return;
+      }
+      window.goToRandomIndex = function(e) {
+        e.preventDefault();
+        window.location.href = 'index.html?exclude=' + current;
+      };
+    })();
   </script>
 
   <!-- Site Nav -->

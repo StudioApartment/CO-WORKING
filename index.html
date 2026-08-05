@@ -18,7 +18,9 @@
       'index-sticker.html',
       'index-video-bg.html'
     ];
-    const randomPage = pages[Math.floor(Math.random() * pages.length)];
+    const exclude = new URLSearchParams(window.location.search).get('exclude');
+    const available = exclude ? pages.filter(p => p !== exclude) : pages;
+    const randomPage = available[Math.floor(Math.random() * available.length)];
     window.location.replace(randomPage);
   </script>
 </head>

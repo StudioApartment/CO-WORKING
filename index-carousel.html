@@ -141,6 +141,19 @@
       object-fit: cover;
     }
 
+    .channel video::-webkit-media-controls {
+      display: none !important;
+    }
+
+    .channel video::-webkit-media-controls-start-playback-button {
+      display: none !important;
+      -webkit-appearance: none;
+    }
+
+    .channel video::-webkit-media-controls-panel {
+      display: none !important;
+    }
+
     .channel img {
       width: 100%;
       height: auto;
@@ -914,15 +927,20 @@
       <p class="logo-we-are">we are</p>
       <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
     </a>
-    <script>
-      function goToRandomIndex(e) {
-        e.preventDefault();
-        const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html'];
-        const current = 'index-carousel.html';
-        const others = pages.filter(p => p !== current);
-        window.location.href = others[Math.floor(Math.random() * others.length)];
+  <script>
+    (function() {
+      const current = 'index-carousel.html';
+      const nav = performance.getEntriesByType('navigation')[0];
+      if (nav && nav.type === 'reload') {
+        window.location.replace('index.html?exclude=' + current);
+        return;
       }
-    </script>
+      window.goToRandomIndex = function(e) {
+        e.preventDefault();
+        window.location.href = 'index.html?exclude=' + current;
+      };
+    })();
+  </script>
 
     <!-- Channel Indicator -->
     <div class="channel-indicator">FIG. 01</div>
