@@ -70,6 +70,9 @@
       align-items: flex-start;
       z-index: 20;
       text-align: left;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
     }
 
     .logo-we-are {
@@ -163,10 +166,19 @@
   </div>
 
   <!-- Logo Overlay -->
-  <div class="logo-overlay">
+  <a href="#" class="logo-overlay" onclick="goToRandomIndex(event)">
     <p class="logo-we-are">we are</p>
     <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
-  </div>
+  </a>
+  <script>
+    function goToRandomIndex(e) {
+      e.preventDefault();
+      const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html'];
+      const current = 'index-video-bg.html';
+      const others = pages.filter(p => p !== current);
+      window.location.href = others[Math.floor(Math.random() * others.length)];
+    }
+  </script>
 
   <!-- Site Nav -->
   <nav class="site-nav">

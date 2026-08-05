@@ -243,6 +243,9 @@
       align-items: flex-start;
       z-index: 20;
       text-align: left;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
     }
 
     .logo-we-are {
@@ -907,10 +910,19 @@
     </div>
 
     <!-- Logo Overlay -->
-    <div class="logo-overlay">
+    <a href="#" class="logo-overlay" id="logo-link" onclick="goToRandomIndex(event)">
       <p class="logo-we-are">we are</p>
       <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
-    </div>
+    </a>
+    <script>
+      function goToRandomIndex(e) {
+        e.preventDefault();
+        const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html'];
+        const current = 'index-carousel.html';
+        const others = pages.filter(p => p !== current);
+        window.location.href = others[Math.floor(Math.random() * others.length)];
+      }
+    </script>
 
     <!-- Channel Indicator -->
     <div class="channel-indicator">FIG. 01</div>
@@ -926,8 +938,10 @@
   <div class="scroll-spacer">
     <!-- Mobile-only scrollable content -->
     <div class="scroll-content">
-      <p class="logo-we-are">we are</p>
-      <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
+      <a href="#" onclick="goToRandomIndex(event)" style="text-decoration: none; color: inherit;">
+        <p class="logo-we-are">we are</p>
+        <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
+      </a>
       <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
     </div>
   </div>
