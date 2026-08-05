@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CO—WORKING</title>
+  <meta name="description" content="CO—WORKING — a fictional corporation that accidentally becomes a real one. Enterprise solutions for creative people.">
+  <meta property="og:title" content="CO—WORKING">
+  <meta property="og:description" content="A fictional corporation that accidentally becomes a real one. Enterprise solutions for creative people.">
+  <meta property="og:image" content="images/hero-scan.png">
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="images/favicon-light.png" type="image/png" media="(prefers-color-scheme: light)">
+  <link rel="icon" href="images/favicon-dark.png" type="image/png" media="(prefers-color-scheme: dark)">
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+  <meta name="theme-color" content="#000000">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    .sticker-container {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .sticker {
+      position: absolute;
+      width: clamp(180px, 30vw, 350px);
+      height: auto;
+      will-change: transform;
+      filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5));
+    }
+
+    .sticker img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* ——— Logo Overlay ——— */
+    .logo-overlay {
+      position: absolute;
+      top: 2rem;
+      left: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      z-index: 20;
+      text-align: left;
+    }
+
+    .logo-we-are {
+      font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
+      font-size: clamp(1.5rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 0.25rem;
+    }
+
+    .logo-main {
+      width: auto;
+      height: auto;
+      max-width: min(90vw, 36rem);
+      filter: brightness(0) invert(1);
+    }
+
+    .site-nav {
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
+      z-index: 25;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .site-nav a {
+      font-family: "IBM Plex Mono", "SF Mono", "Cascadia Mono", monospace;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .site-nav a:hover {
+      text-decoration: underline;
+    }
+
+    .nav-cta {
+      border: 1px solid #fff;
+      padding: 0.4rem 0.7rem;
+      background: #fff;
+      color: #000 !important;
+    }
+
+    .nav-cta:hover {
+      background: transparent;
+      color: #fff !important;
+      text-decoration: none !important;
+    }
+
+    @media (max-width: 600px) {
+      .logo-overlay {
+        top: 1rem;
+        left: 1rem;
+      }
+
+      .logo-we-are {
+        font-size: 1.25rem;
+      }
+
+      .logo-main {
+        max-width: 70vw;
+      }
+
+      .site-nav {
+        top: 1rem;
+        right: 1rem;
+        gap: 0.75rem;
+      }
+
+      .site-nav a {
+        font-size: 0.62rem;
+      }
+
+      .nav-cta {
+        padding: 0.35rem 0.55rem;
+      }
+
+      .sticker {
+        width: clamp(120px, 40vw, 200px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sticker-container">
+    <div class="sticker" id="sticker">
+      <img src="images/co-sticker.png" alt="CO sticker">
+    </div>
+  </div>
+
+  <!-- Logo Overlay -->
+  <div class="logo-overlay">
+    <p class="logo-we-are">we are</p>
+    <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
+  </div>
+
+  <!-- Site Nav -->
+  <nav class="site-nav">
+    <a href="/events.html" style="display: none;">Panel Discussions</a>
+    <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
+  </nav>
+
+  <script>
+    (function() {
+      const sticker = document.getElementById('sticker');
+      const container = document.querySelector('.sticker-container');
+      
+      const stickerRect = sticker.getBoundingClientRect();
+      const stickerWidth = stickerRect.width;
+      const stickerHeight = stickerRect.height;
+      
+      let x = Math.random() * (window.innerWidth - stickerWidth);
+      let y = Math.random() * (window.innerHeight - stickerHeight);
+      
+      const baseSpeed = 2.5;
+      let vx = baseSpeed * (Math.random() > 0.5 ? 1 : -1);
+      let vy = baseSpeed * (Math.random() > 0.5 ? 1 : -1);
+      
+      let cornerThreshold = 60;
+      let lastCornerCheck = { x: null, y: null };
+      
+      function isNearCorner(x, y, w, h, screenW, screenH) {
+        const nearLeft = x < cornerThreshold;
+        const nearRight = x + w > screenW - cornerThreshold;
+        const nearTop = y < cornerThreshold;
+        const nearBottom = y + h > screenH - cornerThreshold;
+        
+        return (nearLeft || nearRight) && (nearTop || nearBottom);
+      }
+      
+      function nudgeAwayFromCorner() {
+        const w = stickerWidth;
+        const h = stickerHeight;
+        const screenW = window.innerWidth;
+        const screenH = window.innerHeight;
+        
+        const nearLeft = x < cornerThreshold;
+        const nearRight = x + w > screenW - cornerThreshold;
+        const nearTop = y < cornerThreshold;
+        const nearBottom = y + h > screenH - cornerThreshold;
+        
+        if (nearLeft && nearTop) {
+          if (Math.abs(vx) < Math.abs(vy)) vx = Math.abs(vx) + 0.5;
+          else vy = Math.abs(vy) + 0.5;
+        } else if (nearRight && nearTop) {
+          if (Math.abs(vx) < Math.abs(vy)) vx = -Math.abs(vx) - 0.5;
+          else vy = Math.abs(vy) + 0.5;
+        } else if (nearLeft && nearBottom) {
+          if (Math.abs(vx) < Math.abs(vy)) vx = Math.abs(vx) + 0.5;
+          else vy = -Math.abs(vy) - 0.5;
+        } else if (nearRight && nearBottom) {
+          if (Math.abs(vx) < Math.abs(vy)) vx = -Math.abs(vx) - 0.5;
+          else vy = -Math.abs(vy) - 0.5;
+        }
+        
+        const maxSpeed = baseSpeed * 1.8;
+        vx = Math.max(-maxSpeed, Math.min(maxSpeed, vx));
+        vy = Math.max(-maxSpeed, Math.min(maxSpeed, vy));
+      }
+      
+      function animate() {
+        const w = stickerWidth;
+        const h = stickerHeight;
+        const screenW = window.innerWidth;
+        const screenH = window.innerHeight;
+        
+        x += vx;
+        y += vy;
+        
+        if (x <= 0) {
+          x = 0;
+          vx = Math.abs(vx);
+        } else if (x + w >= screenW) {
+          x = screenW - w;
+          vx = -Math.abs(vx);
+        }
+        
+        if (y <= 0) {
+          y = 0;
+          vy = Math.abs(vy);
+        } else if (y + h >= screenH) {
+          y = screenH - h;
+          vy = -Math.abs(vy);
+        }
+        
+        if (isNearCorner(x, y, w, h, screenW, screenH)) {
+          nudgeAwayFromCorner();
+        } else {
+          const speedMag = Math.sqrt(vx * vx + vy * vy);
+          if (speedMag > baseSpeed) {
+            const decay = 0.995;
+            vx *= decay;
+            vy *= decay;
+          }
+        }
+        
+        sticker.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        
+        requestAnimationFrame(animate);
+      }
+      
+      sticker.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      
+      window.addEventListener('resize', () => {
+        const screenW = window.innerWidth;
+        const screenH = window.innerHeight;
+        if (x + stickerWidth > screenW) x = screenW - stickerWidth;
+        if (y + stickerHeight > screenH) y = screenH - stickerHeight;
+        if (x < 0) x = 0;
+        if (y < 0) y = 0;
+      });
+      
+      requestAnimationFrame(animate);
+    })();
+  </script>
+</body>
+</html>
