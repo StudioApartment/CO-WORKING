@@ -1047,7 +1047,7 @@
     <button class="page-nav-btn" onclick="goToNextPage()">›</button>
   </div>
   <script>
-    const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html'];
+    const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html', 'index-photo-bg.html'];
     const currentIndex = 0;
     function goToPrevPage() {
       const prev = (currentIndex - 1 + pages.length) % pages.length;
@@ -1100,6 +1100,9 @@
       const loader = document.getElementById('loader');
       const loaderCount = document.getElementById('loader-count');
       const loaderStatus = document.getElementById('loader-status');
+      
+      // Check if we've already shown the loader this session
+      const hasLoadedBefore = sessionStorage.getItem('co-working-loaded');
       
       // Loading status messages
       const loadingMessages = [
@@ -1328,16 +1331,38 @@
 
       // Load all assets, show progress, then start
       async function loadChannels() {
+        // If we've loaded before, skip the loading animation
+        if (hasLoadedBefore) {
+          loader.classList.add('is-hidden');
+          tvContainer.classList.add('is-loaded');
+          
+          // Still preload in background but don't wait
+          Promise.all(sessionOrder.map(preloadChannel)).then(() => {
+            activeOrder = sessionOrder.filter(ch => loadedChannels.has(ch));
+            if (activeOrder.length === 0) activeOrder = [4];
+          });
+          
+          // Start immediately with all channels available
+          activeOrder = [...sessionOrder];
+          unlockVideos();
+          isRunning = true;
+          flipChannel();
+          return;
+        }
+        
         // Load all session channels with progress tracking
         await Promise.all(sessionOrder.map(preloadChannel));
-        
+
         // Build active order from loaded channels
         activeOrder = sessionOrder.filter(ch => loadedChannels.has(ch));
-        
+
         // Ensure we have content
         if (activeOrder.length === 0) {
           activeOrder = [4]; // Fallback to static
         }
+        
+        // Mark as loaded for this session
+        sessionStorage.setItem('co-working-loaded', 'true');
         
         // Hide loader and start carousel
         hideLoader();

@@ -31,41 +31,24 @@
       min-height: 100%;
       overflow-x: hidden;
       overflow-y: auto;
-    }
-
-    body {
       background: #000;
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     }
 
-    .video-bg {
+    .photo-bg {
       position: fixed;
       inset: 0;
       z-index: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #000;
     }
 
-    .video-bg video {
-      height: auto;
-      max-height: 100%;
-      width: auto;
-      animation: grow-video 60s linear forwards;
+    .photo-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
-    @keyframes grow-video {
-      0% {
-        transform: scale(0.05);
-      }
-      100% {
-        transform: scale(1);
-      }
-    }
-
-    /* ——— Logo Overlay ——— */
+    /* ——— Logo Overlay (centered at top) ——— */
     .logo-overlay {
       position: fixed;
       top: calc(2rem + 6px);
@@ -85,7 +68,7 @@
       font-size: clamp(1.5rem, 5vw, 3rem);
       font-weight: 700;
       letter-spacing: -0.02em;
-      color: #fff;
+      color: #000;
       margin-bottom: 0.85rem;
     }
 
@@ -93,7 +76,36 @@
       width: auto;
       height: auto;
       max-width: min(90vw, 36rem);
-      filter: brightness(0) invert(1);
+      filter: brightness(0);
+    }
+
+    .page-nav {
+      position: fixed;
+      top: 2rem;
+      right: calc(2rem + 10rem);
+      z-index: 25;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      height: 1.5rem;
+      line-height: 1.5rem;
+    }
+
+    .page-nav-btn {
+      background: none;
+      border: none;
+      color: #000;
+      font-size: 1.8rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+      font-family: system-ui, sans-serif;
+      line-height: 1;
+    }
+
+    .page-nav-btn:hover {
+      opacity: 1;
     }
 
     .site-nav {
@@ -121,45 +133,16 @@
     }
 
     .nav-cta {
-      border: 1px solid #fff;
+      border: 1px solid #000;
       padding: 0.4rem 0.7rem;
-      background: #fff;
-      color: #000 !important;
+      background: #000;
+      color: #fff !important;
     }
 
     .nav-cta:hover {
       background: transparent;
-      color: #fff !important;
+      color: #000 !important;
       text-decoration: none !important;
-    }
-
-    .page-nav {
-      position: fixed;
-      top: 2rem;
-      right: calc(2rem + 10rem);
-      z-index: 25;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      height: 1.5rem;
-      line-height: 1.5rem;
-    }
-
-    .page-nav-btn {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 1.8rem;
-      cursor: pointer;
-      padding: 0.25rem;
-      opacity: 0.6;
-      transition: opacity 0.2s ease;
-      font-family: system-ui, sans-serif;
-      line-height: 1;
-    }
-
-    .page-nav-btn:hover {
-      opacity: 1;
     }
 
     @media (max-width: 600px) {
@@ -180,9 +163,12 @@
       }
 
       .logo-overlay {
-        top: 50%;
-        left: 1.5rem;
-        transform: translateY(calc(-50% + 13px));
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        align-items: flex-start;
+        text-align: left;
       }
 
       .logo-we-are {
@@ -194,21 +180,7 @@
       }
 
       .site-nav {
-        position: absolute;
-        top: 50%;
-        left: 1.5rem;
-        right: auto;
-        transform: translateY(calc(-50% + 4.5rem + 13px));
-        gap: 0.75rem;
-        justify-content: flex-start;
-      }
-
-      .site-nav a {
-        font-size: 0.62rem;
-      }
-
-      .nav-cta {
-        padding: 0.35rem 0.55rem;
+        display: none;
       }
     }
 
@@ -338,13 +310,14 @@
         font-size: 1.25rem;
         font-weight: 700;
         letter-spacing: -0.02em;
-        color: #fff;
+        color: #000;
         margin: 0 0 0.85rem 0;
       }
 
       .scroll-content .logo-main {
         max-width: 70vw;
         height: auto;
+        filter: brightness(0);
       }
 
       .scroll-content .nav-cta {
@@ -355,10 +328,10 @@
         letter-spacing: 0.06em;
         text-transform: uppercase;
         text-decoration: none;
-        color: #000;
-        border: 1px solid #fff;
+        color: #fff;
+        border: 1px solid #000;
         padding: 0.35rem 0.55rem;
-        background: #fff;
+        background: #000;
       }
 
       .logo-overlay,
@@ -373,13 +346,11 @@
   </style>
 </head>
 <body>
-  <div class="video-bg">
-    <video autoplay muted loop playsinline>
-      <source src="images/bg-video.mp4" type="video/mp4">
-    </video>
+  <div class="photo-bg">
+    <img src="images/bg-office.jpg" alt="">
   </div>
 
-  <!-- Logo Overlay -->
+  <!-- Logo Overlay (centered) -->
   <a href="index-carousel.html" class="logo-overlay">
     <p class="logo-we-are">we are</p>
     <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
@@ -390,15 +361,9 @@
     <button class="page-nav-btn" onclick="goToPrevPage()">‹</button>
     <button class="page-nav-btn" onclick="goToNextPage()">›</button>
   </div>
-
-  <!-- Site Nav -->
-  <nav class="site-nav">
-    <a href="/events.html" style="display: none;">Panel Discussions</a>
-    <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
-  </nav>
   <script>
     const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html', 'index-photo-bg.html'];
-    const currentIndex = 2;
+    const currentIndex = 3;
     function goToPrevPage() {
       const prev = (currentIndex - 1 + pages.length) % pages.length;
       window.location.href = pages[prev];
@@ -410,6 +375,12 @@
     // Mark as loaded so carousel loader doesn't replay
     sessionStorage.setItem('co-working-loaded', 'true');
   </script>
+
+  <!-- Site Nav -->
+  <nav class="site-nav">
+    <a href="/events.html" style="display: none;">Panel Discussions</a>
+    <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
+  </nav>
 
   <!-- Spacer to enable footer scroll -->
   <div class="scroll-spacer">
