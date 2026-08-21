@@ -17,53 +17,103 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      height: 100%;
-    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      min-height: 100%;
-      overflow-x: hidden;
-      overflow-y: auto;
       background: #000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      font-family: 'Courier New', 'Lucida Console', monospace;
+      color: #b8c6d4;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #game-wrap {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+    }
+
+    canvas { display: block; width: 100%; height: 100%; }
+
+    #scanlines {
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
+      pointer-events: none; z-index: 2;
+    }
+
+    #vignette {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.4) 100%);
+      pointer-events: none; z-index: 3;
+    }
+
+    #mobile-controls {
+      display: none;
+      position: absolute; bottom: 16px; left: 0; right: 0;
+      gap: 14px; justify-content: center; z-index: 100;
+    }
+
+    .ctrl-btn {
+      width: 52px; height: 52px;
+      background: #000;
+      border: 3px solid #fff;
+      border-radius: 0;
       color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-family: monospace; font-size: 20px; font-weight: bold;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      image-rendering: pixelated;
     }
 
-    /* ——— Game Background Container ——— */
-    .game-bg {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      background: #000;
+    .ctrl-btn:active, .ctrl-btn.active {
+      background: #fff;
+      color: #000;
     }
 
-    #game-canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
+    .ctrl-btn.fire {
+      color: #ff3344;
+      border-color: #ff3344;
+      font-size: 14px;
+      letter-spacing: 1px;
     }
 
-    /* ——— Logo Overlay ——— */
+    .ctrl-btn.fire:active, .ctrl-btn.fire.active {
+      background: #ff3344;
+      color: #000;
+    }
+
+    @media (pointer: coarse), (max-width: 600px) {
+      #mobile-controls { display: flex; }
+    }
+
+    /* ——— CO-WORKING Overlay ——— */
     .logo-overlay {
-      position: fixed;
+      position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       display: flex;
       flex-direction: column;
       align-items: center;
-      z-index: 20;
+      z-index: 50;
       text-align: center;
-      text-decoration: none;
-      color: inherit;
       pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .logo-overlay.visible {
+      opacity: 1;
     }
 
     .logo-we-are {
@@ -85,10 +135,10 @@
 
     /* ——— Page Nav ——— */
     .page-nav {
-      position: fixed;
+      position: absolute;
       top: 2rem;
       right: calc(2rem + 10rem);
-      z-index: 25;
+      z-index: 60;
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -115,10 +165,10 @@
 
     /* ——— Site Nav ——— */
     .site-nav {
-      position: fixed;
+      position: absolute;
       top: 2rem;
       right: 2rem;
-      z-index: 25;
+      z-index: 60;
       display: flex;
       align-items: center;
       gap: 1.5rem;
@@ -152,126 +202,10 @@
       text-decoration: none !important;
     }
 
-    /* ——— Game Instructions ——— */
-    .game-instructions {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 25;
-      font-family: "IBM Plex Mono", "SF Mono", monospace;
-      font-size: 0.7rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.5);
-      text-align: center;
-    }
-
-    /* ——— Footer ——— */
-    .site-footer {
-      position: relative;
-      z-index: 30;
-      background: transparent;
-      padding: 1.5rem clamp(1.25rem, 4vw, 2.5rem) 2rem;
-      color: #fff;
-    }
-
-    .footer-inner {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr 1fr;
-      gap: 2rem;
-      align-items: start;
-      text-align: left;
-    }
-
-    .footer-brand {
-      text-align: left;
-      justify-self: start;
-    }
-
-    .footer-position {
-      margin: 0;
-      font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
-      font-size: 0.8rem;
-      color: #fff;
-    }
-
-    .footer-label {
-      margin: 0 0 0.5rem;
-      font-family: "IBM Plex Mono", "SF Mono", Menlo, Consolas, "Courier New", monospace;
-      font-size: 0.68rem;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #fff;
-    }
-
-    .footer-team ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-
-    .footer-team li {
-      margin-bottom: 0.35rem;
-      font-size: 0.9rem;
-      color: #fff;
-    }
-
-    .footer-meta {
-      text-align: right;
-      font-family: "IBM Plex Mono", "SF Mono", Menlo, Consolas, "Courier New", monospace;
-      font-size: 0.68rem;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #fff;
-    }
-
-    .footer-meta p {
-      margin: 0 0 0.5rem;
-    }
-
-    .footer-meta a {
-      font-family: inherit;
-      font-size: inherit;
-      color: #fff;
-      text-decoration: none;
-    }
-
-    .footer-meta a:hover {
-      text-decoration: underline;
-      color: #fff;
-    }
-
-    /* ——— Scroll Spacer ——— */
-    .scroll-spacer {
-      height: 100vh;
-      pointer-events: none;
-      position: relative;
-    }
-
-    @media (max-width: 900px) {
-      .footer-inner {
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-      }
-
-      .footer-brand {
-        grid-column: 1 / -1;
-      }
-
-      .footer-meta {
-        text-align: left;
-      }
-    }
-
     @media (max-width: 600px) {
       .page-nav {
-        position: fixed;
         top: 1rem;
         right: calc(1rem + 4px);
-        left: auto;
         z-index: 9999;
         gap: 1rem;
       }
@@ -281,15 +215,6 @@
         padding: 0.75rem;
         -webkit-tap-highlight-color: rgba(255,255,255,0.2);
         touch-action: manipulation;
-      }
-
-      .logo-overlay {
-        position: relative;
-        top: auto;
-        left: auto;
-        transform: none;
-        padding: 2rem;
-        padding-top: 4rem;
       }
 
       .logo-we-are {
@@ -303,33 +228,23 @@
       .site-nav {
         display: none;
       }
-
-      .game-instructions {
-        bottom: auto;
-        top: 50%;
-        transform: translate(-50%, 8rem);
-      }
-
-      .footer-inner {
-        grid-template-columns: 1fr;
-      }
-
-      .scroll-spacer {
-        height: auto;
-        min-height: 100vh;
-        pointer-events: auto;
-      }
     }
   </style>
 </head>
 <body>
-  <!-- Game Background -->
-  <div class="game-bg">
-    <canvas id="game-canvas"></canvas>
+
+<div id="game-wrap">
+  <canvas id="c"></canvas>
+  <div id="scanlines"></div>
+  <div id="vignette"></div>
+  <div id="mobile-controls">
+    <button class="ctrl-btn" id="btn-left">&larr;</button>
+    <button class="ctrl-btn fire" id="btn-fire">FIRE</button>
+    <button class="ctrl-btn" id="btn-right">&rarr;</button>
   </div>
 
-  <!-- Logo Overlay (centered) -->
-  <div class="logo-overlay">
+  <!-- CO-WORKING Logo Overlay -->
+  <div class="logo-overlay" id="logo-overlay">
     <p class="logo-we-are">we are</p>
     <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
   </div>
@@ -339,105 +254,762 @@
     <button class="page-nav-btn" onclick="goToPrevPage()">‹</button>
     <button class="page-nav-btn" onclick="goToNextPage()">›</button>
   </div>
-  <script>
-    const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html', 'index-photo-bg.html', 'index-invaders.html'];
-    const currentIndex = 4;
-    function goToPrevPage() {
-      const prev = (currentIndex - 1 + pages.length) % pages.length;
-      window.location.href = pages[prev];
-    }
-    function goToNextPage() {
-      const next = (currentIndex + 1) % pages.length;
-      window.location.href = pages[next];
-    }
-    sessionStorage.setItem('co-working-loaded', 'true');
-  </script>
 
   <!-- Site Nav -->
   <nav class="site-nav">
     <a href="/events.html" style="display: none;">Panel Discussions</a>
     <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
   </nav>
+</div>
 
-  <!-- Game Instructions -->
-  <p class="game-instructions">Arrow keys to move · Space to shoot</p>
+<script>
+  const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html', 'index-photo-bg.html', 'index-invaders.html'];
+  const currentIndex = 4;
+  function goToPrevPage() {
+    const prev = (currentIndex - 1 + pages.length) % pages.length;
+    window.location.href = pages[prev];
+  }
+  function goToNextPage() {
+    const next = (currentIndex + 1) % pages.length;
+    window.location.href = pages[next];
+  }
+  sessionStorage.setItem('co-working-loaded', 'true');
 
-  <!-- Spacer for footer scroll -->
-  <div class="scroll-spacer"></div>
+  // Show logo overlay on menu, hide during gameplay
+  const logoOverlay = document.getElementById('logo-overlay');
+</script>
 
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <p class="footer-position">Productivity Through Atmosphere.</p>
-      </div>
-      <div class="footer-team">
-        <p class="footer-label">Department Heads</p>
-        <ul>
-          <li><strong>Sky Bruno</strong> — Internal Systems</li>
-          <li><strong>Ty Allen</strong> — Spatial Operations</li>
-          <li><strong>Gage Salzano</strong> — Culture</li>
-        </ul>
-      </div>
-      <div class="footer-meta">
-        <p>CO—WORKING © 2026</p>
-        <p>NEW YORK, NY</p>
-        <a href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">EMPLOYEE PORTAL →</a>
-      </div>
-    </div>
-  </footer>
+<script>
+(function () {
+  'use strict';
 
-  <!-- ==================== -->
-  <!-- GAME CODE GOES BELOW -->
-  <!-- ==================== -->
-  <script>
-    // Game canvas setup
-    const canvas = document.getElementById('game-canvas');
-    const ctx = canvas.getContext('2d');
+  // ═══════════════════════════════════════════════
+  //  CONSTANTS
+  // ═══════════════════════════════════════════════
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+  const GAME_W = 480, GAME_H = 640;
+  const PLAYER_W = 32, PLAYER_H = 32;
+  const PLAYER_SPEED = 4.5;
+  const BULLET_SPEED = 7;
+  const ENEMY_BULLET_SPEED = 3.2;
+  const SHOOT_CD = 14;
+  const MAX_BULLETS = 3;
+  const SHIELD_COUNT = 4;
+  const COLS = 7, ROWS = 8;
+  const EW = 32, EH = 32;
+  const EPADX = 10, EPADY = 6;
+  const GRID_TOP = 68;
+  const ICON_PX = 16;
+
+  const COL = {
+    bg: '#000', text: '#b8c6d4', cyan: '#00e5ff',
+    manila: '#f0c040', manilaDark: '#c09a20',
+    alert: '#ff3344', green: '#33ff88', dimText: '#4a5568',
+  };
+
+  // ═══════════════════════════════════════════════
+  //  CANVAS — responsive, fills viewport
+  // ═══════════════════════════════════════════════
+
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  let W, H, scale, offsetX, offsetY;
+
+  function resize() {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    canvas.width = vw * dpr;
+    canvas.height = vh * dpr;
+    W = vw; H = vh;
+    const sx = vw / GAME_W, sy = vh / GAME_H;
+    scale = Math.min(sx, sy);
+    offsetX = (vw - GAME_W * scale) / 2;
+    offsetY = (vh - GAME_H * scale) / 2;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function applyGameTransform() {
+    ctx.translate(offsetX, offsetY);
+    ctx.scale(scale, scale);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  PIXEL TEXT RENDERER
+  // ═══════════════════════════════════════════════
+
+  const _tc = document.createElement('canvas');
+  _tc.width = 512; _tc.height = 24;
+  const _tx = _tc.getContext('2d');
+
+  function pixText(str, x, y, sz, col, align) {
+    const base = 7;
+    const sc = sz / base;
+    _tx.clearRect(0, 0, 512, 24);
+    _tx.font = 'bold ' + base + 'px monospace';
+    _tx.fillStyle = col;
+    _tx.textAlign = 'left';
+    _tx.textBaseline = 'top';
+    _tx.fillText(str, 1, 1);
+    const tw = Math.ceil(_tx.measureText(str).width) + 2;
+    const th = base + 3;
+    const dw = tw * sc, dh = th * sc;
+    const prev = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = false;
+    let dx = x;
+    if (align === 'center') dx = x - dw / 2;
+    else if (align === 'right') dx = x - dw;
+    ctx.drawImage(_tc, 0, 0, tw, th, dx, y, dw, dh);
+    ctx.imageSmoothingEnabled = prev;
+  }
+
+  // ═══════════════════════════════════════════════
+  //  PIXEL ART HELPERS
+  // ═══════════════════════════════════════════════
+
+  function makeIcon(drawFn) {
+    const c = document.createElement('canvas');
+    c.width = ICON_PX; c.height = ICON_PX;
+    const x = c.getContext('2d');
+    drawFn(x);
+    return c;
+  }
+
+  function cutCorners(ctx, r) {
+    for (let y = 0; y < r; y++) {
+      const cut = r - y;
+      ctx.clearRect(0, y, cut, 1);
+      ctx.clearRect(ICON_PX - cut, y, cut, 1);
+      ctx.clearRect(0, ICON_PX - 1 - y, cut, 1);
+      ctx.clearRect(ICON_PX - cut, ICON_PX - 1 - y, cut, 1);
     }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+  }
 
-    // =====================================================
-    // PASTE YOUR GAME CODE HERE
-    // The canvas element is: canvas
-    // The 2D context is: ctx
-    // Canvas auto-resizes to fill the screen
-    // =====================================================
+  function makeSprite(grid, palette) {
+    const h = grid.length, w = grid[0].length;
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const x = c.getContext('2d');
+    for (let y = 0; y < h; y++)
+      for (let i = 0; i < grid[y].length; i++) {
+        const ch = grid[y][i];
+        if (ch !== '.' && palette[ch]) { x.fillStyle = palette[ch]; x.fillRect(i, y, 1, 1); }
+      }
+    return c;
+  }
 
-    // Placeholder: simple starfield background until game code is added
-    const stars = [];
-    for (let i = 0; i < 100; i++) {
-      stars.push({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        size: Math.random() * 2 + 0.5,
-        speed: Math.random() * 0.5 + 0.2
-      });
+  // ═══════════════════════════════════════════════
+  //  ENEMY ICONS (16x16 pixel art)
+  // ═══════════════════════════════════════════════
+
+  const ICON_CACHE = {
+    zoom: makeIcon(x => {
+      x.fillStyle = '#2D8CFF'; x.fillRect(0, 0, 16, 16); cutCorners(x, 3);
+      x.fillStyle = '#fff';
+      x.fillRect(3, 5, 6, 6); x.fillRect(10, 6, 2, 4); x.fillRect(12, 7, 1, 2);
+    }),
+    gmail: makeIcon(x => {
+      x.fillStyle = '#fff';
+      x.fillRect(1, 3, 14, 11);
+      x.fillStyle = '#EA4335';
+      x.fillRect(1, 3, 14, 1);
+      x.fillRect(1, 13, 14, 1);
+      x.fillRect(1, 3, 1, 11);
+      x.fillRect(14, 3, 1, 11);
+      x.fillRect(1, 3, 2, 3);
+      x.fillRect(14, 3, 1, 3);
+      x.fillRect(13, 3, 1, 4);
+      x.fillRect(3, 5, 1, 2);
+      x.fillRect(4, 6, 1, 2);
+      x.fillRect(5, 7, 1, 2);
+      x.fillRect(6, 8, 1, 1);
+      x.fillRect(7, 8, 2, 1);
+      x.fillRect(9, 8, 1, 1);
+      x.fillRect(10, 7, 1, 2);
+      x.fillRect(11, 6, 1, 2);
+      x.fillRect(12, 5, 1, 2);
+    }),
+    excel: makeIcon(x => {
+      x.fillStyle = '#E2EFDA'; x.fillRect(7, 1, 8, 14);
+      x.fillStyle = '#217346'; x.fillRect(1, 2, 7, 12); x.fillRect(2, 1, 5, 14);
+      x.fillStyle = '#fff';
+      x.fillRect(3, 5, 1, 1); x.fillRect(6, 5, 1, 1);
+      x.fillRect(4, 6, 1, 1); x.fillRect(5, 6, 1, 1);
+      x.fillRect(4, 8, 1, 1); x.fillRect(5, 8, 1, 1);
+      x.fillRect(3, 9, 1, 1); x.fillRect(6, 9, 1, 1);
+      x.fillRect(4, 7, 2, 1);
+      x.fillStyle = '#B7D5A0';
+      x.fillRect(8, 4, 6, 1); x.fillRect(8, 7, 6, 1); x.fillRect(8, 10, 6, 1); x.fillRect(11, 3, 1, 10);
+    }),
+    figma: makeIcon(x => {
+      x.fillStyle = '#F24E1E'; x.fillRect(4, 1, 4, 4); x.fillRect(3, 2, 1, 2);
+      x.fillStyle = '#FF7262'; x.fillRect(8, 1, 4, 4); x.fillRect(12, 2, 1, 2);
+      x.fillStyle = '#A259FF'; x.fillRect(4, 5, 4, 4); x.fillRect(3, 6, 1, 2);
+      x.fillStyle = '#1ABCFE'; x.fillRect(8, 5, 4, 4); x.fillRect(12, 6, 1, 2);
+      x.fillStyle = '#0ACF83'; x.fillRect(4, 9, 4, 4); x.fillRect(3, 10, 1, 2);
+      x.fillRect(5, 13, 2, 1);
+      x.clearRect(4, 1, 1, 1); x.clearRect(11, 1, 1, 1);
+      x.clearRect(3, 9, 1, 1); x.clearRect(4, 13, 1, 1); x.clearRect(7, 13, 1, 1);
+    }),
+    imessage: makeIcon(x => {
+      x.fillStyle = '#34C759';
+      x.fillRect(2, 1, 12, 10); x.fillRect(1, 2, 14, 8); x.fillRect(0, 3, 16, 6);
+      x.fillRect(3, 0, 10, 1); x.fillRect(3, 11, 5, 1);
+      x.fillRect(2, 12, 3, 1); x.fillRect(1, 13, 2, 1); x.fillRect(0, 14, 1, 1);
+      x.clearRect(0, 0, 3, 1); x.clearRect(13, 0, 3, 1);
+      x.clearRect(0, 0, 2, 2); x.clearRect(14, 0, 2, 2);
+      x.clearRect(0, 0, 1, 3); x.clearRect(15, 0, 1, 3);
+      x.clearRect(14, 10, 2, 1); x.clearRect(15, 9, 1, 2);
+    }),
+    folder: makeIcon(x => {
+      x.fillStyle = '#3B8CC7'; x.fillRect(1, 3, 6, 2); x.fillRect(2, 2, 4, 1);
+      x.fillStyle = '#4AA3DF'; x.fillRect(0, 5, 16, 9); x.fillRect(1, 4, 15, 1);
+      x.fillStyle = '#6DC1F7'; x.fillRect(1, 5, 14, 2);
+      x.fillStyle = '#2E7EB8'; x.fillRect(0, 13, 16, 1); x.fillRect(1, 14, 14, 1);
+      x.clearRect(0, 5, 1, 1); x.clearRect(15, 4, 1, 1);
+      x.clearRect(0, 14, 1, 1); x.clearRect(15, 14, 1, 1);
+    }),
+    word: makeIcon(x => {
+      x.fillStyle = '#D4E4F7'; x.fillRect(7, 1, 8, 14);
+      x.fillStyle = '#2B579A'; x.fillRect(1, 2, 7, 12); x.fillRect(2, 1, 5, 14);
+      x.fillStyle = '#fff';
+      x.fillRect(3, 5, 1, 4); x.fillRect(6, 5, 1, 4);
+      x.fillRect(4, 8, 1, 1); x.fillRect(5, 8, 1, 1);
+      x.fillRect(3, 9, 1, 1); x.fillRect(6, 9, 1, 1);
+      x.fillRect(4, 7, 1, 1); x.fillRect(5, 7, 1, 1);
+      x.fillStyle = '#8FB4D4'; x.fillRect(8, 4, 6, 1); x.fillRect(8, 7, 6, 1); x.fillRect(8, 10, 6, 1);
+    }),
+    txt: makeIcon(x => {
+      x.fillStyle = '#F0F0F0';
+      x.fillRect(2, 0, 10, 16); x.fillRect(1, 1, 12, 14); x.fillRect(3, 0, 7, 16);
+      x.fillStyle = '#C8C8C8'; x.fillRect(10, 0, 1, 4); x.fillRect(10, 3, 4, 1);
+      x.fillStyle = '#DADADA'; x.fillRect(11, 0, 1, 3); x.fillRect(12, 1, 1, 2);
+      x.clearRect(13, 0, 3, 3); x.clearRect(12, 0, 2, 1);
+      x.fillStyle = '#999';
+      x.fillRect(3, 5, 8, 1); x.fillRect(3, 7, 10, 1); x.fillRect(3, 9, 6, 1);
+      x.fillRect(3, 11, 10, 1); x.fillRect(3, 13, 5, 1);
+    }),
+    calendar: makeIcon(x => {
+      x.fillStyle = '#fff'; x.fillRect(1, 3, 14, 12); x.fillRect(2, 2, 12, 1);
+      x.fillStyle = '#FF3B30'; x.fillRect(2, 2, 12, 3); x.fillRect(1, 3, 14, 2);
+      x.fillStyle = '#666'; x.fillRect(5, 1, 1, 3); x.fillRect(10, 1, 1, 3);
+      x.fillStyle = '#e0e0e0';
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) x.fillRect(2 + c * 3, 6 + r * 3, 2, 2);
+      x.fillStyle = '#FF3B30'; x.fillRect(8, 9, 2, 2);
+      x.clearRect(0, 14, 1, 1); x.clearRect(15, 14, 1, 1);
+      x.clearRect(1, 15, 1, 1); x.clearRect(14, 15, 1, 1);
+    }),
+  };
+
+  // ═══════════════════════════════════════════════
+  //  PLAYER SPRITE (16x16, back-facing top-down)
+  // ═══════════════════════════════════════════════
+
+  const PLAYER_PAL = {
+    'O': '#1A1A2E', 'H': '#3A3A5C', 'h': '#5C5C8A',
+    'S': '#FFD93D', 'R': '#D43030', 'r': '#A82020',
+    'B': '#4A90D9', 'D': '#2A2A44',
+  };
+
+  const playerSprite = makeSprite([
+    '......OOOO......',
+    '.....OhhhhO.....',
+    '....OhhhhhhO....',
+    '...OHhhhhhhhO...',
+    '...OHhhhhhhhO...',
+    '...OHHhhhhHHO...',
+    '....OhhhhhhO....',
+    '....OSHhhHSO....',
+    '...SSOrrrrOSS...',
+    '....SrrrrrrS....',
+    '....SRRrrRRS....',
+    '.....rrrrrr.....',
+    '.....BBBBBB.....',
+    '.....BB..BB.....',
+    '....DBB..BBD....',
+    '....DD....DD....',
+  ], PLAYER_PAL);
+
+  const envelopeSprite = makeSprite([
+    'MMMMMMMM',
+    'MdMMMMdM',
+    'MMdMMdMM',
+    'MMMddMMM',
+    'MMMMMMMM',
+    'MMMMMMMM',
+  ], { 'M': '#f0c040', 'd': '#c09a20' });
+
+  // ═══════════════════════════════════════════════
+  //  ENEMY TYPES
+  // ═══════════════════════════════════════════════
+
+  const TYPES = [
+    { name: 'ZOOM',       icon: ICON_CACHE.zoom,     pts: 100, glow: '#2D8CFF' },
+    { name: 'GMAIL',      icon: ICON_CACHE.gmail,    pts: 85,  glow: '#EA4335' },
+    { name: 'iMESSAGE',   icon: ICON_CACHE.imessage, pts: 70,  glow: '#34C759' },
+    { name: 'FIGMA',      icon: ICON_CACHE.figma,    pts: 55,  glow: '#A259FF' },
+    { name: 'EXCEL',      icon: ICON_CACHE.excel,    pts: 40,  glow: '#217346' },
+    { name: 'WORD',       icon: ICON_CACHE.word,     pts: 30,  glow: '#2B579A' },
+    { name: 'FOLDERS',    icon: ICON_CACHE.folder,   pts: 20,  glow: '#4AA3DF' },
+    { name: 'TXT',        icon: ICON_CACHE.txt,      pts: 10,  glow: '#aaa'    },
+  ];
+  const BONUS_TYPE = { name: 'CALENDAR', icon: ICON_CACHE.calendar, glow: '#FF3B30' };
+
+  // ═══════════════════════════════════════════════
+  //  AUDIO
+  // ═══════════════════════════════════════════════
+
+  let audioCtx;
+  function ensureAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+  function playTone(freq, dur, type, vol, slide) {
+    try {
+      ensureAudio();
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || 'square';
+      o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      if (slide) o.frequency.exponentialRampToValueAtTime(slide, audioCtx.currentTime + dur);
+      g.gain.setValueAtTime(vol || 0.08, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch (e) {}
+  }
+  const SFX = {
+    shoot:     () => playTone(880, 0.08, 'square', 0.06),
+    hit:       () => playTone(220, 0.15, 'square', 0.08, 80),
+    playerHit: () => { playTone(120, 0.3, 'sawtooth', 0.1, 40); playTone(80, 0.4, 'square', 0.06, 30); },
+    bonus:     () => playTone(660, 0.12, 'sine', 0.06, 990),
+    bonusHit:  () => { playTone(440, 0.1, 'square', 0.07); setTimeout(() => playTone(660, 0.1, 'square', 0.07), 80); setTimeout(() => playTone(880, 0.15, 'square', 0.07), 160); },
+    waveWin:   () => { [440,554,659,880].forEach((f,i) => setTimeout(() => playTone(f, 0.15, 'square', 0.06), i * 100)); },
+    gameOver:  () => { [440,349,293,220].forEach((f,i) => setTimeout(() => playTone(f, 0.25, 'sawtooth', 0.07), i * 180)); },
+  };
+
+  // ═══════════════════════════════════════════════
+  //  STARS
+  // ═══════════════════════════════════════════════
+
+  const stars = Array.from({ length: 80 }, () => ({
+    x: Math.random() * GAME_W, y: Math.random() * GAME_H,
+    r: Math.random() * 1.2 + 0.3, a: Math.random() * 0.4 + 0.1,
+    speed: Math.random() * 0.02 + 0.005, phase: Math.random() * Math.PI * 2,
+  }));
+
+  // ═══════════════════════════════════════════════
+  //  STATE
+  // ═══════════════════════════════════════════════
+
+  let state = 'MENU';
+  let score, lives, wave;
+  let hiScore = +(localStorage.getItem('inbox_invaders_hi') || 0);
+  let player, bullets, eBullets, enemies, particles, shields, floatTexts;
+  let bonus, enemyDir, enemyBaseSpeed, enemyTotalAlive;
+  let shootCd, bonusTimer, shakeAmount, shakeDur, invulnTimer;
+  let frame = 0;
+  const PLAYER_Y = GAME_H - 50;
+
+  // Show logo on menu
+  function updateLogoVisibility() {
+    if (state === 'MENU') {
+      logoOverlay.classList.add('visible');
+    } else {
+      logoOverlay.classList.remove('visible');
     }
+  }
 
-    function drawPlaceholder() {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+  function resetGame() {
+    score = 0; lives = 3; wave = 0;
+    player = { x: GAME_W / 2, y: PLAYER_Y };
+    bullets = []; eBullets = []; particles = []; floatTexts = [];
+    bonus = null; shakeAmount = 0; shakeDur = 0;
+    shootCd = 0; invulnTimer = 0;
+    bonusTimer = 300 + Math.random() * 400 | 0;
+    nextWave();
+    updateLogoVisibility();
+  }
 
-      ctx.fillStyle = '#fff';
-      stars.forEach(star => {
-        star.y += star.speed;
-        if (star.y > canvas.height) {
-          star.y = 0;
-          star.x = Math.random() * canvas.width;
+  function nextWave() {
+    wave++;
+    enemies = [];
+    const gridW = COLS * (EW + EPADX) - EPADX;
+    const waveOff = Math.min(wave - 1, 4) * 10;
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++) {
+        enemies.push({
+          row: r, col: c,
+          x: (GAME_W - gridW) / 2 + c * (EW + EPADX) + EW / 2,
+          y: GRID_TOP + r * (EH + EPADY) + waveOff,
+          alive: true, hit: 0,
+        });
+      }
+    enemyDir = 1;
+    enemyBaseSpeed = 0.35 + (wave - 1) * 0.06;
+    enemyTotalAlive = ROWS * COLS;
+    eBullets = []; bonus = null;
+    bonusTimer = 300 + Math.random() * 400 | 0;
+    initShields();
+  }
+
+  function initShields() {
+    shields = [];
+    const sw = 48, sh = 34, sp = GAME_W / (SHIELD_COUNT + 1);
+    for (let i = 0; i < SHIELD_COUNT; i++) {
+      const pixels = [];
+      for (let py = 0; py < sh; py++) {
+        pixels[py] = [];
+        for (let px = 0; px < sw; px++) {
+          const wallThick = 2;
+          const isLeftWall  = px < wallThick;
+          const isRightWall = px >= sw - wallThick;
+          const isBack      = py < wallThick;
+          const isDeskTop   = py >= sh - 8 && py < sh - 6 && px >= 4 && px < sw - 4;
+          const isDeskFront = py >= sh - 6 && px >= 4 && px < sw - 4;
+          const isShelf     = py >= 4 && py < 6 && px >= 3 && px < sw - 3;
+          const isMonitor   = py >= 8 && py < 16 && px >= Math.floor(sw/2) - 5 && px < Math.floor(sw/2) + 5;
+          const isMonStand  = py >= 16 && py < 18 && px >= Math.floor(sw/2) - 1 && px < Math.floor(sw/2) + 1;
+          if (isLeftWall || isRightWall || isBack) pixels[py][px] = 1;
+          else if (isMonitor) pixels[py][px] = 3;
+          else if (isMonStand) pixels[py][px] = 3;
+          else if (isShelf) pixels[py][px] = 4;
+          else if (isDeskTop) pixels[py][px] = 2;
+          else if (isDeskFront) pixels[py][px] = 2;
+          else pixels[py][px] = 0;
         }
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      requestAnimationFrame(drawPlaceholder);
+      }
+      shields.push({ x: sp * (i + 1) - sw / 2, y: GAME_H - 120, w: sw, h: sh, pixels });
     }
-    drawPlaceholder();
-  </script>
+  }
+
+  // ═══════════════════════════════════════════════
+  //  INPUT
+  // ═══════════════════════════════════════════════
+
+  const keys = {};
+  window.addEventListener('keydown', e => {
+    keys[e.code] = true;
+    if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+    if (state === 'MENU' && (e.code === 'Enter' || e.code === 'Space')) { state = 'PLAYING'; resetGame(); ensureAudio(); }
+    if (state === 'GAME_OVER' && (e.code === 'Enter' || e.code === 'Space')) { state = 'PLAYING'; resetGame(); }
+  });
+  window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+  const touchState = { left: false, right: false, fire: false };
+  function bindBtn(id, key) {
+    const el = document.getElementById(id);
+    const on = () => { touchState[key] = true; el.classList.add('active'); ensureAudio(); };
+    const off = () => { touchState[key] = false; el.classList.remove('active'); };
+    el.addEventListener('touchstart', e => { e.preventDefault(); on(); });
+    el.addEventListener('touchend', e => { e.preventDefault(); off(); });
+    el.addEventListener('touchcancel', off);
+    el.addEventListener('mousedown', on); el.addEventListener('mouseup', off); el.addEventListener('mouseleave', off);
+  }
+  bindBtn('btn-left', 'left'); bindBtn('btn-right', 'right'); bindBtn('btn-fire', 'fire');
+
+  canvas.addEventListener('click', () => {
+    if (state === 'MENU') { state = 'PLAYING'; resetGame(); ensureAudio(); }
+    else if (state === 'GAME_OVER') { state = 'PLAYING'; resetGame(); }
+  });
+
+  function isLeft()  { return keys.ArrowLeft || keys.KeyA || touchState.left; }
+  function isRight() { return keys.ArrowRight || keys.KeyD || touchState.right; }
+  function isFire()  { return keys.Space || keys.ArrowUp || keys.KeyW || touchState.fire; }
+
+  // ═══════════════════════════════════════════════
+  //  UPDATE
+  // ═══════════════════════════════════════════════
+
+  function update() {
+    if (state !== 'PLAYING') return;
+
+    if (isLeft())  player.x = Math.max(PLAYER_W / 2 + 4, player.x - PLAYER_SPEED);
+    if (isRight()) player.x = Math.min(GAME_W - PLAYER_W / 2 - 4, player.x + PLAYER_SPEED);
+
+    if (shootCd > 0) shootCd--;
+    if (isFire() && shootCd <= 0 && bullets.length < MAX_BULLETS) {
+      bullets.push({ x: player.x, y: player.y - PLAYER_H / 2 - 4 });
+      shootCd = SHOOT_CD; SFX.shoot();
+    }
+
+    bullets  = bullets.filter(b  => { b.y -= BULLET_SPEED; return b.y > -10; });
+    eBullets = eBullets.filter(b => { b.y += ENEMY_BULLET_SPEED + (wave - 1) * 0.12; return b.y < GAME_H + 10; });
+
+    if (invulnTimer > 0) invulnTimer--;
+
+    const alive = enemies.filter(e => e.alive);
+    enemyTotalAlive = alive.length;
+    if (enemyTotalAlive === 0) { SFX.waveWin(); nextWave(); return; }
+
+    const spMul = Math.max(1, (ROWS * COLS) / Math.max(enemyTotalAlive, 1));
+    const curSp = Math.min(enemyBaseSpeed * Math.sqrt(spMul), 4);
+
+    let minX = GAME_W, maxX = 0;
+    alive.forEach(e => { minX = Math.min(minX, e.x - EW / 2); maxX = Math.max(maxX, e.x + EW / 2); });
+
+    if ((enemyDir > 0 && maxX + curSp >= GAME_W - 8) || (enemyDir < 0 && minX - curSp <= 8)) {
+      enemyDir *= -1;
+      enemies.forEach(e => { if (e.alive) e.y += 12 + wave * 0.4; });
+    } else {
+      enemies.forEach(e => { if (e.alive) e.x += curSp * enemyDir; });
+    }
+
+    enemies.forEach(e => { if (e.hit > 0) e.hit--; });
+
+    const fc = 0.002 + wave * 0.0008;
+    const bots = [];
+    for (let c = 0; c < COLS; c++)
+      for (let r = ROWS - 1; r >= 0; r--) { const e = enemies[r * COLS + c]; if (e && e.alive) { bots.push(e); break; } }
+    bots.forEach(e => { if (Math.random() < fc && eBullets.length < 5 + wave) eBullets.push({ x: e.x, y: e.y + EH / 2 }); });
+
+    if (!bonus) {
+      bonusTimer--;
+      if (bonusTimer <= 0) {
+        const fl = Math.random() > 0.5;
+        bonus = { x: fl ? -30 : GAME_W + 30, y: 36, dir: fl ? 1 : -1, speed: 2 + wave * 0.2,
+          pts: [150, 200, 250, 300][Math.random() * 4 | 0] };
+      }
+    } else {
+      bonus.x += bonus.speed * bonus.dir;
+      if (frame % 30 === 0) SFX.bonus();
+      if (bonus.x < -40 || bonus.x > GAME_W + 40) { bonus = null; bonusTimer = 400 + Math.random() * 600 | 0; }
+    }
+
+    for (let bi = bullets.length - 1; bi >= 0; bi--) {
+      const b = bullets[bi]; let hit = false;
+      for (const e of enemies) {
+        if (!e.alive) continue;
+        if (Math.abs(b.x - e.x) < EW / 2 + 3 && Math.abs(b.y - e.y) < EH / 2 + 3) {
+          e.alive = false; e.hit = 10;
+          const t = TYPES[e.row]; score += t.pts;
+          spawnExplosion(e.x, e.y, t.glow, 14);
+          floatTexts.push({ x: e.x, y: e.y, text: '+' + t.pts, life: 40, color: t.glow });
+          SFX.hit(); hit = true; break;
+        }
+      }
+      if (!hit && bonus && Math.abs(b.x - bonus.x) < 20 && Math.abs(b.y - bonus.y) < 14) {
+        score += bonus.pts;
+        spawnExplosion(bonus.x, bonus.y, BONUS_TYPE.glow, 20);
+        floatTexts.push({ x: bonus.x, y: bonus.y, text: '+' + bonus.pts, life: 50, color: BONUS_TYPE.glow });
+        SFX.bonusHit(); bonus = null; bonusTimer = 500 + Math.random() * 600 | 0; hit = true;
+      }
+      if (hit) { bullets.splice(bi, 1); continue; }
+      for (const s of shields) { if (hitShield(s, b.x, b.y, 3)) { bullets.splice(bi, 1); break; } }
+    }
+
+    if (invulnTimer <= 0) {
+      for (let bi = eBullets.length - 1; bi >= 0; bi--) {
+        const b = eBullets[bi];
+        if (Math.abs(b.x - player.x) < PLAYER_W / 2 + 2 && Math.abs(b.y - player.y) < PLAYER_H / 2 + 2) {
+          eBullets.splice(bi, 1); playerGotHit(); break;
+        }
+      }
+    }
+
+    for (let bi = eBullets.length - 1; bi >= 0; bi--)
+      for (const s of shields) { if (hitShield(s, eBullets[bi].x, eBullets[bi].y, 3)) { eBullets.splice(bi, 1); break; } }
+
+    for (const e of alive)
+      for (const s of shields)
+        if (e.x + EW / 2 > s.x && e.x - EW / 2 < s.x + s.w && e.y + EH / 2 > s.y && e.y - EH / 2 < s.y + s.h)
+          for (let py = 0; py < s.h; py++) for (let px = 0; px < s.w; px++) s.pixels[py][px] = 0;
+
+    if (Math.max(...alive.map(e => e.y + EH / 2)) >= PLAYER_Y - 10) { lives = 0; gameOverSeq(); }
+
+    particles = particles.filter(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.life--; return p.life > 0; });
+    floatTexts = floatTexts.filter(f => { f.y -= 1.2; f.life--; return f.life > 0; });
+    if (shakeDur > 0) shakeDur--; else shakeAmount = 0;
+  }
+
+  function hitShield(s, bx, by, r) {
+    const lx = Math.round(bx - s.x), ly = Math.round(by - s.y);
+    if (lx < -r || lx >= s.w + r || ly < -r || ly >= s.h + r) return false;
+    let hit = false;
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      const px = lx + dx, py = ly + dy;
+      if (px >= 0 && px < s.w && py >= 0 && py < s.h && s.pixels[py][px]) { s.pixels[py][px] = 0; hit = true; }
+    }
+    return hit;
+  }
+
+  function playerGotHit() {
+    lives--;
+    spawnExplosion(player.x, player.y, COL.alert, 16);
+    shakeAmount = 6; shakeDur = 12;
+    SFX.playerHit(); invulnTimer = 90;
+    if (lives <= 0) gameOverSeq();
+  }
+
+  function gameOverSeq() {
+    state = 'GAME_OVER';
+    if (score > hiScore) { hiScore = score; localStorage.setItem('inbox_invaders_hi', hiScore); }
+    SFX.gameOver();
+    updateLogoVisibility();
+  }
+
+  function spawnExplosion(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2, sp = Math.random() * 3 + 1;
+      particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1,
+        life: 20 + Math.random() * 15 | 0, color, size: Math.random() * 3 + 1.5 });
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  //  RENDER
+  // ═══════════════════════════════════════════════
+
+  function render() {
+    ctx.save();
+    ctx.fillStyle = COL.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    applyGameTransform();
+
+    if (shakeDur > 0) ctx.translate((Math.random() - 0.5) * shakeAmount, (Math.random() - 0.5) * shakeAmount);
+
+    stars.forEach(s => {
+      ctx.globalAlpha = s.a * (Math.sin(frame * s.speed + s.phase) * 0.3 + 0.7);
+      ctx.fillStyle = '#c8d6e5';
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    if (state === 'MENU') { renderMenu(); ctx.restore(); return; }
+
+    ctx.imageSmoothingEnabled = false;
+
+    shields.forEach(renderShield);
+    enemies.forEach(e => { if (e.alive) renderEnemy(e); });
+    if (bonus) renderBonus();
+
+    bullets.forEach(b => {
+      ctx.drawImage(envelopeSprite, b.x - 8, b.y - 6, 16, 12);
+      ctx.globalAlpha = 0.25; ctx.fillStyle = COL.manila;
+      ctx.fillRect(b.x - 1, b.y + 4, 2, 8); ctx.globalAlpha = 1;
+    });
+
+    eBullets.forEach(b => {
+      ctx.fillStyle = COL.alert; ctx.shadowColor = COL.alert; ctx.shadowBlur = 6;
+      ctx.fillRect(b.x - 2, b.y - 5, 4, 10); ctx.shadowBlur = 0;
+    });
+
+    if (state === 'PLAYING' && (invulnTimer <= 0 || frame % 4 < 2))
+      ctx.drawImage(playerSprite, player.x - 16, player.y - 16, 32, 32);
+
+    ctx.imageSmoothingEnabled = true;
+
+    particles.forEach(p => {
+      ctx.globalAlpha = p.life / 35; ctx.fillStyle = p.color;
+      ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+    });
+    ctx.globalAlpha = 1;
+
+    floatTexts.forEach(f => {
+      ctx.globalAlpha = Math.min(1, f.life / 15);
+      pixText(f.text, f.x, f.y - 5, 10, f.color, 'center');
+    });
+    ctx.globalAlpha = 1;
+
+    renderHUD();
+    if (state === 'GAME_OVER') renderGameOver();
+    ctx.restore();
+  }
+
+  function renderEnemy(e) {
+    const t = TYPES[e.row];
+    const wobble = Math.sin(frame * 0.06 + e.col * 0.5) * 1.5;
+    ctx.save();
+    ctx.shadowColor = t.glow; ctx.shadowBlur = 10;
+    ctx.drawImage(t.icon, e.x - EW / 2, e.y - EH / 2 + wobble, EW, EH);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  function renderBonus() {
+    ctx.save();
+    ctx.shadowColor = BONUS_TYPE.glow;
+    ctx.shadowBlur = 14 + Math.sin(frame * 0.15) * 3;
+    ctx.drawImage(BONUS_TYPE.icon, bonus.x - 18, bonus.y - 18, 36, 36);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  const CUBICLE_COLORS = { 1: '#8A8A7A', 2: '#B0A890', 3: '#4A6A8A', 4: '#9A9A88' };
+  function renderShield(s) {
+    ctx.globalAlpha = 0.85;
+    for (let py = 0; py < s.h; py++)
+      for (let px = 0; px < s.w; px++) {
+        const v = s.pixels[py][px];
+        if (v) { ctx.fillStyle = CUBICLE_COLORS[v] || '#8A8A7A'; ctx.fillRect(s.x + px, s.y + py, 1, 1); }
+      }
+    ctx.globalAlpha = 1;
+  }
+
+  function renderHUD() {
+    ctx.fillStyle = 'rgba(8, 12, 24, 0.7)';
+    ctx.fillRect(0, 0, GAME_W, 26);
+
+    pixText('SCORE ' + String(score).padStart(6, '0'), 10, 5, 12, '#fff', 'left');
+    pixText('HI ' + String(hiScore).padStart(6, '0'), GAME_W / 2, 5, 12, '#888', 'center');
+    pixText('WAVE ' + wave, GAME_W - 62, 5, 12, '#33ff88', 'right');
+
+    ctx.imageSmoothingEnabled = false;
+    for (let i = 0; i < lives; i++)
+      ctx.drawImage(playerSprite, GAME_W - 16 - i * 16, 5, 14, 14);
+    ctx.imageSmoothingEnabled = true;
+  }
+
+  // ═══════════════════════════════════════════════
+  //  MENU (with CO-WORKING branding)
+  // ═══════════════════════════════════════════════
+
+  function renderMenu() {
+    // Stars still render behind
+
+    if (hiScore > 0)
+      pixText('BEST  ' + hiScore, GAME_W / 2, GAME_H * 0.78, 10, '#888', 'center');
+
+    const pulse = Math.sin(frame * 0.06) * 0.3 + 0.7;
+    ctx.globalAlpha = pulse;
+    pixText('PRESS ENTER OR TAP TO START', GAME_W / 2, GAME_H * 0.86, 11, '#FFD700', 'center');
+    ctx.globalAlpha = 1;
+
+    pixText('<- ->  MOVE     SPC  FIRE', GAME_W / 2, GAME_H * 0.93, 8, '#555', 'center');
+  }
+
+  function renderGameOver() {
+    ctx.fillStyle = 'rgba(8, 12, 24, 0.65)';
+    ctx.fillRect(0, 0, GAME_W, GAME_H);
+
+    pixText('GAME OVER', GAME_W / 2, GAME_H * 0.36, 38, '#ff3344', 'center');
+    pixText('SCORE  ' + score, GAME_W / 2, GAME_H * 0.47, 14, '#fff', 'center');
+
+    if (score >= hiScore && score > 0)
+      pixText('NEW HIGH SCORE!', GAME_W / 2, GAME_H * 0.53, 12, '#FFD700', 'center');
+    else
+      pixText('BEST  ' + hiScore, GAME_W / 2, GAME_H * 0.53, 11, '#888', 'center');
+
+    pixText('WAVE REACHED  ' + wave, GAME_W / 2, GAME_H * 0.58, 11, '#fff', 'center');
+
+    const pulse = Math.sin(frame * 0.06) * 0.3 + 0.7;
+    ctx.globalAlpha = pulse;
+    pixText('PRESS ENTER OR TAP TO RETRY', GAME_W / 2, GAME_H * 0.67, 11, '#00e5ff', 'center');
+    ctx.globalAlpha = 1;
+  }
+
+  // ═══════════════════════════════════════════════
+  //  MAIN LOOP
+  // ═══════════════════════════════════════════════
+
+  function tick() {
+    update();
+    render();
+    frame++;
+    requestAnimationFrame(tick);
+  }
+
+  // Initialize logo visibility
+  updateLogoVisibility();
+  tick();
+})();
+</script>
 </body>
 </html>
