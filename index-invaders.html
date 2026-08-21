@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CO—WORKING</title>
+  <meta name="description" content="CO—WORKING — a fictional corporation that accidentally becomes a real one. Enterprise solutions for creative people.">
+  <meta property="og:title" content="CO—WORKING">
+  <meta property="og:description" content="A fictional corporation that accidentally becomes a real one. Enterprise solutions for creative people.">
+  <meta property="og:image" content="images/hero-scan.png">
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="images/favicon-light.png" type="image/png" media="(prefers-color-scheme: light)">
+  <link rel="icon" href="images/favicon-dark.png" type="image/png" media="(prefers-color-scheme: dark)">
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+  <meta name="theme-color" content="#000000">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      height: 100%;
+    }
+
+    body {
+      min-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      background: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    /* ——— Game Background Container ——— */
+    .game-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: #000;
+    }
+
+    #game-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* ——— Logo Overlay ——— */
+    .logo-overlay {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 20;
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+      pointer-events: none;
+    }
+
+    .logo-we-are {
+      font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 1rem;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+    }
+
+    .logo-main {
+      width: auto;
+      height: auto;
+      max-width: min(80vw, 500px);
+      filter: brightness(0) invert(1) drop-shadow(0 4px 30px rgba(0,0,0,0.8));
+    }
+
+    /* ——— Page Nav ——— */
+    .page-nav {
+      position: fixed;
+      top: 2rem;
+      right: calc(2rem + 10rem);
+      z-index: 25;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      height: 1.5rem;
+      line-height: 1.5rem;
+    }
+
+    .page-nav-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.8rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+      font-family: system-ui, sans-serif;
+      line-height: 1;
+    }
+
+    .page-nav-btn:hover {
+      opacity: 1;
+    }
+
+    /* ——— Site Nav ——— */
+    .site-nav {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      z-index: 25;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .site-nav a {
+      font-family: "IBM Plex Mono", "SF Mono", "Cascadia Mono", monospace;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .site-nav a:hover {
+      text-decoration: underline;
+    }
+
+    .nav-cta {
+      border: 1px solid rgba(255,255,255,0.5);
+      padding: 0.4rem 0.7rem;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(4px);
+    }
+
+    .nav-cta:hover {
+      background: #fff;
+      color: #000 !important;
+      border-color: #fff;
+      text-decoration: none !important;
+    }
+
+    /* ——— Game Instructions ——— */
+    .game-instructions {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 25;
+      font-family: "IBM Plex Mono", "SF Mono", monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+    }
+
+    /* ——— Footer ——— */
+    .site-footer {
+      position: relative;
+      z-index: 30;
+      background: transparent;
+      padding: 1.5rem clamp(1.25rem, 4vw, 2.5rem) 2rem;
+      color: #fff;
+    }
+
+    .footer-inner {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+      text-align: left;
+    }
+
+    .footer-brand {
+      text-align: left;
+      justify-self: start;
+    }
+
+    .footer-position {
+      margin: 0;
+      font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
+      font-size: 0.8rem;
+      color: #fff;
+    }
+
+    .footer-label {
+      margin: 0 0 0.5rem;
+      font-family: "IBM Plex Mono", "SF Mono", Menlo, Consolas, "Courier New", monospace;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .footer-team ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .footer-team li {
+      margin-bottom: 0.35rem;
+      font-size: 0.9rem;
+      color: #fff;
+    }
+
+    .footer-meta {
+      text-align: right;
+      font-family: "IBM Plex Mono", "SF Mono", Menlo, Consolas, "Courier New", monospace;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .footer-meta p {
+      margin: 0 0 0.5rem;
+    }
+
+    .footer-meta a {
+      font-family: inherit;
+      font-size: inherit;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .footer-meta a:hover {
+      text-decoration: underline;
+      color: #fff;
+    }
+
+    /* ——— Scroll Spacer ——— */
+    .scroll-spacer {
+      height: 100vh;
+      pointer-events: none;
+      position: relative;
+    }
+
+    @media (max-width: 900px) {
+      .footer-inner {
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      .footer-brand {
+        grid-column: 1 / -1;
+      }
+
+      .footer-meta {
+        text-align: left;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .page-nav {
+        position: fixed;
+        top: 1rem;
+        right: calc(1rem + 4px);
+        left: auto;
+        z-index: 9999;
+        gap: 1rem;
+      }
+
+      .page-nav-btn {
+        font-size: 2.2rem;
+        padding: 0.75rem;
+        -webkit-tap-highlight-color: rgba(255,255,255,0.2);
+        touch-action: manipulation;
+      }
+
+      .logo-overlay {
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        padding: 2rem;
+        padding-top: 4rem;
+      }
+
+      .logo-we-are {
+        font-size: 1.25rem;
+      }
+
+      .logo-main {
+        max-width: 70vw;
+      }
+
+      .site-nav {
+        display: none;
+      }
+
+      .game-instructions {
+        bottom: auto;
+        top: 50%;
+        transform: translate(-50%, 8rem);
+      }
+
+      .footer-inner {
+        grid-template-columns: 1fr;
+      }
+
+      .scroll-spacer {
+        height: auto;
+        min-height: 100vh;
+        pointer-events: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Game Background -->
+  <div class="game-bg">
+    <canvas id="game-canvas"></canvas>
+  </div>
+
+  <!-- Logo Overlay (centered) -->
+  <div class="logo-overlay">
+    <p class="logo-we-are">we are</p>
+    <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
+  </div>
+
+  <!-- Page Nav -->
+  <div class="page-nav">
+    <button class="page-nav-btn" onclick="goToPrevPage()">‹</button>
+    <button class="page-nav-btn" onclick="goToNextPage()">›</button>
+  </div>
+  <script>
+    const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html', 'index-photo-bg.html', 'index-invaders.html'];
+    const currentIndex = 4;
+    function goToPrevPage() {
+      const prev = (currentIndex - 1 + pages.length) % pages.length;
+      window.location.href = pages[prev];
+    }
+    function goToNextPage() {
+      const next = (currentIndex + 1) % pages.length;
+      window.location.href = pages[next];
+    }
+    sessionStorage.setItem('co-working-loaded', 'true');
+  </script>
+
+  <!-- Site Nav -->
+  <nav class="site-nav">
+    <a href="/events.html" style="display: none;">Panel Discussions</a>
+    <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
+  </nav>
+
+  <!-- Game Instructions -->
+  <p class="game-instructions">Arrow keys to move · Space to shoot</p>
+
+  <!-- Spacer for footer scroll -->
+  <div class="scroll-spacer"></div>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <p class="footer-position">Productivity Through Atmosphere.</p>
+      </div>
+      <div class="footer-team">
+        <p class="footer-label">Department Heads</p>
+        <ul>
+          <li><strong>Sky Bruno</strong> — Internal Systems</li>
+          <li><strong>Ty Allen</strong> — Spatial Operations</li>
+          <li><strong>Gage Salzano</strong> — Culture</li>
+        </ul>
+      </div>
+      <div class="footer-meta">
+        <p>CO—WORKING © 2026</p>
+        <p>NEW YORK, NY</p>
+        <a href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">EMPLOYEE PORTAL →</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== -->
+  <!-- GAME CODE GOES BELOW -->
+  <!-- ==================== -->
+  <script>
+    // Game canvas setup
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // =====================================================
+    // PASTE YOUR GAME CODE HERE
+    // The canvas element is: canvas
+    // The 2D context is: ctx
+    // Canvas auto-resizes to fill the screen
+    // =====================================================
+
+    // Placeholder: simple starfield background until game code is added
+    const stars = [];
+    for (let i = 0; i < 100; i++) {
+      stars.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        size: Math.random() * 2 + 0.5,
+        speed: Math.random() * 0.5 + 0.2
+      });
+    }
+
+    function drawPlaceholder() {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#fff';
+      stars.forEach(star => {
+        star.y += star.speed;
+        if (star.y > canvas.height) {
+          star.y = 0;
+          star.x = Math.random() * canvas.width;
+        }
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      requestAnimationFrame(drawPlaceholder);
+    }
+    drawPlaceholder();
+  </script>
+</body>
+</html>
