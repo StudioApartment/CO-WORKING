@@ -585,14 +585,24 @@
   };
 
   // ═══════════════════════════════════════════════
-  //  STARS
+  //  STARS (scrolling upward)
   // ═══════════════════════════════════════════════
 
-  const stars = Array.from({ length: 80 }, () => ({
+  const stars = Array.from({ length: 100 }, () => ({
     x: Math.random() * GAME_W, y: Math.random() * GAME_H,
-    r: Math.random() * 1.2 + 0.3, a: Math.random() * 0.4 + 0.1,
-    speed: Math.random() * 0.02 + 0.005, phase: Math.random() * Math.PI * 2,
+    r: Math.random() * 1.5 + 0.5, a: Math.random() * 0.5 + 0.3,
+    speed: Math.random() * 1.5 + 0.5,
   }));
+
+  function updateStars() {
+    stars.forEach(s => {
+      s.y -= s.speed;
+      if (s.y < -5) {
+        s.y = GAME_H + 5;
+        s.x = Math.random() * GAME_W;
+      }
+    });
+  }
 
   // ═══════════════════════════════════════════════
   //  STATE
@@ -865,8 +875,10 @@
 
     if (shakeDur > 0) ctx.translate((Math.random() - 0.5) * shakeAmount, (Math.random() - 0.5) * shakeAmount);
 
+    // Update and render scrolling stars
+    updateStars();
     stars.forEach(s => {
-      ctx.globalAlpha = s.a * (Math.sin(frame * s.speed + s.phase) * 0.3 + 0.7);
+      ctx.globalAlpha = s.a;
       ctx.fillStyle = '#c8d6e5';
       ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
     });
@@ -958,11 +970,55 @@
   }
 
   // ═══════════════════════════════════════════════
+  //  INBOX INVADERS LOGO
+  // ═══════════════════════════════════════════════
+
+  function drawLogo(cx, cy) {
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const lines = [
+      { t: 'INBOX', sz: 64, y: cy },
+      { t: 'INVADERS', sz: 58, y: cy + 62 },
+    ];
+
+    lines.forEach(l => {
+      ctx.font = 'bold italic ' + l.sz + 'px Impact, "Arial Black", sans-serif';
+      ctx.letterSpacing = '3px';
+
+      // 3D shadow effect
+      for (let i = 8; i >= 1; i--) {
+        ctx.fillStyle = i > 4 ? '#5A0A0A' : '#B22010';
+        ctx.fillText(l.t, cx + 1, l.y + i);
+      }
+
+      // Main color
+      ctx.fillStyle = '#D42A1A';
+      ctx.fillText(l.t, cx, l.y + 1);
+
+      // Highlight
+      ctx.fillStyle = '#FFD700';
+      ctx.fillText(l.t, cx, l.y);
+
+      // Top shine
+      ctx.fillStyle = 'rgba(255, 255, 200, 0.25)';
+      ctx.fillText(l.t, cx, l.y - 1);
+    });
+
+    ctx.letterSpacing = '0px';
+    ctx.restore();
+  }
+
+  // ═══════════════════════════════════════════════
   //  MENU (with CO-WORKING branding)
   // ═══════════════════════════════════════════════
 
   function renderMenu() {
-    // Stars still render behind
+    // Draw Inbox Invaders logo
+    drawLogo(GAME_W / 2, GAME_H * 0.22);
+
+    pixText('DEFEND YOUR SANITY', GAME_W / 2, GAME_H * 0.22 + 95, 9, '#888', 'center');
 
     if (hiScore > 0)
       pixText('BEST  ' + hiScore, GAME_W / 2, GAME_H * 0.78, 10, '#888', 'center');
