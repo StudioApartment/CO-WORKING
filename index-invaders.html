@@ -96,43 +96,6 @@
       #mobile-controls { display: flex; }
     }
 
-    /* ——— CO-WORKING Overlay ——— */
-    .logo-overlay {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      z-index: 50;
-      text-align: center;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-
-    .logo-overlay.visible {
-      opacity: 1;
-    }
-
-    .logo-we-are {
-      font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
-      font-size: clamp(1.5rem, 4vw, 2.5rem);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: #fff;
-      margin-bottom: 1rem;
-      text-shadow: 0 2px 20px rgba(0,0,0,0.8);
-    }
-
-    .logo-main {
-      width: auto;
-      height: auto;
-      max-width: min(80vw, 500px);
-      filter: brightness(0) invert(1) drop-shadow(0 4px 30px rgba(0,0,0,0.8));
-    }
-
     /* ——— Page Nav ——— */
     .page-nav {
       position: absolute;
@@ -217,14 +180,6 @@
         touch-action: manipulation;
       }
 
-      .logo-we-are {
-        font-size: 1.25rem;
-      }
-
-      .logo-main {
-        max-width: 70vw;
-      }
-
       .site-nav {
         display: none;
       }
@@ -243,11 +198,6 @@
     <button class="ctrl-btn" id="btn-right">&rarr;</button>
   </div>
 
-  <!-- CO-WORKING Logo Overlay -->
-  <div class="logo-overlay" id="logo-overlay">
-    <p class="logo-we-are">we are</p>
-    <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
-  </div>
 
   <!-- Page Nav -->
   <div class="page-nav">
@@ -275,8 +225,6 @@
   }
   sessionStorage.setItem('co-working-loaded', 'true');
 
-  // Show logo overlay on menu, hide during gameplay
-  const logoOverlay = document.getElementById('logo-overlay');
 </script>
 
 <script>
@@ -617,15 +565,6 @@
   let frame = 0;
   const PLAYER_Y = GAME_H - 50;
 
-  // Show logo on menu
-  function updateLogoVisibility() {
-    if (state === 'MENU') {
-      logoOverlay.classList.add('visible');
-    } else {
-      logoOverlay.classList.remove('visible');
-    }
-  }
-
   function resetGame() {
     score = 0; lives = 3; wave = 0;
     player = { x: GAME_W / 2, y: PLAYER_Y };
@@ -634,7 +573,6 @@
     shootCd = 0; invulnTimer = 0;
     bonusTimer = 300 + Math.random() * 400 | 0;
     nextWave();
-    updateLogoVisibility();
   }
 
   function nextWave() {
@@ -851,7 +789,6 @@
     state = 'GAME_OVER';
     if (score > hiScore) { hiScore = score; localStorage.setItem('inbox_invaders_hi', hiScore); }
     SFX.gameOver();
-    updateLogoVisibility();
   }
 
   function spawnExplosion(x, y, color, count) {
@@ -1062,8 +999,6 @@
     requestAnimationFrame(tick);
   }
 
-  // Initialize logo visibility
-  updateLogoVisibility();
   tick();
 })();
 </script>
