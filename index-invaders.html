@@ -966,10 +966,28 @@
   }
 
   // ═══════════════════════════════════════════════
+  //  LOGO IMAGE
+  // ═══════════════════════════════════════════════
+
+  const logoImg = new Image();
+  let logoReady = false;
+  logoImg.onload = () => { logoReady = true; };
+  logoImg.src = 'images/inbox-invaders-logo.png';
+
+  // ═══════════════════════════════════════════════
   //  SPACE INVADERS-STYLE LOGO
   // ═══════════════════════════════════════════════
 
   function drawLogo(cx, cy) {
+    if (logoReady && logoImg.naturalWidth) {
+      const maxW = GAME_W * 0.88;
+      const sc = maxW / logoImg.naturalWidth;
+      const w = logoImg.naturalWidth * sc;
+      const h = logoImg.naturalHeight * sc;
+      ctx.drawImage(logoImg, cx - w / 2, cy - h / 2, w, h);
+      return;
+    }
+
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
