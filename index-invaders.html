@@ -1007,28 +1007,30 @@
   // ═══════════════════════════════════════════════
 
   function renderMenu() {
-    drawLogo(GAME_W / 2, GAME_H * 0.22);
+    drawLogo(GAME_W / 2, GAME_H * 0.18);
 
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = '11px "Courier New", monospace';
-    ctx.fillStyle = '#888';
-    ctx.fillText('DEFEND YOUR SANITY', GAME_W / 2, GAME_H * 0.22 + 100);
-
+    
     if (leaderboard.length > 0) {
-      const lbTop = GAME_H * 0.38;
+      const lbTop = GAME_H * 0.42;
       ctx.font = 'bold 12px "Courier New", monospace'; ctx.fillStyle = '#FFD700';
       ctx.fillText('HIGH SCORES', GAME_W / 2, lbTop);
       ctx.font = '11px "Courier New", monospace';
       leaderboard.slice(0, 8).forEach((entry, i) => {
-        const y = lbTop + 18 + i * 16;
+        const y = lbTop + 20 + i * 18;
         const rank = String(i + 1).padStart(2, ' ');
         const sc = String(entry.score).padStart(6, '0');
         ctx.fillStyle = i === 0 ? '#FFD700' : i < 3 ? '#ccc' : '#888';
         ctx.fillText(rank + '. ' + (entry.name || '???') + '  ' + sc, GAME_W / 2, y);
       });
-    } else if (hiScore > 0) {
-      ctx.font = '12px "Courier New", monospace'; ctx.fillStyle = '#888';
-      ctx.fillText('BEST: ' + hiScore, GAME_W / 2, GAME_H * 0.55);
+    } else {
+      ctx.font = '11px "Courier New", monospace';
+      ctx.fillStyle = '#888';
+      ctx.fillText('DEFEND YOUR SANITY', GAME_W / 2, GAME_H * 0.42);
+      if (hiScore > 0) {
+        ctx.font = '12px "Courier New", monospace'; ctx.fillStyle = '#888';
+        ctx.fillText('BEST: ' + hiScore, GAME_W / 2, GAME_H * 0.50);
+      }
     }
 
     const pulse = Math.sin(frame * 0.06) * 0.3 + 0.7;
