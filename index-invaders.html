@@ -975,30 +975,33 @@
     ctx.textBaseline = 'middle';
 
     const lines = [
-      { t: 'INBOX', sz: 64, y: cy },
-      { t: 'INVADERS', sz: 58, y: cy + 62 },
+      { t: 'INBOX', sz: 58, y: cy },
+      { t: 'INVADERS', sz: 52, y: cy + 58 },
     ];
 
     lines.forEach(l => {
-      ctx.font = 'bold italic ' + l.sz + 'px Impact, "Arial Black", sans-serif';
-      ctx.letterSpacing = '3px';
-
-      for (let i = 8; i >= 1; i--) {
-        ctx.fillStyle = i > 4 ? '#5A0A0A' : '#B22010';
-        ctx.fillText(l.t, cx + 1, l.y + i);
+      ctx.font = '900 ' + l.sz + 'px Impact, "Arial Black", sans-serif';
+      
+      // Red 3D depth (going down-left)
+      for (let i = 12; i >= 1; i--) {
+        ctx.fillStyle = i > 6 ? '#8B0000' : '#CC0000';
+        ctx.fillText(l.t, cx - i * 0.3, l.y + i);
       }
-
-      ctx.fillStyle = '#D42A1A';
-      ctx.fillText(l.t, cx, l.y + 1);
-
+      
+      // Black outline
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#000';
+      ctx.strokeText(l.t, cx, l.y);
+      
+      // Yellow face
       ctx.fillStyle = '#FFD700';
       ctx.fillText(l.t, cx, l.y);
-
-      ctx.fillStyle = 'rgba(255, 255, 200, 0.25)';
+      
+      // Subtle highlight
+      ctx.fillStyle = 'rgba(255, 255, 150, 0.15)';
       ctx.fillText(l.t, cx, l.y - 1);
     });
 
-    ctx.letterSpacing = '0px';
     ctx.restore();
   }
 
