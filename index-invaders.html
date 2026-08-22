@@ -15,7 +15,7 @@
   <meta name="theme-color" content="#000000">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -902,7 +902,7 @@
 
     floatTexts.forEach(f => {
       ctx.globalAlpha = Math.min(1, f.life / 15);
-      ctx.font = 'bold 12px "Courier New", monospace';
+      ctx.font = '8px "Press Start 2P", monospace';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillStyle = f.color;
       ctx.fillText(f.text, f.x, f.y);
@@ -946,18 +946,18 @@
 
   function renderHUD() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, GAME_W, 26);
-    ctx.font = 'bold 12px "Courier New", monospace';
+    ctx.fillRect(0, 0, GAME_W, 28);
+    ctx.font = '8px "Press Start 2P", monospace';
     ctx.textBaseline = 'middle';
 
     ctx.textAlign = 'left'; ctx.fillStyle = '#fff';
-    ctx.fillText('SCORE ' + String(score).padStart(6, '0'), 10, 14);
+    ctx.fillText('SCORE ' + String(score).padStart(6, '0'), 8, 15);
 
     ctx.textAlign = 'center'; ctx.fillStyle = '#888';
-    ctx.fillText('HI ' + String(hiScore).padStart(6, '0'), GAME_W / 2, 14);
+    ctx.fillText('HI ' + String(hiScore).padStart(6, '0'), GAME_W / 2, 15);
 
     ctx.textAlign = 'right'; ctx.fillStyle = '#33ff88';
-    ctx.fillText('WAVE ' + wave, GAME_W - 62, 14);
+    ctx.fillText('WAVE ' + wave, GAME_W - 50, 15);
 
     ctx.imageSmoothingEnabled = false;
     for (let i = 0; i < lives; i++)
@@ -1013,55 +1013,55 @@
     
     if (leaderboard.length > 0) {
       const lbTop = GAME_H * 0.42;
-      ctx.font = 'bold 12px "Courier New", monospace'; ctx.fillStyle = '#FFD700';
+      ctx.font = '10px "Press Start 2P", monospace'; ctx.fillStyle = '#FFD700';
       ctx.fillText('HIGH SCORES', GAME_W / 2, lbTop);
-      ctx.font = '11px "Courier New", monospace';
+      ctx.font = '8px "Press Start 2P", monospace';
       leaderboard.slice(0, 8).forEach((entry, i) => {
-        const y = lbTop + 20 + i * 18;
-        const rank = String(i + 1).padStart(2, ' ');
+        const y = lbTop + 24 + i * 20;
+        const rank = String(i + 1) + '.';
         const sc = String(entry.score).padStart(6, '0');
         ctx.fillStyle = i === 0 ? '#FFD700' : i < 3 ? '#ccc' : '#888';
-        ctx.fillText(rank + '. ' + (entry.name || '???') + '  ' + sc, GAME_W / 2, y);
+        ctx.fillText(rank + ' ' + (entry.name || '???') + ' ' + sc, GAME_W / 2, y);
       });
     } else {
-      ctx.font = '11px "Courier New", monospace';
+      ctx.font = '8px "Press Start 2P", monospace';
       ctx.fillStyle = '#888';
       ctx.fillText('DEFEND YOUR SANITY', GAME_W / 2, GAME_H * 0.42);
       if (hiScore > 0) {
-        ctx.font = '12px "Courier New", monospace'; ctx.fillStyle = '#888';
-        ctx.fillText('BEST: ' + hiScore, GAME_W / 2, GAME_H * 0.50);
+        ctx.font = '8px "Press Start 2P", monospace'; ctx.fillStyle = '#888';
+        ctx.fillText('BEST ' + hiScore, GAME_W / 2, GAME_H * 0.50);
       }
     }
 
     const pulse = Math.sin(frame * 0.06) * 0.3 + 0.7;
     ctx.globalAlpha = pulse;
-    ctx.font = 'bold 13px "Courier New", monospace'; ctx.fillStyle = '#FFD700';
-    ctx.fillText('PRESS ENTER OR TAP TO START', GAME_W / 2, GAME_H * 0.86);
+    ctx.font = '8px "Press Start 2P", monospace'; ctx.fillStyle = '#FFD700';
+    ctx.fillText('PRESS START', GAME_W / 2, GAME_H * 0.86);
     ctx.globalAlpha = 1;
 
-    ctx.font = '9px "Courier New", monospace'; ctx.fillStyle = '#555';
-    ctx.fillText('← →  MOVE     SPC  FIRE', GAME_W / 2, GAME_H * 0.93);
+    ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#555';
+    ctx.fillText('ARROWS MOVE   SPACE FIRE', GAME_W / 2, GAME_H * 0.92);
   }
 
   function renderInitials() {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 
-    ctx.font = 'bold 28px "Courier New", monospace'; ctx.fillStyle = '#FFD700';
-    ctx.fillText('NEW HIGH SCORE!', GAME_W / 2, GAME_H * 0.18);
+    ctx.font = '14px "Press Start 2P", monospace'; ctx.fillStyle = '#FFD700';
+    ctx.fillText('NEW HIGH SCORE', GAME_W / 2, GAME_H * 0.16);
 
-    ctx.font = 'bold 18px "Courier New", monospace'; ctx.fillStyle = '#fff';
-    ctx.fillText('SCORE: ' + score, GAME_W / 2, GAME_H * 0.27);
+    ctx.font = '12px "Press Start 2P", monospace'; ctx.fillStyle = '#fff';
+    ctx.fillText('SCORE ' + score, GAME_W / 2, GAME_H * 0.26);
 
-    ctx.font = '13px "Courier New", monospace'; ctx.fillStyle = '#33ff88';
+    ctx.font = '10px "Press Start 2P", monospace'; ctx.fillStyle = '#33ff88';
     ctx.fillText('WAVE ' + wave, GAME_W / 2, GAME_H * 0.33);
 
-    ctx.font = '14px "Courier New", monospace'; ctx.fillStyle = '#888';
-    ctx.fillText('ENTER YOUR INITIALS', GAME_W / 2, GAME_H * 0.44);
+    ctx.font = '8px "Press Start 2P", monospace'; ctx.fillStyle = '#888';
+    ctx.fillText('ENTER INITIALS', GAME_W / 2, GAME_H * 0.42);
 
-    const boxW = 44, boxH = 56, gap = 12;
+    const boxW = 50, boxH = 60, gap = 14;
     const totalW = boxW * 3 + gap * 2;
     const startX = (GAME_W - totalW) / 2;
-    const boxY = GAME_H * 0.50;
+    const boxY = GAME_H * 0.48;
 
     for (let i = 0; i < 3; i++) {
       const bx = startX + i * (boxW + gap);
@@ -1069,26 +1069,26 @@
       ctx.lineWidth = i === initialPos ? 3 : 2;
       ctx.strokeRect(bx, boxY, boxW, boxH);
 
-      ctx.font = 'bold 30px "Courier New", monospace';
+      ctx.font = '24px "Press Start 2P", monospace';
       ctx.fillStyle = i === initialPos ? '#FFD700' : '#fff';
-      ctx.fillText(initials[i], bx + boxW / 2, boxY + boxH / 2);
+      ctx.fillText(initials[i], bx + boxW / 2, boxY + boxH / 2 + 4);
 
       if (i === initialPos) {
         const arrowPulse = Math.sin(frame * 0.1) * 3;
-        ctx.font = '14px "Courier New", monospace'; ctx.fillStyle = '#FFD700';
-        ctx.fillText('▲', bx + boxW / 2, boxY - 12 + arrowPulse);
-        ctx.fillText('▼', bx + boxW / 2, boxY + boxH + 14 - arrowPulse);
+        ctx.font = '12px "Press Start 2P", monospace'; ctx.fillStyle = '#FFD700';
+        ctx.fillText('^', bx + boxW / 2, boxY - 10 + arrowPulse);
+        ctx.fillText('v', bx + boxW / 2, boxY + boxH + 14 - arrowPulse);
       }
     }
 
     const pulse = Math.sin(frame * 0.06) * 0.3 + 0.7;
     ctx.globalAlpha = pulse;
-    ctx.font = 'bold 13px "Courier New", monospace'; ctx.fillStyle = '#00e5ff';
-    ctx.fillText('PRESS ENTER TO SUBMIT', GAME_W / 2, GAME_H * 0.82);
+    ctx.font = '8px "Press Start 2P", monospace'; ctx.fillStyle = '#00e5ff';
+    ctx.fillText('PRESS ENTER', GAME_W / 2, GAME_H * 0.80);
     ctx.globalAlpha = 1;
 
-    ctx.font = '9px "Courier New", monospace'; ctx.fillStyle = '#555';
-    ctx.fillText('TYPE YOUR INITIALS', GAME_W / 2, GAME_H * 0.90);
+    ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#555';
+    ctx.fillText('TYPE YOUR INITIALS', GAME_W / 2, GAME_H * 0.88);
   }
 
   function renderGameOver() {
@@ -1096,27 +1096,27 @@
     ctx.fillRect(0, 0, GAME_W, GAME_H);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 
-    ctx.font = 'bold 38px "Courier New", monospace'; ctx.fillStyle = '#ff3344';
+    ctx.font = '20px "Press Start 2P", monospace'; ctx.fillStyle = '#ff3344';
     ctx.fillText('GAME OVER', GAME_W / 2, GAME_H * 0.38);
 
-    ctx.font = 'bold 16px "Courier New", monospace'; ctx.fillStyle = '#fff';
-    ctx.fillText('SCORE: ' + score, GAME_W / 2, GAME_H * 0.48);
+    ctx.font = '10px "Press Start 2P", monospace'; ctx.fillStyle = '#fff';
+    ctx.fillText('SCORE ' + score, GAME_W / 2, GAME_H * 0.48);
 
     if (score >= hiScore && score > 0) {
-      ctx.font = 'bold 14px "Courier New", monospace'; ctx.fillStyle = '#FFD700';
-      ctx.fillText('NEW HIGH SCORE!', GAME_W / 2, GAME_H * 0.53);
+      ctx.font = '8px "Press Start 2P", monospace'; ctx.fillStyle = '#FFD700';
+      ctx.fillText('NEW HIGH SCORE', GAME_W / 2, GAME_H * 0.54);
     } else {
-      ctx.font = '13px "Courier New", monospace'; ctx.fillStyle = '#888';
-      ctx.fillText('BEST: ' + hiScore, GAME_W / 2, GAME_H * 0.53);
+      ctx.font = '8px "Press Start 2P", monospace'; ctx.fillStyle = '#888';
+      ctx.fillText('BEST ' + hiScore, GAME_W / 2, GAME_H * 0.54);
     }
 
-    ctx.font = '13px "Courier New", monospace'; ctx.fillStyle = '#fff';
-    ctx.fillText('WAVE REACHED: ' + wave, GAME_W / 2, GAME_H * 0.58);
+    ctx.font = '8px "Press Start 2P", monospace'; ctx.fillStyle = '#fff';
+    ctx.fillText('WAVE ' + wave, GAME_W / 2, GAME_H * 0.60);
 
     const pulse = Math.sin(frame * 0.06) * 0.3 + 0.7;
     ctx.globalAlpha = pulse;
-    ctx.font = 'bold 13px "Courier New", monospace'; ctx.fillStyle = '#00e5ff';
-    ctx.fillText('PRESS ENTER OR TAP TO RETRY', GAME_W / 2, GAME_H * 0.67);
+    ctx.font = '8px "Press Start 2P", monospace'; ctx.fillStyle = '#00e5ff';
+    ctx.fillText('PRESS START', GAME_W / 2, GAME_H * 0.70);
     ctx.globalAlpha = 1;
   }
 
