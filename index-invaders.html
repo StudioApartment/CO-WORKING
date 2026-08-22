@@ -235,11 +235,11 @@
 
   const GAME_W = 480, GAME_H = 640;
   const PLAYER_W = 32, PLAYER_H = 32;
-  const PLAYER_SPEED = 6;
-  const BULLET_SPEED = 10;
-  const ENEMY_BULLET_SPEED = 4.5;
-  const SHOOT_CD = 10;
-  const MAX_BULLETS = 4;
+  const PLAYER_SPEED = 8;
+  const BULLET_SPEED = 14;
+  const ENEMY_BULLET_SPEED = 6;
+  const SHOOT_CD = 7;
+  const MAX_BULLETS = 5;
   const SHIELD_COUNT = 4;
   const COLS = 7, ROWS = 8;
   const EW = 32, EH = 32;
@@ -612,7 +612,7 @@
         });
       }
     enemyDir = 1;
-    enemyBaseSpeed = 0.85 + (wave - 1) * 0.12;
+    enemyBaseSpeed = 1.2 + (wave - 1) * 0.15;
     enemyTotalAlive = ROWS * COLS;
     eBullets = []; bonus = null;
     bonusTimer = 300 + Math.random() * 400 | 0;
@@ -744,7 +744,7 @@
 
     enemies.forEach(e => { if (e.hit > 0) e.hit--; });
 
-    const fc = 0.002 + wave * 0.0008;
+    const fc = 0.004 + wave * 0.0012;
     const bots = [];
     for (let c = 0; c < COLS; c++)
       for (let r = ROWS - 1; r >= 0; r--) { const e = enemies[r * COLS + c]; if (e && e.alive) { bots.push(e); break; } }
