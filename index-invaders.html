@@ -198,7 +198,6 @@
     <button class="ctrl-btn" id="btn-right">&rarr;</button>
   </div>
 
-
   <!-- Page Nav -->
   <div class="page-nav">
     <button class="page-nav-btn" onclick="goToPrevPage()">‹</button>
@@ -224,7 +223,6 @@
     window.location.href = pages[next];
   }
   sessionStorage.setItem('co-working-loaded', 'true');
-
 </script>
 
 <script>
@@ -248,6 +246,10 @@
   const EPADX = 10, EPADY = 6;
   const GRID_TOP = 68;
   const ICON_PX = 16;
+
+  // ── FIREBASE CONFIG ─────────────────────────
+  const FIREBASE_URL = 'https://inbox-invaders-1c0d6-default-rtdb.firebaseio.com';
+  const LEADERBOARD_SIZE = 10;
 
   const COL = {
     bg: '#000', text: '#b8c6d4', cyan: '#00e5ff',
@@ -288,11 +290,11 @@
   // ═══════════════════════════════════════════════
 
   const _tc = document.createElement('canvas');
-  _tc.width = 512; _tc.height = 24;
+  _tc.width = 512; _tc.height = 32;
   const _tx = _tc.getContext('2d');
 
   function pixText(str, x, y, sz, col, align) {
-    const base = 7;
+    const base = 14;
     const sc = sz / base;
     _tx.clearRect(0, 0, 512, 24);
     _tx.font = 'bold ' + base + 'px monospace';
@@ -301,7 +303,7 @@
     _tx.textBaseline = 'top';
     _tx.fillText(str, 1, 1);
     const tw = Math.ceil(_tx.measureText(str).width) + 2;
-    const th = base + 3;
+    const th = base + 4;
     const dw = tw * sc, dh = th * sc;
     const prev = ctx.imageSmoothingEnabled;
     ctx.imageSmoothingEnabled = false;
@@ -533,24 +535,14 @@
   };
 
   // ═══════════════════════════════════════════════
-  //  STARS (scrolling upward)
+  //  STARS
   // ═══════════════════════════════════════════════
 
-  const stars = Array.from({ length: 100 }, () => ({
+  const stars = Array.from({ length: 80 }, () => ({
     x: Math.random() * GAME_W, y: Math.random() * GAME_H,
-    r: Math.random() * 1.5 + 0.5, a: Math.random() * 0.5 + 0.3,
-    speed: Math.random() * 1.5 + 0.5,
+    r: Math.random() * 1.2 + 0.3, a: Math.random() * 0.4 + 0.1,
+    speed: Math.random() * 0.02 + 0.005, phase: Math.random() * Math.PI * 2,
   }));
-
-  function updateStars() {
-    stars.forEach(s => {
-      s.y -= s.speed;
-      if (s.y < -5) {
-        s.y = GAME_H + 5;
-        s.x = Math.random() * GAME_W;
-      }
-    });
-  }
 
   // ═══════════════════════════════════════════════
   //  STATE
@@ -558,36 +550,42 @@
 
   let state = 'MENU';
   let score, lives, wave;
+  let hiScore = +(localStorage.getItem('inbox_invaders_hi') || 0);
   let player, bullets, eBullets, enemies, particles, shields, floatTexts;
   let bonus, enemyDir, enemyBaseSpeed, enemyTotalAlive;
   let shootCd, bonusTimer, shakeAmount, shakeDur, invulnTimer;
   let frame = 0;
   const PLAYER_Y = GAME_H - 50;
 
-  // ═══════════════════════════════════════════════
-  //  LEADERBOARD
-  // ═══════════════════════════════════════════════
+  let leaderboard = [];
+  let initials = ['A', 'A', 'A'];
+  let initialPos = 0;
 
-  let leaderboard = JSON.parse(localStorage.getItem('inbox_invaders_leaderboard') || '[]');
-  let initials = '';
-  let initialsCursor = 0;
-
-  function getHighScore() {
-    return leaderboard.length > 0 ? leaderboard[0].score : 0;
+  function fetchLeaderboard() {
+    if (!FIREBASE_URL) return;
+    fetch(FIREBASE_URL + '/leaderboard.json')
+      .then(r => r.json())
+      .then(data => {
+        if (!data) { leaderboard = []; return; }
+        leaderboard = Object.values(data)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, LEADERBOARD_SIZE);
+        const top = leaderboard[0];
+        if (top && top.score > hiScore) { hiScore = top.score; localStorage.setItem('inbox_invaders_hi', hiScore); }
+      })
+      .catch(() => {});
   }
 
-  function isHighScore(s) {
-    if (s <= 0) return false;
-    if (leaderboard.length < 10) return true;
-    return s > leaderboard[leaderboard.length - 1].score;
+  function submitScore(name, sc, w) {
+    if (!FIREBASE_URL) return;
+    fetch(FIREBASE_URL + '/leaderboard.json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, score: sc, wave: w, ts: Date.now() }),
+    }).then(() => fetchLeaderboard()).catch(() => {});
   }
 
-  function addToLeaderboard(name, s, w) {
-    leaderboard.push({ name: name.toUpperCase(), score: s, wave: w });
-    leaderboard.sort((a, b) => b.score - a.score);
-    if (leaderboard.length > 10) leaderboard.pop();
-    localStorage.setItem('inbox_invaders_leaderboard', JSON.stringify(leaderboard));
-  }
+  fetchLeaderboard();
 
   function resetGame() {
     score = 0; lives = 3; wave = 0;
@@ -614,7 +612,7 @@
         });
       }
     enemyDir = 1;
-    enemyBaseSpeed = 0.35 + (wave - 1) * 0.06;
+    enemyBaseSpeed = 0.55 + (wave - 1) * 0.08;
     enemyTotalAlive = ROWS * COLS;
     eBullets = []; bonus = null;
     bonusTimer = 300 + Math.random() * 400 | 0;
@@ -659,29 +657,29 @@
   window.addEventListener('keydown', e => {
     keys[e.code] = true;
     if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
-    
-    if (state === 'ENTER_INITIALS') {
-      // Handle letter input for initials
-      if (e.key.length === 1 && /[a-zA-Z]/.test(e.key) && initials.length < 3) {
-        initials += e.key.toUpperCase();
-        playTone(440 + initials.length * 110, 0.08, 'square', 0.05);
-      }
-      // Backspace to delete
-      if (e.code === 'Backspace' && initials.length > 0) {
-        initials = initials.slice(0, -1);
-        playTone(220, 0.08, 'square', 0.04);
-      }
-      // Enter to submit (need 3 initials or allow less)
-      if (e.code === 'Enter' && initials.length > 0) {
-        addToLeaderboard(initials.padEnd(3, ' '), score, wave);
-        state = 'GAME_OVER';
-        playTone(660, 0.15, 'square', 0.06);
-      }
-      return;
-    }
-    
     if (state === 'MENU' && (e.code === 'Enter' || e.code === 'Space')) { state = 'PLAYING'; resetGame(); ensureAudio(); }
     if (state === 'GAME_OVER' && (e.code === 'Enter' || e.code === 'Space')) { state = 'PLAYING'; resetGame(); }
+    if (state === 'ENTER_INITIALS') {
+      const cc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      if (e.code === 'ArrowUp') {
+        const idx = cc.indexOf(initials[initialPos]);
+        initials[initialPos] = cc[(idx + 1) % cc.length];
+      } else if (e.code === 'ArrowDown') {
+        const idx = cc.indexOf(initials[initialPos]);
+        initials[initialPos] = cc[(idx - 1 + cc.length) % cc.length];
+      } else if (e.code === 'ArrowRight' || e.code === 'Tab') {
+        e.preventDefault();
+        initialPos = Math.min(2, initialPos + 1);
+      } else if (e.code === 'ArrowLeft') {
+        initialPos = Math.max(0, initialPos - 1);
+      } else if (e.code === 'Enter') {
+        submitScore(initials.join(''), score, wave);
+        state = 'GAME_OVER';
+      } else if (e.key.length === 1 && /[A-Za-z0-9]/.test(e.key)) {
+        initials[initialPos] = e.key.toUpperCase();
+        if (initialPos < 2) initialPos++;
+      }
+    }
   });
   window.addEventListener('keyup', e => { keys[e.code] = false; });
 
@@ -700,7 +698,6 @@
   canvas.addEventListener('click', () => {
     if (state === 'MENU') { state = 'PLAYING'; resetGame(); ensureAudio(); }
     else if (state === 'GAME_OVER') { state = 'PLAYING'; resetGame(); }
-    // Don't allow click to skip ENTER_INITIALS - must use keyboard
   });
 
   function isLeft()  { return keys.ArrowLeft || keys.KeyA || touchState.left; }
@@ -832,11 +829,13 @@
   }
 
   function gameOverSeq() {
+    shakeDur = 0; shakeAmount = 0;
+    if (score > hiScore) { hiScore = score; localStorage.setItem('inbox_invaders_hi', hiScore); }
     SFX.gameOver();
-    if (isHighScore(score)) {
+    if (FIREBASE_URL) {
       state = 'ENTER_INITIALS';
-      initials = '';
-      initialsCursor = 0;
+      initials = ['A', 'A', 'A'];
+      initialPos = 0;
     } else {
       state = 'GAME_OVER';
     }
@@ -863,17 +862,15 @@
 
     if (shakeDur > 0) ctx.translate((Math.random() - 0.5) * shakeAmount, (Math.random() - 0.5) * shakeAmount);
 
-    // Update and render scrolling stars
-    updateStars();
     stars.forEach(s => {
-      ctx.globalAlpha = s.a;
+      ctx.globalAlpha = s.a * (Math.sin(frame * s.speed + s.phase) * 0.3 + 0.7);
       ctx.fillStyle = '#c8d6e5';
       ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
     });
     ctx.globalAlpha = 1;
 
     if (state === 'MENU') { renderMenu(); ctx.restore(); return; }
-    if (state === 'ENTER_INITIALS') { renderEnterInitials(); ctx.restore(); return; }
+    if (state === 'ENTER_INITIALS') { renderInitials(); ctx.restore(); return; }
 
     ctx.imageSmoothingEnabled = false;
 
@@ -905,7 +902,10 @@
 
     floatTexts.forEach(f => {
       ctx.globalAlpha = Math.min(1, f.life / 15);
-      pixText(f.text, f.x, f.y - 5, 10, f.color, 'center');
+      ctx.font = 'bold 12px "Courier New", monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = f.color;
+      ctx.fillText(f.text, f.x, f.y);
     });
     ctx.globalAlpha = 1;
 
@@ -945,12 +945,19 @@
   }
 
   function renderHUD() {
-    ctx.fillStyle = 'rgba(8, 12, 24, 0.7)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(0, 0, GAME_W, 26);
+    ctx.font = 'bold 12px "Courier New", monospace';
+    ctx.textBaseline = 'middle';
 
-    pixText('SCORE ' + String(score).padStart(6, '0'), 10, 5, 12, '#fff', 'left');
-    pixText('HI ' + String(getHighScore()).padStart(6, '0'), GAME_W / 2, 5, 12, '#888', 'center');
-    pixText('WAVE ' + wave, GAME_W - 62, 5, 12, '#33ff88', 'right');
+    ctx.textAlign = 'left'; ctx.fillStyle = '#fff';
+    ctx.fillText('SCORE ' + String(score).padStart(6, '0'), 10, 14);
+
+    ctx.textAlign = 'center'; ctx.fillStyle = '#888';
+    ctx.fillText('HI ' + String(hiScore).padStart(6, '0'), GAME_W / 2, 14);
+
+    ctx.textAlign = 'right'; ctx.fillStyle = '#33ff88';
+    ctx.fillText('WAVE ' + wave, GAME_W - 62, 14);
 
     ctx.imageSmoothingEnabled = false;
     for (let i = 0; i < lives; i++)
@@ -959,7 +966,7 @@
   }
 
   // ═══════════════════════════════════════════════
-  //  INBOX INVADERS LOGO
+  //  SPACE INVADERS-STYLE LOGO
   // ═══════════════════════════════════════════════
 
   function drawLogo(cx, cy) {
@@ -976,21 +983,17 @@
       ctx.font = 'bold italic ' + l.sz + 'px Impact, "Arial Black", sans-serif';
       ctx.letterSpacing = '3px';
 
-      // 3D shadow effect
       for (let i = 8; i >= 1; i--) {
         ctx.fillStyle = i > 4 ? '#5A0A0A' : '#B22010';
         ctx.fillText(l.t, cx + 1, l.y + i);
       }
 
-      // Main color
       ctx.fillStyle = '#D42A1A';
       ctx.fillText(l.t, cx, l.y + 1);
 
-      // Highlight
       ctx.fillStyle = '#FFD700';
       ctx.fillText(l.t, cx, l.y);
 
-      // Top shine
       ctx.fillStyle = 'rgba(255, 255, 200, 0.25)';
       ctx.fillText(l.t, cx, l.y - 1);
     });
@@ -1000,103 +1003,118 @@
   }
 
   // ═══════════════════════════════════════════════
-  //  MENU (with CO-WORKING branding)
+  //  MENU
   // ═══════════════════════════════════════════════
 
   function renderMenu() {
-    // Draw Inbox Invaders logo
-    drawLogo(GAME_W / 2, GAME_H * 0.18);
+    drawLogo(GAME_W / 2, GAME_H * 0.22);
 
-    pixText('DEFEND YOUR SANITY', GAME_W / 2, GAME_H * 0.18 + 95, 9, '#888', 'center');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '11px "Courier New", monospace';
+    ctx.fillStyle = '#888';
+    ctx.fillText('DEFEND YOUR SANITY', GAME_W / 2, GAME_H * 0.22 + 100);
 
-    // Show leaderboard if available
     if (leaderboard.length > 0) {
-      pixText('HIGH SCORES', GAME_W / 2, GAME_H * 0.48, 12, '#FFD700', 'center');
-      const shown = Math.min(10, leaderboard.length);
-      for (let i = 0; i < shown; i++) {
-        const entry = leaderboard[i];
-        const y = GAME_H * 0.54 + i * 16;
+      const lbTop = GAME_H * 0.38;
+      ctx.font = 'bold 12px "Courier New", monospace'; ctx.fillStyle = '#FFD700';
+      ctx.fillText('HIGH SCORES', GAME_W / 2, lbTop);
+      ctx.font = '11px "Courier New", monospace';
+      leaderboard.slice(0, 8).forEach((entry, i) => {
+        const y = lbTop + 18 + i * 16;
         const rank = String(i + 1).padStart(2, ' ');
-        const scoreStr = String(entry.score).padStart(6, '0');
-        const color = i === 0 ? '#FFD700' : i < 3 ? '#c0c0c0' : '#888';
-        pixText(rank + '. ' + entry.name + '  ' + scoreStr + '  W' + entry.wave, GAME_W / 2, y, 9, color, 'center');
-      }
-    } else {
-      pixText('NO HIGH SCORES YET', GAME_W / 2, GAME_H * 0.55, 10, '#555', 'center');
+        const sc = String(entry.score).padStart(6, '0');
+        ctx.fillStyle = i === 0 ? '#FFD700' : i < 3 ? '#ccc' : '#888';
+        ctx.fillText(rank + '. ' + (entry.name || '???') + '  ' + sc, GAME_W / 2, y);
+      });
+    } else if (hiScore > 0) {
+      ctx.font = '12px "Courier New", monospace'; ctx.fillStyle = '#888';
+      ctx.fillText('BEST: ' + hiScore, GAME_W / 2, GAME_H * 0.55);
     }
 
     const pulse = Math.sin(frame * 0.06) * 0.3 + 0.7;
     ctx.globalAlpha = pulse;
-    pixText('PRESS ENTER OR TAP TO START', GAME_W / 2, GAME_H * 0.88, 11, '#FFD700', 'center');
+    ctx.font = 'bold 13px "Courier New", monospace'; ctx.fillStyle = '#FFD700';
+    ctx.fillText('PRESS ENTER OR TAP TO START', GAME_W / 2, GAME_H * 0.86);
     ctx.globalAlpha = 1;
 
-    pixText('<- ->  MOVE     SPC  FIRE', GAME_W / 2, GAME_H * 0.94, 8, '#555', 'center');
+    ctx.font = '9px "Courier New", monospace'; ctx.fillStyle = '#555';
+    ctx.fillText('← →  MOVE     SPC  FIRE', GAME_W / 2, GAME_H * 0.93);
   }
 
-  function renderEnterInitials() {
-    ctx.fillStyle = 'rgba(8, 12, 24, 0.85)';
-    ctx.fillRect(0, 0, GAME_W, GAME_H);
+  function renderInitials() {
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 
-    pixText('NEW HIGH SCORE!', GAME_W / 2, GAME_H * 0.25, 28, '#FFD700', 'center');
-    pixText('SCORE  ' + score, GAME_W / 2, GAME_H * 0.34, 16, '#fff', 'center');
-    pixText('WAVE  ' + wave, GAME_W / 2, GAME_H * 0.40, 12, '#33ff88', 'center');
+    ctx.font = 'bold 28px "Courier New", monospace'; ctx.fillStyle = '#FFD700';
+    ctx.fillText('NEW HIGH SCORE!', GAME_W / 2, GAME_H * 0.18);
 
-    pixText('ENTER YOUR INITIALS', GAME_W / 2, GAME_H * 0.52, 12, '#888', 'center');
+    ctx.font = 'bold 18px "Courier New", monospace'; ctx.fillStyle = '#fff';
+    ctx.fillText('SCORE: ' + score, GAME_W / 2, GAME_H * 0.27);
 
-    // Draw initials boxes
-    const boxW = 36, boxH = 44, gap = 12;
-    const startX = GAME_W / 2 - (boxW * 3 + gap * 2) / 2;
-    const boxY = GAME_H * 0.58;
+    ctx.font = '13px "Courier New", monospace'; ctx.fillStyle = '#33ff88';
+    ctx.fillText('WAVE ' + wave, GAME_W / 2, GAME_H * 0.33);
+
+    ctx.font = '14px "Courier New", monospace'; ctx.fillStyle = '#888';
+    ctx.fillText('ENTER YOUR INITIALS', GAME_W / 2, GAME_H * 0.44);
+
+    const boxW = 44, boxH = 56, gap = 12;
+    const totalW = boxW * 3 + gap * 2;
+    const startX = (GAME_W - totalW) / 2;
+    const boxY = GAME_H * 0.50;
 
     for (let i = 0; i < 3; i++) {
-      const x = startX + i * (boxW + gap);
-      ctx.strokeStyle = i === initials.length ? '#FFD700' : '#444';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, boxY, boxW, boxH);
+      const bx = startX + i * (boxW + gap);
+      ctx.strokeStyle = i === initialPos ? '#FFD700' : '#555';
+      ctx.lineWidth = i === initialPos ? 3 : 2;
+      ctx.strokeRect(bx, boxY, boxW, boxH);
 
-      if (initials[i]) {
-        pixText(initials[i], x + boxW / 2, boxY + 12, 24, '#fff', 'center');
-      } else if (i === initials.length) {
-        // Blinking cursor
-        if (Math.floor(frame / 15) % 2 === 0) {
-          ctx.fillStyle = '#FFD700';
-          ctx.fillRect(x + boxW / 2 - 8, boxY + boxH - 8, 16, 3);
-        }
+      ctx.font = 'bold 30px "Courier New", monospace';
+      ctx.fillStyle = i === initialPos ? '#FFD700' : '#fff';
+      ctx.fillText(initials[i], bx + boxW / 2, boxY + boxH / 2);
+
+      if (i === initialPos) {
+        const arrowPulse = Math.sin(frame * 0.1) * 3;
+        ctx.font = '14px "Courier New", monospace'; ctx.fillStyle = '#FFD700';
+        ctx.fillText('▲', bx + boxW / 2, boxY - 12 + arrowPulse);
+        ctx.fillText('▼', bx + boxW / 2, boxY + boxH + 14 - arrowPulse);
       }
     }
 
     const pulse = Math.sin(frame * 0.06) * 0.3 + 0.7;
     ctx.globalAlpha = pulse;
-    if (initials.length > 0) {
-      pixText('PRESS ENTER TO SUBMIT', GAME_W / 2, GAME_H * 0.78, 10, '#00e5ff', 'center');
-    } else {
-      pixText('TYPE YOUR INITIALS', GAME_W / 2, GAME_H * 0.78, 10, '#888', 'center');
-    }
+    ctx.font = 'bold 13px "Courier New", monospace'; ctx.fillStyle = '#00e5ff';
+    ctx.fillText('PRESS ENTER TO SUBMIT', GAME_W / 2, GAME_H * 0.82);
     ctx.globalAlpha = 1;
+
+    ctx.font = '9px "Courier New", monospace'; ctx.fillStyle = '#555';
+    ctx.fillText('TYPE YOUR INITIALS', GAME_W / 2, GAME_H * 0.90);
   }
 
   function renderGameOver() {
-    ctx.fillStyle = 'rgba(8, 12, 24, 0.65)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
     ctx.fillRect(0, 0, GAME_W, GAME_H);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 
-    pixText('GAME OVER', GAME_W / 2, GAME_H * 0.30, 38, '#ff3344', 'center');
-    pixText('SCORE  ' + score, GAME_W / 2, GAME_H * 0.41, 14, '#fff', 'center');
-    pixText('WAVE REACHED  ' + wave, GAME_W / 2, GAME_H * 0.47, 11, '#888', 'center');
+    ctx.font = 'bold 38px "Courier New", monospace'; ctx.fillStyle = '#ff3344';
+    ctx.fillText('GAME OVER', GAME_W / 2, GAME_H * 0.38);
 
-    // Show mini leaderboard
-    if (leaderboard.length > 0) {
-      pixText('TOP SCORES', GAME_W / 2, GAME_H * 0.56, 10, '#FFD700', 'center');
-      const shown = Math.min(5, leaderboard.length);
-      for (let i = 0; i < shown; i++) {
-        const entry = leaderboard[i];
-        const y = GAME_H * 0.61 + i * 14;
-        pixText((i + 1) + '. ' + entry.name + '  ' + entry.score, GAME_W / 2, y, 9, '#aaa', 'center');
-      }
+    ctx.font = 'bold 16px "Courier New", monospace'; ctx.fillStyle = '#fff';
+    ctx.fillText('SCORE: ' + score, GAME_W / 2, GAME_H * 0.48);
+
+    if (score >= hiScore && score > 0) {
+      ctx.font = 'bold 14px "Courier New", monospace'; ctx.fillStyle = '#FFD700';
+      ctx.fillText('NEW HIGH SCORE!', GAME_W / 2, GAME_H * 0.53);
+    } else {
+      ctx.font = '13px "Courier New", monospace'; ctx.fillStyle = '#888';
+      ctx.fillText('BEST: ' + hiScore, GAME_W / 2, GAME_H * 0.53);
     }
+
+    ctx.font = '13px "Courier New", monospace'; ctx.fillStyle = '#fff';
+    ctx.fillText('WAVE REACHED: ' + wave, GAME_W / 2, GAME_H * 0.58);
 
     const pulse = Math.sin(frame * 0.06) * 0.3 + 0.7;
     ctx.globalAlpha = pulse;
-    pixText('PRESS ENTER OR TAP TO RETRY', GAME_W / 2, GAME_H * 0.88, 11, '#00e5ff', 'center');
+    ctx.font = 'bold 13px "Courier New", monospace'; ctx.fillStyle = '#00e5ff';
+    ctx.fillText('PRESS ENTER OR TAP TO RETRY', GAME_W / 2, GAME_H * 0.67);
     ctx.globalAlpha = 1;
   }
 
@@ -1110,7 +1128,6 @@
     frame++;
     requestAnimationFrame(tick);
   }
-
   tick();
 })();
 </script>
