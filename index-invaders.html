@@ -558,12 +558,36 @@
 
   let state = 'MENU';
   let score, lives, wave;
-  let hiScore = +(localStorage.getItem('inbox_invaders_hi') || 0);
   let player, bullets, eBullets, enemies, particles, shields, floatTexts;
   let bonus, enemyDir, enemyBaseSpeed, enemyTotalAlive;
   let shootCd, bonusTimer, shakeAmount, shakeDur, invulnTimer;
   let frame = 0;
   const PLAYER_Y = GAME_H - 50;
+
+  // ═══════════════════════════════════════════════
+  //  LEADERBOARD
+  // ═══════════════════════════════════════════════
+
+  let leaderboard = JSON.parse(localStorage.getItem('inbox_invaders_leaderboard') || '[]');
+  let initials = '';
+  let initialsCursor = 0;
+
+  function getHighScore() {
+    return leaderboard.length > 0 ? leaderboard[0].score : 0;
+  }
+
+  function isHighScore(s) {
+    if (s <= 0) return false;
+    if (leaderboard.length < 10) return true;
+    return s > leaderboard[leaderboard.length - 1].score;
+  }
+
+  function addToLeaderboard(name, s, w) {
+    leaderboard.push({ name: name.toUpperCase(), score: s, wave: w });
+    leaderboard.sort((a, b) => b.score - a.score);
+    if (leaderboard.length > 10) leaderboard.pop();
+    localStorage.setItem('inbox_invaders_leaderboard', JSON.stringify(leaderboard));
+  }
 
   function resetGame() {
     score = 0; lives = 3; wave = 0;
@@ -635,6 +659,27 @@
   window.addEventListener('keydown', e => {
     keys[e.code] = true;
     if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+    
+    if (state === 'ENTER_INITIALS') {
+      // Handle letter input for initials
+      if (e.key.length === 1 && /[a-zA-Z]/.test(e.key) && initials.length < 3) {
+        initials += e.key.toUpperCase();
+        playTone(440 + initials.length * 110, 0.08, 'square', 0.05);
+      }
+      // Backspace to delete
+      if (e.code === 'Backspace' && initials.length > 0) {
+        initials = initials.slice(0, -1);
+        playTone(220, 0.08, 'square', 0.04);
+      }
+      // Enter to submit (need 3 initials or allow less)
+      if (e.code === 'Enter' && initials.length > 0) {
+        addToLeaderboard(initials.padEnd(3, ' '), score, wave);
+        state = 'GAME_OVER';
+        playTone(660, 0.15, 'square', 0.06);
+      }
+      return;
+    }
+    
     if (state === 'MENU' && (e.code === 'Enter' || e.code === 'Space')) { state = 'PLAYING'; resetGame(); ensureAudio(); }
     if (state === 'GAME_OVER' && (e.code === 'Enter' || e.code === 'Space')) { state = 'PLAYING'; resetGame(); }
   });
@@ -655,6 +700,7 @@
   canvas.addEventListener('click', () => {
     if (state === 'MENU') { state = 'PLAYING'; resetGame(); ensureAudio(); }
     else if (state === 'GAME_OVER') { state = 'PLAYING'; resetGame(); }
+    // Don't allow click to skip ENTER_INITIALS - must use keyboard
   });
 
   function isLeft()  { return keys.ArrowLeft || keys.KeyA || touchState.left; }
@@ -786,9 +832,14 @@
   }
 
   function gameOverSeq() {
-    state = 'GAME_OVER';
-    if (score > hiScore) { hiScore = score; localStorage.setItem('inbox_invaders_hi', hiScore); }
     SFX.gameOver();
+    if (isHighScore(score)) {
+      state = 'ENTER_INITIALS';
+      initials = '';
+      initialsCursor = 0;
+    } else {
+      state = 'GAME_OVER';
+    }
   }
 
   function spawnExplosion(x, y, color, count) {
@@ -822,6 +873,7 @@
     ctx.globalAlpha = 1;
 
     if (state === 'MENU') { renderMenu(); ctx.restore(); return; }
+    if (state === 'ENTER_INITIALS') { renderEnterInitials(); ctx.restore(); return; }
 
     ctx.imageSmoothingEnabled = false;
 
@@ -897,7 +949,7 @@
     ctx.fillRect(0, 0, GAME_W, 26);
 
     pixText('SCORE ' + String(score).padStart(6, '0'), 10, 5, 12, '#fff', 'left');
-    pixText('HI ' + String(hiScore).padStart(6, '0'), GAME_W / 2, 5, 12, '#888', 'center');
+    pixText('HI ' + String(getHighScore()).padStart(6, '0'), GAME_W / 2, 5, 12, '#888', 'center');
     pixText('WAVE ' + wave, GAME_W - 62, 5, 12, '#33ff88', 'right');
 
     ctx.imageSmoothingEnabled = false;
@@ -953,38 +1005,98 @@
 
   function renderMenu() {
     // Draw Inbox Invaders logo
-    drawLogo(GAME_W / 2, GAME_H * 0.22);
+    drawLogo(GAME_W / 2, GAME_H * 0.18);
 
-    pixText('DEFEND YOUR SANITY', GAME_W / 2, GAME_H * 0.22 + 95, 9, '#888', 'center');
+    pixText('DEFEND YOUR SANITY', GAME_W / 2, GAME_H * 0.18 + 95, 9, '#888', 'center');
 
-    if (hiScore > 0)
-      pixText('BEST  ' + hiScore, GAME_W / 2, GAME_H * 0.78, 10, '#888', 'center');
+    // Show leaderboard if available
+    if (leaderboard.length > 0) {
+      pixText('HIGH SCORES', GAME_W / 2, GAME_H * 0.48, 12, '#FFD700', 'center');
+      const shown = Math.min(10, leaderboard.length);
+      for (let i = 0; i < shown; i++) {
+        const entry = leaderboard[i];
+        const y = GAME_H * 0.54 + i * 16;
+        const rank = String(i + 1).padStart(2, ' ');
+        const scoreStr = String(entry.score).padStart(6, '0');
+        const color = i === 0 ? '#FFD700' : i < 3 ? '#c0c0c0' : '#888';
+        pixText(rank + '. ' + entry.name + '  ' + scoreStr + '  W' + entry.wave, GAME_W / 2, y, 9, color, 'center');
+      }
+    } else {
+      pixText('NO HIGH SCORES YET', GAME_W / 2, GAME_H * 0.55, 10, '#555', 'center');
+    }
 
     const pulse = Math.sin(frame * 0.06) * 0.3 + 0.7;
     ctx.globalAlpha = pulse;
-    pixText('PRESS ENTER OR TAP TO START', GAME_W / 2, GAME_H * 0.86, 11, '#FFD700', 'center');
+    pixText('PRESS ENTER OR TAP TO START', GAME_W / 2, GAME_H * 0.88, 11, '#FFD700', 'center');
     ctx.globalAlpha = 1;
 
-    pixText('<- ->  MOVE     SPC  FIRE', GAME_W / 2, GAME_H * 0.93, 8, '#555', 'center');
+    pixText('<- ->  MOVE     SPC  FIRE', GAME_W / 2, GAME_H * 0.94, 8, '#555', 'center');
+  }
+
+  function renderEnterInitials() {
+    ctx.fillStyle = 'rgba(8, 12, 24, 0.85)';
+    ctx.fillRect(0, 0, GAME_W, GAME_H);
+
+    pixText('NEW HIGH SCORE!', GAME_W / 2, GAME_H * 0.25, 28, '#FFD700', 'center');
+    pixText('SCORE  ' + score, GAME_W / 2, GAME_H * 0.34, 16, '#fff', 'center');
+    pixText('WAVE  ' + wave, GAME_W / 2, GAME_H * 0.40, 12, '#33ff88', 'center');
+
+    pixText('ENTER YOUR INITIALS', GAME_W / 2, GAME_H * 0.52, 12, '#888', 'center');
+
+    // Draw initials boxes
+    const boxW = 36, boxH = 44, gap = 12;
+    const startX = GAME_W / 2 - (boxW * 3 + gap * 2) / 2;
+    const boxY = GAME_H * 0.58;
+
+    for (let i = 0; i < 3; i++) {
+      const x = startX + i * (boxW + gap);
+      ctx.strokeStyle = i === initials.length ? '#FFD700' : '#444';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, boxY, boxW, boxH);
+
+      if (initials[i]) {
+        pixText(initials[i], x + boxW / 2, boxY + 12, 24, '#fff', 'center');
+      } else if (i === initials.length) {
+        // Blinking cursor
+        if (Math.floor(frame / 15) % 2 === 0) {
+          ctx.fillStyle = '#FFD700';
+          ctx.fillRect(x + boxW / 2 - 8, boxY + boxH - 8, 16, 3);
+        }
+      }
+    }
+
+    const pulse = Math.sin(frame * 0.06) * 0.3 + 0.7;
+    ctx.globalAlpha = pulse;
+    if (initials.length > 0) {
+      pixText('PRESS ENTER TO SUBMIT', GAME_W / 2, GAME_H * 0.78, 10, '#00e5ff', 'center');
+    } else {
+      pixText('TYPE YOUR INITIALS', GAME_W / 2, GAME_H * 0.78, 10, '#888', 'center');
+    }
+    ctx.globalAlpha = 1;
   }
 
   function renderGameOver() {
     ctx.fillStyle = 'rgba(8, 12, 24, 0.65)';
     ctx.fillRect(0, 0, GAME_W, GAME_H);
 
-    pixText('GAME OVER', GAME_W / 2, GAME_H * 0.36, 38, '#ff3344', 'center');
-    pixText('SCORE  ' + score, GAME_W / 2, GAME_H * 0.47, 14, '#fff', 'center');
+    pixText('GAME OVER', GAME_W / 2, GAME_H * 0.30, 38, '#ff3344', 'center');
+    pixText('SCORE  ' + score, GAME_W / 2, GAME_H * 0.41, 14, '#fff', 'center');
+    pixText('WAVE REACHED  ' + wave, GAME_W / 2, GAME_H * 0.47, 11, '#888', 'center');
 
-    if (score >= hiScore && score > 0)
-      pixText('NEW HIGH SCORE!', GAME_W / 2, GAME_H * 0.53, 12, '#FFD700', 'center');
-    else
-      pixText('BEST  ' + hiScore, GAME_W / 2, GAME_H * 0.53, 11, '#888', 'center');
-
-    pixText('WAVE REACHED  ' + wave, GAME_W / 2, GAME_H * 0.58, 11, '#fff', 'center');
+    // Show mini leaderboard
+    if (leaderboard.length > 0) {
+      pixText('TOP SCORES', GAME_W / 2, GAME_H * 0.56, 10, '#FFD700', 'center');
+      const shown = Math.min(5, leaderboard.length);
+      for (let i = 0; i < shown; i++) {
+        const entry = leaderboard[i];
+        const y = GAME_H * 0.61 + i * 14;
+        pixText((i + 1) + '. ' + entry.name + '  ' + entry.score, GAME_W / 2, y, 9, '#aaa', 'center');
+      }
+    }
 
     const pulse = Math.sin(frame * 0.06) * 0.3 + 0.7;
     ctx.globalAlpha = pulse;
-    pixText('PRESS ENTER OR TAP TO RETRY', GAME_W / 2, GAME_H * 0.67, 11, '#00e5ff', 'center');
+    pixText('PRESS ENTER OR TAP TO RETRY', GAME_W / 2, GAME_H * 0.88, 11, '#00e5ff', 'center');
     ctx.globalAlpha = 1;
   }
 
