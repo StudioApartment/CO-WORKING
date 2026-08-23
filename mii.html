@@ -262,9 +262,9 @@ body.native-cursor #pointer{display:none}
   .card p.sub{font-size:12px;margin-bottom:8px}
   .stage{flex-direction:column}
   .stage.done{height:auto}
-  .stage.done .viewport{height:32vh}
-  .stage.done .preview{height:36vh}
-  .viewport{max-height:50vh;aspect-ratio:3/4}
+  .stage.done .viewport{height:32vh;min-height:180px}
+  .stage.done .preview{height:36vh;min-height:200px}
+  .viewport{min-height:240px;height:45vh;max-height:none;aspect-ratio:auto}
   .row{flex-wrap:wrap;gap:8px}
   .row .wbtn{flex:1 1 auto;min-width:80px}
 }
