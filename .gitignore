@@ -2,3 +2,5 @@
 node_modules/
 .vercel
 .env*
+miis.json
+miis.json.tmp

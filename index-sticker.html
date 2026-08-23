@@ -464,15 +464,19 @@
       }
       
       // Offset to compensate for transparent padding in the video file
-      const VIDEO_PADDING = 40; // px of transparent space around the flag in the video
+      // Different sides may have different amounts of transparent space
+      const PADDING_LEFT = 100;
+      const PADDING_RIGHT = 120;
+      const PADDING_TOP = 50;
+      const PADDING_BOTTOM = 50;
       
       // Get bounds (push past edge to compensate for video's transparent padding)
       function getBounds() {
         return {
-          minX: -VIDEO_PADDING,
-          maxX: window.innerWidth - stickerWidth + VIDEO_PADDING,
-          minY: -VIDEO_PADDING,
-          maxY: window.innerHeight - stickerHeight + VIDEO_PADDING
+          minX: -PADDING_LEFT,
+          maxX: window.innerWidth - stickerWidth + PADDING_RIGHT,
+          minY: -PADDING_TOP,
+          maxY: window.innerHeight - stickerHeight + PADDING_BOTTOM
         };
       }
       

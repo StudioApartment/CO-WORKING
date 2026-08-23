@@ -4,6 +4,8 @@
   "private": true,
   "description": "CO—WORKING public landing site",
   "scripts": {
-    "dev": "npx --yes serve -l 4444"
-  }
+    "dev": "npx --yes serve -l 4444",
+    "dev:api": "vercel dev --listen 4444"
+  },
+  "type": "module"
 }
