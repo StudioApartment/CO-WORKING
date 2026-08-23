@@ -2625,36 +2625,32 @@ const Cam = {
     f.style.display = 'block';
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
-    // Build a friendly message with action buttons
     let msg = '';
-    if (reason === 'camera-denied' && isMobile) {
+    if (reason === 'camera-denied') {
       msg = `<div style="text-align:center;padding:10px 0">
-        <div style="font-size:40px;margin-bottom:12px">📸</div>
-        <div style="font-size:15px;font-weight:700;color:#3a4a55;margin-bottom:16px">Take a photo to create your Mii</div>
-        <button class="wbtn primary" style="width:100%;margin-bottom:10px;font-size:14px" onclick="document.getElementById('fileIn').click()">
-          <span class="lbl">📷 Take a selfie or choose photo</span>
+        <button class="wbtn" style="width:100%;margin-bottom:12px" onclick="Cam.retryCamera()">
+          <span class="lbl">⚙️ Allow camera access</span>
         </button>
-        <button class="wbtn" style="width:100%;font-size:12px" onclick="Cam.retryCamera()">
-          <span class="lbl">🔄 I enabled camera — try again</span>
-        </button>
-        <div style="margin-top:14px;font-size:11px;color:#9ab;line-height:1.5">To enable live camera: tap <b>aA</b> in Safari's address bar → Website Settings → Camera → Allow</div>
-      </div>`;
-    } else if (reason === 'camera-denied') {
-      msg = `<div style="text-align:center;padding:10px 0">
-        <div style="font-size:15px;font-weight:700;color:#3a4a55;margin-bottom:16px">Camera permission needed</div>
-        <button class="wbtn primary" style="width:100%;margin-bottom:10px" onclick="document.getElementById('fileIn').click()">
-          <span class="lbl">Upload a photo</span>
-        </button>
-        <button class="wbtn" style="width:100%" onclick="Cam.retryCamera()">
-          <span class="lbl">Try camera again</span>
-        </button>
+        <div style="font-size:11px;color:#9ab;margin-bottom:16px;line-height:1.5">${isMobile ? 'Tap <b>aA</b> in address bar → Camera → Allow, then tap above' : 'Enable camera in browser settings, then click above'}</div>
+        <div style="display:flex;gap:10px">
+          <button class="wbtn primary" style="flex:1" onclick="Cam.takeSelfie()">
+            <span class="lbl">📷 Take Selfie</span>
+          </button>
+          <button class="wbtn" style="flex:1" onclick="document.getElementById('fileIn').click()">
+            <span class="lbl">📁 Upload</span>
+          </button>
+        </div>
       </div>`;
     } else {
       msg = `<div style="text-align:center;padding:10px 0">
-        <div style="font-size:15px;font-weight:700;color:#3a4a55;margin-bottom:16px">No camera available</div>
-        <button class="wbtn primary" style="width:100%" onclick="document.getElementById('fileIn').click()">
-          <span class="lbl">📷 Take or choose a photo</span>
-        </button>
+        <div style="display:flex;gap:10px">
+          <button class="wbtn primary" style="flex:1" onclick="Cam.takeSelfie()">
+            <span class="lbl">📷 Take Selfie</span>
+          </button>
+          <button class="wbtn" style="flex:1" onclick="document.getElementById('fileIn').click()">
+            <span class="lbl">📁 Upload</span>
+          </button>
+        </div>
       </div>`;
     }
     f.innerHTML = msg;
@@ -2662,6 +2658,23 @@ const Cam = {
     $('camGuide').style.display = 'none';
     $('btnSnap').style.display = 'none';
     $('camRowLive').style.display = 'none';
+  },
+  takeSelfie() {
+    // Create a temporary file input with capture attribute for selfie
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'user';
+    input.onchange = (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      const url = URL.createObjectURL(f);
+      const img = new Image();
+      img.onload = () => { Cam.capture(img); URL.revokeObjectURL(url); };
+      img.onerror = () => { toast('Could not read that image'); URL.revokeObjectURL(url); };
+      img.src = url;
+    };
+    input.click();
   },
   async retryCamera() {
     $('camFail').style.display = 'none';
