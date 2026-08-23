@@ -1058,8 +1058,8 @@ function drawFace(dna, expr) {
     g.setTransform(1, 0, 0, 1, 0, 0);
     const st = dna.glasses, shades = st >= 3;
     const sp = dna.eyes.spacing, ey = dna.eyes.y;
-    const gw = st === 3 ? 23 : st === 4 ? 15.5 : 17;
-    const gh = st === 3 ? 18.5 : st === 4 ? 8.5 : 14;
+    const gw = st === 3 ? 28 : st === 4 ? 20 : 19;
+    const gh = st === 3 ? 22 : st === 4 ? 11 : 16;
     const frame = shades ? (st === 3 ? '#221f1c' : '#15161c') : dna.glassCol;
     const lensPath = (w, h) => {
       g.beginPath();
