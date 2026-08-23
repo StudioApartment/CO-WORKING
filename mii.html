@@ -257,10 +257,16 @@ body.native-cursor #pointer{display:none}
 .rerolls .wbtn{height:42px;font-size:12.5px;padding:0 16px;width:auto}
 .rerolls .wbtn .lbl{display:inline}
 @media (max-width:560px){
+  .card{padding:16px 14px 12px;max-height:98vh}
+  .card h2{font-size:18px}
+  .card p.sub{font-size:12px;margin-bottom:8px}
   .stage{flex-direction:column}
   .stage.done{height:auto}
-  .stage.done .viewport{height:24vh}
-  .stage.done .preview{height:28vh}
+  .stage.done .viewport{height:32vh}
+  .stage.done .preview{height:36vh}
+  .viewport{max-height:50vh;aspect-ratio:3/4}
+  .row{flex-wrap:wrap;gap:8px}
+  .row .wbtn{flex:1 1 auto;min-width:80px}
 }
 .viewport{
   position:relative;width:100%;aspect-ratio:4/3;max-height:40vh;border-radius:22px;overflow:hidden;
