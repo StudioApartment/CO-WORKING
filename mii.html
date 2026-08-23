@@ -2794,6 +2794,7 @@ function bindButtons() {
 
   $('btnCamera').addEventListener('click', () => Cam.open());
   $('btnCamClose').addEventListener('click', () => Cam.close());
+  $('btnSnap').addEventListener('click', () => Cam.snap());
   $('btnRetake').addEventListener('click', () => { Cam.reset(); if (!Cam.stream) Cam.open(); });
   $('btnAccept').addEventListener('click', () => Cam.accept());
   $('btnEditSave').addEventListener('click', () => Cam.saveEdit());
