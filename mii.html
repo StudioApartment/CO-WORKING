@@ -2607,7 +2607,7 @@ const Cam = {
     this.el.classList.add('open');
     this.reset();
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      return this.fail('This browser will not hand over a camera here.');
+      return this.fail('camera-unsupported');
     }
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
@@ -2617,18 +2617,29 @@ const Cam = {
       this.video.style.display = '';
       await this.video.play().catch(() => {});
     } catch (err) {
-      this.fail(err && err.name === 'NotAllowedError'
-        ? 'Camera permission was declined.'
-        : 'No camera available on this page.');
+      this.fail(err && err.name === 'NotAllowedError' ? 'camera-denied' : 'camera-unavailable');
     }
   },
-  fail(msg) {
+  fail(reason) {
     const f = $('camFail');
     f.style.display = 'block';
-    f.innerHTML = msg + '<br><br>Open a photo instead &mdash; it works exactly the same way.<br><span style="opacity:.65;font-size:12.5px">(Webcams need https:// or localhost, not file://)</span>';
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    let msg = '';
+    if (reason === 'camera-denied') {
+      msg = isMobile
+        ? '<b>Camera access needed</b><br><br>Tap <b>"Use a photo"</b> below to take a selfie or pick from your library.<br><br><span style="opacity:.65;font-size:12px">To use live camera: go to Settings → Safari → Camera and allow access for this site.</span>'
+        : '<b>Camera permission was declined.</b><br><br>Click "Use a photo" to upload an image instead.';
+    } else if (reason === 'camera-unsupported') {
+      msg = 'This browser does not support camera access.<br><br>Tap <b>"Use a photo"</b> to take a selfie or pick from your library.';
+    } else {
+      msg = 'No camera available.<br><br>Tap <b>"Use a photo"</b> to take a selfie or pick from your library.';
+    }
+    f.innerHTML = msg;
     this.video.style.display = 'none';
     $('camGuide').style.display = 'none';
     $('btnSnap').style.display = 'none';
+    // Make "Use a photo" button more prominent
+    $('btnUpload').classList.add('primary');
   },
   reset() {
     this.result = null; this.dna = null; this.editing = null; this.shooting = false;
@@ -2636,6 +2647,7 @@ const Cam = {
     $('camRowEdit').style.display = 'none';
     $('camTiny').style.display = '';
     Preview.stop(); Preview.clearMii();
+    $('btnUpload').classList.remove('primary');
     closePalette();
     this.shot.style.display = 'none';
     this.video.style.display = '';
