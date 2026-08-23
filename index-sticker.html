@@ -43,20 +43,25 @@
       position: fixed;
       inset: 0;
       overflow: hidden;
+      pointer-events: none;
     }
 
     .sticker {
       position: absolute;
-      width: clamp(180px, 30vw, 350px);
+      width: 440px;
       height: auto;
       will-change: transform;
-      filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5));
+      filter: drop-shadow(0 15px 35px rgba(0,0,0,0.6));
+      transform-origin: center center;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
 
-    .sticker img {
+    .sticker video {
       width: 100%;
       height: auto;
       display: block;
+      pointer-events: none;
     }
 
     /* ——— Logo Overlay ——— */
@@ -205,9 +210,6 @@
         padding: 0.35rem 0.55rem;
       }
 
-      .sticker {
-        width: clamp(120px, 40vw, 200px);
-      }
     }
 
     /* ——— Scroll Spacer ——— */
@@ -373,7 +375,9 @@
 <body>
   <div class="sticker-container">
     <div class="sticker" id="sticker">
-      <img src="images/co-sticker.png" alt="CO sticker">
+      <video id="flagVid" autoplay loop muted playsinline disablepictureinpicture>
+        <source src="images/flag.webm" type="video/webm">
+      </video>
     </div>
   </div>
 
@@ -445,17 +449,45 @@
   <script>
     (function() {
       const sticker = document.getElementById('sticker');
-      const container = document.querySelector('.sticker-container');
+      const video = document.getElementById('flagVid');
       
-      const stickerRect = sticker.getBoundingClientRect();
-      const stickerWidth = stickerRect.width;
-      const stickerHeight = stickerRect.height;
+      // Ensure video plays
+      video.play().catch(() => {});
       
-      let x = Math.random() * (window.innerWidth - stickerWidth);
-      let y = Math.random() * (window.innerHeight - stickerHeight);
+      // Wait for video to load to get dimensions
+      let stickerWidth, stickerHeight;
+      
+      function initDimensions() {
+        const rect = sticker.getBoundingClientRect();
+        stickerWidth = rect.width;
+        stickerHeight = rect.height;
+      }
+      
+      // Offset to compensate for transparent padding in the video file
+      const VIDEO_PADDING = 40; // px of transparent space around the flag in the video
+      
+      // Get bounds (push past edge to compensate for video's transparent padding)
+      function getBounds() {
+        return {
+          minX: -VIDEO_PADDING,
+          maxX: window.innerWidth - stickerWidth + VIDEO_PADDING,
+          minY: -VIDEO_PADDING,
+          maxY: window.innerHeight - stickerHeight + VIDEO_PADDING
+        };
+      }
+      
+      // Initialize position within safe zone
+      function initPosition() {
+        initDimensions();
+        const bounds = getBounds();
+        x = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
+        y = bounds.minY + Math.random() * (bounds.maxY - bounds.minY);
+      }
+      
+      let x = 100, y = 100;
       
       // Speed as percentage of screen per second
-      const speedPercent = 24;
+      const speedPercent = 20;
       
       function getBaseSpeed() {
         return (Math.min(window.innerWidth, window.innerHeight) * speedPercent) / 100 / 60;
@@ -465,105 +497,159 @@
       let vx = baseSpeed * (Math.random() > 0.5 ? 1 : -1);
       let vy = baseSpeed * (Math.random() > 0.5 ? 1 : -1);
       
-      let cornerThreshold = 60;
+      // Spin physics
+      let currentRotation = 0;
+      let spinVelocity = 0; // degrees per frame
+      const spinFriction = 0.997; // How quickly spin slows down (higher = slower decay)
+      const spinImpulse = 1.5; // Initial spin speed on wall hit (degrees per frame)
       
-      function isNearCorner(x, y, w, h, screenW, screenH) {
-        const nearLeft = x < cornerThreshold;
-        const nearRight = x + w > screenW - cornerThreshold;
-        const nearTop = y < cornerThreshold;
-        const nearBottom = y + h > screenH - cornerThreshold;
+      const cornerThreshold = 80;
+      
+      function isNearCorner(x, y, bounds) {
+        const nearLeft = x < bounds.minX + cornerThreshold;
+        const nearRight = x > bounds.maxX - cornerThreshold;
+        const nearTop = y < bounds.minY + cornerThreshold;
+        const nearBottom = y > bounds.maxY - cornerThreshold;
         return (nearLeft || nearRight) && (nearTop || nearBottom);
       }
       
-      function nudgeAwayFromCorner() {
-        const w = stickerWidth;
-        const h = stickerHeight;
-        const screenW = window.innerWidth;
-        const screenH = window.innerHeight;
-        const nudge = baseSpeed * 0.2;
+      function nudgeAwayFromCorner(bounds) {
+        const nudge = baseSpeed * 0.25;
         
-        const nearLeft = x < cornerThreshold;
-        const nearRight = x + w > screenW - cornerThreshold;
-        const nearTop = y < cornerThreshold;
-        const nearBottom = y + h > screenH - cornerThreshold;
+        const nearLeft = x < bounds.minX + cornerThreshold;
+        const nearRight = x > bounds.maxX - cornerThreshold;
+        const nearTop = y < bounds.minY + cornerThreshold;
+        const nearBottom = y > bounds.maxY - cornerThreshold;
         
         if (nearLeft && nearTop) {
-          if (Math.abs(vx) < Math.abs(vy)) vx = Math.abs(vx) + nudge;
-          else vy = Math.abs(vy) + nudge;
+          vx = Math.abs(vx) + nudge;
+          vy = Math.abs(vy) + nudge;
         } else if (nearRight && nearTop) {
-          if (Math.abs(vx) < Math.abs(vy)) vx = -Math.abs(vx) - nudge;
-          else vy = Math.abs(vy) + nudge;
+          vx = -Math.abs(vx) - nudge;
+          vy = Math.abs(vy) + nudge;
         } else if (nearLeft && nearBottom) {
-          if (Math.abs(vx) < Math.abs(vy)) vx = Math.abs(vx) + nudge;
-          else vy = -Math.abs(vy) - nudge;
+          vx = Math.abs(vx) + nudge;
+          vy = -Math.abs(vy) - nudge;
         } else if (nearRight && nearBottom) {
-          if (Math.abs(vx) < Math.abs(vy)) vx = -Math.abs(vx) - nudge;
-          else vy = -Math.abs(vy) - nudge;
+          vx = -Math.abs(vx) - nudge;
+          vy = -Math.abs(vy) - nudge;
         }
         
-        const maxSpeed = baseSpeed * 1.8;
+        // Clamp speed
+        const maxSpeed = baseSpeed * 1.6;
         vx = Math.max(-maxSpeed, Math.min(maxSpeed, vx));
         vy = Math.max(-maxSpeed, Math.min(maxSpeed, vy));
       }
       
-      // Use setInterval as fallback for low power mode (less throttled than rAF)
       let lastTime = performance.now();
       const targetFPS = 60;
       const interval = 1000 / targetFPS;
       
       function update() {
         const now = performance.now();
-        const deltaTime = Math.min((now - lastTime) / interval, 3); // Cap delta to prevent jumps
+        const deltaTime = Math.min((now - lastTime) / interval, 3);
         lastTime = now;
         
-        const w = stickerWidth;
-        const h = stickerHeight;
-        const screenW = window.innerWidth;
-        const screenH = window.innerHeight;
+        const bounds = getBounds();
         
+        // Update position
         x += vx * deltaTime;
         y += vy * deltaTime;
         
-        if (x <= 0) { x = 0; vx = Math.abs(vx); }
-        else if (x + w >= screenW) { x = screenW - w; vx = -Math.abs(vx); }
+        // Bounce off boundaries with spin
+        let hitWall = false;
         
-        if (y <= 0) { y = 0; vy = Math.abs(vy); }
-        else if (y + h >= screenH) { y = screenH - h; vy = -Math.abs(vy); }
+        if (x <= bounds.minX) {
+          x = bounds.minX;
+          vx = Math.abs(vx);
+          vy += (Math.random() - 0.5) * baseSpeed * 0.3;
+          hitWall = true;
+          spinVelocity = (Math.random() > 0.5 ? 1 : -1) * spinImpulse * (0.8 + Math.random() * 0.4);
+        } else if (x >= bounds.maxX) {
+          x = bounds.maxX;
+          vx = -Math.abs(vx);
+          vy += (Math.random() - 0.5) * baseSpeed * 0.3;
+          hitWall = true;
+          spinVelocity = (Math.random() > 0.5 ? 1 : -1) * spinImpulse * (0.8 + Math.random() * 0.4);
+        }
         
-        if (isNearCorner(x, y, w, h, screenW, screenH)) {
-          nudgeAwayFromCorner();
+        if (y <= bounds.minY) {
+          y = bounds.minY;
+          vy = Math.abs(vy);
+          vx += (Math.random() - 0.5) * baseSpeed * 0.3;
+          hitWall = true;
+          spinVelocity = (Math.random() > 0.5 ? 1 : -1) * spinImpulse * (0.8 + Math.random() * 0.4);
+        } else if (y >= bounds.maxY) {
+          y = bounds.maxY;
+          vy = -Math.abs(vy);
+          vx += (Math.random() - 0.5) * baseSpeed * 0.3;
+          hitWall = true;
+          spinVelocity = (Math.random() > 0.5 ? 1 : -1) * spinImpulse * (0.8 + Math.random() * 0.4);
+        }
+        
+        // Corner avoidance
+        if (isNearCorner(x, y, bounds)) {
+          nudgeAwayFromCorner(bounds);
         } else {
+          // Gradual speed normalization
           const speedMag = Math.sqrt(vx * vx + vy * vy);
-          if (speedMag > baseSpeed) {
-            const decay = Math.pow(0.995, deltaTime);
+          if (speedMag > baseSpeed * 1.1) {
+            const decay = Math.pow(0.992, deltaTime);
             vx *= decay;
             vy *= decay;
           }
         }
         
-        sticker.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        // Apply spin with friction (slows down over time)
+        currentRotation += spinVelocity * deltaTime;
+        spinVelocity *= Math.pow(spinFriction, deltaTime);
+        
+        // Stop spinning when very slow
+        if (Math.abs(spinVelocity) < 0.01) {
+          spinVelocity = 0;
+        }
+        
+        // Apply transform with rotation
+        sticker.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${currentRotation}deg)`;
       }
       
-      sticker.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      // Initialize after video loads
+      if (video.readyState >= 1) {
+        initPosition();
+        sticker.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      } else {
+        video.addEventListener('loadedmetadata', () => {
+          initPosition();
+          sticker.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        });
+      }
       
-      // Use both rAF and setInterval for best coverage
+      // Fallback init
+      setTimeout(() => {
+        if (!stickerWidth) {
+          initPosition();
+          sticker.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        }
+      }, 100);
+      
+      // Animation loop with both rAF and setInterval for low power mode
       function animateRAF() {
         update();
         requestAnimationFrame(animateRAF);
       }
       
-      // setInterval runs even in low power mode (though slower)
       setInterval(update, interval);
       requestAnimationFrame(animateRAF);
       
+      // Handle resize - clamp position to safe zone
       window.addEventListener('resize', () => {
-        const screenW = window.innerWidth;
-        const screenH = window.innerHeight;
+        initDimensions();
         baseSpeed = getBaseSpeed();
-        if (x + stickerWidth > screenW) x = screenW - stickerWidth;
-        if (y + stickerHeight > screenH) y = screenH - stickerHeight;
-        if (x < 0) x = 0;
-        if (y < 0) y = 0;
+        const bounds = getBounds();
+        
+        // Clamp position to safe zone
+        x = Math.max(bounds.minX, Math.min(bounds.maxX, x));
+        y = Math.max(bounds.minY, Math.min(bounds.maxY, y));
       });
     })();
   </script>
