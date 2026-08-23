@@ -2624,22 +2624,60 @@ const Cam = {
     const f = $('camFail');
     f.style.display = 'block';
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // Build a friendly message with action buttons
     let msg = '';
-    if (reason === 'camera-denied') {
-      msg = isMobile
-        ? '<b>Camera access needed</b><br><br>Tap <b>"Use a photo"</b> below to take a selfie or pick from your library.<br><br><span style="opacity:.65;font-size:12px">To use live camera: go to Settings → Safari → Camera and allow access for this site.</span>'
-        : '<b>Camera permission was declined.</b><br><br>Click "Use a photo" to upload an image instead.';
-    } else if (reason === 'camera-unsupported') {
-      msg = 'This browser does not support camera access.<br><br>Tap <b>"Use a photo"</b> to take a selfie or pick from your library.';
+    if (reason === 'camera-denied' && isMobile) {
+      msg = `<div style="text-align:center;padding:10px 0">
+        <div style="font-size:40px;margin-bottom:12px">📸</div>
+        <div style="font-size:15px;font-weight:700;color:#3a4a55;margin-bottom:16px">Take a photo to create your Mii</div>
+        <button class="wbtn primary" style="width:100%;margin-bottom:10px;font-size:14px" onclick="document.getElementById('fileIn').click()">
+          <span class="lbl">📷 Take a selfie or choose photo</span>
+        </button>
+        <button class="wbtn" style="width:100%;font-size:12px" onclick="Cam.retryCamera()">
+          <span class="lbl">🔄 I enabled camera — try again</span>
+        </button>
+        <div style="margin-top:14px;font-size:11px;color:#9ab;line-height:1.5">To enable live camera: tap <b>aA</b> in Safari's address bar → Website Settings → Camera → Allow</div>
+      </div>`;
+    } else if (reason === 'camera-denied') {
+      msg = `<div style="text-align:center;padding:10px 0">
+        <div style="font-size:15px;font-weight:700;color:#3a4a55;margin-bottom:16px">Camera permission needed</div>
+        <button class="wbtn primary" style="width:100%;margin-bottom:10px" onclick="document.getElementById('fileIn').click()">
+          <span class="lbl">Upload a photo</span>
+        </button>
+        <button class="wbtn" style="width:100%" onclick="Cam.retryCamera()">
+          <span class="lbl">Try camera again</span>
+        </button>
+      </div>`;
     } else {
-      msg = 'No camera available.<br><br>Tap <b>"Use a photo"</b> to take a selfie or pick from your library.';
+      msg = `<div style="text-align:center;padding:10px 0">
+        <div style="font-size:15px;font-weight:700;color:#3a4a55;margin-bottom:16px">No camera available</div>
+        <button class="wbtn primary" style="width:100%" onclick="document.getElementById('fileIn').click()">
+          <span class="lbl">📷 Take or choose a photo</span>
+        </button>
+      </div>`;
     }
     f.innerHTML = msg;
     this.video.style.display = 'none';
     $('camGuide').style.display = 'none';
     $('btnSnap').style.display = 'none';
-    // Make "Use a photo" button more prominent
-    $('btnUpload').classList.add('primary');
+    $('camRowLive').style.display = 'none';
+  },
+  async retryCamera() {
+    $('camFail').style.display = 'none';
+    $('camRowLive').style.display = 'flex';
+    $('btnSnap').style.display = '';
+    this.video.style.display = '';
+    $('camGuide').style.display = '';
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 960 }, height: { ideal: 720 }, facingMode: 'user' }, audio: false
+      });
+      this.video.srcObject = this.stream;
+      await this.video.play().catch(() => {});
+    } catch (err) {
+      this.fail(err && err.name === 'NotAllowedError' ? 'camera-denied' : 'camera-unavailable');
+    }
   },
   reset() {
     this.result = null; this.dna = null; this.editing = null; this.shooting = false;
