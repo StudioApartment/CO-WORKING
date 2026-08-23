@@ -1189,6 +1189,7 @@ function randomDNA(opts = {}) {
     mouth: { style: randi(0, 5), w: rand(13, 19), h: rand(2.4, 4), y: rand(66, 71) },
     nose: { size: rand(0.098, 0.142), y: rand(-0.14, -0.02) },
     shirt: opts.shirt || pickOne(SHIRTS),
+    hatColor: opts.hatColor || pickOne(SHIRTS),
     pants: pickOne(PANTS),
     shoes: pickOne(SHOES),
     headSize: rand(0.94, 1.06),
@@ -1290,7 +1291,7 @@ function buildHair(dna, mat, extraMats) {
 
   if (HATS[st]) {
     const H = HATS[st];
-    const crownCol = H.crown || dna.shirt;
+    const crownCol = H.crown || dna.hatColor || dna.shirt;
     const accCol = H.accent || shade(crownCol, -46);
     const hatMat = new THREE.MeshStandardMaterial({ color: crownCol, roughness: 0.62, metalness: 0.02 });
     const accMat = new THREE.MeshStandardMaterial({ color: accCol, roughness: 0.55, metalness: 0.02 });
@@ -2824,7 +2825,7 @@ function bindButtons() {
     if (e.key === 'Escape') Cam.close();
     if (e.key === 'm' || e.key === 'M') $('btnSound').click();
   });
-  $('modal').addEventListener('pointerdown', (e) => { if (e.target === $('modal')) Cam.close(); });
+  // Removed: clicking outside modal no longer closes it - only Cancel/X buttons do
 }
 bindButtons();
 
