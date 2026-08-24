@@ -527,6 +527,45 @@ try {
   check('recovery validates the address',
     await evaluate("document.getElementById('recoverBanner').classList.contains('bad')"));
 
+  console.log('\nlocal save still shows the badge card');
+  await evaluate(`(() => {
+    MiiPlaza.Config.storage = 'legacy';
+    MiiPlaza.Config.features.sessions = false;
+  })()`);
+  await evaluate("document.getElementById('camX') && document.getElementById('camX').click()");
+  await sleep(300);
+  await evaluate("document.getElementById('btnCamera').click()");
+  await sleep(500);
+  await evaluate(`(async () => {
+    const c = document.createElement('canvas');
+    c.width = 300; c.height = 300;
+    const g = c.getContext('2d');
+    g.fillStyle = '#8899aa'; g.fillRect(0, 0, 300, 300);
+    g.fillStyle = '#f0c9a4'; g.beginPath(); g.ellipse(150, 150, 78, 96, 0, 0, 7); g.fill();
+    g.fillStyle = '#3b2415'; g.fillRect(60, 42, 180, 52);
+    g.fillStyle = '#2a2a2a'; g.beginPath(); g.arc(122, 142, 9, 0, 7); g.fill();
+    g.beginPath(); g.arc(178, 142, 9, 0, 7); g.fill();
+    g.fillStyle = '#a5474a'; g.fillRect(128, 196, 44, 11);
+    const img = new Image();
+    await new Promise((r) => { img.onload = r; img.src = c.toDataURL('image/png'); });
+    MiiPlaza.Cam.capture(img);
+  })()`);
+  await sleep(800);
+  await evaluate("document.getElementById('miiName').value = 'Local';");
+  await evaluate("document.getElementById('btnAccept').click()");
+  await sleep(800);
+  check('local claim still opens the badge panel',
+    await evaluate("document.getElementById('camBadge').classList.contains('show')"));
+  check('local badge names the holder',
+    await evaluate("document.getElementById('badgeWho').textContent === 'Local'"));
+  check('local badge shows days at CO—WORKING',
+    await evaluate("/CO—WORKING/.test(document.getElementById('badgeSince').textContent)"));
+  check('local badge shows the Mii',
+    await evaluate(`(() => {
+      const mii = document.getElementById('badgeMii');
+      return !!(mii.getAttribute('src') && getComputedStyle(mii).display !== 'none');
+    })()`));
+
   console.log('\nadmin portal');
   await openPage('/admin');
   check('gate is shown first', await evaluate("!document.getElementById('gate').hidden"));
