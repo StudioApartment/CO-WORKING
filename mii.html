@@ -4,6 +4,14 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1" />
 <meta name="theme-color" content="#dfe8ef" />
+<script>
+/* Phones often open the apex; a GET with extra headers then 308s to www and
+   Safari drops it as a failed CORS preflight, which looks like "Office is
+   offline" while desktop on www is fine. Land on www before any fetch. */
+if (location.hostname === 'coworking.fyi') {
+  location.replace('https://www.coworking.fyi' + location.pathname + location.search + location.hash);
+}
+</script>
 <title>Mii Plaza</title>
 <style>
 /* ============================================================
@@ -4618,7 +4626,10 @@ const Store = {
   expectsCloud() {
     return Config.storage !== 'legacy' || Config.features.sessions;
   },
-  _api(path) { return '/api/' + String(path || '').replace(/^\/+/, ''); },
+  _api(path) {
+    const p = '/api/' + String(path || '').replace(/^\/+/, '');
+    try { return new URL(p, location.origin).href; } catch { return p; }
+  },
   _sleep(ms) { return new Promise((ok) => setTimeout(ok, ms)); },
   _isLocalId(id) { return typeof id === 'string' && id.charAt(0) === 'l'; },
   /* Only issued when the server could not sign a session cookie. Returned
@@ -4686,8 +4697,14 @@ const Store = {
     let lastErr = null;
     for (let i = 0; i < attempts; i++) {
       try {
+        /* No custom headers: a GET with x-token is not "simple", and Safari
+           on a phone that hit the apex then followed a 308 to www aborts it.
+           The session cookie still marks `mine`; the legacy token is only
+           sent on writes. Last try omits credentials in case the cookie is
+           what Safari is choking on. */
         const r = await fetch(this._api('miis'), {
-          cache: 'no-store', credentials: 'same-origin', headers: this._head(false)
+          cache: 'no-store',
+          credentials: i === attempts - 1 && attempts > 1 ? 'omit' : 'same-origin'
         });
         if (!r.ok) throw new Error(r.status);
         const list = await r.json();
