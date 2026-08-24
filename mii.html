@@ -1538,7 +1538,16 @@ function drawEyewear(g, U, dna) {
    Original canvas drawings in American-traditional grammar (bold outline,
    limited colour, flat fill), not copies of any flash sheet or celebrity
    piece. Motifs: rose, swallow, nautical star, empty banner, botanical
-   vine, asemic script, knuckle bars that only look like lettering. */
+   vine, asemic script, knuckle bars that only look like lettering.
+
+   Palette lives here, above the painters, so the fills are in scope when
+   the module evaluates — ketchup / relish / navy packed hard enough that
+   a 20px-tall Mii still reads as a flower or a bird. */
+const INK = '#141c26';
+const INK_RED  = '#c41e2a';
+const INK_LEAF = '#2f6a3c';
+const INK_NAVY = '#1a2838';
+
 function inkOutline(g, w) {
   g.strokeStyle = INK;
   g.lineCap = 'round';
@@ -1575,47 +1584,47 @@ function inkStar(g, r) {
 }
 
 function inkRose(g, r) {
-  /* Traditional rose: two-circle construction, crescent petals, two leaves.
-     Spiral centre so it still reads as a flower after minification. */
-  const lw = Math.max(1.5, r * 0.12);
+  /* Traditional rose as a red disc with five petal lobes and two leaves.
+     A dark inner ring used to swallow the red; keep the centre small so
+     the ketchup fill survives minification. */
+  const lw = Math.max(2.2, r * 0.14);
   const leaf = (ang, lr) => {
     g.save();
     g.rotate(ang);
     g.beginPath();
-    g.moveTo(r * 0.15, 0);
-    g.quadraticCurveTo(lr * 0.55, -lr * 0.42, lr * 1.12, 0);
-    g.quadraticCurveTo(lr * 0.55, lr * 0.42, r * 0.15, 0);
+    g.moveTo(r * 0.2, 0);
+    g.quadraticCurveTo(lr * 0.6, -lr * 0.48, lr * 1.2, 0);
+    g.quadraticCurveTo(lr * 0.6, lr * 0.48, r * 0.2, 0);
     g.closePath();
     g.fillStyle = INK_LEAF; g.fill();
     inkOutline(g, lw); g.stroke();
     g.beginPath();
-    g.moveTo(r * 0.28, 0); g.lineTo(lr * 0.95, 0);
-    g.lineWidth = lw * 0.7; g.stroke();
+    g.moveTo(r * 0.32, 0); g.lineTo(lr * 1.02, 0);
+    g.lineWidth = lw * 0.65; g.stroke();
     g.restore();
   };
-  leaf(2.45, r * 0.95);
-  leaf(-2.45, r * 0.9);
+  leaf(2.5, r * 1.05);
+  leaf(-2.5, r * 1.0);
 
   g.fillStyle = INK_RED;
   inkOutline(g, lw);
-  const petals = 6;
+  const petals = 5;
   for (let i = 0; i < petals; i++) {
-    const a = -Math.PI / 2 + (i + 0.5) * TAU / petals;
+    const a = -Math.PI / 2 + i * TAU / petals;
     g.beginPath();
-    g.ellipse(Math.cos(a) * r * 0.4, Math.sin(a) * r * 0.4,
-              r * 0.5, r * 0.34, a, 0, TAU);
+    g.arc(Math.cos(a) * r * 0.42, Math.sin(a) * r * 0.42, r * 0.46, 0, TAU);
     g.fill(); g.stroke();
   }
   g.beginPath();
-  g.arc(0, 0, r * 0.38, 0, TAU);
-  g.fillStyle = '#7a1520'; g.fill(); g.stroke();
-  inkOutline(g, lw * 1.05);
+  g.arc(0, 0, r * 0.52, 0, TAU);
+  g.fill(); g.stroke();
   g.beginPath();
-  g.arc(r * 0.05, -r * 0.04, r * 0.18, 0.15 * Math.PI, 1.55 * Math.PI);
-  g.stroke();
-  g.beginPath();
-  g.arc(0, 0, r * 0.08, 0, TAU);
+  g.arc(0, 0, r * 0.18, 0, TAU);
   g.fillStyle = INK; g.fill();
+  inkOutline(g, lw);
+  g.beginPath();
+  g.arc(r * 0.04, -r * 0.02, r * 0.1, 0.2 * Math.PI, 1.5 * Math.PI);
+  g.stroke();
 }
 
 function inkSwallow(g, s) {
@@ -1784,51 +1793,39 @@ function drawNeckInk(g, U, dna) {
   g.lineCap = 'round';
   g.lineJoin = 'round';
 
-  /* Left jaw: traditional rose, vine climbing the mandible, nautical star. */
+  /* Left jaw: a big traditional rose plus a nautical star. Vines at this
+     scale collapsed into slashes, so the flower has to carry the read. */
   g.save();
-  g.translate(26.5 * U, 77 * U);
-  inkRose(g, 10.8 * U);
+  g.translate(24 * U, 78 * U);
+  inkRose(g, 14.5 * U);
   g.restore();
 
   g.save();
-  g.translate(21 * U, 90 * U);
-  g.rotate(-1.18);
-  inkVine(g, 26 * U, 2.15 * U);
-  g.restore();
-
-  g.save();
-  g.translate(17.5 * U, 65.5 * U);
-  inkStar(g, 5.1 * U);
+  g.translate(16.5 * U, 64 * U);
+  inkStar(g, 6.4 * U);
   g.restore();
 
   /* Right jaw: swallow in a dive, empty banner, matching star. */
   g.save();
-  g.translate(73 * U, 74 * U);
-  g.rotate(-0.32);
-  inkSwallow(g, 14.5 * U);
+  g.translate(74 * U, 75 * U);
+  g.rotate(-0.28);
+  inkSwallow(g, 17.5 * U);
   g.restore();
 
   g.save();
-  g.translate(75 * U, 88.5 * U);
-  inkBanner(g, 20 * U, 6.8 * U);
+  g.translate(76 * U, 90 * U);
+  inkBanner(g, 22 * U, 7.4 * U);
   g.restore();
 
   g.save();
-  g.translate(83.5 * U, 65.5 * U);
-  inkStar(g, 4.7 * U);
-  g.restore();
-
-  g.save();
-  g.translate(79 * U, 90 * U);
-  g.scale(-1, 1);
-  g.rotate(-1.18);
-  inkVine(g, 22 * U, 2.0 * U);
+  g.translate(84.5 * U, 64 * U);
+  inkStar(g, 6.0 * U);
   g.restore();
 
   /* Chin: script-like band. Loops only — no readable word. */
   g.save();
-  g.translate(50 * U, 90.5 * U);
-  inkScript(g, 24 * U, 2.5 * U);
+  g.translate(50 * U, 91 * U);
+  inkScript(g, 22 * U, 3.1 * U);
   g.restore();
 }
 
@@ -2192,14 +2189,6 @@ const TATTOOS = [
   { id: 'neck',  label: 'Jaw' },
   { id: 'both',  label: 'Both' }
 ];
-/* Near-black with a blue cast, the way healed ink actually looks. The earlier
-   value was light enough that it disappeared against darker skin tones. */
-const INK = '#141c26';
-/* Traditional flash palette — ketchup / relish / navy — packed hard so a
-   20px-tall Mii still reads as a rose or a swallow rather than a smudge. */
-const INK_RED  = '#b01e28';
-const INK_LEAF = '#3a6b45';
-const INK_NAVY = '#1a2838';
 
 /* ---- apparel ------------------------------------------------
    `kind` selects the torso texture painter; `hood`/`open` add
@@ -2875,23 +2864,18 @@ function makeInkTexture(kind) {
   const front = S * 0.25;
   wrapped(front, () => {
     g.save();
-    g.translate(0, S * 0.28);
-    inkKnuckleBars(g, S * 0.3);
+    g.translate(0, S * 0.26);
+    inkKnuckleBars(g, S * 0.34);
     g.restore();
 
     g.save();
-    g.translate(0, S * 0.5);
-    inkRose(g, S * 0.155);
+    g.translate(0, S * 0.52);
+    inkRose(g, S * 0.18);
     g.restore();
 
     g.save();
-    g.translate(-S * 0.13, S * 0.7);
-    inkStar(g, S * 0.055);
-    g.restore();
-
-    g.save();
-    g.translate(S * 0.12, S * 0.695);
-    inkBanner(g, S * 0.2, S * 0.055);
+    g.translate(0, S * 0.74);
+    inkStar(g, S * 0.07);
     g.restore();
   });
 
