@@ -1638,20 +1638,33 @@ function drawFacialHair(g, U, dna) {
   g.setTransform(1, 0, 0, 1, 0, 0);
 
   if (st === 'stubble') {
-    /* Stipple, not a wash: a translucent blob vanished against skin and
-       shimmered on every redraw when it was Math.random. */
+    /* Light 5-o'clock shadow across the beard zone — both cheeks, jaw,
+       chin, philtrum — not a dense chin island. A translucent wash vanished
+       against skin, so this stays stipple, just finer and quieter. Seeded
+       so it does not shimmer on redraw. */
     let s = 2166136261;
     const key = String(dna.hair.color) + st;
     for (let i = 0; i < key.length; i++) s = Math.imul(s ^ key.charCodeAt(i), 16777619);
     const rnd = () => { s = Math.imul(s ^ (s >>> 15), 2246822519); return (s >>> 0) / 4294967296; };
     g.fillStyle = col;
-    for (let i = 0; i < 140; i++) {
-      const t = rnd();
-      const x = (50 + (rnd() - 0.5) * 28) * U;
-      const y = (56 + t * 30) * U;
-      const r = (0.45 + rnd() * 0.7) * U;
-      g.globalAlpha = 0.55 + rnd() * 0.4;
-      g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+    /* Rejection-sample a beard-shaped mask so density stays even on the
+       wide cheeks instead of piling up on the chin. x stays inside ~30–70
+       so the patch wrap does not pull it into a chinstrap. */
+    let placed = 0, guard = 0;
+    while (placed < 640 && guard < 5000) {
+      guard++;
+      const x = 30 + rnd() * 40;
+      const y = 51 + rnd() * 42;
+      const dx = Math.abs(x - 50);
+      const t = (y - 51) / 42;
+      let outer = 19.6;
+      if (t > 0.80) outer = 19.6 - (t - 0.80) * 32;
+      const inner = t < 0.14 ? 8.4 : 0;
+      if (dx < inner || dx > outer) continue;
+      const r = (0.22 + rnd() * 0.34) * U;
+      g.globalAlpha = 0.18 + rnd() * 0.20;
+      g.beginPath(); g.arc(x * U, y * U, r, 0, TAU); g.fill();
+      placed++;
     }
     g.globalAlpha = 1;
     return;
