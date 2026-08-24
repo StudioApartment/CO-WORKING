@@ -122,6 +122,26 @@ try {
   check('email field hidden before a photo',
     await evaluate("getComputedStyle(document.getElementById('camEmailRow')).display === 'none'"));
 
+  // A dismiss control has to be present and reachable in every state, not
+  // just the ones that happen to carry a Cancel button.
+  check('close button is visible on open', await evaluate(`(() => {
+    const x = document.getElementById('camX');
+    const r = x.getBoundingClientRect();
+    return r.width >= 30 && r.height >= 30 && getComputedStyle(x).visibility === 'visible';
+  })()`));
+  check('close button is labelled for screen readers',
+    await evaluate("document.getElementById('camX').getAttribute('aria-label') === 'Close'"));
+  check('the dialog announces itself',
+    await evaluate("document.getElementById('modal').getAttribute('role') === 'dialog'"));
+  check('close button dismisses the modal', await evaluate(`(() => {
+    document.getElementById('camX').click();
+    return !document.getElementById('modal').classList.contains('open');
+  })()`));
+  await evaluate("document.getElementById('btnCamera').click()");
+  await sleep(500);
+  check('and the modal reopens cleanly',
+    await evaluate("document.getElementById('modal').classList.contains('open')"));
+
   // A photo is normally captured from a webcam; a synthetic face-ish canvas
   // exercises the same analyze -> DNA -> preview path headlessly.
   await evaluate(`(async () => {
@@ -346,6 +366,11 @@ try {
     await evaluate("document.getElementById('badgeNote').textContent.includes('Wallet')"));
   check('badge chip now visible',
     await evaluate("document.getElementById('mineChip').classList.contains('show')"));
+  // The badge screen only carries a Done button, so the X is the other way out.
+  check('close button still reachable on the badge screen', await evaluate(`(() => {
+    const x = document.getElementById('camX');
+    return x.getBoundingClientRect().width >= 30 && x.offsetParent !== null;
+  })()`));
   check('chip shows the name',
     await evaluate("document.getElementById('mineName').textContent === 'Flow'"));
 

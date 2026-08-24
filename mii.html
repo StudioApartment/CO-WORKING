@@ -223,11 +223,40 @@ body.native-cursor #pointer{display:none}
 #modal.open{display:grid;animation:fadeIn .25s ease both}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .card{
+  position:relative;
   width:min(560px,94vw);max-height:94vh;overflow:auto;
   background:linear-gradient(180deg,#ffffff,#eef5f8);
   border-radius:30px;padding:20px 22px 16px;
   box-shadow:0 26px 70px rgba(60,90,115,.36),0 0 0 3px #fff,0 0 0 6px #cad7e0;
   animation:cardIn .4s cubic-bezier(.2,1.4,.4,1) both;
+}
+
+/* Dismiss control. The card scrolls, so a plain absolute corner button would
+   slide out of view on a long panel; a zero-height sticky row keeps it pinned
+   to whatever the top of the card currently is. */
+.card-xwrap{
+  position:sticky;top:0;height:0;z-index:6;
+  display:flex;justify-content:flex-end;pointer-events:none;
+}
+.card-x{
+  pointer-events:auto;
+  width:36px;height:36px;margin:-4px -4px 0 0;
+  border:0;border-radius:50%;cursor:pointer;
+  display:grid;place-items:center;color:#8ba0ad;
+  background:linear-gradient(#fff,#e9f0f4);
+  box-shadow:inset 0 1px 0 #fff,0 2px 5px rgba(90,115,135,.26),0 0 0 2px #fff,0 0 0 3px #d2dde4;
+  transition:transform .12s ease,color .12s ease;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.card-x:hover{color:#d0453c;transform:translateY(-1px)}
+.card-x:active{transform:translateY(1px)}
+/* keep long headings clear of it */
+.card h2{padding-right:42px}
+
+@media (max-width:560px){
+  /* 44px minimum for a thumb */
+  .card-x{width:44px;height:44px;margin:-2px -2px 0 0}
+  .card h2{padding-right:48px}
 }
 @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.94)}to{opacity:1;transform:none}}
 .card h2{margin:0 0 3px;font-size:21px;color:var(--ink-dk);font-weight:900}
@@ -543,8 +572,16 @@ body.native-cursor #pointer{display:none}
 </div>
 
 <!-- ========================= CAMERA MODAL ========================= -->
-<div id="modal">
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="camTitle">
   <div class="card">
+    <div class="card-xwrap">
+      <button type="button" class="card-x" id="camX" aria-label="Close" title="Close">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="3.2" stroke-linecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18"/>
+        </svg>
+      </button>
+    </div>
     <h2 id="camTitle">Get your badge</h2>
     <p class="sub" id="camSub">Line your face up with the oval and smile. Everything happens on this page &mdash; the photo never leaves your device.</p>
 
@@ -4627,6 +4664,7 @@ function bindButtons() {
 
   $('btnCamera').addEventListener('click', () => Cam.open());
   $('btnCamClose').addEventListener('click', () => Cam.close());
+  $('camX').addEventListener('click', () => { Sound.fx.click(); Cam.close(); });
   $('btnSnap').addEventListener('click', () => Cam.snap());
   $('btnRetake').addEventListener('click', () => { Cam.reset(); if (!Cam.stream) Cam.open(); });
   $('btnAccept').addEventListener('click', () => Cam.accept());
