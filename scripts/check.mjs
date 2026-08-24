@@ -99,7 +99,44 @@ for (const [page, ids] of required) {
     note('✗', 'mii.html — missing apex→www bounce (phones otherwise see the office as offline)');
     failures++;
   } else {
-    note('✓', 'mii.html pins API calls at /api/ and keys claiming off Config');
+    const listBlock = src.match(/async list\(\) \{[\s\S]*?\n  \},\n\n  \/\*\*/);
+    if (!listBlock) {
+      note('✗', 'mii.html — could not find Store.list()');
+      failures++;
+    } else if (listBlock[0].includes('_head(') || !listBlock[0].includes("credentials: 'omit'")) {
+      note('✗', 'mii.html — list() must be a simple GET (credentials omit, no x-token)');
+      failures++;
+    } else {
+      note('✓', 'mii.html pins API calls at /api/ and keys claiming off Config');
+    }
+  }
+}
+
+/* A broken vercel.json fails the production deploy while GitHub still
+   merges — the last plaza fix never reached phones because of that. */
+{
+  try {
+    const cfg = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'));
+    const sources = (cfg.headers || []).map((h) => h && h.source);
+    if (!sources.includes('/admin')) {
+      note('✗', 'vercel.json — missing /admin header block');
+      failures++;
+    } else if (!sources.includes('/mii') || !sources.includes('/mii.html')) {
+      note('✗', 'vercel.json — /mii must be no-store so phones do not keep a stale plaza');
+      failures++;
+    } else {
+      const mii = (cfg.headers || []).find((h) => h && h.source === '/mii');
+      const keys = (mii.headers || []).map((h) => h && h.key);
+      if (!keys.includes('Vercel-CDN-Cache-Control') && !keys.includes('CDN-Cache-Control')) {
+        note('✗', 'vercel.json — /mii needs a CDN no-store header (Cache-Control alone still HITs)');
+        failures++;
+      } else {
+        note('✓', 'vercel.json parses and pins /mii off the CDN');
+      }
+    }
+  } catch (e) {
+    note('✗', `vercel.json — ${e.message}`);
+    failures++;
   }
 }
 
