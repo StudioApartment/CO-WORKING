@@ -200,7 +200,7 @@ off — nothing gets skipped on the way in.
 |---|---|
 | Eyewear | 19 across plastic, metal, sunglasses and wrap-around baseball shades |
 | Hair | 30 real cuts: buzz, crew, French crop, waves, pixie, bowl, comb over, side part, quiff, pompadour, swoop, slick back, swept, spiky, curtains, afro, locs, bob, shag, wolf cut, mullet, flow, long, bun, ponytail, high ponytail, pigtails, long layers, space buns, bald |
-| Headwear | 13 including flat-brim, dad hat, bucket, cowboy, beanie, paisley bandanas in red / blue / green |
+| Headwear | 12 including flat-brim, dad hat, bucket, cowboy, beanie, paisley bandanas in red / blue / green — all three knotted at the back |
 | Facial hair | Stubble, lineup, full, goatee, moustache, handlebar |
 | Piercings | Nose stud, double nostril, septum — new characters start with none |
 | Ink | Hands, jaw, both |
