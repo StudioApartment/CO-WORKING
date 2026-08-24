@@ -2562,11 +2562,11 @@ function makeApparelTexture(dna) {
       }
       g.fillStyle = spec.trim;
       // Hem is a thin rib, not a second shirt. 72px digits used to cover the
-      // whole visible chest and wrap around the sides; 40 sits on the front
-      // and still reads at plaza distance. vy(0.42) keeps them below the
-      // head line (v≈0.36) on both front and back.
+      // whole visible chest and wrap around the sides; 32 sits on the front
+      // and still reads at plaza distance. vy(0.50) keeps them in the middle
+      // of the visible band (below v≈0.36) on both front and back.
       g.fillRect(0, H - 10, W, 10);                            // hem band
-      number(spec.num, spec.stripes ? '#ffffff' : spec.trim, vy(0.42), 40);
+      number(spec.num, spec.stripes ? '#ffffff' : spec.trim, vy(0.50), 32);
       break;
     }
   }
