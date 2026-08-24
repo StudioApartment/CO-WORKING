@@ -145,9 +145,9 @@ try {
       await sleep(220);
     }
   };
-  await stepTo('Headwear', 6);
+  await stepTo('Hat', 6);
   await stepTo('Eyewear', 12);
-  await stepTo('Outfit', 7);
+  await stepTo('Top', 7);
   await sleep(400);
   await shoot('02c-tray-stepped');
   await viewport(1280, 860);

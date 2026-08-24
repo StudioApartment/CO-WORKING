@@ -112,6 +112,19 @@ for (const [page, ids] of required) {
   }
 }
 
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("key: 'hat', label: 'Hat'") || !src.includes("key: 'apparel', label: 'Top'")) {
+    note('✗', 'mii.html — tray should say Hat and Top, not Headwear / Outfit');
+    failures++;
+  } else if (!src.includes("closest('#camPalette')")) {
+    note('✗', 'mii.html — colour palette must close when tapping outside it');
+    failures++;
+  } else {
+    note('✓', 'mii.html labels Hat / Top and dismisses the colour overlay');
+  }
+}
+
 /* A broken vercel.json fails the production deploy while GitHub still
    merges — the last plaza fix never reached phones because of that. */
 {

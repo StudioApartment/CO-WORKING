@@ -171,6 +171,8 @@ try {
     const cats = await evaluate(
       `[...document.querySelectorAll('.cyc .cat')].map(b => b.textContent)`);
     check('one shuffle button per category', cats.length >= 7, `got ${cats.length}: ${cats}`);
+    check('headwear is labelled Hat', cats.includes('Hat') && !cats.includes('Headwear'), cats.join(', '));
+    check('outfit is labelled Top', cats.includes('Top') && !cats.includes('Outfit'), cats.join(', '));
     check('ear jewellery is gone', !cats.includes('Ears'), cats.join(', '));
     // Kit colour and squad number are baked into each shirt now, so those two
     // steppers should be gone rather than sitting there doing nothing.
@@ -188,6 +190,17 @@ try {
     // tab row plus a grid of every option.
     const controls = await evaluate(`document.querySelectorAll('#camTray button').length`);
     check('the tray stays compact', controls <= 14, `${controls} controls`);
+    check('a colour chip closes when you tap elsewhere', await evaluate(`(() => {
+      const pick = document.querySelector('#camPickers .pick');
+      const pal = document.getElementById('camPalette');
+      if (!pick || !pal) return false;
+      pick.click();
+      if (!pal.classList.contains('open')) return false;
+      document.getElementById('camTitle').dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true })
+      );
+      return !pal.classList.contains('open');
+    })()`));
     check('steppers sit in one row', await evaluate(`(() => {
       const tops = [...document.querySelectorAll('.cyc')]
         .map(b => Math.round(b.getBoundingClientRect().top));
@@ -234,7 +247,7 @@ try {
         .find(b => b.querySelector('.cat').textContent === n);
       let guard = 0;
       while (!hats.includes(MiiPlaza.Cam.dna.hair.style) && guard++ < 40) {
-        byCat('Headwear').click();
+        byCat('Hat').click();
       }
       const hatOn = MiiPlaza.Cam.dna.hair.style;
       const hairUnder = MiiPlaza.Cam.dna._hairUnder;
