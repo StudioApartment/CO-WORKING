@@ -138,6 +138,10 @@ try {
   await sleep(400);
   await shoot('02b-tray-hair');
   await ev(`[...document.querySelectorAll('.tray-tab')]
+    .find(b => b.textContent === 'Headwear').click()`);
+  await sleep(500);
+  await shoot('02b2-tray-headwear');
+  await ev(`[...document.querySelectorAll('.tray-tab')]
     .find(b => b.textContent === 'Eyewear').click()`);
   await sleep(500);
   await shoot('02c-tray-eyewear');

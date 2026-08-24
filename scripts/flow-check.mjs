@@ -191,6 +191,36 @@ try {
       sweep.failures.slice(0, 3).join(' | '));
     check('swept a meaningful number of options', sweep.built > 80, `built ${sweep.built}`);
 
+    // Hair and hats share one slot, and volume has to stay above the brow
+    // line or it starts covering the eyes.
+    const cuts = await evaluate(`(() => {
+      const cat = MiiPlaza.catalog;
+      const hats = cat.HAT_STYLES;
+      const cutList = cat.HAIRSTYLES.filter(s => !hats.includes(s));
+      return { cuts: cutList.length, hats: hats.length,
+               overlap: cutList.filter(s => hats.includes(s)).length };
+    })()`);
+    check('haircuts and headwear are distinct sets', cuts.overlap === 0);
+    check('offers a real range of cuts', cuts.cuts >= 20, `${cuts.cuts} cuts`);
+    // A style with no label entry falls through to its raw lowercase id,
+    // which is how "combover" would reach the picker.
+    const unlabelled = await evaluate(`
+      MiiPlaza.catalog.HAIRSTYLES.filter(s => !/^[A-Z]/.test(MiiPlaza.styleLabel(s)))`);
+    check('every style has a display label', unlabelled.length === 0, unlabelled.join(', '));
+
+    // Retired novelty styles must not leave a stored character bald.
+    const aliased = await evaluate(`(() => {
+      const out = {};
+      for (const old of ['mohawk', 'buzzline', 'topknot', 'tails', 'undercut']) {
+        const d = MiiPlaza.normalizeDNA({ hair: { style: old, color: '#333' } });
+        out[old] = d.hair.style;
+      }
+      return out;
+    })()`);
+    check('retired styles map onto real cuts',
+      Object.values(aliased).every((v) => !['mohawk','buzzline','topknot','tails','undercut'].includes(v)),
+      JSON.stringify(aliased));
+
     // Legacy rows predate these fields; they must still render.
     const legacy = await evaluate(`(() => {
       try {

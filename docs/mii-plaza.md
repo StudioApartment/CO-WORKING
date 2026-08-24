@@ -182,7 +182,7 @@ event wiring.
 | Category | Options |
 |---|---|
 | Eyewear | 16 across plastic, metal and sunglasses |
-| Hair | 18 cuts including crop fade, dreads, undercut, top-knot, curtains, mohawk, afro fade |
+| Hair | 23 real cuts: buzz, crew, French crop, waves, pixie, bowl, comb over, side part, quiff, pompadour, slick back, swept, spiky, curtains, afro, afro fade, locs, bob, shag, long, bun, ponytail, bald |
 | Headwear | 11 including flat-brim, dad hat, bucket, cowboy, beanie, bandana front/back |
 | Facial hair | Stubble, lineup, full, goatee, moustache, handlebar |
 | Piercings | Nose, double nostril, septum, eyebrow bar, lip |
@@ -202,6 +202,34 @@ Three surfaces, chosen by what the feature needs:
   silhouette has to be geometry.
 - **Torso texture** (256px canvas) — garments. Jersey numbers and pocket
   details are painted, then hoods and open plackets are added as geometry.
+
+### Working in head space
+
+Hair and headwear are positioned in the head's local space, where the skull is
+a superellipsoid of radius 1. Three numbers matter, and getting them wrong is
+what produced every geometry bug so far:
+
+| Landmark | y |
+|---|---|
+| Top of the skull | 1.0 |
+| Brow line | 0.29 |
+| Eye line | 0.12 |
+| Mouth | −0.28 |
+
+- **Nothing opaque may cross y ≈ 0.29.** A beanie cuff placed at 0.06 spanned
+  −0.04 to 0.16 and sat straight across the eyes.
+- **`CylinderGeometry(1,1,1)` is centred**, so `scale.y` is the *total* height.
+  A crown must be centred half its height above the brim or it floats — the
+  cowboy hat and the original top hat both did.
+- **A crown must be wider than the hair shell at r=1.022.** The cowboy crown
+  was r=0.92 and vanished inside it. The skull is only 0.57 wide at y=0.9, so
+  r≈1.05 encloses it the way a real hat does.
+- **Long styles need the cap's back to reach the nape.** Stopping at the
+  hairline leaves a wedge you can see through from behind.
+
+Hair is built from open shells, so all hair and hat materials are
+`DoubleSide`. With backface culling on, any shell edge turning away from the
+camera shows straight through.
 
 ### Things the rig cannot do
 

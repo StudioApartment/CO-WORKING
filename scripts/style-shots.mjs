@@ -135,8 +135,11 @@ window.__styleSheet = async function (opts) {
     // 30 degree fov gives a visible half-height of 0.268*distance, so the
     // distance has to clear the tallest hat rather than just the skull.
     const framing = base.framing || 'head';
+    // A slight turn is essential for judging headwear and hair: dead-on hides
+    // brim depth, crown height and anything happening at the back.
+    holder.rotation.y = base.turn != null ? base.turn : 0;
     if (framing === 'head') {
-      cam.position.set(0, 1.44, 3.5); cam.lookAt(0, 1.34, 0);
+      cam.position.set(0, 1.5, 3.5); cam.lookAt(0, 1.34, 0);
     } else {
       cam.position.set(0, 1.05, 5.0); cam.lookAt(0, 0.86, 0);
     }
@@ -196,13 +199,37 @@ try {
       base: { dna: { hair: undefined }, framing: 'head' }
     },
     {
-      file: 'style-02-headwear',
-      title: 'Hairstyles and headwear',
+      file: 'style-02-haircuts',
+      title: 'Haircuts',
       field: 'hair.style',
-      pick: `MiiPlaza.catalog.HAIRSTYLES`,
-      labelExpr: `MiiPlaza.catalog.HAIRSTYLES`,
+      pick: `MiiPlaza.catalog.HAIRSTYLES.filter(s => !MiiPlaza.catalog.HAT_STYLES.includes(s))`,
+      labelExpr: `MiiPlaza.catalog.HAIRSTYLES
+        .filter(s => !MiiPlaza.catalog.HAT_STYLES.includes(s))
+        .map(s => MiiPlaza.styleLabel(s))`,
       cols: 8,
-      base: { framing: 'head' }
+      base: { framing: 'head', turn: -0.42 }
+    },
+    {
+      file: 'style-02b-headwear',
+      title: 'Headwear',
+      field: 'hair.style',
+      pick: `MiiPlaza.catalog.HAT_STYLES`,
+      labelExpr: `MiiPlaza.catalog.HAT_STYLES.map(s => MiiPlaza.styleLabel(s))`,
+      cols: 6,
+      base: { framing: 'head', turn: -0.42 }
+    },
+    {
+      // Rear three-quarter: open hair shells show their inside face here, so
+      // this is where see-through would appear if backface culling were on.
+      file: 'style-02c-haircuts-back',
+      title: 'Haircuts from behind — checking for see-through shells',
+      field: 'hair.style',
+      pick: `MiiPlaza.catalog.HAIRSTYLES.filter(s => !MiiPlaza.catalog.HAT_STYLES.includes(s))`,
+      labelExpr: `MiiPlaza.catalog.HAIRSTYLES
+        .filter(s => !MiiPlaza.catalog.HAT_STYLES.includes(s))
+        .map(s => MiiPlaza.styleLabel(s))`,
+      cols: 8,
+      base: { framing: 'head', turn: 2.5 }
     },
     {
       file: 'style-03-facial-hair',
