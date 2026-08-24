@@ -133,6 +133,21 @@ try {
   await sleep(300);
   await shoot('02-badge-form');
 
+  // style tray, on a couple of different categories
+  await viewport(1280, 980);
+  await sleep(400);
+  await shoot('02b-tray-hair');
+  await ev(`[...document.querySelectorAll('.tray-tab')]
+    .find(b => b.textContent === 'Eyewear').click()`);
+  await sleep(500);
+  await shoot('02c-tray-eyewear');
+  await ev(`[...document.querySelectorAll('.tray-tab')]
+    .find(b => b.textContent === 'Outfit').click()`);
+  await sleep(500);
+  await shoot('02d-tray-outfit');
+  await viewport(1280, 860);
+  await sleep(400);
+
   // duplicate-email banner
   await ev(`(async () => {
     await fetch('/api/miis', { method:'POST', headers:{'content-type':'application/json'},

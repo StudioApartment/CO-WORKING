@@ -172,6 +172,68 @@ boxes have no GPU and Three.js would otherwise fail to get a context.
 
 ---
 
+## Customisation
+
+Every option lives as data in the style catalogue near the top of `mii.html`,
+and both the renderers and the UI build themselves from those lists. Adding a
+frame shape or a jersey means adding one object — no new markup, no new
+event wiring.
+
+| Category | Options |
+|---|---|
+| Eyewear | 16 across plastic, metal and sunglasses |
+| Hair | 18 cuts including crop fade, dreads, undercut, top-knot, curtains, mohawk, afro fade |
+| Headwear | 11 including flat-brim, dad hat, bucket, cowboy, beanie, bandana front/back |
+| Facial hair | Stubble, lineup, full, goatee, moustache, handlebar |
+| Piercings | Nose, double nostril, septum, eyebrow bar, lip |
+| Ears | Hoops, studs, stacked |
+| Ink | Hands, neck, both |
+| Outfits | 11 including hoodie, flannel, denim, techwear, cardigan, basketball, soccer |
+| Kit | 6 colourways plus squad number |
+| ID badge | Chest patch, floating tag, @ tag, envelope |
+
+### Where each layer is rendered
+
+Three surfaces, chosen by what the feature needs:
+
+- **Face texture** (512px canvas on the head patch) — eyewear, facial hair,
+  piercings, blush, freckles. Cheap, and it deforms with the head.
+- **Meshes** — hair, hats, ear jewellery. Anything that has to break the
+  silhouette has to be geometry.
+- **Torso texture** (256px canvas) — garments. Jersey numbers and pocket
+  details are painted, then hoods and open plackets are added as geometry.
+
+### Things the rig cannot do
+
+**No forearm or sleeve tattoos.** A Wii Mii has floating hands and no arms —
+that is the silhouette, not an omission. There is no forearm to ink, so the
+brief's sleeve tattoos are not implementable without abandoning the base
+aesthetic. Hands and neck are supported instead.
+
+**Fades are implied, not shaded.** A character carries one hair colour, so
+`crop`, `dreads` and `afrofade` fake the taper by capping the sides short and
+massing the top. It reads correctly in silhouette, which is what this style
+leans on anyway.
+
+### No team marks
+
+Team looks are shape and colourway only, and the cap crests are abstract
+monograms. Real club and franchise logos are trademarks; shipping them on a
+public site is not ours to do. The palettes evoke the right cities without
+reproducing anything.
+
+### The ID badge and email privacy
+
+The brief asked for badges showing the wearer's email address. Rendered
+literally, that would undo the whole privacy design: the API deliberately
+never sends anyone else's email to the browser, and the Realtime publication
+is column-filtered to keep it out of change events.
+
+So the badge renders text **only on your own character**, after `/api/me`
+confirms the session. Everyone else's badge draws as an envelope or an `@`
+mark — the brief's own "custom email icons" option. `applyBadgeIdentity()`
+repaints the texture once ownership is known.
+
 ## Decisions worth knowing
 
 **Validation runs before rate limiting.** Otherwise three mistyped emails

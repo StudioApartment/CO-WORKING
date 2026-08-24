@@ -146,6 +146,69 @@ try {
   check('preview renders to a PNG',
     await evaluate("(MiiPlaza.Preview.snapshot() || '').startsWith('data:image/png')"));
 
+  console.log('\ncustomisation');
+  {
+    const cats = await evaluate(`[...document.querySelectorAll('.tray-tab')].map(b => b.textContent)`);
+    check('style tray offers every category', cats.length >= 11, `got ${cats.length}: ${cats}`);
+    // Compared with bounding rects, not offsetLeft: the tab row is not a
+    // positioned ancestor, so offsetLeft is measured against the card.
+    check('all tabs are visible without scrolling', await evaluate(`(() => {
+      const box = document.getElementById('trayTabs');
+      const r = box.getBoundingClientRect();
+      return [...box.querySelectorAll('.tray-tab')].every(b => {
+        const t = b.getBoundingClientRect();
+        return t.left >= r.left - 1 && t.right <= r.right + 1;
+      });
+    })()`));
+    check('tabs wrap onto more than one row', await evaluate(`(() => {
+      const tops = new Set([...document.querySelectorAll('.tray-tab')]
+        .map(b => Math.round(b.getBoundingClientRect().top)));
+      return tops.size > 1;
+    })()`));
+
+    // Every option in every category must build without throwing. This is the
+    // check that actually matters: the catalogues are data, and a bad entry
+    // would only surface as an unrenderable character.
+    const sweep = await evaluate(`(() => {
+      const failures = [];
+      let built = 0;
+      const tabs = [...document.querySelectorAll('.tray-tab')];
+      for (const tab of tabs) {
+        tab.click();
+        const opts = [...document.querySelectorAll('#trayOpts .opt')];
+        for (let i = 0; i < opts.length; i++) {
+          try {
+            document.querySelectorAll('#trayOpts .opt')[i].click();
+            built++;
+          } catch (e) {
+            failures.push(tab.textContent + '/' + i + ': ' + e.message);
+          }
+        }
+      }
+      return { built, failures };
+    })()`);
+    check('every option builds a character', sweep.failures.length === 0,
+      sweep.failures.slice(0, 3).join(' | '));
+    check('swept a meaningful number of options', sweep.built > 80, `built ${sweep.built}`);
+
+    // Legacy rows predate these fields; they must still render.
+    const legacy = await evaluate(`(() => {
+      try {
+        const old = { name: 'Old', skin: '#f3c9a8', hair: { color: '#2b1d15', style: 'bowl' },
+          eyes: { color: '#333', style: 0, size: 13, spacing: 16, y: 40 },
+          brows: { color: '#222', style: 0, w: 13, h: 3, gap: 12, angle: 0 },
+          mouth: { style: 0, w: 16, h: 3, y: 68 }, nose: { size: 0.12, y: -0.08 },
+          shirt: '#3fa9e0', headSize: 1, height: 1, girth: 1,
+          glasses: 2, stache: true, beard: false };
+        const m = MiiPlaza.buildMii(old);
+        return { ok: true, facialHair: old.facialHair, apparel: old.apparel };
+      } catch (e) { return { ok: false, error: e.message }; }
+    })()`);
+    check('a pre-update character still builds', legacy.ok === true, legacy.error);
+    check('old stache boolean carries over', legacy.facialHair === 'stache', legacy.facialHair);
+    check('missing outfit defaults to a tee', legacy.apparel === 'tee', legacy.apparel);
+  }
+
   console.log('\nvalidation in the UI');
   await evaluate("document.getElementById('miiEmail').value = 'not-an-email'");
   await evaluate("document.getElementById('btnAccept').click()");
