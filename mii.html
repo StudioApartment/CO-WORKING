@@ -462,6 +462,17 @@ body.native-cursor #pointer{display:none}
 .gwallet:active{transform:translateY(1px)}
 .gwallet svg{flex:none}
 
+.awallet{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  margin-top:12px;height:50px;padding:0 22px;border:0;border-radius:999px;cursor:pointer;
+  background:#111;color:#fff;
+  font:inherit;font-size:13.5px;font-weight:800;letter-spacing:.01em;text-decoration:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 3px 8px rgba(17,17,17,.34);
+}
+.awallet:hover{filter:brightness(1.12)}
+.awallet:active{transform:translateY(1px)}
+.awallet svg{flex:none}
+
 /* small text button row under the primary actions */
 .minor{display:flex;gap:16px;justify-content:center;align-items:center;margin-top:12px;flex-wrap:wrap}
 .minor button{
@@ -621,7 +632,7 @@ body.native-cursor #pointer{display:none}
       <label for="miiEmail">Email &mdash; where your badge goes</label>
       <input id="miiEmail" type="email" inputmode="email" autocomplete="email"
              spellcheck="false" placeholder="you@studio.com" maxlength="254"/>
-      <p class="fieldnote">One badge per email. We use it to send your pass and to let you edit this character later &mdash; nothing else.</p>
+      <p class="fieldnote">One badge per email. We send your pass and QR here so you can add it to Apple Wallet &mdash; nothing else.</p>
     </div>
 
     <div class="banner" id="camBanner"></div>
@@ -631,6 +642,14 @@ body.native-cursor #pointer{display:none}
       <img class="qr" id="badgeQr" alt="Your badge QR code" width="150" height="150"/>
       <p class="who" id="badgeWho">–</p>
       <p class="role">Coworker</p>
+      <a class="awallet" id="badgeAppleWallet" href="#" style="display:none" rel="noopener noreferrer">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3.2" y="4.6" width="17.6" height="14.8" rx="3"/>
+          <path d="M3.2 9.4h17.6"/><path d="M8 4.6c0 2.4 1.8 3.6 4 3.6s4-1.2 4-3.6"/>
+        </svg>
+        <span>Add to Apple Wallet</span>
+      </a>
       <a class="gwallet" id="badgeWallet" href="#" target="_blank" rel="noopener noreferrer">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -4550,7 +4569,7 @@ const Config = {
   realtime: false,
   supabaseUrl: null,
   supabaseAnonKey: null,
-  features: { sessions: false, email: false, googleWallet: false, admin: false },
+  features: { sessions: false, email: false, googleWallet: false, appleWallet: false, admin: false },
 
   async load() {
     for (let i = 0; i < 3; i++) {
@@ -4587,7 +4606,7 @@ const Store = {
   degraded: false,   // server was expected but could not be reached
   lastError: null,
   token: null,
-  session: null,   // { id, email, walletUrl, qrUrl } once /api/me answers
+  session: null,   // { id, email, walletUrl, appleWalletUrl, qrUrl } once /api/me answers
 
   init() {
     try { this.token = localStorage.getItem('miiplaza-token') || null; } catch { this.token = null; }
@@ -4646,6 +4665,7 @@ const Store = {
               name: data.mii.name,
               email: data.email,
               walletUrl: data.walletUrl || null,
+              appleWalletUrl: data.appleWalletUrl || null,
               qrUrl: data.qrUrl || null,
               previewUrl: data.previewUrl || null
             }
@@ -5656,6 +5676,8 @@ const Cam = {
     $('btnSnap').style.display = '';
     $('camBadge').classList.remove('show');
     $('camMinor').style.display = '';
+    const appleBtn = $('badgeAppleWallet');
+    if (appleBtn) appleBtn.style.display = 'none';
     this.hideBanner();
     this.hideRecover();
     $('camTitle').textContent = 'Get your badge';
@@ -5692,7 +5714,7 @@ const Cam = {
     this.el.classList.add('open');
     this.reset();
     this.showBadge(
-      { qrUrl: s.qrUrl, walletUrl: s.walletUrl, emailed: true },
+      { qrUrl: s.qrUrl, walletUrl: s.walletUrl, appleWalletUrl: s.appleWalletUrl, emailed: true },
       { name: s.name || 'You', email: s.email || '' }
     );
     $('camSub').textContent = 'Scan this at the door, or add it to your phone.';
@@ -5799,11 +5821,13 @@ const Cam = {
     $('camRowLive').style.display = 'none';
     $('camRowDone').style.display = 'flex';
     $('camTitle').textContent = a.confident ? 'Looking good!' : 'Best guess…';
-    $('camSub').textContent = a.confident
-      ? (a.eyesHidden
-          ? 'Read your colors from the photo. Your eyes were hidden, so pick an eye color below.'
-          : `Read your colors from the photo — ${a.hairStyle} hair it is.`)
-      : 'Could not lock onto a face, so these colors are a rough read — tweak them below.';
+    $('camSub').textContent = Store.expectsCloud()
+      ? 'Add your email below — we will send the badge, QR, and an Apple Wallet pass.'
+      : (a.confident
+          ? (a.eyesHidden
+              ? 'Read your colors from the photo. Your eyes were hidden, so pick an eye color below.'
+              : `Read your colors from the photo — ${a.hairStyle} hair it is.`)
+          : 'Could not lock onto a face, so these colors are a rough read — tweak them below.');
     Sound.fx.chime();
   },
   async accept() {
@@ -5819,7 +5843,7 @@ const Cam = {
     const needsEmail = Store.expectsCloud();
     if (needsEmail) {
       if (!email) {
-        this.showBanner('Add your email so we can send your badge.', 'bad');
+        this.showBanner('Add your email so we can send your badge and Apple Wallet pass.', 'bad');
         $('miiEmail').focus();
         return;
       }
@@ -5883,6 +5907,7 @@ const Cam = {
     Store.session = {
       id: rec.id, name, email,
       walletUrl: rec.walletUrl || null,
+      appleWalletUrl: rec.appleWalletUrl || null,
       qrUrl: rec.qrUrl || null,
       previewUrl: rec.previewUrl || null
     };
@@ -5891,7 +5916,7 @@ const Cam = {
   },
 
   /* Replaces the camera panes with the issued badge: QR, name, and the
-     handoff to Google Wallet. */
+     handoff to Apple / Google Wallet. */
   showBadge(rec, { name, email }) {
     Preview.stop();
     if (this.stream) { this.stream.getTracks().forEach((t) => t.stop()); this.stream = null; }
@@ -5913,7 +5938,7 @@ const Cam = {
 
     $('camTitle').textContent = 'Your badge is ready';
     $('camSub').textContent = rec.emailed
-      ? `Sent to ${email}. Add it to your phone so you never have to dig for it.`
+      ? `Sent to ${email}. Open the pass on your iPhone to add it to Apple Wallet.`
       : 'Save it to your phone now — scan this at the door.';
 
     $('badgeWho').textContent = name;
@@ -5921,6 +5946,14 @@ const Cam = {
     const qr = $('badgeQr');
     if (rec.qrUrl) { qr.src = rec.qrUrl; qr.style.display = ''; }
     else qr.style.display = 'none';
+
+    const apple = $('badgeAppleWallet');
+    if (rec.appleWalletUrl) {
+      apple.href = rec.appleWalletUrl;
+      apple.style.display = '';
+    } else {
+      apple.style.display = 'none';
+    }
 
     const wallet = $('badgeWallet');
     if (rec.walletUrl) {
@@ -5931,7 +5964,11 @@ const Cam = {
     }
 
     const notes = [];
-    if (!rec.walletUrl) notes.push('Google Wallet is not switched on for this site yet.');
+    if (!rec.appleWalletUrl && !rec.walletUrl) {
+      notes.push('Wallet passes are not switched on for this site yet.');
+    } else if (!rec.appleWalletUrl) {
+      notes.push('Apple Wallet is not switched on for this site yet.');
+    }
     if (!rec.emailed) notes.push('We could not email it just now, so screenshot this.');
     $('badgeNote').textContent = notes.join(' ');
 

@@ -19,6 +19,10 @@ process.env.PUBLIC_ORIGIN = 'https://example.test';
 delete process.env.SUPABASE_URL;
 delete process.env.SUPABASE_SERVICE_ROLE_KEY;
 delete process.env.RESEND_API_KEY;
+delete process.env.APPLE_PASS_TYPE_ID;
+delete process.env.APPLE_TEAM_ID;
+delete process.env.APPLE_PASS_CERT;
+delete process.env.APPLE_PASS_KEY;
 
 const STORE_FILE = new URL('../miis.json', import.meta.url);
 try { rmSync(STORE_FILE, { force: true }); } catch {}
@@ -31,6 +35,8 @@ const adminList = (await import('../api/admin/miis.js')).default;
 const adminExport = (await import('../api/admin/export.js')).default;
 const magicLink = (await import('../api/auth/magic-link.js')).default;
 const walletGoogle = (await import('../api/wallet/google.js')).default;
+const walletApple = (await import('../api/wallet/apple/[id].js')).default;
+const { passPayload, applePassUrl, hasAppleWallet } = await import('../api/_lib/appleWallet.js');
 
 /* ------------------------------------------------------------- harness --- */
 
@@ -171,6 +177,7 @@ let createdId = null;
   check('name persisted into dna', b && b.dna && b.dna.name === 'Gage');
   check('qr url points at our endpoint', Boolean(b && b.qrUrl && b.qrUrl.includes('/api/qr/')));
   check('no wallet url without credentials', b && b.walletUrl === null, String(b && b.walletUrl));
+  check('no apple wallet url without credentials', b && b.appleWalletUrl == null, String(b && b.appleWalletUrl));
   check('reports it could not email', b && b.emailed === false);
 
   cookie = cookieFrom(res);
@@ -317,6 +324,24 @@ console.log('\nwallet');
   const b = res.json();
   check('reports wallet unconfigured rather than crashing', res.statusCode === 503, `got ${res.statusCode}`);
   check('still hands back a QR fallback', Boolean(b && b.qrUrl));
+
+  const apple = await call(walletApple, { method: 'GET', query: { id: createdId } });
+  check('Apple Wallet degrades without certs', apple.statusCode === 503, `got ${apple.statusCode}`);
+  check('names the missing Apple issuer', apple.json() && apple.json().code === 'wallet_not_configured');
+  check('Apple Wallet flag is off', hasAppleWallet === false);
+  check('no Apple pass URL without certs', applePassUrl(createdId, 'https://example.test') === null);
+
+  const payload = passPayload({
+    id: createdId || 'abc',
+    name: 'Gage',
+    email: 'gage@example.com',
+    badgeValue: 'https://example.test/api/badge/verify?id=abc&s=sig',
+    origin: 'https://example.test'
+  });
+  check('pass is a generic card', Boolean(payload.generic && payload.generic.primaryFields));
+  check('pass names the holder', payload.generic.primaryFields[0].value === 'Gage');
+  check('pass QR is the door URL', payload.barcodes[0].message.includes('/api/badge/verify'));
+  check('email stays on the back of the pass', payload.generic.backFields.some((f) => f.key === 'email'));
 }
 
 console.log('\nmagic link');
@@ -403,6 +428,25 @@ if (childTally) {
 } else {
   fail++;
   console.log('  ✗ no-session suite did not report a result');
+}
+
+console.log('\napple pass packing');
+{
+  const apple = spawnSync(
+    process.execPath,
+    [new URL('./smoke-apple-pass.mjs', import.meta.url).pathname],
+    { encoding: 'utf8', env: { ...process.env } }
+  );
+  process.stdout.write(apple.stdout || '');
+  if (apple.stderr) process.stderr.write(apple.stderr);
+  const tally = /(\d+) passed, (\d+) failed/.exec(apple.stdout || '');
+  if (tally) {
+    pass += Number(tally[1]);
+    fail += Number(tally[2]);
+  } else {
+    fail++;
+    console.log('  ✗ apple-pass suite did not report a result');
+  }
 }
 
 console.log(`${pass} passed, ${fail} failed\n`);

@@ -10,7 +10,7 @@
 
 import { send, methodNotAllowed, preflight } from './_lib/http.js';
 import { clientConfig } from './_lib/supabase.js';
-import { hasRealtime, hasGoogleWallet, hasResend, hasSessions, hasAdmin } from './_lib/env.js';
+import { hasRealtime, hasGoogleWallet, hasAppleWallet, hasResend, hasSessions, hasAdmin } from './_lib/env.js';
 import { usingSupabase } from './_lib/store.js';
 
 export default function handler(req, res) {
@@ -29,6 +29,7 @@ export default function handler(req, res) {
       sessions: hasSessions,
       email: hasResend,
       googleWallet: hasGoogleWallet,
+      appleWallet: hasAppleWallet,
       admin: hasAdmin
     }
   });

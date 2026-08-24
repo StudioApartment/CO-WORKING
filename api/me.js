@@ -11,6 +11,7 @@ import * as store from './_lib/store.js';
 import { previewUrlFor } from './_lib/supabase.js';
 import { qrImageUrl, badgeUrl } from './_lib/badge.js';
 import { walletSaveUrl } from './_lib/googleWallet.js';
+import { applePassUrl } from './_lib/appleWallet.js';
 import { originFrom, hasSessions } from './_lib/env.js';
 
 export default async function handler(req, res) {
@@ -46,6 +47,7 @@ export default async function handler(req, res) {
       badgeValue: badgeUrl({ id: record.id }, origin),
       origin
     });
+    const appleWalletUrl = applePassUrl(record.id, origin);
 
     return send(res, 200, {
       signedIn: true,
@@ -59,7 +61,8 @@ export default async function handler(req, res) {
       email: record.email,
       previewUrl,
       qrUrl,
-      walletUrl
+      walletUrl,
+      appleWalletUrl
     });
   } catch (e) {
     return send(res, 500, { error: String((e && e.message) || e) });

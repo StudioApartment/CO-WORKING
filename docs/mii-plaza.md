@@ -2,7 +2,8 @@
 
 An accountless badge system living at `coworking.fyi/mii`. Someone points a
 camera at their face, gets a character in a shared 3D plaza, and receives a
-scannable badge by email that they can add to Google Wallet. There is no
+scannable badge by email — QR plus an Apple Wallet pass attached as `.pkpass`,
+and a Google Wallet save link when that issuer is configured. There is no
 sign-up, no password, and no session to manage.
 
 ---
@@ -48,6 +49,7 @@ browser (mii.html, static)
   ├── GET  /api/me              who this browser is
   ├── PUT/DELETE /api/miis/:id  edit or remove your own
   ├── POST /api/auth/magic-link request a recovery link
+  ├── GET  /api/wallet/apple/:id Apple Wallet .pkpass
   └── Supabase Realtime  ◄──────── postgres changes, public columns only
 ```
 
@@ -66,7 +68,8 @@ inlined at compile time.
 | `api/_lib/store.js` | Data access; Supabase primary, legacy fallback |
 | `api/_lib/session.js` | Cookie sessions, admin auth, magic tokens |
 | `api/_lib/badge.js` | Badge signatures and QR rendering |
-| `api/_lib/googleWallet.js` | Wallet save-JWT construction |
+| `api/_lib/googleWallet.js` | Google Wallet save-JWT construction |
+| `api/_lib/appleWallet.js` | Apple Wallet .pkpass signing |
 | `api/_lib/email.js` | Resend templates |
 | `api/_lib/ratelimit.js` | Fixed-window limits |
 | `api/_lib/validation.js` | Zod schemas |
@@ -109,6 +112,7 @@ plaza:
 | `JWT_SECRET` | No sessions, so no editing across reloads and no badge signatures |
 | `RESEND_API_KEY` | Badges still issue, just not emailed |
 | `GOOGLE_*` | Badge shows its QR; no Add to Google Wallet button |
+| `APPLE_*` | Badge emails still go out; no .pkpass attachment or Add to Apple Wallet |
 | `ADMIN_SECRET_KEY` | `/admin` stays locked |
 
 `JWT_SECRET` must be at least 16 characters. Rotating it signs everyone out
@@ -132,7 +136,20 @@ there is no provisioning call and no SDK dependency. Re-saving updates the
 same pass rather than stacking duplicates, because the object id is derived
 from the row id.
 
-### 4. Resend
+### 4. Apple Wallet
+
+In Certificates → Identifiers create a Pass Type ID (for example
+`pass.fyi.coworking.badge`), then issue a Pass Type ID certificate. Convert
+the `.p12` to PEM and set `APPLE_PASS_TYPE_ID`, `APPLE_TEAM_ID`,
+`APPLE_PASS_CERT`, and `APPLE_PASS_KEY`. The WWDR G4 intermediate is vendored
+at `api/_lib/certs/AppleWWDRCAG4.pem`.
+
+Create mails the `.pkpass` as an attachment (Mail on iPhone offers Add to
+Wallet) and also serves it at `/api/wallet/apple/:id` for the on-page button.
+The QR on the pass is the same signed door URL as the PNG in the email. Email
+stays on the back of the card, not on the lock-screen face.
+
+### 5. Resend
 
 Verify a sending domain, then set `RESEND_API_KEY` and `RESEND_FROM`. Badge
 emails reference the QR by URL rather than embedding it, because email clients

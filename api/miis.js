@@ -11,6 +11,7 @@ import { uploadPreview } from './_lib/supabase.js';
 import { issueSession, readSession } from './_lib/session.js';
 import { badgeUrl, qrImageUrl } from './_lib/badge.js';
 import { walletSaveUrl } from './_lib/googleWallet.js';
+import { applePassUrl, buildApplePass } from './_lib/appleWallet.js';
 import { sendBadgeEmail } from './_lib/email.js';
 import { originFrom, hasSessions } from './_lib/env.js';
 import { makeToken, hashToken } from './_store.js';
@@ -82,6 +83,10 @@ export default async function handler(req, res) {
     const walletUrl = walletSaveUrl({
       id: record.id, name, email, previewUrl, qrUrl, badgeValue, origin
     });
+    const appleWalletUrl = applePassUrl(record.id, origin);
+    const applePass = await buildApplePass({
+      id: record.id, name, email, badgeValue, origin
+    });
 
     const mail = await sendBadgeEmail({
       to: email,
@@ -90,6 +95,8 @@ export default async function handler(req, res) {
       previewUrl,
       qrUrl,
       walletUrl,
+      appleWalletUrl,
+      applePass,
       manageUrl: `${origin}/mii`,
       origin
     });
@@ -106,6 +113,7 @@ export default async function handler(req, res) {
       previewUrl,
       qrUrl,
       walletUrl,
+      appleWalletUrl,
       emailed: mail.sent
     });
   } catch (e) {

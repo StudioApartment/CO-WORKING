@@ -36,6 +36,16 @@ export const GOOGLE_SERVICE_ACCOUNT_EMAIL = pick('GOOGLE_SERVICE_ACCOUNT_EMAIL')
 // Vercel's UI stores newlines escaped; restore them so the PEM parses.
 export const GOOGLE_PRIVATE_KEY = pick('GOOGLE_PRIVATE_KEY').replace(/\\n/g, '\n');
 
+/* Apple Wallet Pass Type ID certificate. Same PEM-in-env pattern as Google:
+ * paste the signer cert and key, literal \n sequences are fine. The public
+ * WWDR intermediate is vendored and only overridden when APPLE_WWDR_CERT is set. */
+export const APPLE_PASS_TYPE_ID = pick('APPLE_PASS_TYPE_ID', 'APPLE_PASS_TYPE_IDENTIFIER');
+export const APPLE_TEAM_ID = pick('APPLE_TEAM_ID', 'APPLE_TEAM_IDENTIFIER');
+export const APPLE_PASS_CERT = pick('APPLE_PASS_CERT', 'APPLE_SIGNER_CERT').replace(/\\n/g, '\n');
+export const APPLE_PASS_KEY = pick('APPLE_PASS_KEY', 'APPLE_SIGNER_KEY').replace(/\\n/g, '\n');
+export const APPLE_PASS_KEY_PASSPHRASE = pick('APPLE_PASS_KEY_PASSPHRASE', 'APPLE_SIGNER_KEY_PASSPHRASE');
+export const APPLE_WWDR_CERT = pick('APPLE_WWDR_CERT').replace(/\\n/g, '\n');
+
 export const ADMIN_SECRET_KEY = pick('ADMIN_SECRET_KEY', 'ADMIN_KEY');
 export const JWT_SECRET = pick('JWT_SECRET');
 
@@ -52,6 +62,9 @@ export const hasRealtime = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 export const hasResend = Boolean(RESEND_API_KEY);
 export const hasGoogleWallet = Boolean(
   GOOGLE_ISSUER_ID && GOOGLE_SERVICE_ACCOUNT_EMAIL && GOOGLE_PRIVATE_KEY
+);
+export const hasAppleWallet = Boolean(
+  APPLE_PASS_TYPE_ID && APPLE_TEAM_ID && APPLE_PASS_CERT && APPLE_PASS_KEY
 );
 export const hasAdmin = Boolean(ADMIN_SECRET_KEY);
 
