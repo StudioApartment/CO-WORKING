@@ -114,6 +114,14 @@ plaza:
 `JWT_SECRET` must be at least 16 characters. Rotating it signs everyone out
 and invalidates every issued badge QR.
 
+`SUPABASE_URL` is the bare project URL — `https://<ref>.supabase.co`. The
+client appends `/rest/v1` itself, so a value copied from the API settings page
+with that suffix already on it produces `/rest/v1/rest/v1/...`, and every query
+comes back `PGRST125 Invalid path specified in request URL`. `env.js` trims the
+suffix, but the bare form is what belongs in the dashboard. When the store is
+unreachable the plaza keeps working against `localStorage` and says so in a
+toast — a character made in that state lives on one device only.
+
 ### 3. Google Wallet
 
 From the Google Pay & Wallet Console you need an issuer ID and a service

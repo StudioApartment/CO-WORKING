@@ -4471,6 +4471,8 @@ const Config = {
    ══════════════════════════════════════════════════════════════ */
 const Store = {
   mode: 'local',
+  degraded: false,   // server was expected but could not be reached
+  lastError: null,
   token: null,
   session: null,   // { id, email, walletUrl, qrUrl } once /api/me answers
 
@@ -4526,9 +4528,16 @@ const Store = {
       const list = await r.json();
       if (!Array.isArray(list)) throw new Error('bad payload');
       this.mode = 'server';
+      this.degraded = false;
       return list;
-    } catch {
+    } catch (e) {
+      /* Falling back is right when the page is opened on its own, but when
+         /api/config says there is a backend it means the shared plaza is
+         down. Record that: a silent downgrade to per-device storage looks
+         exactly like "my Mii did not sync" and hides the real fault. */
       this.mode = 'local';
+      this.degraded = Config.storage !== 'legacy' || Config.features.sessions;
+      this.lastError = String(e && e.message || e);
       return this._localList().map((r) => Object.assign({ mine: true }, r));
     }
   },
@@ -6054,6 +6063,13 @@ function reportAuthResult() {
   }, 150 + i * 140));
 
   if (list.length) setTimeout(() => toast(`${list.length} already here`, 2200), 400);
+
+  /* Say so rather than pretending. Characters made now stay on this device
+     and will not appear on another one. */
+  if (Store.degraded) {
+    console.warn('[Mii Plaza] shared plaza unreachable (' + Store.lastError + ') — saving to this device only');
+    setTimeout(() => toast('Office is offline — this one stays on this device', 4200), 900);
+  }
 
   reportAuthResult();
 

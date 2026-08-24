@@ -338,6 +338,21 @@ console.log('\nCSV injection');
   check('neutralises leading = in a cell', String(csv.body).includes("\"'=SUM(A1)\""), 'not escaped');
 }
 
+console.log('\nSupabase project URL');
+{
+  const { projectBase } = await import('../api/_lib/env.js');
+  const base = 'https://abc.supabase.co';
+  /* A URL pasted from the API settings page carries /rest/v1. supabase-js
+     appends that itself, and the doubled path 404s every query — which the
+     plaza hides by falling back to per-device storage. */
+  check('strips a trailing /rest/v1', projectBase(base + '/rest/v1') === base);
+  check('strips /rest/v1 with a trailing slash', projectBase(base + '/rest/v1/') === base);
+  check('strips other service paths', projectBase(base + '/auth/v1') === base);
+  check('leaves a bare project URL alone', projectBase(base) === base);
+  check('drops a lone trailing slash', projectBase(base + '/') === base);
+  check('survives an unset value', projectBase('') === '' && projectBase(undefined) === '');
+}
+
 try { rmSync(STORE_FILE, { force: true }); } catch {}
 
 /* The no-JWT_SECRET path needs a process where the secret was never set, since
