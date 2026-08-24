@@ -248,11 +248,14 @@ Hair is built from open shells, so all hair and hat materials are
 `DoubleSide`. With backface culling on, any shell edge turning away from the
 camera shows straight through.
 
-The crown is a single full-azimuth dome. Split front/back shells start below
-the pole and overlap it. Two shells that both include the north pole produce
-a floating lid — the front polar fan sits above the back one, which is what
-the bowl cut used to show from above. Extra volume pieces (crew, crop, locs)
-sit at y = 0 on the same radius rather than being translated up.
+The top of every cut is a single full-azimuth dome. Split front/back shells
+start below that dome and only add length at the nape. Two shells that both
+include the north pole produce a floating lid — the front polar fan sits
+above the back one, which is what the bowl cut used to show from above.
+
+The pompadour is that same dome with a smooth front-upper bump, not a second
+object parked on the crown. Extra loc volume sits at y = 0 on a slightly
+larger radius rather than being translated up.
 
 ### Things the rig cannot do
 

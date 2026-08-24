@@ -2085,10 +2085,9 @@ const HEAD_N = 2.55;
 const FACE_PHI = 1.95, FACE_TH0 = Math.PI * 0.26, FACE_THL = Math.PI * 0.5;
 const HAIR_GAP = 2.32, HAIR_OVER = 0.2;
 /* Split front/back shells used to both include the north pole. Different
-   radius and tessellation made the front polar fan sit as a floating lid
-   on bowl cuts and anything else built from `cap()`. One full-azimuth
-   crown owns the pole; the split shells start below it and overlap. */
-const HAIR_CROWN = 0.55, HAIR_CROWN_OVER = 0.14;
+   radius and tessellation made the front polar fan sit as a floating lid.
+   cap() now uses one full-azimuth dome for the top; skirts start below it. */
+const HAIR_CROWN = 0.72;
 
 const G = {
   head:  () => geoCache('head',  () => superball(1, 44, 32, HEAD_N)),
@@ -2099,11 +2098,27 @@ const G = {
   neck:  () => geoCache('neck',  () => new THREE.CylinderGeometry(1, 1, 1, 16)),
   collar:() => geoCache('collar',() => new THREE.TorusGeometry(1, 0.22, 8, 24)),
   spike: () => geoCache('spike', () => new THREE.ConeGeometry(1, 1, 10)),
-  hairCrown: (r, tl) => geoCache(`hc${r}_${tl}`, () => superball(r, 32, 12, HEAD_N, 0, TAU, 0, tl)),
-  hairBack: (r, tl) => geoCache(`hb${r}_${tl}`, () => superball(r, 30, 16, HEAD_N, Math.PI / 2 + HAIR_GAP / 2, TAU - HAIR_GAP, HAIR_CROWN, Math.max(0.12, tl - HAIR_CROWN))),
-  hairFront:(r, tl) => geoCache(`hf${r}_${tl}`, () => superball(r, 26, 12, HEAD_N, Math.PI / 2 - (HAIR_GAP + HAIR_OVER) / 2, HAIR_GAP + HAIR_OVER, HAIR_CROWN, Math.max(0.12, tl - HAIR_CROWN))),
+  hairBack: (r, tl, ts = HAIR_CROWN) => geoCache(`hb${r}_${tl}_${ts}`, () => superball(r, 30, 16, HEAD_N, Math.PI / 2 + HAIR_GAP / 2, TAU - HAIR_GAP, ts, Math.max(0.12, tl - ts))),
+  hairFront:(r, tl, ts = HAIR_CROWN) => geoCache(`hf${r}_${tl}_${ts}`, () => superball(r, 26, 12, HEAD_N, Math.PI / 2 - (HAIR_GAP + HAIR_OVER) / 2, HAIR_GAP + HAIR_OVER, ts, Math.max(0.12, tl - ts))),
   hairBand: (r) => geoCache(`hbd${r}`, () => superball(r, 26, 10, HEAD_N, Math.PI / 2 + HAIR_GAP / 2, TAU - HAIR_GAP, 1.15, 0.5)),
-  dome: (r, tl) => geoCache(`dm${r}_${tl}`, () => superball(r, 30, 18, HEAD_N, 0, TAU, 0, tl)),
+  dome: (r, tl) => geoCache(`dm${r}_${tl}`, () => superball(r, 36, 24, HEAD_N, 0, TAU, 0, tl)),
+  pomp: (r, tl) => geoCache(`pomp${r}_${tl}`, () => {
+    const g = superball(r, 36, 28, HEAD_N, 0, TAU, 0, tl);
+    const p = g.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      /* Smooth mound on the forehead. Peak has to beat the dome pole (y≈r)
+         or the cut still reads as a bowl from the front. */
+      const dx = v.x * 0.92, dy = v.y - 0.72, dz = v.z - 0.58;
+      const bump = Math.exp(-(dx * dx + dy * dy + dz * dz) * 2.15);
+      v.y += bump * 0.44;
+      v.z += bump * 0.16;
+      p.setXYZ(i, v.x, v.y, v.z);
+    }
+    p.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  }),
   cyl:  () => geoCache('cyl', () => new THREE.CylinderGeometry(1, 1, 1, 32)),
   frus: (rt) => geoCache(`fr${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 32)),
 };
@@ -2427,11 +2442,17 @@ function buildHair(dna, mat, extraMats) {
     out.push(m); return m;
   };
   const shells = (r, back, front, y = 0) => {
-    const longest = Math.max(back, front || 0);
-    const crownTl = Math.min(HAIR_CROWN + HAIR_CROWN_OVER, longest + 0.08);
-    add(G.hairCrown(r, crownTl), 0, y, 0);
-    if (back > HAIR_CROWN) add(G.hairBack(r, back), 0, y, 0);
-    if (front > HAIR_CROWN) add(G.hairFront(r, front), 0, y, 0);
+    /* One full-azimuth dome owns the top of the head. Split front/back
+       shells used to both include the north pole, so the front polar fan
+       sat as a floating lid (bowl cut, buzz, anything from cap()). */
+    const cover = front > 0 ? front : Math.min(back, 1.05);
+    /* Slight y-scale so the flattened pole sits clear of the skull. A
+       same-n superellipsoid at r=1.026 still lets the head poke through
+       the faceted crown. */
+    add(G.dome(r, cover), 0, y, 0, 1, 1.03, 1);
+    const skirt = cover - 0.12;
+    if (back > cover + 0.03) add(G.hairBack(r + 0.005, back, skirt), 0, y, 0);
+    if (front > cover + 0.03) add(G.hairFront(r + 0.005, front, skirt), 0, y, 0);
   };
   const cap = (r, back, front) => shells(r, back, front, 0);
   const put = (g, mtl, x, y, z, sx, sy, sz) => {
@@ -2646,15 +2667,8 @@ function buildHair(dna, mat, extraMats) {
     q.rotation.x = -0.62;
     add(G.ball(), 0, 0.72, 0.16, 0.66, 0.28, 0.52);
   } else if (st === 'pompadour') {
-    /* Close sides. Volume is a wave that lifts off the forehead and rolls
-       back into the crown — not a sphere parked on top of a skullcap. */
-    cap(1.028, 1.22, 0.92);
-    const wave = add(G.ball(), 0, 0.78, 0.50, 0.58, 0.46, 0.60);
-    wave.rotation.x = -0.85;
-    const peak = add(G.ball(), 0, 1.00, 0.38, 0.46, 0.34, 0.40);
-    peak.rotation.x = -0.5;
-    const lip = add(G.ball(), 0, 0.54, 0.76, 0.48, 0.22, 0.26);
-    lip.rotation.x = 0.28;
+    // One puffed shell. Extra primitives on a cap always read as a bun.
+    add(G.pomp(1.05, 1.48), 0, 0, 0);
   } else if (st === 'swoop') {
     // 1950s James Dean: a wide curl that lifts off the forehead and falls
     // to one side — not a thin vertical stack that reads as a mohawk.
