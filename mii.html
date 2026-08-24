@@ -1813,7 +1813,7 @@ const SHOES  = ['#2f3a45','#e8ecef','#c0392b','#33506b','#4a4a4a'];
 /* Real haircuts people ask for, rather than novelty shapes. Ordered roughly
    short to long so the picker reads sensibly. */
 const HAIRSTYLES = ['bald','buzz','taper','crop','waves','pixie','bowl','combover','sidepart',
-                    'quiff','pompadour','swoop','slickback','swept','spiky','curtains','afro','afrofade',
+                    'quiff','pompadour','swoop','slickback','swept','spiky','curtains','afro',
                     'dreads','bob','shag','wolf','mullet','flow','long','bun','pony',
                     'cap','flatbrim','dadhat','knicks','yankees','bucket','cowboy','beanie',
                     'bandana','bandanablue','bandanagreen','bandanaback','tophat'];
@@ -1825,7 +1825,8 @@ const HAIRSTYLE_ALIASES = {
   buzzline: 'taper',
   topknot: 'bun',
   tails: 'pony',
-  undercut: 'slickback'
+  undercut: 'slickback',
+  afrofade: 'afro'
 };
 
 /* Raw ids are terse; the picker shows these. */
@@ -1834,7 +1835,7 @@ const STYLE_LABELS = {
   waves: 'Waves', pixie: 'Pixie', bowl: 'Bowl', combover: 'Comb over',
   sidepart: 'Side part', quiff: 'Quiff', pompadour: 'Pompadour', swoop: 'Swoop',
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
-  curtains: 'Curtains', afro: 'Afro', afrofade: 'Afro fade', dreads: 'Locs',
+  curtains: 'Curtains', afro: 'Afro', dreads: 'Locs',
   bob: 'Bob', shag: 'Shag', wolf: 'Wolf cut', mullet: 'Mullet', flow: 'Flow',
   long: 'Long', bun: 'Bun', pony: 'Ponytail',
   cap: 'Cap', flatbrim: 'Flat brim', dadhat: 'Dad hat', knicks: 'Orange & blue',
@@ -2729,9 +2730,6 @@ function buildHair(dna, mat, extraMats) {
       add(G.neck(), x, y, z, 0.11, len, 0.11);
       add(G.ball(), x, y - len / 2, z, 0.11, 0.11, 0.11);
     }
-  } else if (st === 'afrofade') {
-    cap(1.028, 1.16, 1.04);
-    add(G.ball(), 0, 0.80, 0.0, 0.88, 0.72, 0.88);
   } else if (st === 'bob') {
     // blunt, jaw length, tucked in at the ends
     cap(1.058, 1.5, 1.14);
