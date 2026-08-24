@@ -448,6 +448,23 @@ try {
   check('session established', await evaluate('!!MiiPlaza.Store.session'));
   check('badge panel shown',
     await evaluate("document.getElementById('camBadge').classList.contains('show')"));
+  check('badge names the holder above the QR',
+    await evaluate("document.getElementById('badgeWho').textContent === 'Flow'"));
+  check('badge shows the email',
+    await evaluate("document.getElementById('badgeEmail').textContent === " + JSON.stringify(EMAIL)));
+  check('badge shows days at CO—WORKING',
+    await evaluate("/CO—WORKING/.test(document.getElementById('badgeSince').textContent)"));
+  check('badge shows the Mii next to the QR',
+    await evaluate(`(() => {
+      const mii = document.getElementById('badgeMii');
+      const qr = document.getElementById('badgeQr');
+      if (!mii.getAttribute('src') || getComputedStyle(mii).display === 'none') return false;
+      const a = mii.getBoundingClientRect();
+      const b = qr.getBoundingClientRect();
+      const beside = Math.abs(a.top - b.top) < 48 && a.left < b.left;
+      const stacked = a.bottom <= b.top + 12;
+      return beside || stacked;
+    })()`));
   check('QR image is pointed at our endpoint',
     await evaluate("(document.getElementById('badgeQr').src || '').includes('/api/qr/')"));
   check('wallet button hidden without credentials',
