@@ -2116,40 +2116,62 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  quiff: (r) => geoCache(`quiffC${r}`, () => {
+  quiff: (r) => geoCache(`quiffD${r}`, () => {
     /* One shell. Extra balls on a cap were a crown bun. Short sides,
-       a lifted front that reads from head-on — a forehead sweep, not a
-       nipple on the pole. Head scale squashes z, so the bump has to live
-       forward and push out there. */
-    const tl = 1.20;
-    const g = superball(r, 44, 36, HEAD_N, 0, TAU, 0, tl);
+       hairline at the brow, a forehead lift that reads from head-on —
+       smaller than pomp. Head scale squashes z, so the bump lives
+       forward. */
+    const tl = 1.40;
+    const g = new THREE.SphereGeometry(r, 44, 36, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
+    const n = HEAD_N;
+    const faceTh = 1.30;
+    const sideTh = 1.12;
+    const backTh = 1.16;
     for (let i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i);
-      const rs0 = Math.hypot(v.x, v.z) || 1e-6;
-      const azFront = Math.max(0, v.z / rs0);
+      const L = v.length() || 1;
+      const ux = v.x / L, uy = v.y / L, uz = v.z / L;
+      const th = Math.acos(Math.max(-1, Math.min(1, uy)));
+      const rs0 = Math.hypot(ux, uz) || 1e-6;
+      const azFront = Math.max(0, uz / rs0);
+      const azBack = Math.max(0, -uz / rs0);
+      const faceWin = Math.pow(Math.max(0, azFront - 0.10) / 0.90, 1.35);
+      const backAmt = Math.pow(azBack, 1.7);
+      const maxTh = sideTh
+        + (faceTh - sideTh) * faceWin
+        + (backTh - sideTh) * backAmt;
+      const th2 = (th / tl) * maxTh;
+      const rs = Math.sin(th2);
+      let nx = ux / rs0 * rs;
+      let ny = Math.cos(th2);
+      let nz = uz / rs0 * rs;
+      const s = Math.pow(
+        Math.pow(Math.abs(nx), n) + Math.pow(Math.abs(ny), n) + Math.pow(Math.abs(nz), n),
+        -1 / n
+      );
+      nx *= s * r; ny *= s * r; nz *= s * r;
 
       /* Flatten the crop crown so the front lift can beat the pole. */
-      const crown = Math.max(0, v.y - 0.72);
-      v.y -= crown * 0.18 * (1 - azFront * 0.92);
+      ny -= Math.max(0, ny - 0.70) * 0.14 * (1 - azFront * 0.9);
 
-      /* Forehead-wide lift, smaller than pomp. Peak still has to beat
-         the (flattened) pole or it reads as a bowl from the front. */
-      const dx = v.x * 1.06, dy = v.y - 0.54, dz = v.z - 0.82;
-      const bump = Math.exp(-(dx * dx * 1.05 + dy * dy + dz * dz * 0.78) * 2.45);
-      v.y += bump * 0.52;
-      v.z += bump * 0.26;
+      /* Forehead-wide lift. Peak has to beat the pole or it reads as a bowl. */
+      const dx = nx * 1.05, dy = ny - 0.50, dz = nz - 0.80;
+      const bump = Math.exp(-(dx * dx + dy * dy + dz * dz * 0.72) * 2.30);
+      ny += bump * 0.48;
+      nz += bump * 0.24;
 
-      /* Hairline stays above the brow (y≈0.29). A z-puff here is a visor. */
-      if (azFront > 0.2 && v.y < 0.34) {
-        v.y += (0.34 - v.y) * 0.85;
-        const Lh = Math.hypot(v.x, v.y, v.z) || 1;
-        if (Lh > 1.06) {
-          const k = 1.06 / Lh;
-          v.x *= k; v.y *= k; v.z *= k;
-        }
+      /* Front hem hugs the skull so it is a hairline, not a visor.
+         Stay above the brow (y≈0.29). */
+      if (azFront > 0.32 && ny < 0.58) {
+        const t = Math.pow((azFront - 0.32) / 0.68, 1.2)
+          * Math.min(1, (0.58 - ny) / 0.28);
+        const Lh = Math.hypot(nx, ny, nz) || 1;
+        const k = 1 - t + t * (1.045 / Lh);
+        nx *= k; ny *= k; nz *= k;
+        if (ny < 0.31) ny = 0.31;
       }
-      p.setXYZ(i, v.x, v.y, v.z);
+      p.setXYZ(i, nx, ny, nz);
     }
     p.needsUpdate = true;
     g.computeVertexNormals();
