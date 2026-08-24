@@ -196,7 +196,7 @@ only takes the hat off — nothing gets skipped on the way in.
 | Headwear | 11 including flat-brim, dad hat, bucket, cowboy, beanie, bandana front/back |
 | Facial hair | Stubble, lineup, full, goatee, moustache, handlebar |
 | Piercings | Nose stud, double nostril, septum |
-| Ink | Hands, neck, both |
+| Ink | Hands, jaw, both |
 | Outfits | 11 including hoodie, flannel, denim, techwear, cardigan, basketball, soccer |
 | Kit | 6 colourways plus squad number |
 | ID badge | Chest patch, floating tag, @ tag, envelope |
@@ -245,7 +245,18 @@ camera shows straight through.
 **No forearm or sleeve tattoos.** A Wii Mii has floating hands and no arms —
 that is the silhouette, not an omission. There is no forearm to ink, so the
 brief's sleeve tattoos are not implementable without abandoning the base
-aesthetic. Hands and neck are supported instead.
+aesthetic.
+
+**And no neck tattoos either, strictly speaking.** The head is between 0.33
+and 0.54 wide across the neck's entire height while the neck is only 0.115, so
+the head hides that mesh completely and the collar covers what is left — ink
+painted there was invisible at every angle. The "Jaw" option paints it into
+the face texture along the jawline instead, which is visible, and a beard
+grows over it because the ink is drawn first.
+
+Hand ink also has to fight for space: the hands are spheres about a tenth of
+the body tall, so the motif is heavy bars at full opacity rather than line
+art, repeated around the sphere so it reads whichever way the hand drifts.
 
 **Fades are implied, not shaded.** A character carries one hair colour, so
 `crop`, `dreads` and `afrofade` fake the taper by capping the sides short and

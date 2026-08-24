@@ -1382,6 +1382,48 @@ function drawEyewear(g, U, dna) {
   g.globalAlpha = 1;
 }
 
+/* ---- neck ink -----------------------------------------------
+   Painted along the jaw rather than on the neck mesh, because the head
+   hides that mesh entirely. Mirrored on both sides so it reads at any
+   angle, and drawn before facial hair so a beard covers it the way one
+   actually would. */
+function drawNeckInk(g, U, dna) {
+  if (dna.tattoo !== 'neck' && dna.tattoo !== 'both') return;
+
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.strokeStyle = INK;
+  g.fillStyle = INK;
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+
+  for (const sgn of [-1, 1]) {
+    g.save();
+    g.translate(50 * U, 0);
+    g.scale(sgn, 1);
+
+    // three tapering bars sweeping up the side of the jaw
+    g.lineWidth = 3.4 * U;
+    for (let i = 0; i < 3; i++) {
+      const x = 21 + i * 5.4;
+      g.beginPath();
+      g.moveTo(x * U, (88 - i * 3) * U);
+      g.lineTo((x + 4.6) * U, (72 - i * 4) * U);
+      g.stroke();
+    }
+
+    // a solid wedge at the corner of the jaw to anchor them
+    g.beginPath();
+    g.moveTo(19 * U, 78 * U);
+    g.lineTo(27 * U, 68 * U);
+    g.lineTo(29 * U, 74 * U);
+    g.lineTo(22 * U, 84 * U);
+    g.closePath();
+    g.fill();
+
+    g.restore();
+  }
+}
+
 /* ---- facial hair --------------------------------------------
    Shapes hug the jaw and run up to the temples. An ellipse across
    the bottom of the face was the obvious approach and it read as a
@@ -1549,6 +1591,8 @@ function drawFace(dna, expr) {
   // eyes
   P(50 - dna.eyes.spacing, dna.eyes.y); drawEye(g, U, dna, 1, expr);
   P(50 + dna.eyes.spacing, dna.eyes.y); drawEye(g, U, dna, -1, expr);
+  // ink first, so a beard grows over it rather than under it
+  drawNeckInk(g, U, dna);
   // facial hair sits under the mouth so a moustache reads as hair on skin,
   // not a sticker over the lips
   drawFacialHair(g, U, dna);
@@ -1691,11 +1735,13 @@ const PIERCING_ALIASES = { brow: 'none', lip: 'none' };
    sleeve ink has no surface to sit on. Hands and neck do. */
 const TATTOOS = [
   { id: 'none',  label: 'None' },
-  { id: 'hand',  label: 'Hand ink' },
-  { id: 'neck',  label: 'Neck' },
-  { id: 'both',  label: 'Hands + neck' }
+  { id: 'hand',  label: 'Hands' },
+  { id: 'neck',  label: 'Jaw' },
+  { id: 'both',  label: 'Both' }
 ];
-const INK = '#2a3340';
+/* Near-black with a blue cast, the way healed ink actually looks. The earlier
+   value was light enough that it disappeared against darker skin tones. */
+const INK = '#141c26';
 
 /* ---- apparel ------------------------------------------------
    `kind` selects the torso texture painter; `hood`/`open` add
@@ -2170,37 +2216,85 @@ function applyBadgeIdentity(mii, email) {
 
 /* Ink is painted into its own small texture so it can sit on the neck
    cylinder and the hand spheres without touching the garment map. */
+/* Ink has very little canvas to work with: the rig shows a small neck and two
+ * hands barely a tenth of the body tall. Two things follow.
+ *
+ * First, alignment matters. Three.js puts the front of a sphere at u=0.25 and
+ * the front of a cylinder at u=0 — the first version drew both designs around
+ * u=0.5, which put the hand ink on the outside of the hand and the neck ink
+ * around the back of the neck, facing away from the camera.
+ *
+ * Second, subtlety does not survive. Thin low-opacity line art minified to a
+ * few dozen pixels reads as a smudge, so these are heavy strokes at full
+ * opacity, and the motifs repeat around the surface so they read from any
+ * angle rather than only head-on.
+ */
 function makeInkTexture(kind) {
-  const S = 128;
+  const S = 256;
   const c = cv(S);
   const g = c.getContext('2d');
   g.clearRect(0, 0, S, S);
   g.strokeStyle = INK;
+  g.fillStyle = INK;
   g.lineCap = 'round';
+  g.lineJoin = 'round';
+
+  /* Draws around the seam as well, so a motif centred on the front edge of a
+     cylinder is not sliced in half. */
+  const wrapped = (cx, draw) => {
+    for (const dx of [-S, 0, S]) {
+      g.save(); g.translate(cx + dx, 0); draw(); g.restore();
+    }
+  };
 
   if (kind === 'neck') {
-    // minimalist line art: a few arcs and a short script-like stroke
-    g.globalAlpha = 0.85; g.lineWidth = 4;
-    g.beginPath(); g.arc(S * 0.32, S * 0.5, 16, -0.6, 2.2); g.stroke();
-    g.beginPath(); g.arc(S * 0.66, S * 0.46, 11, 0.4, 3.4); g.stroke();
-    g.lineWidth = 3;
-    g.beginPath();
-    g.moveTo(S * 0.2, S * 0.72);
-    g.bezierCurveTo(S * 0.36, S * 0.62, S * 0.5, S * 0.84, S * 0.78, S * 0.7);
-    g.stroke();
-  } else {
-    g.globalAlpha = 0.8; g.lineWidth = 5;
-    for (let i = 0; i < 3; i++) {                     // small knuckle bars
-      const y = S * (0.34 + i * 0.16);
-      g.beginPath(); g.moveTo(S * 0.3, y); g.lineTo(S * 0.7, y); g.stroke();
+    // Bands run the whole way round, so the tattoo reads from every angle.
+    g.lineWidth = 13;
+    g.beginPath(); g.moveTo(0, S * 0.46); g.lineTo(S, S * 0.46); g.stroke();
+    g.lineWidth = 7;
+    g.beginPath(); g.moveTo(0, S * 0.63); g.lineTo(S, S * 0.63); g.stroke();
+
+    // Chevrons hanging off the lower band, repeated around the circumference.
+    for (let i = 0; i < 6; i++) {
+      const cx = (i + 0.5) * (S / 6);
+      wrapped(cx, () => {
+        g.lineWidth = 9;
+        g.beginPath();
+        g.moveTo(-S * 0.05, S * 0.72);
+        g.lineTo(0, S * 0.85);
+        g.lineTo(S * 0.05, S * 0.72);
+        g.stroke();
+      });
     }
-    g.lineWidth = 4;
-    g.beginPath(); g.arc(S * 0.5, S * 0.2, 9, 0, TAU); g.stroke();
+
+    // A heavier mark on the front of the throat — cylinder front is u=0.
+    wrapped(0, () => {
+      g.lineWidth = 11;
+      g.beginPath(); g.arc(0, S * 0.3, S * 0.1, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
+      g.beginPath(); g.arc(0, S * 0.3, S * 0.045, 0, TAU); g.fill();
+    });
+  } else {
+    // Sphere front is u=0.25: knuckle bars belong on the back of the hand,
+    // which is what faces the camera.
+    const front = S * 0.25;
+    wrapped(front, () => {
+      g.lineWidth = 14;
+      for (let i = 0; i < 3; i++) {
+        const y = S * (0.42 + i * 0.15);
+        g.beginPath(); g.moveTo(-S * 0.14, y); g.lineTo(S * 0.14, y); g.stroke();
+      }
+      g.lineWidth = 12;
+      g.beginPath(); g.arc(0, S * 0.24, S * 0.1, 0, TAU); g.stroke();
+    });
+
+    // Ring right round the wrist so ink is visible however the hand turns.
+    g.lineWidth = 12;
+    g.beginPath(); g.moveTo(0, S * 0.86); g.lineTo(S, S * 0.86); g.stroke();
   }
-  g.globalAlpha = 1;
 
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
   t.userData.own = true;
   return t;
 }
@@ -2546,19 +2640,11 @@ function buildMii(dna) {
   neck.scale.set(0.115, 0.2, 0.105); neck.position.y = 0.7;
   body.add(neck);
 
-  // Neck ink rides a hair's breadth outside the neck so it never z-fights.
-  if (dna.tattoo === 'neck' || dna.tattoo === 'both') {
-    const inkTex = makeInkTexture('neck');
-    const inkMat = new THREE.MeshStandardMaterial({
-      map: inkTex, transparent: true, roughness: 0.85, depthWrite: false
-    });
-    M.mats.push(inkMat);
-    const inkNeck = new THREE.Mesh(G.neck(), inkMat);
-    inkNeck.scale.set(0.118, 0.19, 0.108);
-    inkNeck.position.y = 0.7;
-    inkNeck.renderOrder = 3;
-    body.add(inkNeck);
-  }
+  /* Neck ink used to be a shell over this cylinder. It was never visible: the
+     head is between 0.33 and 0.54 wide across the neck's whole height while
+     the neck itself is only 0.115, so the head hides it completely and the
+     collar covers whatever is left. It is painted onto the jaw in the face
+     texture instead — see drawNeckInk(). */
 
   // Cardigans, flannels and denim read as layers, so the collar picks up
   // the garment instead of staying a white tee crew neck.

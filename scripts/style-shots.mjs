@@ -250,6 +250,28 @@ try {
       base: { framing: 'head' }
     },
     {
+      file: 'style-04b-tattoos',
+      title: 'Ink',
+      field: 'tattoo',
+      pick: `MiiPlaza.catalog.TATTOOS.map(t => t.id)`,
+      labelExpr: `MiiPlaza.catalog.TATTOOS.map(t => t.label)`,
+      cols: 4,
+      // no hat or beard in the way, and close enough to judge the jaw
+      base: { framing: 'head', turn: -0.3,
+              dna: { tattoo: 'none', facialHair: 'none', hair: { style: 'buzz', color: '#2b1d15' } } }
+    },
+    {
+      file: 'style-04c-tattoos-body',
+      title: 'Ink — full body, to check the hands',
+      field: 'tattoo',
+      pick: `MiiPlaza.catalog.TATTOOS.map(t => t.id)`,
+      labelExpr: `MiiPlaza.catalog.TATTOOS.map(t => t.label)`,
+      cols: 4,
+      base: { framing: 'body', turn: -0.2,
+              dna: { tattoo: 'none', facialHair: 'none', apparel: 'tee',
+                     hair: { style: 'buzz', color: '#2b1d15' } } }
+    },
+    {
       file: 'style-05-apparel',
       title: 'Apparel — streetwear and kits',
       field: 'apparel',
