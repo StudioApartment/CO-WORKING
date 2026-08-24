@@ -256,6 +256,34 @@ try {
       MiiPlaza.catalog.HAIRSTYLES.filter(s => !/^[A-Z]/.test(MiiPlaza.styleLabel(s)))`);
     check('every style has a display label', unlabelled.length === 0, unlabelled.join(', '));
 
+    const extras = await evaluate(`(() => {
+      const cat = MiiPlaza.catalog;
+      const cuts = cat.HAIRSTYLES.filter(s => !cat.HAT_STYLES.includes(s));
+      const glasses = cat.EYEWEAR;
+      return {
+        hasSwoop: cuts.includes('swoop'),
+        hasFlow: cuts.includes('flow'),
+        hasMullet: cuts.includes('mullet'),
+        hasWolf: cuts.includes('wolf'),
+        bandanas: cat.HAT_STYLES.filter(s => s.startsWith('bandana')),
+        wedge: glasses.filter(e => e.frame === 'wedge').map(e => e.id),
+        wrap: glasses.filter(e => e.frame === 'wrap').map(e => e.label),
+        tints: glasses.filter(e => e.tint).map(e => e.tint)
+      };
+    })()`);
+    check('James Dean swoop is in the list', extras.hasSwoop);
+    check('flowy mens cuts are in the list', extras.hasFlow && extras.hasMullet && extras.hasWolf);
+    check('bandanas come in red, blue and green',
+      extras.bandanas.includes('bandana') && extras.bandanas.includes('bandanablue')
+        && extras.bandanas.includes('bandanagreen'),
+      JSON.stringify(extras.bandanas));
+    check('no triangular wedge frames', extras.wedge.length === 0, extras.wedge.join(','));
+    check('wrap-around baseball shades are in the list', extras.wrap.length >= 3, extras.wrap.join(', '));
+    check('tinted lenses are actually tinted', extras.tints.every((t) => {
+      const m = /,\s*([0-9.]+)\)/.exec(t);
+      return m && Number(m[1]) >= 0.5;
+    }), extras.tints.join(', '));
+
     // Retired novelty styles must not leave a stored character bald.
     const aliased = await evaluate(`(() => {
       const out = {};

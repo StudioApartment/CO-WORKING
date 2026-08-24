@@ -1092,6 +1092,62 @@ function makeCapLogo(text, color) {
   return t;
 }
 
+/* Classic paisley (buta) on a solid field. Motifs are oversized on purpose:
+   a fine print disappears once it is wrapped onto a dome the size of a head. */
+function makePaisleyTexture(base) {
+  const S = 256, c = cv(S), g = c.getContext('2d');
+  const dark = shade(base, -70);
+  const mid = shade(base, -28);
+  const light = mixHex('#f4ead2', base, 0.18);
+  g.fillStyle = base;
+  g.fillRect(0, 0, S, S);
+
+  const motif = (x, y, sc, rot) => {
+    g.save();
+    g.translate(x, y);
+    g.rotate(rot);
+    g.scale(sc, sc);
+    g.beginPath();
+    g.moveTo(0, -30);
+    g.bezierCurveTo(22, -28, 30, 4, 8, 30);
+    g.bezierCurveTo(-6, 22, -4, 8, -2, 0);
+    g.bezierCurveTo(-24, 6, -26, -22, 0, -30);
+    g.fillStyle = dark;
+    g.fill();
+    g.strokeStyle = light;
+    g.lineWidth = 2.4;
+    g.stroke();
+    g.beginPath();
+    g.moveTo(3, -12);
+    g.bezierCurveTo(12, -10, 14, 6, 3, 16);
+    g.bezierCurveTo(-4, 10, -6, -6, 3, -12);
+    g.fillStyle = light;
+    g.fill();
+    g.fillStyle = mid;
+    g.beginPath(); g.arc(-10, 6, 3.2, 0, TAU); g.fill();
+    g.beginPath(); g.arc(-6, 16, 2.2, 0, TAU); g.fill();
+    g.fillStyle = light;
+    g.beginPath(); g.arc(10, -4, 2.4, 0, TAU); g.fill();
+    g.restore();
+  };
+
+  const step = 72;
+  for (let row = -1; row < 6; row++) {
+    for (let col = -1; col < 6; col++) {
+      motif(col * step + (row % 2) * (step / 2), row * step * 0.72,
+        0.95, (row % 2 ? 0.45 : -0.35) + col * 0.04);
+    }
+  }
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(2, 2);
+  t.anisotropy = 4;
+  t.userData.own = true;
+  return t;
+}
+
 function makeNameTexture(name) {
   const label = String(name).slice(0, 14);
   if (!_measure) _measure = cv(8, 8).getContext('2d');
@@ -1279,18 +1335,67 @@ function drawEyewear(g, U, dna) {
   // make transparent plastic render as solid.
   const frame = spec.frameColor || spec.metal || (spec.shades ? '#1b1c22' : dna.glassCol);
 
+  /* One continuous shield, not two lenses. Wrap-around baseball shades only
+     read as wrap-around if they cover temple to temple as a single piece. */
+  if (spec.frame === 'wrap') {
+    g.save();
+    g.translate(50 * U, ey * U);
+    const W = gw * U, H = gh * U;
+    const shield = () => {
+      g.beginPath();
+      g.moveTo(-W * 0.5, -H * 0.22);
+      g.quadraticCurveTo(0, -H * 0.58, W * 0.5, -H * 0.22);
+      g.quadraticCurveTo(W * 0.56, H * 0.08, W * 0.5, H * 0.44);
+      g.quadraticCurveTo(0, H * 0.68, -W * 0.5, H * 0.44);
+      g.quadraticCurveTo(-W * 0.56, H * 0.08, -W * 0.5, -H * 0.22);
+      g.closePath();
+    };
+    shield();
+    const grd = g.createLinearGradient(0, -H * 0.55, 0, H * 0.6);
+    grd.addColorStop(0, spec.mirrorTop || '#ffe08a');
+    grd.addColorStop(0.4, spec.mirrorMid || '#d47818');
+    grd.addColorStop(1, spec.mirrorBot || '#2a1408');
+    g.fillStyle = grd;
+    g.fill();
+    g.save();
+    shield();
+    g.clip();
+    g.globalAlpha = 0.38;
+    g.fillStyle = '#ffffff';
+    g.beginPath();
+    g.moveTo(-W * 0.52, H * 0.12);
+    g.lineTo(W * 0.08, -H * 0.6);
+    g.lineTo(W * 0.22, -H * 0.6);
+    g.lineTo(-W * 0.36, H * 0.22);
+    g.closePath();
+    g.fill();
+    g.restore();
+    g.strokeStyle = frame;
+    g.lineWidth = spec.lw * U;
+    g.lineJoin = 'round';
+    shield();
+    g.stroke();
+    g.beginPath();
+    g.moveTo(-W * 0.46, -H * 0.18);
+    g.lineTo(W * 0.46, -H * 0.18);
+    g.lineWidth = spec.lw * U * 1.35;
+    g.stroke();
+    g.lineWidth = spec.lw * U * 0.85;
+    for (const sgn of [-1, 1]) {
+      g.beginPath();
+      g.moveTo(sgn * W * 0.5, -H * 0.06);
+      g.lineTo(sgn * (W * 0.5 + 4.4 * U), -H * 0.3);
+      g.stroke();
+    }
+    g.restore();
+    return;
+  }
+
   const lensPath = (w, h) => {
     g.beginPath();
     switch (spec.frame) {
       case 'oval':
         g.ellipse(0, 0, w / 2, h / 2, 0, 0, TAU);
-        return;
-      case 'wedge':
-        g.moveTo(-w / 2, -h * 0.58);
-        g.lineTo(w * 0.5, -h * 0.1);
-        g.lineTo(w * 0.5, h * 0.06);
-        g.lineTo(-w / 2, h * 0.58);
-        g.closePath();
         return;
       case 'aviator': {
         // teardrop: wide flat brow, tapering to a low inner point
@@ -1342,10 +1447,10 @@ function drawEyewear(g, U, dna) {
 
     lensPath(lw, lh);
     if (spec.shades) {
-      g.fillStyle = spec.lens || 'rgba(26,28,38,.88)';
+      g.fillStyle = spec.lens || 'rgba(16,18,26,.96)';
       g.fill();
       g.save(); g.clip();
-      g.globalAlpha = 0.24; g.fillStyle = '#dff1ff';
+      g.globalAlpha = 0.22; g.fillStyle = '#dff1ff';
       g.beginPath();
       g.moveTo(-lw * 0.58, lh * 0.62); g.lineTo(lw * 0.02, -lh * 0.62);
       g.lineTo(lw * 0.24, -lh * 0.62); g.lineTo(-lw * 0.36, lh * 0.62);
@@ -1353,6 +1458,13 @@ function drawEyewear(g, U, dna) {
       g.restore();
     } else if (spec.tint) {
       g.fillStyle = spec.tint; g.fill();
+      g.save(); g.clip();
+      const tg = g.createLinearGradient(0, -lh / 2, 0, lh / 2);
+      tg.addColorStop(0, 'rgba(255,255,255,.32)');
+      tg.addColorStop(1, 'rgba(20,10,0,.28)');
+      g.fillStyle = tg;
+      g.fillRect(-lw, -lh, lw * 2, lh * 2);
+      g.restore();
     } else {
       // clear plastic still needs a hint of glass or the lens reads as a hole
       g.globalAlpha = spec.clear ? 0.1 : 0.16;
@@ -1362,7 +1474,7 @@ function drawEyewear(g, U, dna) {
 
     g.strokeStyle = strokeStyleFor(lh);
     g.lineWidth = spec.lw * U;
-    g.lineJoin = spec.frame === 'wedge' ? 'miter' : 'round';
+    g.lineJoin = 'round';
     g.miterLimit = 8;
     lensPath(lw, lh);
     g.stroke();
@@ -1658,10 +1770,10 @@ const SHOES  = ['#2f3a45','#e8ecef','#c0392b','#33506b','#4a4a4a'];
 /* Real haircuts people ask for, rather than novelty shapes. Ordered roughly
    short to long so the picker reads sensibly. */
 const HAIRSTYLES = ['bald','buzz','taper','crop','waves','pixie','bowl','combover','sidepart',
-                    'quiff','pompadour','slickback','swept','spiky','curtains','afro','afrofade',
-                    'dreads','bob','shag','long','bun','pony',
+                    'quiff','pompadour','swoop','slickback','swept','spiky','curtains','afro','afrofade',
+                    'dreads','bob','shag','wolf','mullet','flow','long','bun','pony',
                     'cap','flatbrim','dadhat','knicks','yankees','bucket','cowboy','beanie',
-                    'bandana','bandanaback','tophat'];
+                    'bandana','bandanablue','bandanagreen','bandanaback','tophat'];
 
 /* Styles that existed before this list was rewritten. Stored characters keep
    working by landing on the nearest real cut instead of rendering bald. */
@@ -1677,13 +1789,15 @@ const HAIRSTYLE_ALIASES = {
 const STYLE_LABELS = {
   bald: 'Bald', buzz: 'Buzz cut', taper: 'Crew cut', crop: 'French crop',
   waves: 'Waves', pixie: 'Pixie', bowl: 'Bowl', combover: 'Comb over',
-  sidepart: 'Side part', quiff: 'Quiff', pompadour: 'Pompadour',
+  sidepart: 'Side part', quiff: 'Quiff', pompadour: 'Pompadour', swoop: 'Swoop',
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
   curtains: 'Curtains', afro: 'Afro', afrofade: 'Afro fade', dreads: 'Locs',
-  bob: 'Bob', shag: 'Shag', long: 'Long', bun: 'Bun', pony: 'Ponytail',
+  bob: 'Bob', shag: 'Shag', wolf: 'Wolf cut', mullet: 'Mullet', flow: 'Flow',
+  long: 'Long', bun: 'Bun', pony: 'Ponytail',
   cap: 'Cap', flatbrim: 'Flat brim', dadhat: 'Dad hat', knicks: 'Orange & blue',
   yankees: 'Navy & white', bucket: 'Bucket', cowboy: 'Cowboy', beanie: 'Beanie',
-  bandana: 'Bandana', bandanaback: 'Bandana back', tophat: 'Top hat'
+  bandana: 'Red bandana', bandanablue: 'Blue bandana', bandanagreen: 'Green bandana',
+  bandanaback: 'Bandana back', tophat: 'Top hat'
 };
 const styleLabel = (id) => STYLE_LABELS[id] || id;
 const NAMES = ['Yuki','Momo','Kai','Rin','Taro','Bea','Nico','Pim','Otto','Lulu','Sora','Ren','Miki','Bo','Gus','Ada','Ken','Emi','Hugo','Pia','Tobi','Zed','Coco','Finn','Nori','Vee','Sam','Juno','Milo','Bibi'];
@@ -1701,10 +1815,10 @@ const NAMES = ['Yuki','Momo','Kai','Rin','Taro','Bea','Nico','Pim','Otto','Lulu'
    ══════════════════════════════════════════════════════════════ */
 
 /* ---- eyewear -------------------------------------------------
-   Three families. `frame` drives geometry, `metal` switches the
-   stroke to a gradient, `tint` fills the lens. Legacy DNA stored
-   glasses as 1..4, so those ids are kept pointing at the same
-   shapes they always were. */
+   Four families. `frame` drives geometry, `metal` switches the
+   stroke to a gradient, `tint` fills the lens, `wrap` draws a
+   single shield. Legacy DNA stored glasses as 1..4, so those ids
+   are kept pointing at the same slots they always were. */
 const EYEWEAR = [
   { id: 0,  label: 'None',       group: null },
 
@@ -1719,9 +1833,9 @@ const EYEWEAR = [
 
   // metal
   { id: 20, label: 'Gold aviator', group: 'Metal', frame: 'aviator', w: 22, h: 18, lw: 1.5,
-    metal: '#d8b45e', tint: 'rgba(120,96,40,.22)' },
+    metal: '#d8b45e', tint: 'rgba(120,96,40,.62)' },
   { id: 21, label: 'Orange tint',  group: 'Metal', frame: 'aviator', w: 22, h: 18, lw: 1.5,
-    metal: '#c9a253', tint: 'rgba(214,118,42,.40)' },
+    metal: '#c9a253', tint: 'rgba(214,118,42,.72)' },
   { id: 22, label: 'Thin rect',    group: 'Metal', frame: 'square',  w: 17, h: 10, lw: 1.2,
     metal: '#b9c2c9' },
   { id: 23, label: 'Wire round',   group: 'Metal', frame: 'oval',    w: 18, h: 17, lw: 1.15,
@@ -1729,14 +1843,20 @@ const EYEWEAR = [
 
   // sunglasses
   { id: 3,  label: 'Big shades',  group: 'Sunglasses', frame: 'square',  w: 28, h: 22, lw: 2.6, shades: true },
-  { id: 4,  label: 'Angular',     group: 'Sunglasses', frame: 'wedge',   w: 20, h: 11, lw: 1.35, shades: true },
+  { id: 4,  label: 'Tiny square', group: 'Sunglasses', frame: 'square',  w: 16, h: 10, lw: 1.5, shades: true },
   { id: 30, label: 'Wayfarer',    group: 'Sunglasses', frame: 'wayfarer',w: 24, h: 17, lw: 3.4, shades: true },
   { id: 31, label: 'Italian',     group: 'Sunglasses', frame: 'oval',    w: 26, h: 21, lw: 3.0, shades: true,
-    lens: 'rgba(58,32,44,.86)' },
-  { id: 32, label: 'Narrow',      group: 'Sunglasses', frame: 'wedge',   w: 23, h: 8,  lw: 1.2, shades: true,
-    lens: 'rgba(18,20,30,.94)' },
+    lens: 'rgba(40,18,28,.96)' },
+  { id: 32, label: 'Tiny round',  group: 'Sunglasses', frame: 'oval',    w: 15, h: 15, lw: 1.45, shades: true,
+    lens: 'rgba(16,18,26,.96)' },
   { id: 33, label: 'Teardrop',    group: 'Sunglasses', frame: 'aviator', w: 23, h: 19, lw: 1.6, shades: true,
-    metal: '#cbb06a', lens: 'rgba(30,26,22,.80)' }
+    metal: '#cbb06a', lens: 'rgba(28,22,16,.94)' },
+  { id: 34, label: 'Amber wrap',  group: 'Sunglasses', frame: 'wrap',    w: 64, h: 17, lw: 2.5,
+    mirrorTop: '#ffe08a', mirrorMid: '#d47818', mirrorBot: '#2a1408' },
+  { id: 35, label: 'Green wrap',  group: 'Sunglasses', frame: 'wrap',    w: 64, h: 17, lw: 2.5,
+    mirrorTop: '#d4f2a0', mirrorMid: '#3a8c28', mirrorBot: '#0c2410' },
+  { id: 36, label: 'Blue wrap',   group: 'Sunglasses', frame: 'wrap',    w: 64, h: 17, lw: 2.5,
+    mirrorTop: '#c4e8ff', mirrorMid: '#2a6cb0', mirrorBot: '#081830' }
 ];
 const EYEWEAR_BY_ID = new Map(EYEWEAR.map((e) => [e.id, e]));
 
@@ -1966,9 +2086,11 @@ const HATS = {
   yankees:  { crown: '#132448', accent: '#e8e8ee', mark: 'NY' },
   bucket:   { crown: '#8d8f68', accent: '#6d6f4e' },
   cowboy:   { crown: '#8a6236', accent: '#5d4023' },
-  beanie:   { crown: null,      accent: null      },
-  bandana:      { crown: null,  accent: null      },
-  bandanaback:  { crown: null,  accent: null      }
+  beanie:       { crown: null,      accent: null      },
+  bandana:      { crown: '#c62828', paisley: true     },
+  bandanablue:  { crown: '#1565c0', paisley: true     },
+  bandanagreen: { crown: '#2e7d32', paisley: true     },
+  bandanaback:  { crown: '#c62828', paisley: true     }
 };
 const HAT_STYLES = Object.keys(HATS);
 
@@ -2304,6 +2426,11 @@ function buildHair(dna, mat, extraMats) {
       color: accCol, roughness: 0.55, metalness: 0.02, side: THREE.DoubleSide
     });
     if (extraMats) extraMats.push(hatMat, accMat);
+    if (H.paisley) {
+      hatMat.map = makePaisleyTexture(crownCol);
+      hatMat.color.set('#ffffff');
+      hatMat.roughness = 0.74;
+    }
 
     /* Hair still shows under a hat, but only down to the brow. Taken any
        lower it reaches eye level and reads as a coloured patch stuck to the
@@ -2311,12 +2438,16 @@ function buildHair(dna, mat, extraMats) {
     cap(1.022, 1.28, 1.0);
 
     if (st === 'tophat') {
-      // CylinderGeometry is height 1 centred, so scale.y is the total height:
-      // the crown has to be centred half its height above the brim, or it
-      // floats. It was doing exactly that.
-      put(G.cyl(), accMat, 0, 0.42, 0, 1.44, 0.07, 1.44);         // brim  0.385..0.455
-      put(G.cyl(), hatMat, 0, 0.75, 0, 0.93, 0.60, 0.93);         // crown 0.450..1.050
-      put(G.cyl(), accMat, 0, 0.52, 0, 0.96, 0.12, 0.96);         // band  0.460..0.580
+      /* CylinderGeometry is height 1 centred, so scale.y is the total height:
+         the crown has to be centred half its height above the brim or it
+         floats.
+
+         The crown also has to be wider than the skull along its whole span.
+         At r=0.93 it was narrower than the head at y=0.45, where the head is
+         0.947 across — so the head pushed out through the side of the hat. */
+      put(G.cyl(), accMat, 0, 0.42, 0, 1.46, 0.07, 1.46);         // brim  0.385..0.455
+      put(G.cyl(), hatMat, 0, 0.76, 0, 1.0,  0.64, 1.0);          // crown 0.440..1.080
+      put(G.cyl(), accMat, 0, 0.51, 0, 1.03, 0.13, 1.03);         // band  0.445..0.575
     } else if (st === 'bucket') {
       put(G.dome(1.07, 1.22), hatMat, 0, 0.02, 0, 1, 1, 1);
       put(G.frus(0.95), hatMat, 0, 0.36, 0, 1.46, 0.34, 1.46);   // floppy flare
@@ -2342,12 +2473,12 @@ function buildHair(dna, mat, extraMats) {
       put(G.dome(1.07, 1.3), hatMat, 0, 0.02, 0, 1, 1.04, 1);
       put(G.cyl(), accMat, 0, 0.33, 0, 1.1, 0.14, 1.05);          // folded cuff
       put(G.ball(), accMat, 0, 1.12, 0, 0.2, 0.2, 0.2);           // bobble
-    } else if (st === 'bandana' || st === 'bandanaback') {
+    } else if (st === 'bandana' || st === 'bandanablue' || st === 'bandanagreen' || st === 'bandanaback') {
       // Tied around the head, so it comes down to the brow like the cap
       // crowns do. Stopping high up read as a small skullcap instead.
       put(G.dome(1.05, 1.28), hatMat, 0, 0.02, 0, 1, 1, 1);
       put(G.cyl(), hatMat, 0, 0.34, 0, 1.07, 0.16, 1.02);         // rolled edge
-      const front = st === 'bandana';
+      const front = st !== 'bandanaback';
       const z = front ? 1.0 : -1.0;
       const knot = put(G.ball(), hatMat, 0, 0.34, z * 0.62, 0.2, 0.2, 0.2);
       knot.rotation.y = 0.4;
@@ -2357,16 +2488,27 @@ function buildHair(dna, mat, extraMats) {
         t.rotation.z = sx * 0.3;
       }
     } else {
-      // baseball family: cap, flatbrim, dadhat, and the two colourways
+      /* Baseball family: cap, flatbrim, dadhat, and the two colourways.
+
+         The dad hat used to squash the crown to 0.94 of its height, which put
+         its apex at 1.010 against a skull apex of 1.000. Ten thousandths is
+         less than the faceting error on an 18-segment dome, so the head
+         showed through the top. Crowns are full height now and a dad hat gets
+         its slouch from the brim angle instead. */
       const soft = H.soft;
-      put(G.dome(1.075, soft ? 1.36 : 1.3), hatMat, 0, soft ? 0.0 : 0.03, 0, 1, soft ? 0.94 : 1, 1);
-      put(G.ball(), accMat, 0, 1.03, 0, 0.11, 0.11, 0.11);       // button
+      put(G.dome(1.075, soft ? 1.36 : 1.3), hatMat, 0, soft ? 0.0 : 0.03, 0, 1, 1, 1);
+      put(G.ball(), accMat, 0, 1.05, 0, 0.11, 0.11, 0.11);       // button
+
+      /* A dome ends in an open edge, and with DoubleSide you see its inside —
+         which read as a gap between crown and brim. A sweatband closes the
+         edge and carries the line round to meet the brim. */
+      put(G.cyl(), hatMat, 0, 0.30, 0, 1.064, 0.11, 1.064);
 
       if (H.flat) {
         put(G.foot(), accMat, 0, 0.29, 0.96, 0.68, 0.07, 0.56);  // squared flat brim
       } else {
         const brim = put(G.foot(), st === 'yankees' ? hatMat : accMat,
-          0, soft ? 0.22 : 0.28, 0.95, 0.66, 0.06, soft ? 0.62 : 0.56);
+          0, soft ? 0.24 : 0.28, 0.95, 0.66, 0.06, soft ? 0.62 : 0.56);
         brim.rotation.x = soft ? -0.34 : -0.2;                   // dad hats sit lower
       }
 
@@ -2473,16 +2615,27 @@ function buildHair(dna, mat, extraMats) {
     top.rotation.z = 0.16;
     add(G.ball(), 0.42, 0.66, 0.3, 0.2, 0.16, 0.44);       // raised edge of the part
   } else if (st === 'quiff') {
-    // short sides, front lifted and swept back
-    cap(1.03, 1.2, 0.9);
-    const q = add(G.ball(), 0, 0.74, 0.5, 0.52, 0.36, 0.34);
-    q.rotation.x = -0.42;
-    add(G.ball(), 0, 0.66, 0.06, 0.66, 0.24, 0.5);
+    // short sides, a lifted front that reads from head-on — not a bump on
+    // the crown that disappears in three-quarter
+    cap(1.028, 1.18, 0.82);
+    const q = add(G.ball(), 0, 0.9, 0.5, 0.48, 0.52, 0.36);
+    q.rotation.x = -0.58;
+    add(G.ball(), 0, 0.7, 0.1, 0.64, 0.28, 0.52);
   } else if (st === 'pompadour') {
-    // taller and rounder than a quiff, volume held above the forehead
-    cap(1.03, 1.2, 0.86);
-    add(G.ball(), 0, 0.82, 0.3, 0.62, 0.46, 0.56);
-    add(G.ball(), 0, 0.7, -0.16, 0.7, 0.3, 0.6);
+    // taller and rounder: volume held above the forehead, sides cropped
+    cap(1.026, 1.16, 0.78);
+    add(G.ball(), 0, 1.02, 0.18, 0.6, 0.56, 0.52);
+    add(G.ball(), 0, 0.74, 0.52, 0.48, 0.34, 0.34);
+    add(G.ball(), 0, 0.64, -0.18, 0.7, 0.28, 0.6);
+  } else if (st === 'swoop') {
+    // 1950s James Dean: a curl that lifts off the forehead and falls to
+    // one side, sides cropped, the rest combed back.
+    cap(1.026, 1.14, 0.76);
+    const lift = add(G.ball(), 0.1, 0.94, 0.54, 0.46, 0.5, 0.4);
+    lift.rotation.x = -0.74;
+    lift.rotation.z = -0.2;
+    add(G.ball(), 0, 0.86, 0.14, 0.56, 0.4, 0.48);
+    add(G.ball(), 0.12, 0.58, -0.22, 0.64, 0.24, 0.56);
   } else if (st === 'slickback') {
     // flat to the head, combed straight back
     cap(1.028, 1.3, 0.96);
@@ -2502,18 +2655,23 @@ function buildHair(dna, mat, extraMats) {
     // where the locs start hanging.
     cap(1.03, 1.6, 0.98);
     add(G.dome(1.06, 0.66), 0, 0.06, 0);
-    // Locs ring the head and hang past the jaw so they stay visible head-on,
-    // not just in three-quarter view.
+    /* Locs hang from the cap's lower edge. CylinderGeometry is centred, so
+       the origin is the midpoint of each loc — the top has to sit on the cap
+       (y≈−0.03, r≈1.03) or they float as a ring of detached blobs. The tips
+       used to be placed a full length below the origin, which is len/2 past
+       the actual end of the cylinder. */
+    const capEdgeY = -0.03;
+    const locRing = 1.02;
     for (let i = 0; i < 12; i++) {
       const a = Math.PI * 0.16 + (i / 11) * Math.PI * 1.68;
-      const r = 0.86;
-      const len = 0.62 + (i % 3) * 0.16;
-      const l = add(G.neck(), Math.sin(a) * r, -0.34 - (i % 3) * 0.12, Math.cos(a) * r * 0.86,
-        0.1, len, 0.1);
-      l.rotation.z = Math.sin(a) * 0.24;
-      l.rotation.x = -Math.cos(a) * 0.16;
-      add(G.ball(), Math.sin(a) * r, -0.34 - (i % 3) * 0.12 - len, Math.cos(a) * r * 0.86,
-        0.1, 0.1, 0.1);                                    // rounded tip
+      const len = 0.55 + (i % 3) * 0.14;
+      const x = Math.sin(a) * locRing;
+      const z = Math.cos(a) * locRing * 0.92;
+      const y = capEdgeY - len / 2;
+      const l = add(G.neck(), x, y, z, 0.09, len, 0.09);
+      l.rotation.z = Math.sin(a) * 0.1;
+      l.rotation.x = -Math.cos(a) * 0.06;
+      add(G.ball(), x, y - len / 2, z, 0.09, 0.09, 0.09);
     }
   } else if (st === 'afrofade') {
     // tight at the temples, full and round above
@@ -2540,6 +2698,34 @@ function buildHair(dna, mat, extraMats) {
     add(G.ball(), 0, -0.34, -0.7, 0.66, 0.46, 0.36);
     const fringe = add(G.ball(), 0, 0.44, 0.78, 0.6, 0.2, 0.2);
     fringe.rotation.x = 0.26;
+  } else if (st === 'wolf') {
+    // shaggy layers, curtain bangs, length through the sides and nape
+    cap(1.054, 1.7, 1.18);
+    for (const sx of [-1, 1]) {
+      const bang = add(G.ball(), sx * 0.36, 0.42, 0.76, 0.32, 0.3, 0.22);
+      bang.rotation.z = sx * 0.32;
+      bang.rotation.x = 0.2;
+      const layer = add(G.ball(), sx * 0.86, -0.28, 0.02, 0.28, 0.62, 0.4);
+      layer.rotation.z = -sx * 0.18;
+    }
+    add(G.ball(), 0, -0.4, -0.68, 0.7, 0.62, 0.4);
+  } else if (st === 'mullet') {
+    // short on top, long at the back. The cap stays tight at the front so
+    // the party is all in the nape.
+    cap(1.034, 1.22, 1.0);
+    add(G.dome(1.05, 0.7), 0, 0.04, 0);
+    for (const sx of [-1, 1]) add(G.ball(), sx * 0.82, -0.42, -0.18, 0.26, 0.7, 0.36);
+    add(G.ball(), 0, -0.58, -0.72, 0.66, 0.92, 0.48);
+  } else if (st === 'flow') {
+    // medium-long, swept back, moving at the sides — the hockey flow
+    cap(1.056, 1.78, 1.08);
+    const top = add(G.ball(), 0, 0.62, -0.08, 0.82, 0.36, 0.88);
+    top.rotation.x = -0.28;
+    for (const sx of [-1, 1]) {
+      const s = add(G.ball(), sx * 0.78, -0.22, 0.08, 0.28, 0.7, 0.42);
+      s.rotation.z = -sx * 0.12;
+    }
+    add(G.ball(), 0, -0.48, -0.68, 0.68, 0.78, 0.44);
   }
   return out;
 }

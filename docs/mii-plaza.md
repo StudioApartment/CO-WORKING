@@ -191,9 +191,9 @@ only takes the hat off — nothing gets skipped on the way in.
 
 | Category | Options |
 |---|---|
-| Eyewear | 16 across plastic, metal and sunglasses |
-| Hair | 23 real cuts: buzz, crew, French crop, waves, pixie, bowl, comb over, side part, quiff, pompadour, slick back, swept, spiky, curtains, afro, afro fade, locs, bob, shag, long, bun, ponytail, bald |
-| Headwear | 11 including flat-brim, dad hat, bucket, cowboy, beanie, bandana front/back |
+| Eyewear | 19 across plastic, metal, sunglasses and wrap-around baseball shades |
+| Hair | 27 real cuts: buzz, crew, French crop, waves, pixie, bowl, comb over, side part, quiff, pompadour, swoop, slick back, swept, spiky, curtains, afro, afro fade, locs, bob, shag, wolf cut, mullet, flow, long, bun, ponytail, bald |
+| Headwear | 13 including flat-brim, dad hat, bucket, cowboy, beanie, paisley bandanas in red / blue / green |
 | Facial hair | Stubble, lineup, full, goatee, moustache, handlebar |
 | Piercings | Nose stud, double nostril, septum |
 | Ink | Hands, jaw, both |
