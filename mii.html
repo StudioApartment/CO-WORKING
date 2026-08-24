@@ -2712,23 +2712,45 @@ function buildHair(dna, mat, extraMats) {
     add(G.curtains(1.06, 1.28), 0, 0, 0, 1, 1.05, 1);
     add(G.hairBack(1.065, 1.52, 1.14), 0, 0, 0);
   } else if (st === 'dreads') {
-    // Deep enough at the back and sides that scalp does not show between
-    // the crown and where the locs start hanging.
-    cap(1.045, 1.78, 1.35);
-    add(G.dome(1.07, 0.95), 0, 0, 0);
-    /* Locs grow out of the cap. A ring of root spheres sits on the shell so
-       the hanging cylinders are never a smaller, lower orbit of their own. */
-    const locRing = 1.08;
-    const topY = 0.22;
-    for (let i = 0; i < 14; i++) {
-      const a = Math.PI * 0.22 + (i / 13) * Math.PI * 1.56;
-      const len = 0.52 + (i % 3) * 0.14;
-      const x = Math.sin(a) * locRing;
-      const z = Math.cos(a) * locRing;
-      add(G.ball(), x * 0.96, topY + 0.06, z * 0.96, 0.14, 0.14, 0.14);
-      const y = topY - len / 2;
-      add(G.neck(), x, y, z, 0.11, len, 0.11);
-      add(G.ball(), x, y - len / 2, z, 0.11, 0.11, 0.11);
+    /* Locs are sausages from the pole down, not a bowl with tubes glued to
+       the rim. A smooth extra dome was reading as a helmet. The thin cap
+       only stops scalp flashing between nubs; the nubs are the cut. */
+    cap(1.026, 1.16, 1.02);
+    const n = HEAD_N;
+    const R = 1.10;
+    const putLoc = (th, phi, rad, hang) => {
+      const ux = Math.sin(th) * Math.sin(phi);
+      const uy = Math.cos(th);
+      const uz = Math.sin(th) * Math.cos(phi);
+      const s = Math.pow(
+        Math.pow(Math.abs(ux), n) + Math.pow(Math.abs(uy), n) + Math.pow(Math.abs(uz), n),
+        -1 / n
+      );
+      const x = ux * s * R, y = uy * s * R, z = uz * s * R;
+      /* Hairline sits above the brow (y≈0.29). Front nubs below that cover
+         the eyes. */
+      if (y < 0.38 && z > 0.40) return;
+      add(G.ball(), x, y, z, rad, rad, rad);
+      if (hang > 0.08) {
+        add(G.neck(), x, y - hang / 2, z, rad * 0.9, hang, rad * 0.9);
+        add(G.ball(), x, y - hang, z, rad * 0.9, rad * 0.9, rad * 0.9);
+      }
+    };
+    putLoc(0, 0, 0.20, 0.08);
+    const rings = [
+      { th: 0.28, count: 6,  rad: 0.18,  hang: 0.10, off: 0 },
+      { th: 0.50, count: 10, rad: 0.17,  hang: 0.22, off: 0.18 },
+      { th: 0.72, count: 12, rad: 0.155, hang: 0.40, off: 0.08 },
+      { th: 0.94, count: 12, rad: 0.145, hang: 0.62, off: 0.18 }
+    ];
+    for (const ring of rings) {
+      for (let i = 0; i < ring.count; i++) {
+        const phi = (i / ring.count) * TAU + ring.off;
+        const uz = Math.sin(ring.th) * Math.cos(phi);
+        /* Front locs stay as nubs; length lives at the sides and nape. */
+        const hang = ring.hang * Math.max(0.12, 0.55 - uz) + (i % 3) * 0.05;
+        putLoc(ring.th, phi, ring.rad, hang);
+      }
     }
   } else if (st === 'bob') {
     // blunt, jaw length, tucked in at the ends
