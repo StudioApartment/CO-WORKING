@@ -1343,30 +1343,35 @@ function drawEyewear(g, U, dna) {
     const W = gw * U, H = gh * U;
     const shield = () => {
       g.beginPath();
-      g.moveTo(-W * 0.5, -H * 0.22);
-      g.quadraticCurveTo(0, -H * 0.58, W * 0.5, -H * 0.22);
-      g.quadraticCurveTo(W * 0.56, H * 0.08, W * 0.5, H * 0.44);
-      g.quadraticCurveTo(0, H * 0.68, -W * 0.5, H * 0.44);
-      g.quadraticCurveTo(-W * 0.56, H * 0.08, -W * 0.5, -H * 0.22);
+      // More of the shield sits below the eye line so it covers the iris
+      // rather than hovering as a visor on the brow.
+      g.moveTo(-W * 0.5, -H * 0.12);
+      g.quadraticCurveTo(0, -H * 0.48, W * 0.5, -H * 0.12);
+      g.quadraticCurveTo(W * 0.58, H * 0.22, W * 0.5, H * 0.58);
+      g.quadraticCurveTo(0, H * 0.82, -W * 0.5, H * 0.58);
+      g.quadraticCurveTo(-W * 0.58, H * 0.22, -W * 0.5, -H * 0.12);
       g.closePath();
     };
     shield();
-    const grd = g.createLinearGradient(0, -H * 0.55, 0, H * 0.6);
-    grd.addColorStop(0, spec.mirrorTop || '#ffe08a');
-    grd.addColorStop(0.4, spec.mirrorMid || '#d47818');
-    grd.addColorStop(1, spec.mirrorBot || '#2a1408');
+    g.fillStyle = spec.mirrorBot || '#1a0c04';
+    g.fill();
+    shield();
+    const grd = g.createLinearGradient(0, -H * 0.5, 0, H * 0.7);
+    grd.addColorStop(0, spec.mirrorTop || '#fff4b8');
+    grd.addColorStop(0.38, spec.mirrorMid || '#e07014');
+    grd.addColorStop(1, spec.mirrorBot || '#1a0c04');
     g.fillStyle = grd;
     g.fill();
     g.save();
     shield();
     g.clip();
-    g.globalAlpha = 0.38;
+    g.globalAlpha = 0.55;
     g.fillStyle = '#ffffff';
     g.beginPath();
-    g.moveTo(-W * 0.52, H * 0.12);
-    g.lineTo(W * 0.08, -H * 0.6);
-    g.lineTo(W * 0.22, -H * 0.6);
-    g.lineTo(-W * 0.36, H * 0.22);
+    g.moveTo(-W * 0.52, H * 0.06);
+    g.lineTo(W * 0.12, -H * 0.52);
+    g.lineTo(W * 0.28, -H * 0.52);
+    g.lineTo(-W * 0.32, H * 0.16);
     g.closePath();
     g.fill();
     g.restore();
@@ -1376,15 +1381,15 @@ function drawEyewear(g, U, dna) {
     shield();
     g.stroke();
     g.beginPath();
-    g.moveTo(-W * 0.46, -H * 0.18);
-    g.lineTo(W * 0.46, -H * 0.18);
-    g.lineWidth = spec.lw * U * 1.35;
+    g.moveTo(-W * 0.46, -H * 0.08);
+    g.lineTo(W * 0.46, -H * 0.08);
+    g.lineWidth = spec.lw * U * 1.45;
     g.stroke();
-    g.lineWidth = spec.lw * U * 0.85;
+    g.lineWidth = spec.lw * U * 0.9;
     for (const sgn of [-1, 1]) {
       g.beginPath();
-      g.moveTo(sgn * W * 0.5, -H * 0.06);
-      g.lineTo(sgn * (W * 0.5 + 4.4 * U), -H * 0.3);
+      g.moveTo(sgn * W * 0.5, 0);
+      g.lineTo(sgn * (W * 0.5 + 4.8 * U), -H * 0.22);
       g.stroke();
     }
     g.restore();
@@ -1833,9 +1838,9 @@ const EYEWEAR = [
 
   // metal
   { id: 20, label: 'Gold aviator', group: 'Metal', frame: 'aviator', w: 22, h: 18, lw: 1.5,
-    metal: '#d8b45e', tint: 'rgba(120,96,40,.62)' },
+    metal: '#d8b45e', tint: 'rgba(92,70,22,.90)' },
   { id: 21, label: 'Orange tint',  group: 'Metal', frame: 'aviator', w: 22, h: 18, lw: 1.5,
-    metal: '#c9a253', tint: 'rgba(214,118,42,.72)' },
+    metal: '#c9a253', tint: 'rgba(176,88,18,.92)' },
   { id: 22, label: 'Thin rect',    group: 'Metal', frame: 'square',  w: 17, h: 10, lw: 1.2,
     metal: '#b9c2c9' },
   { id: 23, label: 'Wire round',   group: 'Metal', frame: 'oval',    w: 18, h: 17, lw: 1.15,
@@ -1851,12 +1856,12 @@ const EYEWEAR = [
     lens: 'rgba(16,18,26,.96)' },
   { id: 33, label: 'Teardrop',    group: 'Sunglasses', frame: 'aviator', w: 23, h: 19, lw: 1.6, shades: true,
     metal: '#cbb06a', lens: 'rgba(28,22,16,.94)' },
-  { id: 34, label: 'Amber wrap',  group: 'Sunglasses', frame: 'wrap',    w: 64, h: 17, lw: 2.5,
-    mirrorTop: '#ffe08a', mirrorMid: '#d47818', mirrorBot: '#2a1408' },
-  { id: 35, label: 'Green wrap',  group: 'Sunglasses', frame: 'wrap',    w: 64, h: 17, lw: 2.5,
-    mirrorTop: '#d4f2a0', mirrorMid: '#3a8c28', mirrorBot: '#0c2410' },
-  { id: 36, label: 'Blue wrap',   group: 'Sunglasses', frame: 'wrap',    w: 64, h: 17, lw: 2.5,
-    mirrorTop: '#c4e8ff', mirrorMid: '#2a6cb0', mirrorBot: '#081830' }
+  { id: 34, label: 'Amber wrap',  group: 'Sunglasses', frame: 'wrap',    w: 68, h: 24, lw: 2.8,
+    mirrorTop: '#fff4b8', mirrorMid: '#e07014', mirrorBot: '#1a0c04' },
+  { id: 35, label: 'Green wrap',  group: 'Sunglasses', frame: 'wrap',    w: 68, h: 24, lw: 2.8,
+    mirrorTop: '#e8ffb8', mirrorMid: '#2e8a24', mirrorBot: '#061408' },
+  { id: 36, label: 'Blue wrap',   group: 'Sunglasses', frame: 'wrap',    w: 68, h: 24, lw: 2.8,
+    mirrorTop: '#d8f0ff', mirrorMid: '#1e68c0', mirrorBot: '#040c20' }
 ];
 const EYEWEAR_BY_ID = new Map(EYEWEAR.map((e) => [e.id, e]));
 
@@ -2618,24 +2623,26 @@ function buildHair(dna, mat, extraMats) {
     // short sides, a lifted front that reads from head-on — not a bump on
     // the crown that disappears in three-quarter
     cap(1.028, 1.18, 0.82);
-    const q = add(G.ball(), 0, 0.9, 0.5, 0.48, 0.52, 0.36);
-    q.rotation.x = -0.58;
-    add(G.ball(), 0, 0.7, 0.1, 0.64, 0.28, 0.52);
+    const q = add(G.ball(), 0.04, 0.86, 0.58, 0.58, 0.42, 0.4);
+    q.rotation.x = -0.62;
+    add(G.ball(), 0, 0.72, 0.16, 0.66, 0.28, 0.52);
   } else if (st === 'pompadour') {
-    // taller and rounder: volume held above the forehead, sides cropped
+    // taller and rounder: volume held above and in front of the forehead
     cap(1.026, 1.16, 0.78);
-    add(G.ball(), 0, 1.02, 0.18, 0.6, 0.56, 0.52);
-    add(G.ball(), 0, 0.74, 0.52, 0.48, 0.34, 0.34);
-    add(G.ball(), 0, 0.64, -0.18, 0.7, 0.28, 0.6);
+    add(G.ball(), 0, 0.94, 0.36, 0.62, 0.48, 0.5);
+    add(G.ball(), 0, 0.78, 0.64, 0.5, 0.32, 0.32);
+    add(G.ball(), 0, 0.64, -0.12, 0.7, 0.26, 0.58);
   } else if (st === 'swoop') {
-    // 1950s James Dean: a curl that lifts off the forehead and falls to
-    // one side, sides cropped, the rest combed back.
+    // 1950s James Dean: a wide curl that lifts off the forehead and falls
+    // to one side — not a thin vertical stack that reads as a mohawk.
     cap(1.026, 1.14, 0.76);
-    const lift = add(G.ball(), 0.1, 0.94, 0.54, 0.46, 0.5, 0.4);
-    lift.rotation.x = -0.74;
-    lift.rotation.z = -0.2;
-    add(G.ball(), 0, 0.86, 0.14, 0.56, 0.4, 0.48);
-    add(G.ball(), 0.12, 0.58, -0.22, 0.64, 0.24, 0.56);
+    const pad = add(G.ball(), 0.08, 0.8, 0.46, 0.72, 0.36, 0.52);
+    pad.rotation.x = -0.48;
+    pad.rotation.z = -0.24;
+    const curl = add(G.ball(), 0.22, 0.9, 0.68, 0.38, 0.26, 0.3);
+    curl.rotation.x = -0.85;
+    curl.rotation.z = -0.4;
+    add(G.ball(), 0.06, 0.68, -0.08, 0.64, 0.24, 0.56);
   } else if (st === 'slickback') {
     // flat to the head, combed straight back
     cap(1.028, 1.3, 0.96);
@@ -2651,27 +2658,23 @@ function buildHair(dna, mat, extraMats) {
       s.rotation.x = 0.18;
     }
   } else if (st === 'dreads') {
-    // Deep enough at the back that scalp does not show between the crown and
-    // where the locs start hanging.
-    cap(1.03, 1.6, 0.98);
-    add(G.dome(1.06, 0.66), 0, 0.06, 0);
-    /* Locs hang from the cap's lower edge. CylinderGeometry is centred, so
-       the origin is the midpoint of each loc — the top has to sit on the cap
-       (y≈−0.03, r≈1.03) or they float as a ring of detached blobs. The tips
-       used to be placed a full length below the origin, which is len/2 past
-       the actual end of the cylinder. */
-    const capEdgeY = -0.03;
-    const locRing = 1.02;
-    for (let i = 0; i < 12; i++) {
-      const a = Math.PI * 0.16 + (i / 11) * Math.PI * 1.68;
-      const len = 0.55 + (i % 3) * 0.14;
+    // Deep enough at the back and sides that scalp does not show between
+    // the crown and where the locs start hanging.
+    cap(1.045, 1.78, 1.35);
+    add(G.dome(1.07, 0.95), 0, 0.02, 0);
+    /* Locs grow out of the cap. A ring of root spheres sits on the shell so
+       the hanging cylinders are never a smaller, lower orbit of their own. */
+    const locRing = 1.08;
+    const topY = 0.22;
+    for (let i = 0; i < 14; i++) {
+      const a = Math.PI * 0.22 + (i / 13) * Math.PI * 1.56;
+      const len = 0.52 + (i % 3) * 0.14;
       const x = Math.sin(a) * locRing;
-      const z = Math.cos(a) * locRing * 0.92;
-      const y = capEdgeY - len / 2;
-      const l = add(G.neck(), x, y, z, 0.09, len, 0.09);
-      l.rotation.z = Math.sin(a) * 0.1;
-      l.rotation.x = -Math.cos(a) * 0.06;
-      add(G.ball(), x, y - len / 2, z, 0.09, 0.09, 0.09);
+      const z = Math.cos(a) * locRing;
+      add(G.ball(), x * 0.96, topY + 0.06, z * 0.96, 0.14, 0.14, 0.14);
+      const y = topY - len / 2;
+      add(G.neck(), x, y, z, 0.11, len, 0.11);
+      add(G.ball(), x, y - len / 2, z, 0.11, 0.11, 0.11);
     }
   } else if (st === 'afrofade') {
     // tight at the temples, full and round above

@@ -281,7 +281,7 @@ try {
     check('wrap-around baseball shades are in the list', extras.wrap.length >= 3, extras.wrap.join(', '));
     check('tinted lenses are actually tinted', extras.tints.every((t) => {
       const m = /,\s*([0-9.]+)\)/.exec(t);
-      return m && Number(m[1]) >= 0.5;
+      return m && Number(m[1]) >= 0.85;
     }), extras.tints.join(', '));
 
     // Retired novelty styles must not leave a stored character bald.
@@ -363,12 +363,13 @@ try {
   }
 
   console.log('\nvalidation in the UI');
+  const beforeClaim = await evaluate('MiiPlaza.World.miis.length');
   await evaluate("document.getElementById('miiEmail').value = 'not-an-email'");
   await evaluate("document.getElementById('btnAccept').click()");
   await sleep(500);
   check('blocks a malformed email inline',
     await evaluate("document.getElementById('camBanner').classList.contains('show')"));
-  check('nobody was added', await evaluate('MiiPlaza.World.miis.length === 0'));
+  check('nobody was added', await evaluate(`MiiPlaza.World.miis.length === ${beforeClaim}`));
 
   await evaluate("document.getElementById('miiEmail').value = ''");
   await evaluate("document.getElementById('btnAccept').click()");
@@ -382,7 +383,8 @@ try {
   await evaluate("document.getElementById('btnAccept').click()");
   await sleep(2500);
 
-  check('character joined the plaza', await evaluate('MiiPlaza.World.miis.length === 1'));
+  check('character joined the plaza',
+    await evaluate(`MiiPlaza.World.miis.length === ${beforeClaim + 1}`));
   check('session established', await evaluate('!!MiiPlaza.Store.session'));
   check('badge panel shown',
     await evaluate("document.getElementById('camBadge').classList.contains('show')"));
