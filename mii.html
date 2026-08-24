@@ -363,11 +363,12 @@ body.native-cursor #pointer{display:none}
 #fileIn{display:none}
 
 /* ============================================================
-   STYLE TRAY — one stepper per category
+   STYLE TRAY — one shuffle button per category
    ---------------------------------------------------------------
    Listing every option as its own chip meant ~34 controls on screen
-   at once. Each category is a single button instead: it shows what
-   is currently picked, and tapping moves to the next one.
+   at once. Each category is a single button instead: tapping it
+   picks another value at random. The character is the preview, so
+   the button does not also spell out "French crop".
    ============================================================ */
 .tray{display:none;margin-top:14px}
 .stage.done ~ .tray{display:block}
@@ -381,7 +382,7 @@ body.native-cursor #pointer{display:none}
 
 .cyc{
   flex:1 1 0;min-width:0;border:0;cursor:pointer;font:inherit;text-align:center;
-  padding:6px 4px 5px;border-radius:13px;
+  padding:10px 4px 9px;border-radius:13px;
   background:linear-gradient(#fff,#eaf1f5);
   box-shadow:inset 0 1px 0 #fff,0 1px 3px rgba(90,115,135,.2),0 0 0 2px #fff,0 0 0 3px #d9e3ea;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;
@@ -391,16 +392,12 @@ body.native-cursor #pointer{display:none}
 .cyc:active{transform:translateY(1px)}
 
 .cyc .cat{
-  display:block;font-size:7.5px;font-weight:900;letter-spacing:.08em;
-  text-transform:uppercase;color:#a4b6c2;
+  display:block;font-size:11px;font-weight:800;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--ink-dk);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.cyc .val{
-  display:block;margin-top:2px;font-size:11px;font-weight:800;
-  color:var(--ink-dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
 /* "off" states read quieter than a real choice */
-.cyc.empty .val{color:#b3c2cc;font-weight:700}
+.cyc.empty .cat{color:#b3c2cc;font-weight:700}
 
 /* colourway steppers show the pair instead of a name */
 .cyc .kit{
@@ -410,9 +407,8 @@ body.native-cursor #pointer{display:none}
 
 @media (max-width:560px){
   .tray-cycles{gap:4px;padding:7px 4px}
-  .cyc{padding:5px 2px 4px;border-radius:11px}
-  .cyc .cat{font-size:6.5px;letter-spacing:.06em}
-  .cyc .val{font-size:10px}
+  .cyc{padding:8px 2px 7px;border-radius:11px}
+  .cyc .cat{font-size:9.5px;letter-spacing:.03em}
 }
 
 /* ============================================================
@@ -608,7 +604,7 @@ body.native-cursor #pointer{display:none}
     </div>
     <div class="palette" id="camPalette"></div>
 
-    <!-- one stepper per category: tap to move to the next option -->
+    <!-- one shuffle button per category: the character is the preview -->
     <div class="tray" id="camTray">
       <div class="tray-cycles" id="trayCycles"></div>
     </div>
@@ -4378,9 +4374,9 @@ const TRAY = [
   },
 ];
 
-/* One button per category. It names what is currently picked, and a tap
-   advances to the next value, wrapping at the end. Shift-click (or a
-   right-click) steps backwards, so a long list is not a one-way trip. */
+/* One button per category. It names the category, not the current pick —
+   the spinning character is the preview. A tap shuffles to another value.
+   While a hat is on, the first tap on Hair only takes it off. */
 function renderTray() {
   const box = $('trayCycles');
   if (!box || !Cam.dna) return;
@@ -4400,7 +4396,8 @@ function renderTray() {
     // whereas "None" and "Off" are the absence of one.
     const isOff = now.label === 'None' || now.label === 'Off';
     b.className = 'cyc' + (isOff ? ' empty' : '');
-    b.title = `${cat.label} — tap for the next one`;
+    b.title = `${cat.label} — tap to shuffle`;
+    b.setAttribute('aria-label', `${cat.label} — tap to shuffle`);
 
     const catEl = document.createElement('span');
     catEl.className = 'cat';
@@ -4414,18 +4411,14 @@ function renderTray() {
         ? `linear-gradient(135deg, ${now.swatch} 50%, ${now.swatch2} 50%)`
         : now.swatch;
       b.appendChild(chip);
-    } else {
-      const valEl = document.createElement('span');
-      valEl.className = 'val';
-      valEl.textContent = now.label;
-      b.appendChild(valEl);
     }
 
-    const step = (dir) => {
+    const shuffle = () => {
       // A category that does not currently own its slot spends the first tap
       // claiming it, so nothing is skipped over on the way in.
       const claiming = typeof cat.claims === 'function' && cat.claims(Cam.dna);
-      const next = claiming ? now : options[(i + dir + options.length) % options.length];
+      const others = options.filter((o) => o.v !== now.v);
+      const next = claiming ? now : (others.length ? pickOne(others) : now);
       cat.set(Cam.dna, next.v);
       Preview.build(Cam.dna);
       renderPickers();
@@ -4433,8 +4426,8 @@ function renderTray() {
       Sound.fx.boing();
     };
 
-    b.addEventListener('click', (e) => step(e.shiftKey ? -1 : 1));
-    b.addEventListener('contextmenu', (e) => { e.preventDefault(); step(-1); });
+    b.addEventListener('click', shuffle);
+    b.addEventListener('contextmenu', (e) => { e.preventDefault(); shuffle(); });
 
     box.appendChild(b);
   }
@@ -4484,9 +4477,9 @@ function openPalette(key, force) {
 }
 
 /* ---------------- feature rerolls ----------------
-   Hair, outfit and the rest are stepped through one at a time in the tray.
-   Face proportions are not an enumerable list — there is no "next nose" —
-   so shuffling stays the way to explore them. */
+   Hair, outfit and the rest are shuffled from the tray. Face proportions
+   are not an enumerable list — there is no "next nose" — so they have
+   their own shuffle. */
 function rerollFace(d) {
   const r = randomDNA();
   d.eyes.style = r.eyes.style; d.eyes.size = r.eyes.size;
@@ -4497,8 +4490,8 @@ function rerollFace(d) {
   d.blush = r.blush; d.freckles = r.freckles;
   d.headSize = r.headSize; d.height = r.height; d.girth = r.girth;
   // Deliberately leaves eyewear, facial hair, piercings and outfit alone:
-  // those have their own steppers, and shuffling them here would undo a
-  // choice the user just made by hand.
+  // those have their own shuffle buttons, and mixing them in here would undo
+  // a choice the user just made by hand.
 }
 
 /* ---------------- camera modal ---------------- */
