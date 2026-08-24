@@ -2116,6 +2116,39 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
+  quiff: (r) => geoCache(`quiffA${r}`, () => {
+    /* One shell. Extra balls on a cap were a crown bun. Short sides,
+       a lifted front that reads from head-on — tighter than a pomp. */
+    const tl = 1.24;
+    const g = superball(r, 40, 32, HEAD_N, 0, TAU, 0, tl);
+    const p = g.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      const Lh = Math.hypot(v.x, v.y, v.z) || 1;
+      const rs0 = Math.hypot(v.x, v.z) || 1e-6;
+      const azFront = Math.max(0, v.z / rs0);
+
+      /* Front hem hugs the skull so the crop edge is a hairline, not a visor. */
+      if (azFront > 0.35 && v.y < 0.58) {
+        const t = Math.pow((azFront - 0.35) / 0.65, 1.3)
+          * Math.min(1, (0.58 - v.y) / 0.28);
+        const k = 1 - t + t * (1.04 / Lh);
+        v.x *= k; v.y *= k; v.z *= k;
+      }
+
+      /* Tight mound on the forehead. Peak has to beat the dome pole or
+         it still reads as a bowl from the front. Narrower and more
+         forward than pomp — a front lift, not a full mound. */
+      const dx = v.x * 1.48, dy = v.y - 0.66, dz = v.z - 0.68;
+      const bump = Math.exp(-(dx * dx + dy * dy + dz * dz) * 3.5);
+      v.y += bump * 0.42;
+      v.z += bump * 0.10;
+      p.setXYZ(i, v.x, v.y, v.z);
+    }
+    p.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  }),
   curtains: (r, tl) => geoCache(`curt${r}_${tl}`, () => {
     const g = superball(r, 36, 28, HEAD_N, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
@@ -2890,12 +2923,8 @@ function buildHair(dna, mat, extraMats) {
     top.rotation.z = 0.16;
     add(G.ball(), 0.42, 0.66, 0.3, 0.2, 0.16, 0.44);       // raised edge of the part
   } else if (st === 'quiff') {
-    // short sides, a lifted front that reads from head-on — not a bump on
-    // the crown that disappears in three-quarter
-    cap(1.028, 1.18, 0.82);
-    const q = add(G.ball(), 0.04, 0.86, 0.58, 0.58, 0.42, 0.4);
-    q.rotation.x = -0.62;
-    add(G.ball(), 0, 0.72, 0.16, 0.66, 0.28, 0.52);
+    /* One lifted shell. Extra primitives on a cap always read as a bun. */
+    add(G.quiff(1.04), 0, 0, 0);
   } else if (st === 'pompadour') {
     // One puffed shell. Extra primitives on a cap always read as a bun.
     add(G.pomp(1.05, 1.48), 0, 0, 0);
