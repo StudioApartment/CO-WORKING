@@ -2155,6 +2155,7 @@ const SHOES  = ['#2f3a45','#e8ecef','#c0392b','#33506b','#4a4a4a'];
 const HAIRSTYLES = ['bald','buzz','taper','crop','waves','pixie','bowl','combover','sidepart',
                     'quiff','pompadour','swoop','slickback','swept','spiky','curtains','afro',
                     'dreads','bob','shag','wolf','mullet','flow','long','bun','pony',
+                    'highpony','pigtails','layers','spacebuns',
                     'cap','flatbrim','dadhat','knicks','yankees','bucket','cowboy','beanie',
                     'bandana','bandanablue','bandanagreen','bandanaback','tophat'];
 
@@ -2178,6 +2179,8 @@ const STYLE_LABELS = {
   curtains: 'Curtains', afro: 'Afro', dreads: 'Locs',
   bob: 'Bob', shag: 'Shag', wolf: 'Wolf cut', mullet: 'Mullet', flow: 'Flow',
   long: 'Long', bun: 'Bun', pony: 'Ponytail',
+  highpony: 'High ponytail', pigtails: 'Pigtails',
+  layers: 'Long layers', spacebuns: 'Space buns',
   cap: 'Cap', flatbrim: 'Flat brim', dadhat: 'Dad hat', knicks: 'Orange & blue',
   yankees: 'Navy & white', bucket: 'Bucket', cowboy: 'Cowboy', beanie: 'Beanie',
   bandana: 'Red bandana', bandanablue: 'Blue bandana', bandanagreen: 'Green bandana',
@@ -2295,7 +2298,13 @@ const APPAREL = [
   { id: 'hoodie',   label: 'Hoodie',    kind: 'hoodie',  hood: true },
   { id: 'suit',     label: 'Suit',      kind: 'suit'     },
   { id: 'jersey',   label: 'Jersey',    kind: 'football',
-    body: '#1d5cab', trim: '#f4f6f8', num: 10 }
+    body: '#1d5cab', trim: '#f4f6f8', num: 10 },
+  { id: 'dress',    label: 'Dress',     kind: 'dress',    skirt: 'long' },
+  { id: 'sundress', label: 'Sundress',  kind: 'sundress', skirt: 'mid',
+    skirtFrom: 'light', nocollar: true },
+  { id: 'skirt',    label: 'Skirt',     kind: 'skirt',    skirt: 'mini',
+    skirtFrom: 'pants' },
+  { id: 'cardigan', label: 'Cardigan',  kind: 'cardigan', open: true }
 ];
 const APPAREL_BY_ID = new Map(APPAREL.map((a) => [a.id, a]));
 
@@ -2809,6 +2818,62 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
+  layers: (r) => geoCache(`layersA${r}`, () => {
+    /* One shell, longer than a bob, with a side part. A jaw-length
+       dome would just be another bob; extra cheek balls would be
+       earmuffs. Length hangs past the shoulders, the face stays
+       open, and a left-of-centre part sweeps the fringe aside. */
+    const tl = 2.58;
+    const g = new THREE.SphereGeometry(r, 48, 40, 0, TAU, 0, tl);
+    const p = g.attributes.position, v = new THREE.Vector3();
+    const n = HEAD_N;
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      const L = v.length() || 1;
+      const ux = v.x / L, uy = v.y / L, uz = v.z / L;
+      const th = Math.acos(Math.max(-1, Math.min(1, uy)));
+      const rs0 = Math.hypot(ux, uz) || 1e-6;
+      const azFront = Math.max(0, uz / rs0);
+      const azBack = Math.max(0, -uz / rs0);
+      const phi = Math.atan2(ux, uz);
+      const sweep = Math.max(0, ux);
+      const part = Math.max(0, -ux);
+      const faceWin = Math.pow(Math.max(0, azFront - 0.16 - sweep * 0.10) / 0.84, 2);
+      const open = Math.min(1, faceWin + part * azFront * 0.22);
+      const chop = (0.02 * Math.sin(phi * 7.0) + 0.01 * Math.sin(phi * 13.0 + 0.5))
+        * (1 - faceWin);
+      const maxTh = 2.46 - open * 1.18 + chop;
+      const th2 = (th / tl) * maxTh;
+      const rs = Math.sin(th2);
+      let nx = ux / rs0 * rs;
+      let ny = Math.cos(th2);
+      let nz = uz / rs0 * rs;
+      const s = Math.pow(
+        Math.pow(Math.abs(nx), n) + Math.pow(Math.abs(ny), n) + Math.pow(Math.abs(nz), n),
+        -1 / n
+      );
+      nx *= s * r; ny *= s * r; nz *= s * r;
+      ny += Math.max(0, ny - 0.46) * 0.30;
+      const groove = Math.exp(-((ux + 0.22) * (ux + 0.22)) * 16) * Math.max(0, ny - 0.18);
+      nx *= 1 - groove * 0.08;
+      nz *= 1 - groove * 0.08;
+      if (azFront > 0.38 && ny < 0.62) {
+        const t = Math.pow((azFront - 0.38) / 0.62, 1.3) * Math.min(1, (0.62 - ny) / 0.32);
+        const Lh = Math.hypot(nx, ny, nz) || 1;
+        const k = 1 - t + t * (1.05 / Lh);
+        nx *= k; ny *= k; nz *= k;
+      }
+      const hang = Math.max(0, -ny + 0.06) * (0.55 + azBack * 0.35);
+      ny -= hang;
+      nz -= hang * 0.16 * azBack;
+      const side = Math.abs(ux) / rs0;
+      nx *= 1 + Math.max(0, 0.02 - ny) * side * 0.10;
+      p.setXYZ(i, nx, ny, nz);
+    }
+    p.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  }),
   /* Hat rims need far more radial segments than a 32-gon or a 48-gon.
      At Mii scale those read as stop-signs from below. Crowns stay at
      HEAD_N so they still cover the skull; only the tessellation goes up.
@@ -2882,6 +2947,16 @@ const HAT_STYLES = Object.keys(HATS);
    Colourways are abstract. No club crests, no wordmarks.
    ══════════════════════════════════════════════════════════════ */
 const TORSO_W = 256, TORSO_H = 256;
+
+function skirtColor(dna, spec) {
+  if (spec.skirtFrom === 'pants') return dna.pants;
+  if (spec.skirtFrom === 'light') {
+    const c = hex2rgb(dna.shirt);
+    const lum = (c.r * 0.299 + c.g * 0.587 + c.b * 0.114) / 255;
+    return lum > 0.72 ? shade(dna.shirt, -44) : shade(dna.shirt, 38);
+  }
+  return dna.shirt;
+}
 
 function makeApparelTexture(dna) {
   const spec = APPAREL_BY_ID.get(dna.apparel) || APPAREL_BY_ID.get('tee');
@@ -3061,6 +3136,86 @@ function makeApparelTexture(dna) {
       // head line (v≈0.36) on both front and back, without dropping to the hem.
       g.fillRect(0, H - 10, W, 10);                            // hem band
       number(spec.num, spec.stripes ? '#ffffff' : spec.trim, vy(0.42), 32);
+      break;
+    }
+    case 'dress': {
+      g.fillStyle = base; g.fillRect(0, 0, W, H);
+      g.fillStyle = shade(base, -16);
+      for (const x of [0, W * 0.5]) {
+        g.beginPath();
+        g.moveTo(x - 18, vy(0.32));
+        g.lineTo(x + 18, vy(0.32));
+        g.lineTo(x + 34, H);
+        g.lineTo(x - 34, H);
+        g.closePath(); g.fill();
+      }
+      g.fillStyle = shade(base, -22);
+      g.fillRect(0, vy(0.36), W, 8);                            // empire seam
+      g.fillStyle = dna.skin;
+      g.beginPath();
+      g.ellipse(front, vy(-0.04), 30, 22, 0, 0, Math.PI);
+      g.fill();
+      g.fillStyle = shade(base, -18);
+      g.fillRect(0, H - 14, W, 14);                             // painted hem
+      break;
+    }
+    case 'sundress': {
+      const skirt = skirtColor(dna, spec);
+      g.fillStyle = base; g.fillRect(0, 0, W, H);
+      g.fillStyle = dna.skin;
+      g.fillRect(0, 0, W, vy(0.14));
+      g.fillStyle = base;
+      g.fillRect(front - 34, 0, 12, vy(0.18));                  // straps
+      g.fillRect(front + 22, 0, 12, vy(0.18));
+      g.fillStyle = skirt;
+      g.fillRect(0, vy(0.44), W, H);                            // colour-block skirt
+      g.fillStyle = shade(base, -18);
+      g.fillRect(0, vy(0.40), W, 12);                           // waist band
+      break;
+    }
+    case 'skirt': {
+      g.fillStyle = base; g.fillRect(0, 0, W, H);
+      g.fillStyle = shade(base, -14);
+      g.fillRect(0, vy(0.46), W, 6);                            // top hem
+      g.fillStyle = dna.pants;
+      g.fillRect(0, vy(0.50), W, H);                            // skirt panel
+      g.fillStyle = shade(dna.pants, 22);
+      g.fillRect(0, vy(0.48), W, 10);                           // belt
+      g.fillStyle = shade(dna.pants, -28);
+      g.fillRect(front - 7, vy(0.48), 14, 10);
+      break;
+    }
+    case 'cardigan': {
+      g.fillStyle = base; g.fillRect(0, 0, W, H);
+      g.globalAlpha = 0.22;
+      g.fillStyle = shade(base, -28);
+      for (let y = 0; y < H; y += 5) g.fillRect(0, y, W, 2);    // knit ribs
+      g.globalAlpha = 1;
+      g.fillStyle = '#f3eee4';                                  // inner top
+      g.beginPath();
+      g.moveTo(front - 32, vy(-0.08));
+      g.lineTo(front + 32, vy(-0.08));
+      g.lineTo(front + 14, vy(0.50));
+      g.lineTo(front, vy(0.64));
+      g.lineTo(front - 14, vy(0.50));
+      g.closePath(); g.fill();
+      g.fillStyle = shade(base, -22);
+      for (const sx of [-1, 1]) {
+        g.beginPath();
+        g.moveTo(front + sx * 32, vy(-0.08));
+        g.lineTo(front + sx * 14, vy(0.50));
+        g.lineTo(front + sx * 16, H);
+        g.lineTo(front + sx * 8, H);
+        g.lineTo(front + sx * 10, vy(0.50));
+        g.lineTo(front + sx * 24, vy(-0.08));
+        g.closePath(); g.fill();
+      }
+      g.fillStyle = shade(base, -16);
+      g.fillRect(0, vy(0.86), W, H);                            // hem ribbing
+      g.fillStyle = shade(base, 36);
+      for (let i = 0; i < 4; i++) {
+        g.beginPath(); g.arc(front - 18, vy(0.18 + i * 0.18), 4.5, 0, TAU); g.fill();
+      }
       break;
     }
   }
@@ -3484,6 +3639,28 @@ function buildHair(dna, mat, extraMats) {
     /* One swept-back shell. A cap plus top/side/nape balls was a helmet
        with earmuffs — the hem has to be the same surface as the crown. */
     add(G.flow(1.09), 0, 0, 0, 1, 1.04, 1);
+  } else if (st === 'highpony') {
+    // Pulled up to the crown, not the nape pony already in the list.
+    cap(1.04, 1.34, 0.98);
+    add(G.ball(), 0, 0.94, -0.42, 0.26, 0.26, 0.26);
+    const t = add(G.ball(), 0, 0.08, -1.08, 0.24, 0.92, 0.28);
+    t.rotation.x = -0.22;
+    add(G.ball(), 0, -0.58, -1.18, 0.20, 0.40, 0.22);
+  } else if (st === 'pigtails') {
+    /* Two tails from small ties on the crown — the rare extra-primitive
+       case. Ties on the cheeks are earmuffs; these sit high and back. */
+    cap(1.04, 1.32, 1.02);
+    for (const sx of [-1, 1]) {
+      add(G.ball(), sx * 0.46, 0.88, -0.22, 0.17, 0.17, 0.17);
+      const t = add(G.ball(), sx * 0.72, 0.06, -0.36, 0.17, 0.82, 0.20);
+      t.rotation.z = sx * 0.32;
+    }
+  } else if (st === 'layers') {
+    add(G.layers(1.09), 0, 0, 0, 1, 1.06, 1);
+  } else if (st === 'spacebuns') {
+    // Two small buns on the crown, not ovals on the cheeks.
+    cap(1.038, 1.30, 1.0);
+    for (const sx of [-1, 1]) add(G.ball(), sx * 0.34, 1.02, -0.10, 0.22, 0.22, 0.22);
   }
   return out;
 }
@@ -3509,7 +3686,9 @@ function buildMii(dna) {
     roughness: apparel.bare ? 0.82 : apparel.kind === 'suit' ? 0.55 : 0.72,
     metalness: 0
   });
-  const pantMat  = new THREE.MeshStandardMaterial({ color: dna.pants, roughness: 0.85 });
+  const legCol = apparel.skirt && apparel.skirtFrom !== 'pants'
+    ? skirtColor(dna, apparel) : dna.pants;
+  const pantMat  = new THREE.MeshStandardMaterial({ color: legCol, roughness: 0.85 });
   const shoeMat  = new THREE.MeshStandardMaterial({ color: dna.shoes, roughness: 0.55 });
   const whiteMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.6 });
   M.mats = [skinMat, hairMat, shirtMat, pantMat, shoeMat, whiteMat];
@@ -3571,7 +3750,7 @@ function buildMii(dna) {
   /* The collar is a white crew neck by default. Layered garments take it in
      their own colour, a suit gets a shirt collar, and bare skin gets none at
      all — a floating white ring above an undressed chest looks like a bug. */
-  if (!apparel.bare) {
+  if (!apparel.bare && !apparel.nocollar) {
     const collarMat = apparel.open
       ? new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -30), roughness: 0.7 })
       : whiteMat;
@@ -3590,6 +3769,20 @@ function buildMii(dna) {
     hood.position.set(0, 0.78, -0.16);
     hood.rotation.x = -0.3;
     body.add(hood);
+  }
+
+  if (apparel.skirt) {
+    const sCol = skirtColor(dna, apparel);
+    const skirtMat = new THREE.MeshStandardMaterial({
+      color: sCol, roughness: 0.74, side: THREE.DoubleSide
+    });
+    M.mats.push(skirtMat);
+    const hem = (apparel.skirt === 'long' ? 0.42 : apparel.skirt === 'mid' ? 0.38 : 0.34) * dna.girth;
+    const h = apparel.skirt === 'long' ? 0.28 : apparel.skirt === 'mid' ? 0.22 : 0.14;
+    const mesh = new THREE.Mesh(G.frus(0.76), skirtMat);
+    mesh.scale.set(hem, h, hem * 0.90);
+    mesh.position.y = 0.34 - h / 2;
+    body.add(mesh);
   }
 
   /* ---- floating hands ---- */

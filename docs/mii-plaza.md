@@ -191,12 +191,12 @@ off — nothing gets skipped on the way in.
 | Category | Options |
 |---|---|
 | Eyewear | 19 across plastic, metal, sunglasses and wrap-around baseball shades |
-| Hair | 26 real cuts: buzz, crew, French crop, waves, pixie, bowl, comb over, side part, quiff, pompadour, swoop, slick back, swept, spiky, curtains, afro, locs, bob, shag, wolf cut, mullet, flow, long, bun, ponytail, bald |
+| Hair | 30 real cuts: buzz, crew, French crop, waves, pixie, bowl, comb over, side part, quiff, pompadour, swoop, slick back, swept, spiky, curtains, afro, locs, bob, shag, wolf cut, mullet, flow, long, bun, ponytail, high ponytail, pigtails, long layers, space buns, bald |
 | Headwear | 13 including flat-brim, dad hat, bucket, cowboy, beanie, paisley bandanas in red / blue / green |
 | Facial hair | Stubble, lineup, full, goatee, moustache, handlebar |
 | Piercings | Nose stud, double nostril, septum — new characters start with none |
 | Ink | Hands, jaw, both |
-| Outfits | 8: t-shirt, cutoff, no shirt, button-up, flannel, hoodie, suit, jersey |
+| Outfits | 12: t-shirt, cutoff, no shirt, button-up, flannel, hoodie, suit, jersey, dress, sundress, skirt, cardigan |
 
 ### Where each layer is rendered
 
@@ -208,6 +208,9 @@ Three surfaces, chosen by what the feature needs:
   silhouette has to be geometry.
 - **Torso texture** (256px canvas) — garments. Jersey numbers and pocket
   details are painted, then hoods and open plackets are added as geometry.
+  Dresses and skirts keep the one-torso model: the garment is painted on
+  the chest, and a short flared mesh hangs from the waist so the hem can
+  pass the torso pole.
 
   Two things govern where detail can go. Horizontally the chest is at u=0.25
   and the back at u=0.75, not 0.5. Vertically the head is wider than the chest

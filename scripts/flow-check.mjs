@@ -276,6 +276,11 @@ try {
         hasFlow: cuts.includes('flow'),
         hasMullet: cuts.includes('mullet'),
         hasWolf: cuts.includes('wolf'),
+        hasHighpony: cuts.includes('highpony'),
+        hasPigtails: cuts.includes('pigtails'),
+        hasLayers: cuts.includes('layers'),
+        hasSpacebuns: cuts.includes('spacebuns'),
+        outfits: cat.APPAREL.map(a => a.id),
         bandanas: cat.HAT_STYLES.filter(s => s.startsWith('bandana')),
         wedge: glasses.filter(e => e.frame === 'wedge').map(e => e.id),
         wrap: glasses.filter(e => e.frame === 'wrap').map(e => e.label),
@@ -287,6 +292,15 @@ try {
       await evaluate(`Array.from({length: 16}, () => MiiPlaza.randomDNA().piercing)
         .every(p => p === 'none')`));
     check('flowy mens cuts are in the list', extras.hasFlow && extras.hasMullet && extras.hasWolf);
+    check('women\'s cuts are in the list',
+      extras.hasHighpony && extras.hasPigtails && extras.hasLayers && extras.hasSpacebuns,
+      JSON.stringify({
+        highpony: extras.hasHighpony, pigtails: extras.hasPigtails,
+        layers: extras.hasLayers, spacebuns: extras.hasSpacebuns
+      }));
+    check('women\'s outfits are in the list',
+      ['dress','sundress','skirt','cardigan'].every((id) => extras.outfits.includes(id)),
+      extras.outfits.join(', '));
     check('bandanas come in red, blue and green',
       extras.bandanas.includes('bandana') && extras.bandanas.includes('bandanablue')
         && extras.bandanas.includes('bandanagreen'),
