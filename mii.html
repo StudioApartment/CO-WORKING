@@ -334,60 +334,54 @@ body.native-cursor #pointer{display:none}
 #fileIn{display:none}
 
 /* ============================================================
-   STYLE TRAY — customisation categories and options
+   STYLE TRAY — one stepper per category
+   ---------------------------------------------------------------
+   Listing every option as its own chip meant ~34 controls on screen
+   at once. Each category is a single button instead: it shows what
+   is currently picked, and tapping moves to the next one.
    ============================================================ */
 .tray{display:none;margin-top:14px}
 .stage.done ~ .tray{display:block}
 
-/* Wraps rather than scrolls: with eleven categories a single scrolling row
-   hid the selected tab, so the active state pointed at nothing on screen. */
-.tray-tabs{
-  display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:2px 2px 9px;
-}
-.tray-tab{
-  flex:0 0 auto;border:0;cursor:pointer;font:inherit;
-  font-size:11px;font-weight:900;letter-spacing:.04em;
-  padding:8px 13px;border-radius:999px;color:#7d8f9c;
-  background:linear-gradient(#fff,#eaf1f5);
-  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(90,115,135,.18),0 0 0 2px #fff,0 0 0 3px #d9e3ea;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-}
-.tray-tab:hover{color:var(--ink-dk)}
-.tray-tab.on{
-  color:#fff;background:linear-gradient(var(--blue-lt),var(--blue));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 1px 3px rgba(40,110,150,.3),0 0 0 2px #fff,0 0 0 3px var(--blue);
-}
-
-.tray-opts{
-  display:flex;flex-wrap:wrap;gap:7px;justify-content:center;
-  max-height:148px;overflow-y:auto;padding:9px 8px;border-radius:18px;
+.tray-cycles{
+  display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+  padding:11px 9px;border-radius:18px;
   background:linear-gradient(#f5fafc,#e9f1f5);
   box-shadow:inset 0 2px 5px rgba(110,140,160,.18),0 0 0 2px #fff,0 0 0 3px #d9e3ea;
 }
-.opt{
-  border:0;cursor:pointer;font:inherit;
-  font-size:11px;font-weight:800;color:#5f7280;
-  padding:7px 12px;border-radius:999px;
-  background:linear-gradient(#fff,#eef4f7);
-  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(90,115,135,.16),0 0 0 1.5px #dbe5eb;
+
+.cyc{
+  flex:0 0 auto;border:0;cursor:pointer;font:inherit;text-align:center;
+  min-width:84px;padding:7px 12px 6px;border-radius:15px;
+  background:linear-gradient(#fff,#eaf1f5);
+  box-shadow:inset 0 1px 0 #fff,0 1px 3px rgba(90,115,135,.2),0 0 0 2px #fff,0 0 0 3px #d9e3ea;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:transform .12s ease;
 }
-.opt:hover{transform:translateY(-1px);color:var(--ink-dk)}
-.opt.on{
-  color:#fff;background:linear-gradient(var(--blue-lt),var(--blue));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 1px 3px rgba(40,110,150,.28),0 0 0 1.5px var(--blue-dk);
+.cyc:hover{transform:translateY(-2px)}
+.cyc:active{transform:translateY(1px)}
+
+.cyc .cat{
+  display:block;font-size:8.5px;font-weight:900;letter-spacing:.13em;
+  text-transform:uppercase;color:#a4b6c2;
 }
-/* swatch variant, for colour lists */
-.opt.sw{width:30px;height:30px;padding:0;border-radius:50%}
-.opt.sw.on{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--blue),0 2px 5px rgba(60,90,115,.3)}
-.tray-group{
-  flex:0 0 100%;text-align:center;font-size:9.5px;font-weight:900;
-  letter-spacing:.14em;text-transform:uppercase;color:#a4b6c2;margin:2px 0 -2px;
+.cyc .val{
+  display:block;margin-top:2px;font-size:12.5px;font-weight:800;
+  color:var(--ink-dk);white-space:nowrap;
+}
+/* "off" states read quieter than a real choice */
+.cyc.empty .val{color:#b3c2cc;font-weight:700}
+
+/* colourway steppers show the pair instead of a name */
+.cyc .kit{
+  display:block;width:34px;height:15px;margin:4px auto 1px;border-radius:999px;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.85),0 1px 2px rgba(90,115,135,.3);
 }
 
 @media (max-width:560px){
-  .tray-opts{max-height:118px}
-  .tray-tab{font-size:10.5px;padding:7px 11px}
+  .tray-cycles{gap:6px;padding:9px 7px}
+  .cyc{min-width:74px;padding:6px 9px 5px}
+  .cyc .val{font-size:11.5px}
 }
 
 /* ============================================================
@@ -570,17 +564,14 @@ body.native-cursor #pointer{display:none}
     </div>
 
     <div class="rerolls" id="camRerolls">
-      <button class="wbtn" id="btnHair"><span class="lbl">Hair</span></button>
-      <button class="wbtn" id="btnFace"><span class="lbl">Face</span></button>
-      <button class="wbtn" id="btnFit"><span class="lbl">Outfit</span></button>
+      <button class="wbtn" id="btnFace"><span class="lbl">Shuffle face</span></button>
       <div class="pickers" id="camPickers"></div>
     </div>
     <div class="palette" id="camPalette"></div>
 
-    <!-- style tray: categories on the left, options for the active one below -->
+    <!-- one stepper per category: tap to move to the next option -->
     <div class="tray" id="camTray">
-      <div class="tray-tabs" id="trayTabs"></div>
-      <div class="tray-opts" id="trayOpts"></div>
+      <div class="tray-cycles" id="trayCycles"></div>
     </div>
 
     <div class="namerow" id="camNameRow" style="display:none">
@@ -4083,15 +4074,19 @@ const TRAY = [
   {
     key: 'hair', label: 'Hair',
     options: () => HAIRSTYLES.filter((s) => !HATS[s]).map((s) => ({ v: s, label: styleLabel(s) })),
-    get: (d) => d.hair.style,
-    set: (d, v) => { d.hair.style = v; }
+    /* Hair and headwear share one slot. While a hat is on, report the cut
+       remembered underneath — saying "Bald" because a cap happens to occupy
+       the slot is just wrong. */
+    get: (d) => (HATS[d.hair.style] ? (d._hairUnder || 'bowl') : d.hair.style),
+    /* And while a hat is on, the first tap only takes it off to reveal that
+       cut, rather than also skipping past it. */
+    claims: (d) => Boolean(HATS[d.hair.style]),
+    set: (d, v) => { d.hair.style = v; d._hairUnder = v; }
   },
   {
     key: 'hat', label: 'Headwear',
     options: () => [{ v: '', label: 'None' }]
       .concat(HAT_STYLES.map((s) => ({ v: s, label: styleLabel(s) }))),
-    // Hats live in the same slot as hair, so picking one has to remember
-    // something to go back to.
     get: (d) => (HATS[d.hair.style] ? d.hair.style : ''),
     set: (d, v) => {
       if (v) {
@@ -4159,66 +4154,65 @@ const TRAY = [
   }
 ];
 
-let trayTab = 'hair';
-
+/* One button per category. It names what is currently picked, and a tap
+   advances to the next value, wrapping at the end. Shift-click (or a
+   right-click) steps backwards, so a long list is not a one-way trip. */
 function renderTray() {
-  const tabs = $('trayTabs'), opts = $('trayOpts');
-  if (!tabs || !opts || !Cam.dna) return;
+  const box = $('trayCycles');
+  if (!box || !Cam.dna) return;
 
-  tabs.textContent = '';
+  box.textContent = '';
+
   for (const cat of TRAY) {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'tray-tab' + (cat.key === trayTab ? ' on' : '');
-    b.textContent = cat.label;
-    b.addEventListener('click', () => {
-      trayTab = cat.key;
-      renderTray();
-      Sound.fx.click();
-    });
-    tabs.appendChild(b);
-  }
-
-  const cat = TRAY.find((c) => c.key === trayTab) || TRAY[0];
-  const current = cat.get(Cam.dna);
-
-  opts.textContent = '';
-  let lastGroup;
-  for (const o of cat.options()) {
-    if (o.group && o.group !== lastGroup) {
-      const h = document.createElement('div');
-      h.className = 'tray-group';
-      h.textContent = o.group;
-      opts.appendChild(h);
-      lastGroup = o.group;
-    }
+    const options = cat.options();
+    const current = cat.get(Cam.dna);
+    let i = options.findIndex((o) => o.v === current);
+    if (i < 0) i = 0;
+    const now = options[i];
 
     const b = document.createElement('button');
     b.type = 'button';
-    const on = o.v === current;
-    b.className = 'opt' + (o.swatch ? ' sw' : '') + (on ? ' on' : '');
+    // Judged on the label, not the value: squad number 0 is a real choice,
+    // whereas "None" and "Off" are the absence of one.
+    const isOff = now.label === 'None' || now.label === 'Off';
+    b.className = 'cyc' + (isOff ? ' empty' : '');
+    b.title = `${cat.label} — tap for the next one`;
 
-    if (o.swatch) {
-      b.style.background = o.swatch2
-        ? `linear-gradient(135deg, ${o.swatch} 50%, ${o.swatch2} 50%)`
-        : o.swatch;
-      b.title = 'Colourway';
+    const catEl = document.createElement('span');
+    catEl.className = 'cat';
+    catEl.textContent = cat.label;
+    b.appendChild(catEl);
+
+    if (now.swatch) {
+      const chip = document.createElement('span');
+      chip.className = 'kit';
+      chip.style.background = now.swatch2
+        ? `linear-gradient(135deg, ${now.swatch} 50%, ${now.swatch2} 50%)`
+        : now.swatch;
+      b.appendChild(chip);
     } else {
-      b.textContent = o.label;
+      const valEl = document.createElement('span');
+      valEl.className = 'val';
+      valEl.textContent = now.label;
+      b.appendChild(valEl);
     }
 
-    b.addEventListener('click', () => {
-      cat.set(Cam.dna, o.v);
+    const step = (dir) => {
+      // A category that does not currently own its slot spends the first tap
+      // claiming it, so nothing is skipped over on the way in.
+      const claiming = typeof cat.claims === 'function' && cat.claims(Cam.dna);
+      const next = claiming ? now : options[(i + dir + options.length) % options.length];
+      cat.set(Cam.dna, next.v);
       Preview.build(Cam.dna);
       renderPickers();
       renderTray();
       Sound.fx.boing();
-    });
-    opts.appendChild(b);
-    // Long lists scroll, so keep the current choice in view after a rebuild.
-    if (on) requestAnimationFrame(() => {
-      if (b.offsetParent) opts.scrollTop = Math.max(0, b.offsetTop - opts.clientHeight / 2);
-    });
+    };
+
+    b.addEventListener('click', (e) => step(e.shiftKey ? -1 : 1));
+    b.addEventListener('contextmenu', (e) => { e.preventDefault(); step(-1); });
+
+    box.appendChild(b);
   }
 }
 
@@ -4265,11 +4259,10 @@ function openPalette(key, force) {
   $('camPickers').querySelectorAll('.pick').forEach((b) => b.classList.toggle('on', b.dataset.key === key));
 }
 
-/* ---------------- feature rerolls ---------------- */
-function rerollHair(d) {
-  const was = d.hair.style;
-  do { d.hair.style = pickOne(HAIRSTYLES); } while (d.hair.style === was && HAIRSTYLES.length > 1);
-}
+/* ---------------- feature rerolls ----------------
+   Hair, outfit and the rest are stepped through one at a time in the tray.
+   Face proportions are not an enumerable list — there is no "next nose" —
+   so shuffling stays the way to explore them. */
 function rerollFace(d) {
   const r = randomDNA();
   d.eyes.style = r.eyes.style; d.eyes.size = r.eyes.size;
@@ -4277,19 +4270,11 @@ function rerollFace(d) {
   d.brows.style = r.brows.style; d.brows.w = r.brows.w; d.brows.h = r.brows.h;
   d.brows.gap = r.brows.gap; d.brows.angle = r.brows.angle;
   d.mouth = r.mouth; d.nose = r.nose;
-  d.glasses = r.glasses; d.glassCol = r.glassCol;
   d.blush = r.blush; d.freckles = r.freckles;
-  d.facialHair = r.facialHair; d.piercing = r.piercing; d.ears = r.ears;
   d.headSize = r.headSize; d.height = r.height; d.girth = r.girth;
-}
-
-/* Outfit reroll is its own button-worth of state: apparel, colourway and
-   number move together so a jersey never lands with a clashing kit. */
-function rerollFit(d) {
-  const r = randomDNA();
-  d.apparel = r.apparel; d.kit = r.kit; d.kitNumber = r.kitNumber;
-  d.shirt = r.shirt; d.pants = r.pants; d.shoes = r.shoes;
-  d.tattoo = r.tattoo;
+  // Deliberately leaves eyewear, facial hair, piercings, ears and outfit
+  // alone: those have their own steppers, and shuffling them here would
+  // undo a choice the user just made by hand.
 }
 
 /* ---------------- camera modal ---------------- */
@@ -4718,9 +4703,7 @@ function bindButtons() {
     renderTray();
     Sound.fx.boing();
   };
-  $('btnHair').addEventListener('click', reroll(rerollHair));
   $('btnFace').addEventListener('click', reroll(rerollFace));
-  $('btnFit').addEventListener('click', reroll(rerollFit));
 
   $('btnCamera').addEventListener('click', () => Cam.open());
   $('btnCamClose').addEventListener('click', () => Cam.close());

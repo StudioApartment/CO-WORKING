@@ -133,22 +133,23 @@ try {
   await sleep(300);
   await shoot('02-badge-form');
 
-  // style tray, on a couple of different categories
-  await viewport(1280, 980);
+  // the stepper tray, then the same tray after cycling a few categories
+  await viewport(1280, 940);
   await sleep(400);
-  await shoot('02b-tray-hair');
-  await ev(`[...document.querySelectorAll('.tray-tab')]
-    .find(b => b.textContent === 'Headwear').click()`);
-  await sleep(500);
-  await shoot('02b2-tray-headwear');
-  await ev(`[...document.querySelectorAll('.tray-tab')]
-    .find(b => b.textContent === 'Eyewear').click()`);
-  await sleep(500);
-  await shoot('02c-tray-eyewear');
-  await ev(`[...document.querySelectorAll('.tray-tab')]
-    .find(b => b.textContent === 'Outfit').click()`);
-  await sleep(500);
-  await shoot('02d-tray-outfit');
+  await shoot('02b-tray');
+
+  const stepTo = async (cat, times) => {
+    for (let i = 0; i < times; i++) {
+      await ev(`[...document.querySelectorAll('.cyc')]
+        .find(b => b.querySelector('.cat').textContent === ${JSON.stringify(cat)}).click()`);
+      await sleep(220);
+    }
+  };
+  await stepTo('Headwear', 6);
+  await stepTo('Eyewear', 12);
+  await stepTo('Outfit', 7);
+  await sleep(400);
+  await shoot('02c-tray-stepped');
   await viewport(1280, 860);
   await sleep(400);
 

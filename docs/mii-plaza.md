@@ -179,6 +179,16 @@ and both the renderers and the UI build themselves from those lists. Adding a
 frame shape or a jersey means adding one object — no new markup, no new
 event wiring.
 
+The picker is one **stepper per category**: it names what is currently chosen,
+and a tap moves to the next value. Shift-click, or a right-click, steps back.
+An earlier version listed every option as its own chip behind a row of
+category tabs, which put around 34 controls on screen at once for what is
+really eleven decisions.
+
+Hair and headwear share a slot, so the hair stepper reports the cut
+remembered *under* a hat rather than the hat itself, and the first tap on it
+only takes the hat off — nothing gets skipped on the way in.
+
 | Category | Options |
 |---|---|
 | Eyewear | 16 across plastic, metal and sunglasses |
