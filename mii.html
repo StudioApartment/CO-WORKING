@@ -2200,7 +2200,7 @@ const G = {
       const azFront = Math.max(0, uz / rs0);
       const phi = Math.atan2(ux, uz);
       const faceWin = Math.pow(Math.max(0, azFront - 0.18) / 0.82, 2);
-      const chop = (0.055 * Math.sin(phi * 8.0) + 0.028 * Math.sin(phi * 15.0 + 0.7))
+      const chop = (0.04 * Math.sin(phi * 8.0) + 0.02 * Math.sin(phi * 15.0 + 0.7))
         * (1 - faceWin);
       const maxTh = 2.12 - faceWin * 1.04 + chop;
       const th2 = (th / tl) * maxTh;
@@ -2225,7 +2225,7 @@ const G = {
       nx *= 1 + flick;
       nz *= 1 + flick * Math.max(0, -uz) * 0.40;
       const hem = Math.max(0, Math.min(1, (th2 - 1.4) / 0.7));
-      const jag = (Math.sin(phi * 8) * 0.02 + Math.sin(phi * 17 + 0.9) * 0.012)
+      const jag = (Math.sin(phi * 8) * 0.016 + Math.sin(phi * 17 + 0.9) * 0.01)
         * hem * (1 - faceWin);
       nx *= 1 + jag;
       nz *= 1 + jag * 0.5;
