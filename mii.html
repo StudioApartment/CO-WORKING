@@ -2235,6 +2235,62 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
+  wolf: (r) => geoCache(`wolfA${r}`, () => {
+    /* Long on top and down the back, short on the sides. A cap plus
+       cheek teardrops was earmuffs with a blunt nape — the opposite. */
+    const tl = 2.62;
+    const g = new THREE.SphereGeometry(r, 48, 40, 0, TAU, 0, tl);
+    const p = g.attributes.position, v = new THREE.Vector3();
+    const n = HEAD_N;
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      const L = v.length() || 1;
+      const ux = v.x / L, uy = v.y / L, uz = v.z / L;
+      const th = Math.acos(Math.max(-1, Math.min(1, uy)));
+      const rs0 = Math.hypot(ux, uz) || 1e-6;
+      const azFront = Math.max(0, uz / rs0);
+      const azBack = Math.max(0, -uz / rs0);
+      const side = Math.abs(ux) / rs0;
+      const phi = Math.atan2(ux, uz);
+      const faceWin = Math.pow(Math.max(0, azFront - 0.18) / 0.82, 2);
+      const backAmt = Math.pow(azBack, 2.4);
+      const chop = (0.045 * Math.sin(phi * 7.0) + 0.02 * Math.sin(phi * 13.0 + 0.6))
+        * backAmt;
+      const maxTh = 1.22 * (1 - faceWin - backAmt)
+        + 1.08 * faceWin
+        + 2.52 * backAmt
+        + chop;
+      const th2 = (th / tl) * maxTh;
+      const rs = Math.sin(th2);
+      let nx = ux / rs0 * rs;
+      let ny = Math.cos(th2);
+      let nz = uz / rs0 * rs;
+      const s = Math.pow(
+        Math.pow(Math.abs(nx), n) + Math.pow(Math.abs(ny), n) + Math.pow(Math.abs(nz), n),
+        -1 / n
+      );
+      nx *= s * r; ny *= s * r; nz *= s * r;
+      ny += Math.max(0, ny - 0.38) * 0.50;
+      const mane = Math.exp(-ux * ux * 6.5) * Math.max(0, ny - 0.18);
+      ny += mane * 0.12;
+      if (azFront > 0.4 && ny < 0.62) {
+        const t = Math.pow((azFront - 0.4) / 0.6, 1.3) * Math.min(1, (0.62 - ny) / 0.32);
+        const Lh = Math.hypot(nx, ny, nz) || 1;
+        const k = 1 - t + t * (1.05 / Lh);
+        nx *= k; ny *= k; nz *= k;
+      }
+      nx *= 1 - Math.pow(side, 2) * Math.max(0, 0.45 - Math.abs(ny)) * 0.14;
+      if (azBack > 0.35 && ny < 0.12) {
+        const drop = (0.12 - ny) * azBack;
+        ny -= drop * 0.10;
+        nz -= drop * 0.16;
+      }
+      p.setXYZ(i, nx, ny, nz);
+    }
+    p.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  }),
   cyl:  () => geoCache('cyl', () => new THREE.CylinderGeometry(1, 1, 1, 32)),
   frus: (rt) => geoCache(`fr${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 32)),
 };
@@ -2864,16 +2920,9 @@ function buildHair(dna, mat, extraMats) {
        face was three haircuts glued together. */
     add(G.shag(1.09), 0, 0, 0, 1, 1.08, 1);
   } else if (st === 'wolf') {
-    // shaggy layers, curtain bangs, length through the sides and nape
-    cap(1.054, 1.7, 1.18);
-    for (const sx of [-1, 1]) {
-      const bang = add(G.ball(), sx * 0.36, 0.42, 0.76, 0.32, 0.3, 0.22);
-      bang.rotation.z = sx * 0.32;
-      bang.rotation.x = 0.2;
-      const layer = add(G.ball(), sx * 0.86, -0.28, 0.02, 0.28, 0.62, 0.4);
-      layer.rotation.z = -sx * 0.18;
-    }
-    add(G.ball(), 0, -0.4, -0.68, 0.7, 0.62, 0.4);
+    /* Long on top and down the back, short on the sides. Side teardrops
+       on a bowl were earmuffs; the nape has to be the same shell. */
+    add(G.wolf(1.09), 0, 0, 0, 1, 1.14, 1);
   } else if (st === 'mullet') {
     // short on top, long at the back. The cap stays tight at the front so
     // the party is all in the nape.
