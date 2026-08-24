@@ -8,12 +8,13 @@
  * supabase/schema.sql.
  */
 
-import { send, methodNotAllowed } from './_lib/http.js';
+import { send, methodNotAllowed, preflight } from './_lib/http.js';
 import { clientConfig } from './_lib/supabase.js';
 import { hasRealtime, hasGoogleWallet, hasResend, hasSessions, hasAdmin } from './_lib/env.js';
 import { usingSupabase } from './_lib/store.js';
 
 export default function handler(req, res) {
+  if (preflight(req, res)) return;
   if (req.method !== 'GET') return methodNotAllowed(res, ['GET']);
 
   const { supabaseUrl, supabaseAnonKey } = clientConfig();

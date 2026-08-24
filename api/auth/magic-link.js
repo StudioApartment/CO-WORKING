@@ -7,7 +7,7 @@
  * be used to enumerate who has a badge.
  */
 
-import { send, readJson, clientIp, methodNotAllowed } from '../_lib/http.js';
+import { send, readJson, clientIp, methodNotAllowed, preflight } from '../_lib/http.js';
 import { magicLinkSchema, parseOr400 } from '../_lib/validation.js';
 import { limitMagic, tooMany } from '../_lib/ratelimit.js';
 import * as store from '../_lib/store.js';
@@ -23,6 +23,7 @@ const VAGUE_OK = {
 };
 
 export default async function handler(req, res) {
+  if (preflight(req, res)) return;
   try {
     if (req.method !== 'POST') return methodNotAllowed(res, ['POST']);
 

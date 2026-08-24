@@ -6,7 +6,7 @@
  * existed stay editable by the browser that made them.
  */
 
-import { send, readJson, clientIp, methodNotAllowed } from '../_lib/http.js';
+import { send, readJson, clientIp, methodNotAllowed, preflight } from '../_lib/http.js';
 import { updateMiiSchema, parseOr400 } from '../_lib/validation.js';
 import { limitWrite, tooMany } from '../_lib/ratelimit.js';
 import * as store from '../_lib/store.js';
@@ -34,6 +34,7 @@ function mayWrite(req, record) {
 }
 
 export default async function handler(req, res) {
+  if (preflight(req, res)) return;
   try {
     const id = String((req.query && req.query.id) || '').slice(0, 64);
     if (!id) return send(res, 400, { error: 'missing id' });
