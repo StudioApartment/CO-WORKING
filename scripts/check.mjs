@@ -95,6 +95,9 @@ for (const [page, ids] of required) {
   } else if (!src.includes("fetch('/api/config'") || !src.includes("expectsCloud()")) {
     note('✗', 'mii.html — missing root-absolute /api/config fetch or expectsCloud()');
     failures++;
+  } else if (!src.includes("location.hostname === 'coworking.fyi'")) {
+    note('✗', 'mii.html — missing apex→www bounce (phones otherwise see the office as offline)');
+    failures++;
   } else {
     note('✓', 'mii.html pins API calls at /api/ and keys claiming off Config');
   }
