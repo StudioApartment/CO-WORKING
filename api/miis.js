@@ -1,51 +1,112 @@
-/* GET  /api/miis  -> public list (no tokens, no owner ids)
- * POST /api/miis  -> { dna } -> { id, dna, created, token }   token is shown once
+/* GET  /api/miis  -> the plaza, without emails
+ * POST /api/miis  -> claim a badge: one per email, sets an HTTP-only session
+ *                    cookie, mails the pass
  */
-import {
-  listAll, putOne, countFor, allowWrite, makeToken, hashToken,
-  cleanDna, clientIp, readJson, send, MAX_PER_TOKEN, publicView
-} from './_store.js';
+
+import { send, readJson, clientIp, methodNotAllowed } from './_lib/http.js';
+import { createMiiSchema, parseOr400 } from './_lib/validation.js';
+import { limitCreate, tooMany } from './_lib/ratelimit.js';
+import * as store from './_lib/store.js';
+import { uploadPreview } from './_lib/supabase.js';
+import { issueSession, readSession } from './_lib/session.js';
+import { badgeUrl, qrImageUrl } from './_lib/badge.js';
+import { walletSaveUrl } from './_lib/googleWallet.js';
+import { sendBadgeEmail } from './_lib/email.js';
+import { originFrom, hasSessions } from './_lib/env.js';
+import { makeToken, hashToken } from './_store.js';
 
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      // the caller's token decides which records come back flagged as theirs,
-      // so the browser never has to keep its own list of what it owns
+      const session = readSession(req);
       const token = String(req.headers['x-token'] || '');
-      const mineHash = token ? hashToken(token) : null;
-      const list = await listAll();
-      list.sort((a, b) => (a.created || 0) - (b.created || 0));
-      return send(res, 200, list.map((r) => ({
-        ...publicView(r),
-        mine: Boolean(mineHash && r.tokenHash === mineHash)
-      })));
+      return send(res, 200, await store.listPublic({
+        sessionId: session ? session.miiId : null,
+        tokenHash: token ? hashToken(token) : null
+      }));
     }
 
-    if (req.method === 'POST') {
-      if (!(await allowWrite(clientIp(req)))) {
-        return send(res, 429, { error: 'Too many for now — try again later.' });
-      }
-      const body = await readJson(req);
-      const dna = cleanDna(body.dna);
-      if (!dna) return send(res, 400, { error: 'bad dna' });
+    if (req.method !== 'POST') return methodNotAllowed(res, ['GET', 'POST']);
 
-      // an existing token may only hold a few Miis, so nobody can flood the plaza
-      const token = typeof body.token === 'string' && body.token ? body.token : makeToken();
-      const tokenHash = hashToken(token);
-      if (await countFor(tokenHash) >= MAX_PER_TOKEN) {
-        return send(res, 409, { error: `You already have ${MAX_PER_TOKEN} Miis here.` });
-      }
+    // Shape is checked before the quota so a mistyped email costs nothing —
+    // otherwise three fumbled attempts would lock someone out for an hour.
+    // The body is already size-capped by readJson, so parsing first is cheap.
+    const parsed = parseOr400(createMiiSchema, await readJson(req));
+    if (!parsed.ok) return send(res, 400, { error: parsed.error });
+    const { email, name, dna, preview } = parsed.data;
 
-      const rec = {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
-        dna, created: Date.now(), tokenHash
-      };
-      await putOne(rec);
-      return send(res, 201, { ...publicView(rec), token });
+    const limit = await limitCreate(clientIp(req));
+    if (!limit.allowed) {
+      return tooMany(res, send, limit, 'That is a lot of new characters from one place. Try again in a bit.');
     }
 
-    res.setHeader('allow', 'GET, POST');
-    return send(res, 405, { error: 'method not allowed' });
+    // Checked up front so the common case gets the friendly banner copy, not a
+    // constraint error. The unique index is still the real guarantee.
+    const existing = await store.findByEmail(email);
+    if (existing) {
+      return send(res, 409, {
+        error: 'An account with this email already exists.',
+        code: 'email_taken',
+        manageUrl: `${originFrom(req)}/mii`
+      });
+    }
+
+    /* Ownership has to come from somewhere. Normally that is the signed
+     * session cookie, but a deploy without JWT_SECRET cannot sign one — and a
+     * character nobody can edit is worse than a slightly weaker proof. So in
+     * that case fall back to the original capability token: random, returned
+     * exactly once, and only its hash is stored. */
+    const fallbackToken = hasSessions ? null : makeToken();
+
+    let record;
+    try {
+      record = await store.create({
+        email, name, dna: { ...dna, name },
+        tokenHash: fallbackToken ? hashToken(fallbackToken) : null
+      });
+    } catch (e) {
+      if (e instanceof store.StoreError) {
+        return send(res, e.status, { error: e.message, code: e.code || undefined });
+      }
+      throw e;
+    }
+
+    // From here the badge exists. Nothing below is allowed to fail the request.
+    const origin = originFrom(req);
+    issueSession(res, { miiId: record.id, email });
+
+    const previewUrl = preview ? await uploadPreview(record.id, preview) : null;
+    const qrUrl = qrImageUrl(record.id, origin);
+    const badgeValue = badgeUrl({ id: record.id }, origin);
+    const walletUrl = walletSaveUrl({
+      id: record.id, name, email, previewUrl, qrUrl, badgeValue, origin
+    });
+
+    const mail = await sendBadgeEmail({
+      to: email,
+      name,
+      miiId: record.id,
+      previewUrl,
+      qrUrl,
+      walletUrl,
+      manageUrl: `${origin}/mii`,
+      origin
+    });
+
+    return send(res, 201, {
+      id: record.id,
+      dna: record.mii_data,
+      name: record.name,
+      created: new Date(record.created_at).getTime(),
+      mine: true,
+      sessioned: hasSessions,
+      // Shown once, only when there is no cookie to rely on.
+      token: fallbackToken || undefined,
+      previewUrl,
+      qrUrl,
+      walletUrl,
+      emailed: mail.sent
+    });
   } catch (e) {
     return send(res, 500, { error: String((e && e.message) || e) });
   }

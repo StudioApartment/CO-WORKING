@@ -333,6 +333,157 @@ body.native-cursor #pointer{display:none}
 .tiny{margin-top:10px;text-align:center;font-size:11.5px;font-weight:700;color:#a4b6c2;line-height:1.5}
 #fileIn{display:none}
 
+/* ============================================================
+   STYLE TRAY — customisation categories and options
+   ============================================================ */
+.tray{display:none;margin-top:14px}
+.stage.done ~ .tray{display:block}
+
+/* Wraps rather than scrolls: with eleven categories a single scrolling row
+   hid the selected tab, so the active state pointed at nothing on screen. */
+.tray-tabs{
+  display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:2px 2px 9px;
+}
+.tray-tab{
+  flex:0 0 auto;border:0;cursor:pointer;font:inherit;
+  font-size:11px;font-weight:900;letter-spacing:.04em;
+  padding:8px 13px;border-radius:999px;color:#7d8f9c;
+  background:linear-gradient(#fff,#eaf1f5);
+  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(90,115,135,.18),0 0 0 2px #fff,0 0 0 3px #d9e3ea;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.tray-tab:hover{color:var(--ink-dk)}
+.tray-tab.on{
+  color:#fff;background:linear-gradient(var(--blue-lt),var(--blue));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 1px 3px rgba(40,110,150,.3),0 0 0 2px #fff,0 0 0 3px var(--blue);
+}
+
+.tray-opts{
+  display:flex;flex-wrap:wrap;gap:7px;justify-content:center;
+  max-height:148px;overflow-y:auto;padding:9px 8px;border-radius:18px;
+  background:linear-gradient(#f5fafc,#e9f1f5);
+  box-shadow:inset 0 2px 5px rgba(110,140,160,.18),0 0 0 2px #fff,0 0 0 3px #d9e3ea;
+}
+.opt{
+  border:0;cursor:pointer;font:inherit;
+  font-size:11px;font-weight:800;color:#5f7280;
+  padding:7px 12px;border-radius:999px;
+  background:linear-gradient(#fff,#eef4f7);
+  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(90,115,135,.16),0 0 0 1.5px #dbe5eb;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.opt:hover{transform:translateY(-1px);color:var(--ink-dk)}
+.opt.on{
+  color:#fff;background:linear-gradient(var(--blue-lt),var(--blue));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 1px 3px rgba(40,110,150,.28),0 0 0 1.5px var(--blue-dk);
+}
+/* swatch variant, for colour lists */
+.opt.sw{width:30px;height:30px;padding:0;border-radius:50%}
+.opt.sw.on{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--blue),0 2px 5px rgba(60,90,115,.3)}
+.tray-group{
+  flex:0 0 100%;text-align:center;font-size:9.5px;font-weight:900;
+  letter-spacing:.14em;text-transform:uppercase;color:#a4b6c2;margin:2px 0 -2px;
+}
+
+@media (max-width:560px){
+  .tray-opts{max-height:118px}
+  .tray-tab{font-size:10.5px;padding:7px 11px}
+}
+
+/* ============================================================
+   BADGE FLOW — email capture, recovery, wallet handoff
+   ============================================================ */
+.namerow.stack{flex-direction:column;align-items:stretch;gap:6px;margin-top:14px}
+.namerow.stack label{margin-left:4px}
+.namerow.stack input{width:100%}
+.namerow + .namerow{margin-top:12px}
+.fieldnote{margin:6px 4px 0;font-size:11px;font-weight:700;color:#a4b6c2;line-height:1.5}
+
+/* inline notices inside the card */
+.banner{
+  display:none;margin:14px 0 0;padding:12px 15px;border-radius:16px;
+  font-size:12.5px;font-weight:800;line-height:1.5;
+  box-shadow:inset 0 1px 0 #fff,0 0 0 2px #fff,0 0 0 3.5px #e2cfa8;
+  background:linear-gradient(#fff8ea,#fdeed3);color:#8a6420;
+}
+.banner.show{display:block;animation:cardIn .3s cubic-bezier(.2,1.4,.4,1) both}
+.banner.bad{box-shadow:inset 0 1px 0 #fff,0 0 0 2px #fff,0 0 0 3.5px #eec0bb;
+  background:linear-gradient(#fff3f1,#fde3e0);color:#a53a31}
+.banner.good{box-shadow:inset 0 1px 0 #fff,0 0 0 2px #fff,0 0 0 3.5px #b6e0c6;
+  background:linear-gradient(#f1fbf5,#dff4e7);color:#1f7a4d}
+.banner a,.banner button.link{
+  color:inherit;font:inherit;font-weight:900;text-decoration:underline;
+  background:none;border:0;padding:0;cursor:pointer;
+}
+
+/* the "your badge is ready" panel that replaces the camera after saving */
+.badgeout{display:none;flex-direction:column;align-items:center;text-align:center;padding:6px 0 0}
+.badgeout.show{display:flex;animation:cardIn .34s cubic-bezier(.2,1.4,.4,1) both}
+.badgeout .qr{
+  width:150px;height:150px;border-radius:18px;background:#fff;padding:9px;
+  box-shadow:0 0 0 2px #fff,0 0 0 3.5px #d3dee5;
+}
+.badgeout .who{margin-top:12px;font-size:19px;font-weight:900;color:var(--ink-dk)}
+.badgeout .role{margin-top:2px;font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#a4b6c2}
+
+/* Google's brand guidance wants the button visually distinct from ours */
+.gwallet{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  margin-top:16px;height:50px;padding:0 22px;border:0;border-radius:999px;cursor:pointer;
+  background:linear-gradient(#3c4043,#202124);color:#fff;
+  font:inherit;font-size:13.5px;font-weight:800;letter-spacing:.01em;text-decoration:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 3px 8px rgba(32,33,36,.34);
+}
+.gwallet:hover{filter:brightness(1.12)}
+.gwallet:active{transform:translateY(1px)}
+.gwallet svg{flex:none}
+
+/* small text button row under the primary actions */
+.minor{display:flex;gap:16px;justify-content:center;align-items:center;margin-top:12px;flex-wrap:wrap}
+.minor button{
+  background:none;border:0;padding:4px 2px;cursor:pointer;
+  font:inherit;font-size:11.5px;font-weight:800;color:#8ba0ad;text-decoration:underline;
+}
+.minor button:hover{color:var(--blue-dk)}
+
+/* recovery sub-panel */
+.recover{display:none;margin-top:14px;padding:15px 16px 16px;border-radius:20px;
+  background:linear-gradient(#f7fbfd,#eef5f8);box-shadow:inset 0 1px 0 #fff,0 0 0 2px #fff,0 0 0 3.5px #d9e3ea}
+.recover.show{display:block;animation:cardIn .3s cubic-bezier(.2,1.4,.4,1) both}
+.recover h3{margin:0 0 4px;font-size:14.5px;font-weight:900;color:var(--ink-dk)}
+.recover p{margin:0 0 12px;font-size:12px;font-weight:700;color:#8ba0ad;line-height:1.5}
+.recover .rrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.recover input{
+  flex:1 1 180px;height:42px;border:0;outline:0;border-radius:999px;padding:0 16px;
+  font-size:15px;font-weight:800;color:var(--ink-dk);
+  background:linear-gradient(#eef4f7,#fff);
+  box-shadow:inset 0 2px 4px rgba(110,140,160,.22),0 0 0 2px #fff,0 0 0 3.5px #d3dee5;
+}
+.recover input:focus{box-shadow:inset 0 2px 4px rgba(110,140,160,.22),0 0 0 2px #fff,0 0 0 3.5px var(--blue)}
+.recover .wbtn{height:42px;font-size:12.5px;padding:0 18px;width:auto}
+.recover .wbtn .lbl{display:inline}
+
+/* the badge chip in the corner once this browser owns a Mii */
+.mine-chip{
+  display:none;align-items:center;gap:9px;height:38px;padding:0 6px 0 14px;border-radius:999px;
+  font-size:12px;font-weight:800;color:#7d8f9c;
+  background:linear-gradient(#fff,#eaf1f5);
+  box-shadow:inset 0 1px 0 #fff,0 1px 3px rgba(90,115,135,.22),0 0 0 2px #fff,0 0 0 3px #d2dde4;
+}
+.mine-chip.show{display:inline-flex}
+.mine-chip b{color:var(--blue-dk);max-width:12ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mine-chip button{
+  height:28px;padding:0 12px;border:0;border-radius:999px;cursor:pointer;
+  font:inherit;font-size:11px;font-weight:900;color:#fff;
+  background:linear-gradient(var(--blue),var(--blue-dk));
+}
+.mine-chip button:hover{filter:brightness(1.06)}
+
+@media (max-width:600px){
+  .mine-chip b{max-width:8ch}
+  .badgeout .qr{width:132px;height:132px}
+}
+
 .nomod{position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:30px;font-weight:800;color:#7d92a0;z-index:300;background:#eef4f8}
 </style>
 </head>
@@ -343,6 +494,10 @@ body.native-cursor #pointer{display:none}
 <div id="hud">
   <div class="topright pe">
     <div class="counter">Coworkers <b id="miiCount">0</b></div>
+    <div class="mine-chip" id="mineChip">
+      <span>You&rsquo;re <b id="mineName">–</b></span>
+      <button type="button" id="mineManage">Badge</button>
+    </div>
     <button class="wbtn primary" id="btnCamera" title="Make a Mii from your face">
       <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.4A2.4 2.4 0 0 1 5.4 6h2.1l1.3-2h6.4l1.3 2h2.1A2.4 2.4 0 0 1 21 8.4v9.2A2.4 2.4 0 0 1 18.6 20H5.4A2.4 2.4 0 0 1 3 17.6z"/><circle cx="12" cy="13" r="3.7"/></svg>
       <span class="lbl">Get my badge</span>
@@ -417,13 +572,45 @@ body.native-cursor #pointer{display:none}
     <div class="rerolls" id="camRerolls">
       <button class="wbtn" id="btnHair"><span class="lbl">Hair</span></button>
       <button class="wbtn" id="btnFace"><span class="lbl">Face</span></button>
+      <button class="wbtn" id="btnFit"><span class="lbl">Outfit</span></button>
       <div class="pickers" id="camPickers"></div>
     </div>
     <div class="palette" id="camPalette"></div>
 
+    <!-- style tray: categories on the left, options for the active one below -->
+    <div class="tray" id="camTray">
+      <div class="tray-tabs" id="trayTabs"></div>
+      <div class="tray-opts" id="trayOpts"></div>
+    </div>
+
     <div class="namerow" id="camNameRow" style="display:none">
       <label for="miiName">Name</label>
       <input id="miiName" maxlength="14" value="New Person" spellcheck="false" autocomplete="off"/>
+    </div>
+
+    <div class="namerow stack" id="camEmailRow" style="display:none">
+      <label for="miiEmail">Email &mdash; where your badge goes</label>
+      <input id="miiEmail" type="email" inputmode="email" autocomplete="email"
+             spellcheck="false" placeholder="you@studio.com" maxlength="254"/>
+      <p class="fieldnote">One badge per email. We use it to send your pass and to let you edit this character later &mdash; nothing else.</p>
+    </div>
+
+    <div class="banner" id="camBanner"></div>
+
+    <!-- shown after a badge is issued -->
+    <div class="badgeout" id="camBadge">
+      <img class="qr" id="badgeQr" alt="Your badge QR code" width="150" height="150"/>
+      <p class="who" id="badgeWho">–</p>
+      <p class="role">Coworker</p>
+      <a class="gwallet" id="badgeWallet" href="#" target="_blank" rel="noopener noreferrer">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2.6" y="5.6" width="18.8" height="13.4" rx="3.2"/>
+          <path d="M2.6 10.4h18.8"/><path d="M16.4 14.7h2.4"/>
+        </svg>
+        <span>Add to Google Wallet</span>
+      </a>
+      <p class="tiny" id="badgeNote"></p>
     </div>
 
     <div class="row" id="camRowLive">
@@ -433,14 +620,32 @@ body.native-cursor #pointer{display:none}
     </div>
     <div class="row" id="camRowDone" style="display:none">
       <button class="wbtn" id="btnRetake"><span class="lbl">Retake</span></button>
-      <button class="wbtn primary" id="btnAccept"><span class="lbl">Add to Plaza</span></button>
+      <button class="wbtn primary" id="btnAccept"><span class="lbl">Get my badge</span></button>
     </div>
     <div class="row" id="camRowEdit" style="display:none">
       <button class="wbtn" id="btnEditCancel"><span class="lbl">Cancel</span></button>
       <button class="wbtn primary" id="btnEditSave"><span class="lbl">Save changes</span></button>
     </div>
+    <div class="row" id="camRowBadge" style="display:none">
+      <button class="wbtn primary" id="btnBadgeDone"><span class="lbl">Done</span></button>
+    </div>
 
-    <p class="tiny" id="camTiny">Colors are read straight from the pixels of your photo with a skin-tone mask &mdash; nothing is uploaded, stored or sent anywhere.</p>
+    <div class="minor" id="camMinor">
+      <button type="button" id="btnRecover">Already have a Mii? Load it</button>
+    </div>
+
+    <div class="recover" id="camRecover">
+      <h3>Load my Mii</h3>
+      <p>New device or cleared browser? Enter the email you used and we&rsquo;ll send a one-time link that reconnects you.</p>
+      <div class="rrow">
+        <input id="recoverEmail" type="email" inputmode="email" autocomplete="email"
+               spellcheck="false" placeholder="you@studio.com" maxlength="254"/>
+        <button class="wbtn primary" id="btnRecoverSend"><span class="lbl">Send link</span></button>
+      </div>
+      <div class="banner" id="recoverBanner" style="margin-top:12px"></div>
+    </div>
+
+    <p class="tiny" id="camTiny">Colors are read straight from the pixels of your photo with a skin-tone mask &mdash; the photo itself never leaves your device.</p>
     <input type="file" id="fileIn" accept="image/*"/>
   </div>
 </div>
@@ -1029,6 +1234,315 @@ function drawMouth(g, U, dna, expr) {
   g.restore();
 }
 
+/* ---- eyewear -------------------------------------------------
+   One path builder per frame family, then a shared pass for lens,
+   stroke, arm and bridge. Metal frames get a vertical gradient
+   stroke, which is what sells "wire" against "plastic" at this
+   resolution — an even line just reads as thin plastic. */
+function drawEyewear(g, U, dna) {
+  const spec = EYEWEAR_BY_ID.get(dna.glasses);
+  if (!spec || !spec.id) return;
+
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  const sp = dna.eyes.spacing, ey = dna.eyes.y;
+  const gw = spec.w, gh = spec.h;
+  const isMetal = Boolean(spec.metal);
+  // Clear frames pin their own colour: taking the wearer's frame colour would
+  // make transparent plastic render as solid.
+  const frame = spec.frameColor || spec.metal || (spec.shades ? '#1b1c22' : dna.glassCol);
+
+  const lensPath = (w, h) => {
+    g.beginPath();
+    switch (spec.frame) {
+      case 'oval':
+        g.ellipse(0, 0, w / 2, h / 2, 0, 0, TAU);
+        return;
+      case 'wedge':
+        g.moveTo(-w / 2, -h * 0.58);
+        g.lineTo(w * 0.5, -h * 0.1);
+        g.lineTo(w * 0.5, h * 0.06);
+        g.lineTo(-w / 2, h * 0.58);
+        g.closePath();
+        return;
+      case 'aviator': {
+        // teardrop: wide flat brow, tapering to a low inner point
+        g.moveTo(-w / 2, -h * 0.44);
+        g.lineTo(w / 2, -h * 0.44);
+        g.quadraticCurveTo(w * 0.52, h * 0.26, w * 0.16, h * 0.5);
+        g.quadraticCurveTo(-w * 0.22, h * 0.62, -w * 0.44, h * 0.16);
+        g.quadraticCurveTo(-w * 0.52, -h * 0.16, -w / 2, -h * 0.44);
+        g.closePath();
+        return;
+      }
+      case 'wayfarer': {
+        // browline heavier than the base, canted outward
+        g.moveTo(-w / 2, -h * 0.5);
+        g.lineTo(w / 2, -h * 0.42);
+        g.quadraticCurveTo(w * 0.5, h * 0.34, w * 0.2, h * 0.5);
+        g.quadraticCurveTo(-w * 0.2, h * 0.56, -w * 0.44, h * 0.2);
+        g.quadraticCurveTo(-w * 0.52, -h * 0.2, -w / 2, -h * 0.5);
+        g.closePath();
+        return;
+      }
+      default: {
+        const rr = spec.frame === 'square' ? Math.min(w, h) * 0.16 : Math.min(w, h) * 0.42;
+        const X = -w / 2, Y = -h / 2;
+        g.moveTo(X + rr, Y); g.lineTo(X + w - rr, Y);
+        g.quadraticCurveTo(X + w, Y, X + w, Y + rr);
+        g.lineTo(X + w, Y + h - rr); g.quadraticCurveTo(X + w, Y + h, X + w - rr, Y + h);
+        g.lineTo(X + rr, Y + h); g.quadraticCurveTo(X, Y + h, X, Y + h - rr);
+        g.lineTo(X, Y + rr); g.quadraticCurveTo(X, Y, X + rr, Y);
+        g.closePath();
+      }
+    }
+  };
+
+  const strokeStyleFor = (lh) => {
+    if (!isMetal) return frame;
+    const grd = g.createLinearGradient(0, -lh / 2, 0, lh / 2);
+    grd.addColorStop(0, shade(spec.metal, 46));
+    grd.addColorStop(0.45, spec.metal);
+    grd.addColorStop(1, shade(spec.metal, -34));
+    return grd;
+  };
+
+  for (const sgn of [-1, 1]) {
+    g.save();
+    g.translate((50 + sgn * sp) * U, ey * U);
+    g.scale(sgn, 1);
+    const lw = gw * U, lh = gh * U;
+
+    lensPath(lw, lh);
+    if (spec.shades) {
+      g.fillStyle = spec.lens || 'rgba(26,28,38,.88)';
+      g.fill();
+      g.save(); g.clip();
+      g.globalAlpha = 0.24; g.fillStyle = '#dff1ff';
+      g.beginPath();
+      g.moveTo(-lw * 0.58, lh * 0.62); g.lineTo(lw * 0.02, -lh * 0.62);
+      g.lineTo(lw * 0.24, -lh * 0.62); g.lineTo(-lw * 0.36, lh * 0.62);
+      g.closePath(); g.fill();
+      g.restore();
+    } else if (spec.tint) {
+      g.fillStyle = spec.tint; g.fill();
+    } else {
+      // clear plastic still needs a hint of glass or the lens reads as a hole
+      g.globalAlpha = spec.clear ? 0.1 : 0.16;
+      g.fillStyle = '#bfe6ff'; g.fill();
+    }
+    g.globalAlpha = 1;
+
+    g.strokeStyle = strokeStyleFor(lh);
+    g.lineWidth = spec.lw * U;
+    g.lineJoin = spec.frame === 'wedge' ? 'miter' : 'round';
+    g.miterLimit = 8;
+    lensPath(lw, lh);
+    g.stroke();
+
+    // Clear frames need edges on both sides of the rim: a single translucent
+    // stroke on skin just looks like a smudge.
+    if (spec.clear) {
+      g.save();
+      g.strokeStyle = 'rgba(255,255,255,.9)';
+      g.lineWidth = spec.lw * U * 0.3;
+      lensPath(lw * 0.9, lh * 0.86);
+      g.stroke();
+      g.strokeStyle = 'rgba(120,146,164,.5)';
+      g.lineWidth = spec.lw * U * 0.22;
+      lensPath(lw * 1.06, lh * 1.08);
+      g.stroke();
+      g.restore();
+    }
+
+    // arm heading back toward the ear
+    g.strokeStyle = strokeStyleFor(lh);
+    g.lineWidth = spec.lw * U * (isMetal ? 0.9 : 0.8);
+    g.beginPath();
+    g.moveTo(gw / 2 * U, -gh * 0.12 * U);
+    g.lineTo((gw / 2 + 3.6) * U, -gh * 0.32 * U);
+    g.stroke();
+    g.restore();
+  }
+
+  // bridge
+  const bridgeDrop = spec.frame === 'aviator' ? 3.2 : spec.frame === 'square' ? 1.6 : 0;
+  g.save();
+  g.translate(50 * U, ey * U);
+  g.strokeStyle = strokeStyleFor(gh * U);
+  g.lineWidth = spec.lw * U * (isMetal ? 0.85 : 1);
+  g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo((-sp + gw / 2) * U, -bridgeDrop * 0.25 * U);
+  if (bridgeDrop) {
+    g.quadraticCurveTo(0, -bridgeDrop * U, (sp - gw / 2) * U, -bridgeDrop * 0.25 * U);
+  } else {
+    g.lineTo((sp - gw / 2) * U, 0);
+  }
+  g.stroke();
+  // aviators carry a second brow bar across the top
+  if (spec.frame === 'aviator') {
+    g.beginPath();
+    g.moveTo((-sp - gw / 2) * U, -gh * 0.44 * U);
+    g.lineTo((sp + gw / 2) * U, -gh * 0.44 * U);
+    g.lineWidth = spec.lw * U * 0.8;
+    g.stroke();
+  }
+  g.restore();
+  g.globalAlpha = 1;
+}
+
+/* ---- facial hair --------------------------------------------
+   Shapes hug the jaw and run up to the temples. An ellipse across
+   the bottom of the face was the obvious approach and it read as a
+   chinstrap, because the face patch keeps curving back at the chin —
+   so these are explicit paths instead. */
+function drawFacialHair(g, U, dna) {
+  const st = dna.facialHair;
+  if (!st || st === 'none') return;
+
+  const col = dna.hair.color;
+
+  // Outer silhouette: sideburns down the sides, round across the chin.
+  const beardOutline = () => {
+    g.beginPath();
+    g.moveTo(23 * U, 46 * U);
+    g.lineTo(23 * U, 64 * U);
+    g.quadraticCurveTo(25 * U, 84 * U, 50 * U, 89 * U);
+    g.quadraticCurveTo(75 * U, 84 * U, 77 * U, 64 * U);
+    g.lineTo(77 * U, 46 * U);
+    g.lineTo(69 * U, 46 * U);
+    g.lineTo(69 * U, 62 * U);
+    g.quadraticCurveTo(67 * U, 76 * U, 50 * U, 80 * U);
+    g.quadraticCurveTo(33 * U, 76 * U, 31 * U, 62 * U);
+    g.lineTo(31 * U, 46 * U);
+    g.closePath();
+  };
+
+  // Filled mass for a full beard: same silhouette with no inner cutout.
+  const beardSolid = () => {
+    g.beginPath();
+    g.moveTo(23 * U, 46 * U);
+    g.lineTo(23 * U, 64 * U);
+    g.quadraticCurveTo(25 * U, 84 * U, 50 * U, 89 * U);
+    g.quadraticCurveTo(75 * U, 84 * U, 77 * U, 64 * U);
+    g.lineTo(77 * U, 46 * U);
+    g.closePath();
+  };
+
+  const moustache = (wide) => {
+    g.setTransform(1, 0, 0, 1, 50 * U, 62 * U);
+    g.fillStyle = col;
+    g.beginPath();
+    if (wide) {
+      // handlebar: tips curl back up past the corners of the mouth
+      g.moveTo(0, 0);
+      g.quadraticCurveTo(-10 * U, -3.4 * U, -17 * U, 1.2 * U);
+      g.quadraticCurveTo(-19 * U, -2.6 * U, -14 * U, -1.2 * U);
+      g.quadraticCurveTo(-8 * U, 0.6 * U, 0, 3.4 * U);
+      g.quadraticCurveTo(8 * U, 0.6 * U, 14 * U, -1.2 * U);
+      g.quadraticCurveTo(19 * U, -2.6 * U, 17 * U, 1.2 * U);
+      g.quadraticCurveTo(10 * U, -3.4 * U, 0, 0);
+    } else {
+      g.moveTo(0, 0);
+      g.quadraticCurveTo(-9 * U, -3 * U, -13 * U, 3.5 * U);
+      g.quadraticCurveTo(-8 * U, 5.5 * U, 0, 3 * U);
+      g.quadraticCurveTo(8 * U, 5.5 * U, 13 * U, 3.5 * U);
+      g.quadraticCurveTo(9 * U, -3 * U, 0, 0);
+    }
+    g.fill();
+    g.setTransform(1, 0, 0, 1, 0, 0);
+  };
+
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillStyle = col;
+
+  if (st === 'stubble') {
+    // Grown-out shadow: soft, but opaque enough to survive the shading pass.
+    g.globalAlpha = 0.42;
+    beardSolid(); g.fill();
+    g.globalAlpha = 1;
+    return;
+  }
+  if (st === 'lineup') {
+    // Crisp edge: the band only, so the cheek stays bare and the boundary
+    // stays sharp — that edge is the whole point of the look.
+    beardOutline(); g.fill();
+    moustache(false);
+    return;
+  }
+  if (st === 'full') {
+    beardSolid(); g.fill();
+    moustache(false);
+    return;
+  }
+  if (st === 'goatee') {
+    g.beginPath();
+    g.moveTo(41 * U, 68 * U);
+    g.quadraticCurveTo(43 * U, 84 * U, 50 * U, 87 * U);
+    g.quadraticCurveTo(57 * U, 84 * U, 59 * U, 68 * U);
+    g.quadraticCurveTo(50 * U, 72 * U, 41 * U, 68 * U);
+    g.closePath();
+    g.fill();
+    moustache(false);
+    return;
+  }
+  if (st === 'stache') { moustache(false); return; }
+  if (st === 'handlebar') { moustache(true); return; }
+}
+
+/* ---- piercings ----------------------------------------------
+   Small and high-contrast: at 512px a stud is only a few pixels,
+   so each one gets a dark rim to stay legible against skin. */
+function drawPiercings(g, U, dna) {
+  const st = dna.piercing;
+  if (!st || st === 'none') return;
+
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  const metal = '#f2f6f9', rim = 'rgba(32,44,56,.8)';
+
+  // Every piece gets a dark rim: bare metal on skin loses its edge once the
+  // texture is minified onto a head that is a couple of hundred pixels tall.
+  const bead = (x, y, r) => {
+    g.beginPath(); g.arc(x * U, y * U, r * U, 0, TAU);
+    g.fillStyle = metal; g.fill();
+    g.lineWidth = 0.8 * U; g.strokeStyle = rim; g.stroke();
+  };
+  const ring = (x, y, r) => {
+    g.beginPath(); g.arc(x * U, y * U, r * U, 0, TAU);
+    g.lineWidth = 2.2 * U; g.strokeStyle = rim; g.stroke();
+    g.lineWidth = 1.3 * U; g.strokeStyle = metal; g.stroke();
+  };
+
+  // The nose is its own sphere sitting proud of the face, so nostril work
+  // lands just below and outside it rather than on the bridge.
+  const noseY = 56 + dna.nose.y * 30;
+
+  if (st === 'nose') bead(42, noseY, 2.2);
+  else if (st === 'nostril2') { ring(41.5, noseY, 2.8); ring(58.5, noseY, 2.8); }
+  else if (st === 'septum') {
+    g.beginPath();
+    g.arc(50 * U, (noseY + 1.5) * U, 4.2 * U, 0.1 * Math.PI, 0.9 * Math.PI);
+    g.lineWidth = 2.4 * U; g.strokeStyle = rim; g.stroke();
+    g.lineWidth = 1.4 * U; g.strokeStyle = metal; g.stroke();
+  } else if (st === 'brow') {
+    const bx = 50 - dna.eyes.spacing - 5;
+    const by = dna.eyes.y - dna.brows.gap - 1;
+    g.save();
+    g.translate(bx * U, by * U);
+    g.rotate(-0.4);
+    g.strokeStyle = rim; g.lineWidth = 0.9 * U;
+    g.fillStyle = metal;
+    g.fillRect(-1.1 * U, -4.4 * U, 2.2 * U, 8.8 * U);
+    g.strokeRect(-1.1 * U, -4.4 * U, 2.2 * U, 8.8 * U);
+    g.restore();
+    bead(bx - 1.8, by - 4.6, 1.9);
+    bead(bx + 1.8, by + 4.6, 1.9);
+  } else if (st === 'lip') {
+    ring(50 - dna.mouth.w * 0.36, dna.mouth.y + 6, 2.8);
+  }
+  g.globalAlpha = 1;
+}
+
 function drawFace(dna, expr) {
   const S = FACE_RES, c = cv(S), g = c.getContext('2d'), U = S / 100;
   g.clearRect(0, 0, S, S);
@@ -1059,99 +1573,15 @@ function drawFace(dna, expr) {
   // eyes
   P(50 - dna.eyes.spacing, dna.eyes.y); drawEye(g, U, dna, 1, expr);
   P(50 + dna.eyes.spacing, dna.eyes.y); drawEye(g, U, dna, -1, expr);
-  // glasses  (1 rounded, 2 oval, 3 big shades, 4 tiny angular shades)
-  if (dna.glasses) {
-    g.setTransform(1, 0, 0, 1, 0, 0);
-    const st = dna.glasses, shades = st >= 3;
-    const sp = dna.eyes.spacing, ey = dna.eyes.y;
-    const gw = st === 3 ? 28 : st === 4 ? 20 : 19;
-    const gh = st === 3 ? 22 : st === 4 ? 11 : 16;
-    const frame = shades ? (st === 3 ? '#221f1c' : '#15161c') : dna.glassCol;
-    const lensPath = (w, h) => {
-      g.beginPath();
-      if (st === 2) { g.ellipse(0, 0, w / 2, h / 2, 0, 0, TAU); return; }
-      if (st === 4) {                       // sharp wedge, tapering to a point outward
-        g.moveTo(-w / 2, -h * 0.58);
-        g.lineTo(w * 0.5, -h * 0.1);
-        g.lineTo(w * 0.5, h * 0.06);
-        g.lineTo(-w / 2, h * 0.58);
-        g.closePath(); return;
-      }
-      const rr = st === 3 ? h * 0.44 : 3.4 * U;
-      const X = -w / 2, Y = -h / 2;
-      g.moveTo(X + rr, Y); g.lineTo(X + w - rr, Y);
-      g.quadraticCurveTo(X + w, Y, X + w, Y + rr);
-      g.lineTo(X + w, Y + h - rr); g.quadraticCurveTo(X + w, Y + h, X + w - rr, Y + h);
-      g.lineTo(X + rr, Y + h); g.quadraticCurveTo(X, Y + h, X, Y + h - rr);
-      g.lineTo(X, Y + rr); g.quadraticCurveTo(X, Y, X + rr, Y);
-      g.closePath();
-    };
-
-    for (const sgn of [-1, 1]) {
-      g.save();
-      g.translate((50 + sgn * sp) * U, ey * U);
-      g.scale(sgn, 1);
-      const lw = gw * U, lh = gh * U;
-      lensPath(lw, lh);
-      if (shades) {
-        g.fillStyle = st === 3 ? 'rgba(26,28,38,.88)' : 'rgba(16,17,24,.92)';
-        g.fill();
-        g.save(); g.clip();                 // narrow diagonal glare, sized to the lens
-        g.globalAlpha = 0.24; g.fillStyle = '#dff1ff';
-        g.beginPath();
-        g.moveTo(-lw * 0.58, lh * 0.62); g.lineTo(lw * 0.02, -lh * 0.62);
-        g.lineTo(lw * 0.24, -lh * 0.62); g.lineTo(-lw * 0.36, lh * 0.62);
-        g.closePath(); g.fill();
-        g.restore();
-      } else {
-        g.globalAlpha = 0.16; g.fillStyle = '#bfe6ff'; g.fill(); g.globalAlpha = 1;
-      }
-      g.globalAlpha = 1;
-      g.strokeStyle = frame;
-      g.lineWidth = (st === 3 ? 2.6 : st === 4 ? 1.35 : 2.1) * U;
-      g.lineJoin = st === 4 ? 'miter' : 'round';   // keep the points sharp
-      g.miterLimit = 8;
-      lensPath(lw, lh);
-      g.stroke();
-      // arm heading back toward the ear
-      g.beginPath();
-      g.moveTo(gw / 2 * U, -gh * 0.12 * U);
-      g.lineTo((gw / 2 + 3.4) * U, -gh * 0.3 * U);
-      g.stroke();
-      g.restore();
-    }
-    // bridge
-    g.strokeStyle = frame;
-    g.lineWidth = (st === 3 ? 2.6 : st === 4 ? 1.5 : 2.1) * U;
-    g.beginPath();
-    g.moveTo((50 - sp + gw / 2) * U, (ey - (st === 3 ? 2.2 : 0)) * U);
-    if (st === 3) g.quadraticCurveTo(50 * U, (ey - 3.4) * U, (50 + sp - gw / 2) * U, (ey - 2.2) * U);
-    else g.lineTo((50 + sp - gw / 2) * U, ey * U);
-    g.stroke();
-    g.globalAlpha = 1;
-  }
-
-  // facial hair
-  if (dna.stache) {
-    g.setTransform(1, 0, 0, 1, 50 * U, 62 * U);
-    g.fillStyle = dna.hair.color;
-    g.beginPath();
-    g.moveTo(0, 0);
-    g.quadraticCurveTo(-9 * U, -3 * U, -13 * U, 3.5 * U);
-    g.quadraticCurveTo(-8 * U, 5.5 * U, 0, 3 * U);
-    g.quadraticCurveTo(8 * U, 5.5 * U, 13 * U, 3.5 * U);
-    g.quadraticCurveTo(9 * U, -3 * U, 0, 0);
-    g.fill();
-  }
-  if (dna.beard) {
-    g.setTransform(1, 0, 0, 1, 0, 0);
-    g.globalAlpha = 0.55; g.fillStyle = dna.hair.color;
-    g.beginPath(); g.ellipse(50 * U, 82 * U, 26 * U, 20 * U, 0, Math.PI, TAU, true); g.fill();
-    g.globalAlpha = 1;
-  }
+  // facial hair sits under the mouth so a moustache reads as hair on skin,
+  // not a sticker over the lips
+  drawFacialHair(g, U, dna);
   // mouth
   P(50, dna.mouth.y); drawMouth(g, U, dna, expr);
   g.setTransform(1, 0, 0, 1, 0, 0);
+  // eyewear and metal go last: they occlude everything they sit on
+  drawEyewear(g, U, dna);
+  drawPiercings(g, U, dna);
 
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
@@ -1169,8 +1599,140 @@ const EYECOL = ['#3a2416','#5b3a1e','#7a5230','#2f6f9e','#3f7fa8','#4a7a4d','#6b
 const PANTS  = ['#3f4d5c','#2f3a47','#4a5a6b','#5c4633','#37506e'];
 const SHOES  = ['#2f3a45','#e8ecef','#c0392b','#33506b','#4a4a4a'];
 const HAIRSTYLES = ['bowl','swept','spiky','long','buzz','bun','pony','tails','afro','bald',
-                    'cap','knicks','yankees','bucket','tophat'];
+                    'crop','dreads','undercut','topknot','curtains','mohawk','afrofade','buzzline',
+                    'cap','flatbrim','dadhat','knicks','yankees','bucket','cowboy','beanie',
+                    'bandana','bandanaback','tophat'];
 const NAMES = ['Yuki','Momo','Kai','Rin','Taro','Bea','Nico','Pim','Otto','Lulu','Sora','Ren','Miki','Bo','Gus','Ada','Ken','Emi','Hugo','Pia','Tobi','Zed','Coco','Finn','Nori','Vee','Sam','Juno','Milo','Bibi'];
+
+/* ══════════════════════════════════════════════════════════════
+   4a · STYLE CATALOGUE
+   ---------------------------------------------------------------
+   Every customisable option lives here as data, so adding a frame
+   shape or a jersey does not mean touching the renderers. The UI
+   builds itself from these lists too.
+
+   Nothing here reproduces a real logo or wordmark. Team looks are
+   shape plus colourway only — the crests are abstract monograms —
+   because those marks are trademarks and not ours to ship.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ---- eyewear -------------------------------------------------
+   Three families. `frame` drives geometry, `metal` switches the
+   stroke to a gradient, `tint` fills the lens. Legacy DNA stored
+   glasses as 1..4, so those ids are kept pointing at the same
+   shapes they always were. */
+const EYEWEAR = [
+  { id: 0,  label: 'None',       group: null },
+
+  // plastic
+  { id: 1,  label: 'Rounded',    group: 'Plastic', frame: 'round',  w: 19, h: 16, lw: 2.1 },
+  { id: 2,  label: 'Oval',       group: 'Plastic', frame: 'oval',   w: 19, h: 16, lw: 2.1 },
+  { id: 10, label: 'Clear',      group: 'Plastic', frame: 'round',  w: 21, h: 17, lw: 3.2,
+    clear: true, frameColor: 'rgba(232,238,242,.82)' },
+  { id: 11, label: 'Big square', group: 'Plastic', frame: 'square', w: 25, h: 20, lw: 3.6 },
+  { id: 12, label: 'Chunky',     group: 'Plastic', frame: 'oval',   w: 22, h: 20, lw: 3.8 },
+  { id: 13, label: 'Small rect', group: 'Plastic', frame: 'square', w: 17, h: 11, lw: 2.0 },
+
+  // metal
+  { id: 20, label: 'Gold aviator', group: 'Metal', frame: 'aviator', w: 22, h: 18, lw: 1.5,
+    metal: '#d8b45e', tint: 'rgba(120,96,40,.22)' },
+  { id: 21, label: 'Orange tint',  group: 'Metal', frame: 'aviator', w: 22, h: 18, lw: 1.5,
+    metal: '#c9a253', tint: 'rgba(214,118,42,.40)' },
+  { id: 22, label: 'Thin rect',    group: 'Metal', frame: 'square',  w: 17, h: 10, lw: 1.2,
+    metal: '#b9c2c9' },
+  { id: 23, label: 'Wire round',   group: 'Metal', frame: 'oval',    w: 18, h: 17, lw: 1.15,
+    metal: '#c8cfd4' },
+
+  // sunglasses
+  { id: 3,  label: 'Big shades',  group: 'Sunglasses', frame: 'square',  w: 28, h: 22, lw: 2.6, shades: true },
+  { id: 4,  label: 'Angular',     group: 'Sunglasses', frame: 'wedge',   w: 20, h: 11, lw: 1.35, shades: true },
+  { id: 30, label: 'Wayfarer',    group: 'Sunglasses', frame: 'wayfarer',w: 24, h: 17, lw: 3.4, shades: true },
+  { id: 31, label: 'Italian',     group: 'Sunglasses', frame: 'oval',    w: 26, h: 21, lw: 3.0, shades: true,
+    lens: 'rgba(58,32,44,.86)' },
+  { id: 32, label: 'Narrow',      group: 'Sunglasses', frame: 'wedge',   w: 23, h: 8,  lw: 1.2, shades: true,
+    lens: 'rgba(18,20,30,.94)' },
+  { id: 33, label: 'Teardrop',    group: 'Sunglasses', frame: 'aviator', w: 23, h: 19, lw: 1.6, shades: true,
+    metal: '#cbb06a', lens: 'rgba(30,26,22,.80)' }
+];
+const EYEWEAR_BY_ID = new Map(EYEWEAR.map((e) => [e.id, e]));
+
+/* ---- facial hair ---- */
+const FACIAL_HAIR = [
+  { id: 'none',      label: 'None' },
+  { id: 'stubble',   label: 'Stubble' },
+  { id: 'lineup',    label: 'Lineup' },
+  { id: 'full',      label: 'Full beard' },
+  { id: 'goatee',    label: 'Goatee' },
+  { id: 'stache',    label: 'Moustache' },
+  { id: 'handlebar', label: 'Handlebar' }
+];
+
+/* ---- piercings ---- */
+const PIERCINGS = [
+  { id: 'none',     label: 'None' },
+  { id: 'nose',     label: 'Nose stud' },
+  { id: 'nostril2', label: 'Double ring' },
+  { id: 'septum',   label: 'Septum' },
+  { id: 'brow',     label: 'Eyebrow bar' },
+  { id: 'lip',      label: 'Lip ring' }
+];
+const EAR_STYLES = [
+  { id: 'none',   label: 'None' },
+  { id: 'hoop',   label: 'Hoops' },
+  { id: 'stud',   label: 'Studs' },
+  { id: 'stacked',label: 'Stacked' }
+];
+
+/* ---- tattoos ------------------------------------------------
+   The Wii rig has floating hands and no arms, so forearm and
+   sleeve ink has no surface to sit on. Hands and neck do. */
+const TATTOOS = [
+  { id: 'none',  label: 'None' },
+  { id: 'hand',  label: 'Hand ink' },
+  { id: 'neck',  label: 'Neck' },
+  { id: 'both',  label: 'Hands + neck' }
+];
+const INK = '#2a3340';
+
+/* ---- apparel ------------------------------------------------
+   `kind` selects the torso texture painter; `hood`/`open` add
+   geometry on top of it. */
+const APPAREL = [
+  { id: 'tee',       label: 'Tee',        kind: 'plain'   },
+  { id: 'washed',    label: 'Washed tee', kind: 'washed'  },
+  { id: 'hoodie',    label: 'Hoodie',     kind: 'hoodie', hood: true },
+  { id: 'crop',      label: 'Cardigan',   kind: 'cardi',  open: true },
+  { id: 'flannel',   label: 'Flannel',    kind: 'flannel',open: true },
+  { id: 'denim',     label: 'Denim',      kind: 'denim',  open: true },
+  { id: 'techwear',  label: 'Techwear',   kind: 'tech'    },
+  { id: 'hoops',     label: 'Basketball', kind: 'jersey'  },
+  { id: 'hoopsretro',label: 'Retro hoops',kind: 'jersey', retro: true },
+  { id: 'soccer',    label: 'Soccer',     kind: 'stripes' },
+  { id: 'soccerfed', label: 'Federation', kind: 'fed'     }
+];
+const APPAREL_BY_ID = new Map(APPAREL.map((a) => [a.id, a]));
+
+/* Abstract colourways, no marks. */
+const KIT_COLORS = [
+  { a: '#f4842a', b: '#0d5eab' },   // orange / blue
+  { a: '#132448', b: '#e8e8ee' },   // navy / white
+  { a: '#1d7a4c', b: '#f2f4f5' },   // green / white
+  { a: '#8e1b2e', b: '#f0e2c8' },   // claret / cream
+  { a: '#2b2f36', b: '#f5c542' },   // charcoal / gold
+  { a: '#5a3fa8', b: '#e9e4f7' }    // purple / lilac
+];
+
+/* ---- digital ID badge ---------------------------------------
+   The plaza deliberately never receives other people's email
+   addresses, so only the owner's own badge can render text. For
+   everyone else these draw as a mark. See applyBadgeIdentity(). */
+const BADGES = [
+  { id: 'none',     label: 'Off' },
+  { id: 'patch',    label: 'Chest patch' },
+  { id: 'pill',     label: 'Floating tag' },
+  { id: 'at',       label: '@ tag' },
+  { id: 'envelope', label: 'Envelope' }
+];
 
 function randomDNA(opts = {}) {
   const male = chance(0.5);
@@ -1201,15 +1763,54 @@ function randomDNA(opts = {}) {
     headSize: rand(0.94, 1.06),
     height: rand(0.9, 1.1),
     girth: rand(0.9, 1.12),
-    glasses: chance(0.34) ? randi(1, 4) : 0,
+    glasses: chance(0.34) ? pickOne(EYEWEAR.filter((e) => e.id).map((e) => e.id)) : 0,
     glassCol: pickOne(['#3c4a55','#7a4a2a','#2f6f9e','#111']),
     blush: chance(0.4),
     freckles: chance(0.18),
-    stache: male && chance(0.18),
-    beard: male && chance(0.12),
+    facialHair: male && chance(0.42) ? pickOne(['stubble','lineup','full','goatee','stache','handlebar']) : 'none',
+    piercing: chance(0.2) ? pickOne(['nose','nostril2','septum','brow','lip']) : 'none',
+    ears: chance(0.22) ? pickOne(['hoop','stud','stacked']) : 'none',
+    tattoo: chance(0.16) ? pickOne(['hand','neck','both']) : 'none',
+    apparel: opts.apparel || pickOne(APPAREL).id,
+    kit: randi(0, KIT_COLORS.length - 1),
+    kitNumber: pickOne([0, 3, 6, 7, 8, 9, 10, 11, 21, 23, 24, 30]),
+    badge: 'none',
     hue: Math.random()
   };
   if (!d.brows.color) d.brows.color = shade(d.hair.color, d.hair.style === 'bald' ? -10 : -18);
+  return normalizeDNA(d);
+}
+
+/* Characters are stored as opaque JSON, so a row written before a field
+   existed will simply be missing it. Filling the gaps here means the
+   renderers can read straight from the object without guarding every
+   property, and an old Mii picks up sane modern defaults instead of
+   failing to build. */
+function normalizeDNA(d) {
+  if (!d || typeof d !== 'object') return d;
+
+  d.hair = d.hair || {};
+  if (!d.hair.color) d.hair.color = pickOne(HAIRS);
+  if (!d.hair.style) d.hair.style = 'bowl';
+
+  // Booleans predate the named styles; carry them over rather than
+  // silently shaving anyone.
+  if (typeof d.facialHair !== 'string') {
+    d.facialHair = d.beard ? 'full' : d.stache ? 'stache' : 'none';
+  }
+  if (typeof d.piercing !== 'string') d.piercing = 'none';
+  if (typeof d.ears !== 'string') d.ears = 'none';
+  if (typeof d.tattoo !== 'string') d.tattoo = 'none';
+  if (typeof d.apparel !== 'string' || !APPAREL_BY_ID.has(d.apparel)) d.apparel = 'tee';
+  if (typeof d.badge !== 'string') d.badge = 'none';
+  if (!Number.isInteger(d.kit)) d.kit = 0;
+  if (!Number.isInteger(d.kitNumber)) d.kitNumber = 10;
+  if (!EYEWEAR_BY_ID.has(d.glasses)) d.glasses = 0;
+  if (!d.glassCol) d.glassCol = '#3c4a55';
+  if (!d.hatColor) d.hatColor = d.shirt || pickOne(SHIRTS);
+  if (!d.pants) d.pants = pickOne(PANTS);
+  if (!d.shoes) d.shoes = pickOne(SHOES);
+
   return d;
 }
 
@@ -1268,12 +1869,334 @@ const HEAD_R = 0.62;
 /* Headwear. Team caps are shape + colourway only — no logos or wordmarks,
    which are trademarks and not mine to reproduce. */
 const HATS = {
-  tophat:  { crown: '#1b1b22', accent: '#7d1f2b' },
-  cap:     { crown: null,      accent: null      },   // takes the shirt colour
-  knicks:  { crown: '#0d5eab', accent: '#f4842a' },
-  yankees: { crown: '#132448', accent: '#e8e8ee' },
-  bucket:  { crown: '#8d8f68', accent: '#6d6f4e' }
+  tophat:   { crown: '#1b1b22', accent: '#7d1f2b' },
+  cap:      { crown: null,      accent: null      },   // takes the shirt colour
+  flatbrim: { crown: null,      accent: null,     flat: true },
+  dadhat:   { crown: null,      accent: null,     soft: true },
+  knicks:   { crown: '#0d5eab', accent: '#f4842a', flat: true, mark: 'NY' },
+  yankees:  { crown: '#132448', accent: '#e8e8ee', mark: 'NY' },
+  bucket:   { crown: '#8d8f68', accent: '#6d6f4e' },
+  cowboy:   { crown: '#8a6236', accent: '#5d4023' },
+  beanie:   { crown: null,      accent: null      },
+  bandana:      { crown: null,  accent: null      },
+  bandanaback:  { crown: null,  accent: null      }
 };
+const HAT_STYLES = Object.keys(HATS);
+
+/* ══════════════════════════════════════════════════════════════
+   6a · APPAREL
+   ---------------------------------------------------------------
+   The torso is one mesh, so a garment is a texture wrapped around
+   it plus optional geometry on top. UVs run left-to-right around
+   the body, which means the front of the chest sits at u≈0.5 —
+   anything that has to read from the front is centred there.
+
+   Colourways are abstract. No club crests, no wordmarks.
+   ══════════════════════════════════════════════════════════════ */
+const TORSO_W = 256, TORSO_H = 256;
+
+function makeApparelTexture(dna) {
+  const spec = APPAREL_BY_ID.get(dna.apparel) || APPAREL_BY_ID.get('tee');
+  if (spec.kind === 'plain') return null;            // flat colour, no texture needed
+
+  const c = cv(TORSO_W, TORSO_H);
+  const g = c.getContext('2d');
+  const base = dna.shirt;
+  const kit = KIT_COLORS[dna.kit % KIT_COLORS.length];
+  const W = TORSO_W, H = TORSO_H;
+
+  /* Three.js sphere UVs start at -x and run anticlockwise, which puts the
+     chest at u=0.25 and the back at u=0.75 — not 0.5. Anything that has to
+     face the camera is centred on `front`, and the number is repeated at
+     `back` so a jersey reads from behind too. */
+  const front = W * 0.25;
+  const back = W * 0.75;
+
+  g.fillStyle = base;
+  g.fillRect(0, 0, W, H);
+
+  const vstripes = (a, b, n) => {
+    const w = W / n;
+    for (let i = 0; i < n; i++) { g.fillStyle = i % 2 ? b : a; g.fillRect(i * w, 0, w + 1, H); }
+  };
+
+  /* Numbers are drawn as glyphs rather than art so any value works. */
+  const number = (n, col, y, size) => {
+    g.save();
+    g.font = `800 ${size}px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif`;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (const x of [front, back]) {
+      g.lineWidth = size * 0.16; g.strokeStyle = 'rgba(0,0,0,.28)';
+      g.strokeText(String(n), x, y);
+      g.fillStyle = col;
+      g.fillText(String(n), x, y);
+    }
+    g.restore();
+  };
+
+  switch (spec.kind) {
+    case 'washed': {
+      // uneven bleach: soft light blooms over the base
+      for (let i = 0; i < 26; i++) {
+        const x = Math.random() * W, y = Math.random() * H, r = 14 + Math.random() * 34;
+        const grd = g.createRadialGradient(x, y, 1, x, y, r);
+        grd.addColorStop(0, 'rgba(255,255,255,.14)');
+        grd.addColorStop(1, 'rgba(255,255,255,0)');
+        g.fillStyle = grd; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+      }
+      break;
+    }
+    case 'hoodie': {
+      g.fillStyle = shade(base, -18);
+      g.fillRect(0, H * 0.76, W, H * 0.24);              // waist ribbing
+      // kangaroo pocket as a filled shape, not an outline — a 3px line
+      // disappears once this is wrapped onto the torso
+      g.fillStyle = shade(base, -10);
+      g.fillRect(front - 42, H * 0.5, 84, H * 0.26);
+      g.strokeStyle = shade(base, -40); g.lineWidth = 5;
+      g.strokeRect(front - 42, H * 0.5, 84, H * 0.26);
+      g.strokeStyle = '#f4f6f8'; g.lineWidth = 9; g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(front - 16, H * 0.1); g.lineTo(front - 11, H * 0.42);
+      g.moveTo(front + 16, H * 0.1); g.lineTo(front + 11, H * 0.42);
+      g.stroke();                                        // drawcords
+      break;
+    }
+    case 'cardi':
+    case 'denim': {
+      const body = spec.kind === 'denim' ? '#4d6f9a' : base;
+      g.fillStyle = body; g.fillRect(0, 0, W, H);
+      if (spec.kind === 'denim') {
+        g.globalAlpha = 0.14; g.fillStyle = '#ffffff';
+        for (let i = 0; i < W; i += 4) g.fillRect(i, 0, 2, H);   // twill
+        g.globalAlpha = 1;
+        g.strokeStyle = '#e0b769'; g.lineWidth = 4; g.setLineDash([9, 7]);
+        g.beginPath();
+        g.moveTo(front - 34, 0); g.lineTo(front - 34, H);
+        g.moveTo(front + 34, 0); g.lineTo(front + 34, H);
+        g.stroke(); g.setLineDash([]);                            // contrast stitch
+        g.fillStyle = '#cfd6dc';
+        g.fillRect(front - 44, H * 0.42, 20, 12);                 // chest pocket flap
+        g.fillRect(front + 24, H * 0.42, 20, 12);
+      }
+      g.fillStyle = shade(body, -34);
+      g.fillRect(front - 9, 0, 18, H);                            // centre opening
+      break;
+    }
+    case 'flannel': {
+      const a = shade(base, -8), b = shade(base, -50);
+      vstripes(a, b, 6);
+      g.globalAlpha = 0.5;
+      const hh = H / 6;
+      for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? b : a; g.fillRect(0, i * hh, W, hh + 1); }
+      g.globalAlpha = 1;
+      g.strokeStyle = 'rgba(255,255,255,.4)'; g.lineWidth = 3;
+      for (let i = 0; i <= 6; i++) {
+        g.beginPath(); g.moveTo(i * (W / 6), 0); g.lineTo(i * (W / 6), H); g.stroke();
+      }
+      g.fillStyle = shade(base, -58); g.fillRect(front - 8, 0, 16, H);
+      break;
+    }
+    case 'tech': {
+      g.fillStyle = shade(base, -48); g.fillRect(0, 0, W, H);
+      g.fillStyle = shade(base, -14);
+      g.fillRect(0, H * 0.3, W, H * 0.14);                         // chest panel seam
+      g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 4;
+      g.beginPath(); g.moveTo(0, H * 0.62); g.lineTo(W, H * 0.62); g.stroke();
+      g.fillStyle = '#cfd6dc';
+      g.fillRect(front - 3, H * 0.1, 6, H * 0.5);                  // centre zip
+      g.fillRect(front + 22, H * 0.46, 30, 14);                    // pocket flap
+      g.fillStyle = '#8f9aa4';
+      g.fillRect(front - 52, H * 0.5, 24, 10);                     // strap detail
+      break;
+    }
+    case 'jersey': {
+      g.fillStyle = spec.retro ? kit.b : kit.a;
+      g.fillRect(0, 0, W, H);
+      const trim = spec.retro ? kit.a : kit.b;
+      g.fillStyle = trim;
+      g.fillRect(0, 0, W, 18);                                     // shoulder trim
+      g.fillRect(0, H - 24, W, 24);                                // hem
+      // Side piping sits at the seams: u=0 and u=0.5 are the body's sides.
+      g.fillRect(0, 0, 10, H);
+      g.fillRect(W * 0.5 - 5, 0, 10, H);
+      g.fillRect(W - 10, 0, 10, H);
+      number(dna.kitNumber, trim, H * 0.5, 112);
+      break;
+    }
+    case 'stripes': {
+      vstripes(kit.a, kit.b, 8);                                   // classic verticals
+      g.fillStyle = shade(kit.a, -40);
+      g.fillRect(0, H - 20, W, 20);
+      number(dna.kitNumber, '#ffffff', H * 0.52, 96);
+      break;
+    }
+    case 'fed': {
+      // modern minimalist: single body, one sash, small number
+      g.fillStyle = kit.a; g.fillRect(0, 0, W, H);
+      g.save();
+      g.translate(0, H * 0.46); g.rotate(-0.16);
+      g.fillStyle = kit.b; g.fillRect(-W, -22, W * 3, 44);
+      g.restore();
+      number(dna.kitNumber, kit.b, H * 0.78, 66);
+      break;
+    }
+  }
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  t.userData.own = true;      // dispose() looks for this
+  return t;
+}
+
+/* ---- digital ID badge --------------------------------------
+   Rendered in the Mii Channel's UI language: a glossy pill with a
+   soft inner highlight.
+
+   `email` is null for everyone except the signed-in owner, because
+   the plaza is never sent other people's addresses — the API only
+   publishes id, name and character data. A badge with no address
+   still works: it draws as an envelope or an @ mark. */
+function makeIdBadgeTexture(style, email) {
+  const wide = style === 'pill' || (style === 'patch' && email);
+  const W = wide ? 512 : 192, H = 192;
+  const c = cv(W, H);
+  const g = c.getContext('2d');
+  g.clearRect(0, 0, W, H);
+
+  const pad = 12;
+  const r = (H - pad * 2) / 2;
+  const x0 = pad, y0 = pad, w = W - pad * 2, h = H - pad * 2;
+
+  const pill = () => {
+    g.beginPath();
+    g.moveTo(x0 + r, y0);
+    g.lineTo(x0 + w - r, y0);
+    g.arcTo(x0 + w, y0, x0 + w, y0 + r, r);
+    g.lineTo(x0 + w, y0 + h - r);
+    g.arcTo(x0 + w, y0 + h, x0 + w - r, y0 + h, r);
+    g.lineTo(x0 + r, y0 + h);
+    g.arcTo(x0, y0 + h, x0, y0 + h - r, r);
+    g.lineTo(x0, y0 + r);
+    g.arcTo(x0, y0, x0 + r, y0, r);
+    g.closePath();
+  };
+
+  // drop shadow, then the body, then a top gloss — the Wii UI recipe
+  g.save();
+  g.shadowColor = 'rgba(60,90,115,.35)';
+  g.shadowBlur = 14; g.shadowOffsetY = 5;
+  const body = g.createLinearGradient(0, y0, 0, y0 + h);
+  body.addColorStop(0, '#ffffff');
+  body.addColorStop(1, '#dce7ee');
+  g.fillStyle = body;
+  pill(); g.fill();
+  g.restore();
+
+  g.strokeStyle = '#c6d2da'; g.lineWidth = 4; pill(); g.stroke();
+
+  g.save();
+  pill(); g.clip();
+  const gloss = g.createLinearGradient(0, y0, 0, y0 + h * 0.5);
+  gloss.addColorStop(0, 'rgba(255,255,255,.95)');
+  gloss.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gloss;
+  g.fillRect(x0, y0, w, h * 0.5);
+  g.restore();
+
+  const INK_BLUE = '#1b7fbc';
+  const cx = x0 + (email ? r + 6 : w / 2);
+  const cy = H / 2;
+
+  if (style === 'envelope' || (!email && style !== 'at')) {
+    // envelope mark
+    const ew = 62, eh = 42;
+    g.strokeStyle = INK_BLUE; g.lineWidth = 6; g.lineJoin = 'round';
+    g.strokeRect(cx - ew / 2, cy - eh / 2, ew, eh);
+    g.beginPath();
+    g.moveTo(cx - ew / 2, cy - eh / 2);
+    g.lineTo(cx, cy + eh * 0.16);
+    g.lineTo(cx + ew / 2, cy - eh / 2);
+    g.stroke();
+  } else if (style === 'at' || !email) {
+    g.font = '800 96px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = INK_BLUE;
+    g.fillText('@', cx, cy + 4);
+  }
+
+  if (email) {
+    // Long addresses get squeezed rather than clipped mid-domain.
+    const left = style === 'patch' ? x0 + 18 : cx + r + 4;
+    const room = x0 + w - left - 14;
+    let size = 52;
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    do {
+      g.font = `700 ${size}px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif`;
+      size -= 2;
+    } while (g.measureText(email).width > room && size > 20);
+    g.fillStyle = '#3d4d58';
+    g.fillText(email, left, cy + 2);
+  }
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  t.userData.own = true;
+  return t;
+}
+
+/* Swap in the real address once we know it is our own Mii. Called after
+   /api/me resolves, so it has to repaint an already-built badge. */
+function applyBadgeIdentity(mii, email) {
+  if (!mii || !mii.badgeMat || !mii.badgeStyle || !email) return;
+  const next = makeIdBadgeTexture(mii.badgeStyle, email);
+  const prev = mii.badgeMat.map;
+  mii.badgeMat.map = next;
+  mii.badgeMat.needsUpdate = true;
+  if (prev && prev.userData && prev.userData.own) prev.dispose();
+
+  if (mii.badgeStyle === 'patch') mii.badgeMesh.scale.set(0.3, 0.11, 1);
+  else if (mii.badgeStyle !== 'pill') mii.badgeMesh.scale.set(0.5, 0.18, 1);
+}
+
+/* Ink is painted into its own small texture so it can sit on the neck
+   cylinder and the hand spheres without touching the garment map. */
+function makeInkTexture(kind) {
+  const S = 128;
+  const c = cv(S);
+  const g = c.getContext('2d');
+  g.clearRect(0, 0, S, S);
+  g.strokeStyle = INK;
+  g.lineCap = 'round';
+
+  if (kind === 'neck') {
+    // minimalist line art: a few arcs and a short script-like stroke
+    g.globalAlpha = 0.85; g.lineWidth = 4;
+    g.beginPath(); g.arc(S * 0.32, S * 0.5, 16, -0.6, 2.2); g.stroke();
+    g.beginPath(); g.arc(S * 0.66, S * 0.46, 11, 0.4, 3.4); g.stroke();
+    g.lineWidth = 3;
+    g.beginPath();
+    g.moveTo(S * 0.2, S * 0.72);
+    g.bezierCurveTo(S * 0.36, S * 0.62, S * 0.5, S * 0.84, S * 0.78, S * 0.7);
+    g.stroke();
+  } else {
+    g.globalAlpha = 0.8; g.lineWidth = 5;
+    for (let i = 0; i < 3; i++) {                     // small knuckle bars
+      const y = S * (0.34 + i * 0.16);
+      g.beginPath(); g.moveTo(S * 0.3, y); g.lineTo(S * 0.7, y); g.stroke();
+    }
+    g.lineWidth = 4;
+    g.beginPath(); g.arc(S * 0.5, S * 0.2, 9, 0, TAU); g.stroke();
+  }
+  g.globalAlpha = 1;
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.userData.own = true;
+  return t;
+}
 
 function buildHair(dna, mat, extraMats) {
   const out = [], st = dna.hair.style;
@@ -1313,18 +2236,54 @@ function buildHair(dna, mat, extraMats) {
       put(G.dome(1.07, 1.22), hatMat, 0, 0.02, 0, 1, 1, 1);
       put(G.frus(0.95), hatMat, 0, 0.36, 0, 1.46, 0.34, 1.46);   // floppy flare
       put(G.cyl(), accMat, 0, 0.56, 0, 1.06, 0.1, 1.06);
+    } else if (st === 'cowboy') {
+      // tall pinched crown over a wide brim with an upturned edge
+      put(G.dome(0.94, 1.16), hatMat, 0, 0.34, 0, 1, 1.16, 0.92);
+      put(G.ball(), hatMat, 0, 0.96, 0, 0.42, 0.2, 0.34);        // crease along the top
+      const brim = put(G.foot(), hatMat, 0, 0.30, 0.04, 1.62, 0.07, 1.42);
+      brim.rotation.x = 0.04;
+      for (const sx of [-1, 1]) {                                 // curled sides
+        const c = put(G.ball(), hatMat, sx * 1.42, 0.40, 0.02, 0.3, 0.1, 0.7);
+        c.rotation.z = sx * 0.5;
+      }
+      put(G.cyl(), accMat, 0, 0.46, 0, 1.0, 0.12, 0.95);          // band
+    } else if (st === 'beanie') {
+      put(G.dome(1.075, 1.44), hatMat, 0, 0.1, 0, 1, 1, 1);
+      // The cuff has to be a distinct ring or the whole thing reads as a
+      // plain cap; a band alone was invisible at thumbnail size.
+      const cuff = put(G.cyl(), accMat, 0, 0.06, 0, 1.11, 0.2, 1.06);
+      cuff.scale.y = 0.2;
+      put(G.ball(), accMat, 0, 1.2, 0, 0.22, 0.22, 0.22);         // bobble, clear of the crown
+    } else if (st === 'bandana' || st === 'bandanaback') {
+      // low dome that stops above the brow, plus a knot and two tails
+      put(G.dome(1.055, 1.06), hatMat, 0, 0.06, 0, 1, 1, 1);
+      const front = st === 'bandana';
+      const z = front ? 1.0 : -1.0;
+      const knot = put(G.ball(), hatMat, 0, 0.34, z * 0.62, 0.2, 0.2, 0.2);
+      knot.rotation.y = 0.4;
+      for (const sx of [-1, 1]) {
+        const t = put(G.ball(), hatMat, sx * 0.2, 0.16, z * 0.78, 0.1, 0.26, 0.12);
+        t.rotation.x = front ? 0.5 : -0.5;
+        t.rotation.z = sx * 0.3;
+      }
     } else {
-      put(G.dome(1.075, 1.3), hatMat, 0, 0.03, 0, 1, 1, 1);
+      // baseball family: cap, flatbrim, dadhat, and the two colourways
+      const soft = H.soft;
+      put(G.dome(1.075, soft ? 1.36 : 1.3), hatMat, 0, soft ? 0.0 : 0.03, 0, 1, soft ? 0.94 : 1, 1);
       put(G.ball(), accMat, 0, 1.03, 0, 0.11, 0.11, 0.11);       // button
-      if (st === 'knicks') {
+
+      if (H.flat) {
         put(G.foot(), accMat, 0, 0.29, 0.96, 0.68, 0.07, 0.56);  // squared flat brim
       } else {
-        const brim = put(G.ball(), st === 'yankees' ? hatMat : accMat, 0, 0.28, 0.94, 0.7, 0.075, 0.6);
-        brim.rotation.x = -0.2;                                  // curved, tipped down
+        const brim = put(G.foot(), st === 'yankees' ? hatMat : accMat,
+          0, soft ? 0.22 : 0.28, 0.95, 0.66, 0.06, soft ? 0.62 : 0.56);
+        brim.rotation.x = soft ? -0.34 : -0.2;                   // dad hats sit lower
       }
-      if (st === 'yankees') {
+
+      // Abstract monogram, not a team wordmark.
+      if (H.mark) {
         const logoMat = new THREE.MeshBasicMaterial({
-          map: makeCapLogo('NY', accCol), transparent: true, depthWrite: false
+          map: makeCapLogo(H.mark, accCol), transparent: true, depthWrite: false
         });
         if (extraMats) extraMats.push(logoMat);
         const logo = new THREE.Mesh(geoCache('quad', () => new THREE.PlaneGeometry(1, 1)), logoMat);
@@ -1375,6 +2334,73 @@ function buildHair(dna, mat, extraMats) {
       const t = add(G.ball(), sx * 0.99, 0.02, -0.66, 0.22, 0.42, 0.24);
       t.rotation.z = sx * 0.22;
     }
+
+  /* ---- modern cuts ------------------------------------------
+     A fade is the tricky one: this rig has a single hair colour, so
+     the taper is faked by capping the sides short and stacking a
+     denser mass on top. Reads correctly in silhouette, which is what
+     the Mii style is carrying anyway. */
+  } else if (st === 'crop') {
+    cap(1.03, 1.3, 1.04);                                  // short sides
+    add(G.dome(1.062, 0.62), 0, 0.05, 0.02);               // textured top
+    add(G.ball(), 0, 0.66, 0.5, 0.5, 0.16, 0.3);           // pushed-forward fringe
+  } else if (st === 'buzzline') {
+    cap(1.026, 1.2, 1.0);
+    // hard front edge: a flat slab across the brow
+    const edge = add(G.foot(), 0, 0.5, 0.72, 0.66, 0.2, 0.4);
+    edge.rotation.x = -0.12;
+  } else if (st === 'undercut') {
+    cap(1.022, 1.02, 0.62);                                // very short sides
+    const top = add(G.ball(), 0, 0.6, -0.06, 0.78, 0.42, 0.8);
+    top.rotation.x = 0.1;
+    const slick = add(G.ball(), 0, 0.52, -0.62, 0.6, 0.3, 0.46);
+    slick.rotation.x = -0.3;                               // swept back
+  } else if (st === 'curtains') {
+    cap(1.055, 1.44, 1.2);
+    for (const sx of [-1, 1]) {                            // parted either side of centre
+      const s = add(G.ball(), sx * 0.38, 0.3, 0.78, 0.34, 0.42, 0.22);
+      s.rotation.z = sx * 0.34;
+      s.rotation.x = 0.2;
+    }
+  } else if (st === 'mohawk') {
+    cap(1.02, 1.0, 0.44);                                  // shaved sides
+    // A continuous ridge first: separate cones alone read as a stray spike
+    // once the head is only ~150px on screen.
+    const ridge = add(G.ball(), 0, 0.92, -0.06, 0.13, 0.42, 0.92);
+    ridge.rotation.x = 0.06;
+    for (let i = 0; i < 6; i++) {
+      const t = i / 5;
+      const h = 0.42 + Math.sin(t * Math.PI) * 0.34;
+      add(G.spike(), 0, 1.06 + h * 0.4, 0.6 - t * 1.28, 0.13, h, 0.17);
+    }
+  } else if (st === 'dreads') {
+    cap(1.03, 1.16, 0.98);                                 // faded sides
+    add(G.dome(1.06, 0.66), 0, 0.06, 0);
+    // Locs ring the head and hang past the jaw so they stay visible head-on,
+    // not just in three-quarter view.
+    for (let i = 0; i < 12; i++) {
+      const a = Math.PI * 0.16 + (i / 11) * Math.PI * 1.68;
+      const r = 0.86;
+      const len = 0.62 + (i % 3) * 0.16;
+      const l = add(G.neck(), Math.sin(a) * r, -0.34 - (i % 3) * 0.12, Math.cos(a) * r * 0.86,
+        0.1, len, 0.1);
+      l.rotation.z = Math.sin(a) * 0.24;
+      l.rotation.x = -Math.cos(a) * 0.16;
+      add(G.ball(), Math.sin(a) * r, -0.34 - (i % 3) * 0.12 - len, Math.cos(a) * r * 0.86,
+        0.1, 0.1, 0.1);                                    // rounded tip
+    }
+  } else if (st === 'afrofade') {
+    // tight at the temples, full and round above
+    cap(1.028, 1.1, 0.98);
+    add(G.hairBack(1.2, 1.5), 0, 0.18, 0);
+    add(G.hairFront(1.208, 0.8), 0, 0.18, 0);
+  } else if (st === 'topknot') {
+    cap(1.04, 1.34, 0.98);
+    add(G.neck(), 0, 0.9, -0.12, 0.16, 0.2, 0.16);         // gathered base
+    const knot = add(G.ball(), 0, 1.12, -0.14, 0.32, 0.28, 0.3);
+    knot.rotation.z = 0.3;                                  // sits off-centre, messy
+    const wisp = add(G.ball(), 0.1, 1.28, -0.3, 0.1, 0.2, 0.1);
+    wisp.rotation.z = -0.5;
   }
   return out;
 }
@@ -1382,9 +2408,18 @@ function buildHair(dna, mat, extraMats) {
 function buildMii(dna) {
   const M = { dna, faces: {}, t: Math.random() * 100 };
 
+  normalizeDNA(dna);
+  const apparel = APPAREL_BY_ID.get(dna.apparel) || APPAREL_BY_ID.get('tee');
+
   const skinMat  = new THREE.MeshStandardMaterial({ color: dna.skin, roughness: 0.82, metalness: 0 });
   const hairMat  = new THREE.MeshStandardMaterial({ color: dna.hair.color, roughness: 0.5, metalness: 0.02 });
-  const shirtMat = new THREE.MeshStandardMaterial({ color: dna.shirt, roughness: 0.72, metalness: 0 });
+  const apparelTex = makeApparelTexture(dna);
+  const shirtMat = new THREE.MeshStandardMaterial({
+    color: apparelTex ? '#ffffff' : dna.shirt,
+    map: apparelTex || null,
+    roughness: apparel.kind === 'tech' ? 0.42 : 0.72,
+    metalness: 0
+  });
   const pantMat  = new THREE.MeshStandardMaterial({ color: dna.pants, roughness: 0.85 });
   const shoeMat  = new THREE.MeshStandardMaterial({ color: dna.shoes, roughness: 0.55 });
   const whiteMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.6 });
@@ -1424,6 +2459,38 @@ function buildMii(dna) {
 
   for (const h of buildHair(dna, hairMat, M.mats)) headScale.add(h);
 
+  /* ---- ear jewellery ----
+     The head has no ear geometry, so these hang off the sides of the skull
+     where an ear would be. Metal is a real material here rather than a
+     painted highlight, because a hoop has to catch the key light to read. */
+  if (dna.ears && dna.ears !== 'none') {
+    const jewelMat = new THREE.MeshStandardMaterial({
+      color: '#e4e9ee', roughness: 0.22, metalness: 0.85
+    });
+    M.mats.push(jewelMat);
+    for (const sx of [-1, 1]) {
+      if (dna.ears === 'hoop') {
+        const hoop = new THREE.Mesh(G.collar(), jewelMat);
+        hoop.scale.set(0.1, 0.1, 0.22);
+        hoop.position.set(sx * 0.97, -0.16, 0.02);
+        hoop.rotation.y = Math.PI / 2;
+        headScale.add(hoop);
+      } else if (dna.ears === 'stud') {
+        const stud = new THREE.Mesh(G.ball(), jewelMat);
+        stud.scale.setScalar(0.055);
+        stud.position.set(sx * 0.98, -0.12, 0.04);
+        headScale.add(stud);
+      } else if (dna.ears === 'stacked') {
+        for (let i = 0; i < 3; i++) {
+          const stud = new THREE.Mesh(G.ball(), jewelMat);
+          stud.scale.setScalar(0.045);
+          stud.position.set(sx * 0.98, -0.04 - i * 0.11, 0.04);
+          headScale.add(stud);
+        }
+      }
+    }
+  }
+
   /* ---- torso ---- */
   const torso = new THREE.Mesh(G.torso(), shirtMat);
   torso.scale.set(0.33 * dna.girth, 0.28, 0.27 * dna.girth);
@@ -1434,12 +2501,51 @@ function buildMii(dna) {
   neck.scale.set(0.115, 0.2, 0.105); neck.position.y = 0.7;
   body.add(neck);
 
-  const collar = new THREE.Mesh(G.collar(), whiteMat);
+  // Neck ink rides a hair's breadth outside the neck so it never z-fights.
+  if (dna.tattoo === 'neck' || dna.tattoo === 'both') {
+    const inkTex = makeInkTexture('neck');
+    const inkMat = new THREE.MeshStandardMaterial({
+      map: inkTex, transparent: true, roughness: 0.85, depthWrite: false
+    });
+    M.mats.push(inkMat);
+    const inkNeck = new THREE.Mesh(G.neck(), inkMat);
+    inkNeck.scale.set(0.118, 0.19, 0.108);
+    inkNeck.position.y = 0.7;
+    inkNeck.renderOrder = 3;
+    body.add(inkNeck);
+  }
+
+  // Cardigans, flannels and denim read as layers, so the collar picks up
+  // the garment instead of staying a white tee crew neck.
+  const collarMat = apparel.open
+    ? new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -30), roughness: 0.7 })
+    : whiteMat;
+  if (apparel.open) M.mats.push(collarMat);
+  const collar = new THREE.Mesh(G.collar(), collarMat);
   collar.scale.set(0.135, 0.135, 0.13); collar.rotation.x = Math.PI / 2;
   collar.position.y = 0.7; body.add(collar);
 
+  // A hood is a shell behind the head, not headwear — it coexists with hats.
+  if (apparel.hood) {
+    const hoodMat = new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -10), roughness: 0.76 });
+    M.mats.push(hoodMat);
+    const hood = new THREE.Mesh(G.dome(1, 1.5), hoodMat);
+    hood.scale.set(0.4, 0.3, 0.34);
+    hood.position.set(0, 0.78, -0.16);
+    hood.rotation.x = -0.3;
+    body.add(hood);
+  }
+
   /* ---- floating hands ---- */
   M.hands = [];
+  const handInk = dna.tattoo === 'hand' || dna.tattoo === 'both';
+  const handInkMat = handInk
+    ? new THREE.MeshStandardMaterial({
+        map: makeInkTexture('hand'), transparent: true, roughness: 0.85, depthWrite: false
+      })
+    : null;
+  if (handInkMat) M.mats.push(handInkMat);
+
   for (const sx of [-1, 1]) {
     const h = new THREE.Mesh(G.ball(), skinMat);
     h.scale.setScalar(0.118);
@@ -1447,6 +2553,13 @@ function buildMii(dna) {
     h.userData.home = h.position.clone();
     h.userData.sx = sx;
     body.add(h); M.hands.push(h);
+
+    if (handInkMat) {
+      const ink = new THREE.Mesh(G.ball(), handInkMat);
+      ink.scale.setScalar(1.03);
+      ink.renderOrder = 3;
+      h.add(ink);            // parented, so it follows the hand's idle motion
+    }
   }
 
   /* ---- legs + feet ---- */
@@ -1468,6 +2581,40 @@ function buildMii(dna) {
     f.userData.hip = hip;
     f.userData.sx = sx;
     hip.add(f); M.feet.push(f);
+  }
+
+  /* ---- digital ID badge ----
+     Text is only ever filled in for the signed-in owner; see
+     applyBadgeIdentity(). Everyone else gets the mark on its own. */
+  if (dna.badge && dna.badge !== 'none') {
+    const style = dna.badge;
+    if (style === 'patch') {
+      const patchMat = new THREE.MeshStandardMaterial({
+        map: makeIdBadgeTexture(style, null), transparent: true, roughness: 0.7, depthWrite: false,
+        polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -3
+      });
+      M.mats.push(patchMat);
+      const patch = new THREE.Mesh(geoCache('quad', () => new THREE.PlaneGeometry(1, 1)), patchMat);
+      patch.scale.set(0.2, 0.075, 1);
+      patch.position.set(0.11, 0.6, 0.28 * dna.girth);
+      patch.renderOrder = 4;
+      body.add(patch);
+      M.badgeMesh = patch; M.badgeMat = patchMat;
+    } else {
+      // Floating variants hang just under the name plate and always face out.
+      const tagMat = new THREE.SpriteMaterial({
+        map: makeIdBadgeTexture(style, null), transparent: true, depthTest: false, opacity: 0.95
+      });
+      M.mats.push(tagMat);
+      const chip = new THREE.Sprite(tagMat);
+      const wide = style === 'pill';
+      chip.scale.set(wide ? 0.5 : 0.18, 0.18, 1);
+      chip.position.y = HANG * S + 0.13;
+      chip.renderOrder = 19;
+      root.add(chip);
+      M.badgeMesh = chip; M.badgeMat = tagMat;
+    }
+    M.badgeStyle = style;
   }
 
   /* ---- name tag ---- */
@@ -2019,6 +3166,45 @@ const World = {
     m.dispose();
     updateCount();
   },
+
+  /* Leaving with some dignity: a hop, a shrink, then the usual teardown.
+     Used when someone else's delete arrives over Realtime, where a character
+     vanishing mid-stride would just read as a glitch. The Mii is pulled from
+     the simulation immediately so nothing can grab or collide with it while
+     the animation plays. */
+  exit(m) {
+    const i = this.miis.indexOf(m);
+    if (i < 0) return;
+    if (held === m) { held = null; controls.enabled = true; pointerEl.classList.remove('grab'); }
+    if (hovered === m) hovered = null;
+
+    this.miis.splice(i, 1);
+    updateCount();
+    if (toolsFor === m) { toolsFor = null; $('miiTools').classList.remove('show'); }
+
+    m.setMood('wow');
+    this.ringBurst(m.pos.x, m.pos.z, 0xffc4bd);
+    Sound.fx.drop();
+
+    const t0 = performance.now();
+    const DUR = 620;
+    const baseY = m.y;
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / DUR);
+      // small hop up, then away
+      m.y = baseY + Math.sin(k * Math.PI) * 1.5 + k * k * 3.2;
+      m.root.scale.setScalar(Math.max(0.001, 1 - k * k));
+      m.root.rotation.y += 0.22;
+      m.shadow.material.opacity = 0.5 * (1 - k);
+      m.root.position.set(m.pos.x, m.y, m.pos.z);
+      m.shadow.position.set(m.pos.x, 0.02, m.pos.z);
+      if (k < 1) return requestAnimationFrame(step);
+      this.puff(m.pos.x, m.pos.z, 1.1);
+      scene.remove(m.root); scene.remove(m.shadow);
+      m.dispose();
+    };
+    requestAnimationFrame(step);
+  },
   update(dt, t) {
     for (const m of this.miis) m.update(dt, t);
     this.updateFx(dt);
@@ -2027,21 +3213,57 @@ const World = {
 World.initFx();
 
 /* ══════════════════════════════════════════════════════════════
-   8b · STORAGE
+   8b · CONFIG
+   ---------------------------------------------------------------
+   No build step here, so the publishable Supabase keys are fetched at
+   runtime instead of being inlined. Everything downstream treats missing
+   config as "run in local mode" rather than as an error.
+   ══════════════════════════════════════════════════════════════ */
+const Config = {
+  loaded: false,
+  storage: 'legacy',
+  realtime: false,
+  supabaseUrl: null,
+  supabaseAnonKey: null,
+  features: { sessions: false, email: false, googleWallet: false, admin: false },
+
+  async load() {
+    try {
+      const r = await fetch('api/config', { cache: 'no-store' });
+      if (!r.ok) throw new Error(r.status);
+      Object.assign(this, await r.json());
+    } catch {
+      /* left at defaults: the plaza still runs off localStorage */
+    }
+    this.loaded = true;
+    return this;
+  }
+};
+
+/* ══════════════════════════════════════════════════════════════
+   8c · STORAGE
    ---------------------------------------------------------------
    Talks to the /api routes when they exist, and quietly falls back to
    localStorage so the page still works opened on its own.
-   Ownership is a capability token issued once at create time and kept in
-   localStorage — the server only ever stores its hash, and no response
-   ever reveals it. Lose the browser profile and you lose the ability to
-   edit those Miis; that is the trade for having no sign-in.
+
+   Ownership is an HTTP-only session cookie naming one row, set by the
+   server when a badge is claimed. Page scripts cannot read it, so "is this
+   mine?" is answered by /api/me rather than by anything kept here. A
+   browser that loses the cookie recovers by email, not by password.
+
+   The legacy capability token is still sent when present so characters
+   made before the cookie existed stay editable.
    ══════════════════════════════════════════════════════════════ */
 const Store = {
-  mode: 'local', token: null,
+  mode: 'local',
+  token: null,
+  session: null,   // { id, email, walletUrl, qrUrl } once /api/me answers
 
   init() {
     try { this.token = localStorage.getItem('miiplaza-token') || null; } catch { this.token = null; }
   },
+  /* Only issued when the server could not sign a session cookie. Returned
+     once at create time, so it has to be kept the moment we see it. */
   _saveToken(t) {
     if (!t) return;
     this.token = t;
@@ -2056,9 +3278,35 @@ const Store = {
   _localList() { try { return JSON.parse(localStorage.getItem('miiplaza-miis') || '[]'); } catch { return []; } },
   _localSave(l) { try { localStorage.setItem('miiplaza-miis', JSON.stringify(l)); } catch {} },
 
+  /* Who this browser is. Also the only way to learn our own row id, since
+     the cookie is invisible to script. */
+  async me() {
+    try {
+      const r = await fetch('api/me', { cache: 'no-store', credentials: 'same-origin' });
+      if (!r.ok) throw new Error(r.status);
+      const data = await r.json();
+      this.session = data.signedIn
+        ? {
+            id: data.mii.id,
+            name: data.mii.name,
+            email: data.email,
+            walletUrl: data.walletUrl || null,
+            qrUrl: data.qrUrl || null,
+            previewUrl: data.previewUrl || null
+          }
+        : null;
+      return this.session;
+    } catch {
+      this.session = null;
+      return null;
+    }
+  },
+
   async list() {
     try {
-      const r = await fetch('api/miis', { cache: 'no-store', headers: this._head() });
+      const r = await fetch('api/miis', {
+        cache: 'no-store', credentials: 'same-origin', headers: this._head()
+      });
       if (!r.ok) throw new Error(r.status);
       const list = await r.json();
       if (!Array.isArray(list)) throw new Error('bad payload');
@@ -2070,56 +3318,215 @@ const Store = {
     }
   },
 
-  async add(dna) {
+  /**
+   * Claim a badge. Resolves to { ok:true, record } or { ok:false, ... } so
+   * the caller can render the duplicate-email banner rather than a toast.
+   */
+  async add({ dna, email, name, preview }) {
     if (this.mode === 'server') {
       try {
         const r = await fetch('api/miis', {
-          method: 'POST', headers: this._head(),
-          body: JSON.stringify({ dna, token: this.token || undefined })
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: this._head(),
+          body: JSON.stringify({ dna, email, name, preview })
         });
+        const body = await r.json().catch(() => ({}));
         if (r.ok) {
-          const rec = await r.json();
-          this._saveToken(rec.token);       // returned once, on first create
-          rec.mine = true;
-          return rec;
+          this._saveToken(body.token);
+          body.mine = true;
+          return { ok: true, record: body };
         }
-        const err = await r.json().catch(() => ({}));
-        toast(err.error || 'Could not save that one', 3200);
-        return null;
-      } catch {}
+        return {
+          ok: false,
+          status: r.status,
+          code: body.code || null,
+          error: body.error || 'Could not save that one',
+          manageUrl: body.manageUrl || null
+        };
+      } catch {
+        return { ok: false, status: 0, error: 'Network hiccup — try that again.' };
+      }
     }
-    const rec = { id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), dna, created: Date.now(), mine: true };
+
+    const rec = {
+      id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      dna, name, created: Date.now(), mine: true
+    };
     const l = this._localList(); l.push(rec); this._localSave(l);
-    return rec;
+    return { ok: true, record: rec, local: true };
   },
 
-  async update(id, dna) {
+  async update(id, dna, preview) {
     if (this.mode === 'server') {
       try {
         const r = await fetch('api/miis/' + encodeURIComponent(id), {
-          method: 'PUT', headers: this._head(), body: JSON.stringify({ dna })
+          method: 'PUT',
+          credentials: 'same-origin',
+          headers: this._head(),
+          body: JSON.stringify({ dna, name: dna.name, preview })
         });
-        if (!r.ok) { const e = await r.json().catch(() => ({})); toast(e.error || 'Could not update'); }
-        return;
-      } catch {}
+        if (!r.ok) {
+          const e = await r.json().catch(() => ({}));
+          toast(e.error || 'Could not update');
+          return false;
+        }
+        return true;
+      } catch {
+        return false;
+      }
     }
     const l = this._localList(); const i = l.findIndex((m) => m.id === id);
     if (i >= 0) { l[i].dna = dna; this._localSave(l); }
+    return true;
   },
 
   async remove(id) {
     if (this.mode === 'server') {
       try {
-        const r = await fetch('api/miis/' + encodeURIComponent(id), { method: 'DELETE', headers: this._head() });
-        if (!r.ok) { const e = await r.json().catch(() => ({})); toast(e.error || 'Could not remove'); return false; }
+        const r = await fetch('api/miis/' + encodeURIComponent(id), {
+          method: 'DELETE', credentials: 'same-origin', headers: this._head()
+        });
+        if (!r.ok) {
+          const e = await r.json().catch(() => ({}));
+          toast(e.error || 'Could not remove');
+          return false;
+        }
+        if (this.session && this.session.id === id) this.session = null;
         return true;
-      } catch {}
+      } catch {
+        return false;
+      }
     }
     this._localSave(this._localList().filter((m) => m.id !== id));
     return true;
+  },
+
+  async requestMagicLink(email) {
+    try {
+      const r = await fetch('api/auth/magic-link', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) return { ok: false, error: body.error || 'Could not send that link.' };
+      return { ok: true, message: body.message };
+    } catch {
+      return { ok: false, error: 'Network hiccup — try that again.' };
+    }
   }
 };
 Store.init();
+
+/* ══════════════════════════════════════════════════════════════
+   8d · REALTIME
+   ---------------------------------------------------------------
+   Postgres change feed straight from Supabase, so a badge claimed on
+   someone else's phone walks into this plaza without a refresh. The
+   publication only carries public columns, so no email arrives here.
+
+   Events for rows we already hold are ignored: the client that created a
+   Mii has already drawn it, and echoing would double it.
+   ══════════════════════════════════════════════════════════════ */
+const Realtime = {
+  client: null,
+  channel: null,
+  ready: false,
+
+  async connect() {
+    if (!Config.realtime || !Config.supabaseUrl || !Config.supabaseAnonKey) return false;
+    try {
+      const { createClient } = await import(
+        'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm'
+      );
+      this.client = createClient(Config.supabaseUrl, Config.supabaseAnonKey, {
+        auth: { persistSession: false },
+        realtime: { params: { eventsPerSecond: 6 } }
+      });
+
+      this.channel = this.client
+        .channel('plaza')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'miis' },
+          (p) => this.onInsert(p.new))
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'miis' },
+          (p) => this.onDelete(p.old))
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'miis' },
+          (p) => this.onUpdate(p.new));
+
+      await new Promise((resolve) => {
+        this.channel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') { this.ready = true; resolve(); }
+          else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') resolve();
+        });
+        setTimeout(resolve, 6000);
+      });
+
+      return this.ready;
+    } catch {
+      return false;
+    }
+  },
+
+  onInsert(row) {
+    if (!row || !row.id || findByRecordId(row.id)) return;
+    const dna = row.mii_data;
+    if (!dna) return;
+
+    const m = safeAdd(dna, { record: { id: row.id, mine: false } });
+    if (!m) return;
+    World.ringBurst(m.pos.x, m.pos.z);
+    Sound.fx.chime();
+    toast(`${row.name || dna.name || 'Someone'} joined the office!`, 3000);
+  },
+
+  onUpdate(row) {
+    if (!row || !row.id || !row.mii_data) return;
+    const m = findByRecordId(row.id);
+    if (!m) return;
+    // Our own edit already rebuilt the model locally.
+    if (Store.session && Store.session.id === row.id) return;
+    respawnFrom(m, row.mii_data, { id: row.id, mine: false });
+  },
+
+  onDelete(row) {
+    const m = row && row.id ? findByRecordId(row.id) : null;
+    if (!m) return;
+    const name = m.dna.name;
+    World.exit(m);
+    toast(`${name} left the office`, 2400);
+  }
+};
+
+const findByRecordId = (id) => World.miis.find((m) => m.recordId === id) || null;
+
+/* mii_data is stored opaquely, so a row written by an older version of the
+   character schema — or by hand — can be missing fields the builder expects.
+   One unrenderable row must not take the plaza down with it, so failures are
+   logged and skipped rather than thrown. */
+function safeAdd(dna, opts) {
+  try {
+    return World.add(dna, opts);
+  } catch (err) {
+    console.warn('[Mii Plaza] skipped a character that could not be built', opts?.record?.id, err);
+    return null;
+  }
+}
+
+/* Rebuild a Mii in place from new DNA, keeping where they were standing. */
+function respawnFrom(m, dna, record) {
+  const pos = m.pos.clone(), facing = m.facing, y = m.y;
+  World.remove(m);
+  const nm = safeAdd(dna, { record, fromSky: false });
+  if (!nm) return null;
+  nm.pos.copy(pos); nm.y = y; nm.facing = facing; nm.targetFacing = facing;
+  nm.sq = 0.7; nm.sqv = 0; nm.setMood('happy');
+  if (y > 0.01) { nm.state = 'fall'; nm.vy = 0; }
+  nm.sync();
+  World.ringBurst(pos.x, pos.z);
+  return nm;
+}
 
 /* ══════════════════════════════════════════════════════════════
    9 · POINTER + DRAG INTERACTION
@@ -2526,6 +3933,37 @@ const Preview = {
     this.raf = requestAnimationFrame(tick);
   },
   stop() { if (this.raf) { cancelAnimationFrame(this.raf); this.raf = 0; } },
+
+  /* A square PNG of the character, face on, for the badge artwork and the
+     email. Rendering happens here because the server has no WebGL — the
+     turntable is briefly straightened so every badge is shot from the same
+     angle instead of wherever the spin happened to be. */
+  snapshot(size = 384) {
+    if (!this.renderer || !this.mii) return null;
+    const cvs = this.renderer.domElement;
+    const prevSpin = this.holder.rotation.y;
+    const prevW = this._w, prevH = this._h;
+    const prevAspect = this.camera.aspect;
+
+    try {
+      this.holder.rotation.y = 0;
+      this.renderer.setSize(size, size, false);
+      this.camera.aspect = 1;
+      this.camera.position.set(0, 1.25, 4.9);
+      this.camera.lookAt(0, 0.92, 0);
+      this.camera.updateProjectionMatrix();
+      this.renderer.render(this.scene, this.camera);
+      return cvs.toDataURL('image/png');
+    } catch {
+      return null;
+    } finally {
+      // Force the next animation frame to re-fit the canvas.
+      this.holder.rotation.y = prevSpin;
+      this.camera.aspect = prevAspect;
+      this._w = prevW === size ? -1 : -1;
+      this._h = prevH === size ? -1 : -1;
+    }
+  }
 };
 
 /* ---------------- colour pickers ---------------- */
@@ -2535,6 +3973,152 @@ const PICKERS = [
   { key: 'eyes',  label: 'Eyes',  list: EYECOL, get: (d) => d.eyes.color, set: (d, v) => { d.eyes.color = v; } },
   { key: 'shirt', label: 'Shirt', list: SHIRTS, get: (d) => d.shirt,      set: (d, v) => { d.shirt = v; } }
 ];
+
+/* ---------------- style tray ----------------
+   Categories are declared, not hand-built: each one says how to read the
+   current value off the DNA and how to write a new one, so adding an option
+   to a catalogue above puts it in the UI with no extra wiring. */
+const TRAY = [
+  {
+    key: 'hair', label: 'Hair',
+    options: () => HAIRSTYLES.filter((s) => !HATS[s]).map((s) => ({ v: s, label: s })),
+    get: (d) => d.hair.style,
+    set: (d, v) => { d.hair.style = v; }
+  },
+  {
+    key: 'hat', label: 'Headwear',
+    options: () => [{ v: '', label: 'None' }].concat(HAT_STYLES.map((s) => ({ v: s, label: s }))),
+    // Hats live in the same slot as hair, so picking one has to remember
+    // something to go back to.
+    get: (d) => (HATS[d.hair.style] ? d.hair.style : ''),
+    set: (d, v) => {
+      if (v) {
+        if (!HATS[d.hair.style]) d._hairUnder = d.hair.style;
+        d.hair.style = v;
+      } else {
+        d.hair.style = d._hairUnder || 'bowl';
+      }
+    }
+  },
+  {
+    key: 'eyewear', label: 'Eyewear',
+    options: () => EYEWEAR.map((e) => ({ v: e.id, label: e.label, group: e.group })),
+    get: (d) => d.glasses,
+    set: (d, v) => { d.glasses = v; }
+  },
+  {
+    key: 'facialHair', label: 'Facial hair',
+    options: () => FACIAL_HAIR.map((f) => ({ v: f.id, label: f.label })),
+    get: (d) => d.facialHair,
+    set: (d, v) => { d.facialHair = v; }
+  },
+  {
+    key: 'piercing', label: 'Piercings',
+    options: () => PIERCINGS.map((p) => ({ v: p.id, label: p.label })),
+    get: (d) => d.piercing,
+    set: (d, v) => { d.piercing = v; }
+  },
+  {
+    key: 'ears', label: 'Ears',
+    options: () => EAR_STYLES.map((e) => ({ v: e.id, label: e.label })),
+    get: (d) => d.ears,
+    set: (d, v) => { d.ears = v; }
+  },
+  {
+    key: 'tattoo', label: 'Ink',
+    options: () => TATTOOS.map((t) => ({ v: t.id, label: t.label })),
+    get: (d) => d.tattoo,
+    set: (d, v) => { d.tattoo = v; }
+  },
+  {
+    key: 'apparel', label: 'Outfit',
+    options: () => APPAREL.map((a) => ({ v: a.id, label: a.label })),
+    get: (d) => d.apparel,
+    set: (d, v) => { d.apparel = v; }
+  },
+  {
+    key: 'kit', label: 'Kit colours',
+    options: () => KIT_COLORS.map((k, i) => ({ v: i, swatch: k.a, swatch2: k.b })),
+    get: (d) => d.kit,
+    set: (d, v) => { d.kit = v; }
+  },
+  {
+    key: 'kitNumber', label: 'Number',
+    options: () => [0, 3, 6, 7, 8, 9, 10, 11, 21, 23, 24, 30, 77, 99]
+      .map((n) => ({ v: n, label: String(n) })),
+    get: (d) => d.kitNumber,
+    set: (d, v) => { d.kitNumber = v; }
+  },
+  {
+    key: 'badge', label: 'ID badge',
+    options: () => BADGES.map((b) => ({ v: b.id, label: b.label })),
+    get: (d) => d.badge,
+    set: (d, v) => { d.badge = v; }
+  }
+];
+
+let trayTab = 'hair';
+
+function renderTray() {
+  const tabs = $('trayTabs'), opts = $('trayOpts');
+  if (!tabs || !opts || !Cam.dna) return;
+
+  tabs.textContent = '';
+  for (const cat of TRAY) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tray-tab' + (cat.key === trayTab ? ' on' : '');
+    b.textContent = cat.label;
+    b.addEventListener('click', () => {
+      trayTab = cat.key;
+      renderTray();
+      Sound.fx.click();
+    });
+    tabs.appendChild(b);
+  }
+
+  const cat = TRAY.find((c) => c.key === trayTab) || TRAY[0];
+  const current = cat.get(Cam.dna);
+
+  opts.textContent = '';
+  let lastGroup;
+  for (const o of cat.options()) {
+    if (o.group && o.group !== lastGroup) {
+      const h = document.createElement('div');
+      h.className = 'tray-group';
+      h.textContent = o.group;
+      opts.appendChild(h);
+      lastGroup = o.group;
+    }
+
+    const b = document.createElement('button');
+    b.type = 'button';
+    const on = o.v === current;
+    b.className = 'opt' + (o.swatch ? ' sw' : '') + (on ? ' on' : '');
+
+    if (o.swatch) {
+      b.style.background = o.swatch2
+        ? `linear-gradient(135deg, ${o.swatch} 50%, ${o.swatch2} 50%)`
+        : o.swatch;
+      b.title = 'Colourway';
+    } else {
+      b.textContent = o.label;
+    }
+
+    b.addEventListener('click', () => {
+      cat.set(Cam.dna, o.v);
+      Preview.build(Cam.dna);
+      renderPickers();
+      renderTray();
+      Sound.fx.boing();
+    });
+    opts.appendChild(b);
+    // Long lists scroll, so keep the current choice in view after a rebuild.
+    if (on) requestAnimationFrame(() => {
+      if (b.offsetParent) opts.scrollTop = Math.max(0, b.offsetTop - opts.clientHeight / 2);
+    });
+  }
+}
 
 function renderPickers() {
   const box = $('camPickers'); if (!box) return;
@@ -2592,8 +4176,18 @@ function rerollFace(d) {
   d.brows.gap = r.brows.gap; d.brows.angle = r.brows.angle;
   d.mouth = r.mouth; d.nose = r.nose;
   d.glasses = r.glasses; d.glassCol = r.glassCol;
-  d.blush = r.blush; d.freckles = r.freckles; d.stache = r.stache; d.beard = r.beard;
+  d.blush = r.blush; d.freckles = r.freckles;
+  d.facialHair = r.facialHair; d.piercing = r.piercing; d.ears = r.ears;
   d.headSize = r.headSize; d.height = r.height; d.girth = r.girth;
+}
+
+/* Outfit reroll is its own button-worth of state: apparel, colourway and
+   number move together so a jersey never lands with a clashing kit. */
+function rerollFit(d) {
+  const r = randomDNA();
+  d.apparel = r.apparel; d.kit = r.kit; d.kitNumber = r.kitNumber;
+  d.shirt = r.shirt; d.pants = r.pants; d.shoes = r.shoes;
+  d.tattoo = r.tattoo;
 }
 
 /* ---------------- camera modal ---------------- */
@@ -2695,6 +4289,10 @@ const Cam = {
   reset() {
     this.result = null; this.dna = null; this.editing = null; this.shooting = false;
     $('camStage').classList.remove('done', 'edit');
+    $('camStage').style.display = '';
+    $('camRerolls').style.display = '';
+    $('camPalette').style.display = '';
+    $('camTray').style.display = '';
     $('camRowEdit').style.display = 'none';
     $('camTiny').style.display = '';
     Preview.stop(); Preview.clearMii();
@@ -2705,12 +4303,56 @@ const Cam = {
     $('camFail').style.display = 'none';
     $('camGuide').style.display = '';
     $('camNameRow').style.display = 'none';
+    $('camEmailRow').style.display = 'none';
     $('camRowLive').style.display = 'flex';
     $('camRowDone').style.display = 'none';
+    $('camRowBadge').style.display = 'none';
     $('btnSnap').style.display = '';
+    $('camBadge').classList.remove('show');
+    $('camMinor').style.display = '';
+    this.hideBanner();
+    this.hideRecover();
     $('camTitle').textContent = 'Get your badge';
     $('camSub').innerHTML = 'Line your face up with the oval and smile. Everything happens on this page &mdash; the photo never leaves your device.';
   },
+
+  /* ---------------- inline notices ---------------- */
+  showBanner(html, kind) {
+    const el = $('camBanner');
+    el.innerHTML = html;
+    el.className = 'banner show' + (kind ? ' ' + kind : '');
+  },
+  hideBanner() {
+    const el = $('camBanner');
+    el.className = 'banner';
+    el.innerHTML = '';
+  },
+
+  showRecover(prefill) {
+    $('camRecover').classList.add('show');
+    $('recoverBanner').className = 'banner';
+    if (prefill) $('recoverEmail').value = prefill;
+    setTimeout(() => $('recoverEmail').focus(), 80);
+  },
+  hideRecover() {
+    $('camRecover').classList.remove('show');
+    $('recoverBanner').className = 'banner';
+  },
+  /* The badge this browser already owns — reached from the corner chip, so
+     someone can re-save the pass without editing anything. */
+  openMyBadge() {
+    const s = Store.session;
+    if (!s) { this.open(); return; }
+    this.el.classList.add('open');
+    this.reset();
+    this.showBadge(
+      { qrUrl: s.qrUrl, walletUrl: s.walletUrl, emailed: true },
+      { name: s.name || 'You', email: s.email || '' }
+    );
+    $('camSub').textContent = 'Scan this at the door, or add it to your phone.';
+    Sound.fx.click();
+  },
+
   /* reopen the panel on an existing Mii, working on a copy so Cancel really cancels */
   openEdit(mii) {
     this.el.classList.add('open');
@@ -2719,7 +4361,7 @@ const Cam = {
     this.dna = JSON.parse(JSON.stringify(mii.dna));
     $('camStage').classList.add('done', 'edit');
     $('camTitle').textContent = 'Edit ' + (mii.dna.name || 'this Mii');
-    $('camSub').textContent = 'Change their hair, face or colours. Everything else stays put.';
+    $('camSub').textContent = 'Change their look — hair, glasses, outfit, ink. Everything else stays put.';
     $('camRowLive').style.display = 'none';
     $('camRowDone').style.display = 'none';
     $('camRowEdit').style.display = 'flex';
@@ -2727,7 +4369,7 @@ const Cam = {
     $('camTiny').style.display = 'none';
     $('miiName').value = mii.dna.name || '';
     Preview.build(this.dna);
-    renderPickers(); closePalette();
+    renderPickers(); renderTray(); closePalette();
     Sound.fx.click();
   },
 
@@ -2737,20 +4379,18 @@ const Cam = {
     const dna = this.dna;
     dna.name = ($('miiName').value || '').trim().slice(0, 14) || dna.name || 'New Person';
     const rec = { id: m.recordId, mine: true };
-    const pos = m.pos.clone(), facing = m.facing, y = m.y;
+
+    const preview = Preview.snapshot();
     this.close();
 
-    World.remove(m);
-    const nm = World.add(dna, { record: rec, fromSky: false });
-    nm.pos.copy(pos); nm.y = y; nm.facing = facing; nm.targetFacing = facing;
-    nm.sq = 0.7; nm.sqv = 0; nm.setMood('happy');
-    // if they were still dropping in when the panel opened, let them finish the fall
-    // rather than freezing them mid-air
-    if (y > 0.01) { nm.state = 'fall'; nm.vy = 0; } 
-    nm.sync();
-    World.ringBurst(pos.x, pos.z);
+    respawnFrom(m, dna, rec);
     Sound.fx.chime();
-    if (rec.id) await Store.update(rec.id, dna);
+
+    if (rec.id) await Store.update(rec.id, dna, preview);
+    if (Store.session && Store.session.id === rec.id) {
+      Store.session.name = dna.name;
+      refreshMineChip();
+    }
     toast(`${dna.name} updated`);
   },
 
@@ -2806,9 +4446,10 @@ const Cam = {
     this.dna = dnaFromPhoto(a, ($('miiName').value || '').trim() || 'New Person');
     $('camStage').classList.add('done');
     Preview.build(this.dna);
-    renderPickers(); closePalette();
+    renderPickers(); renderTray(); closePalette();
 
     $('camNameRow').style.display = 'flex';
+    if (Store.mode === 'server') $('camEmailRow').style.display = 'flex';
     $('camRowLive').style.display = 'none';
     $('camRowDone').style.display = 'flex';
     $('camTitle').textContent = a.confident ? 'Looking good!' : 'Best guess…';
@@ -2820,19 +4461,134 @@ const Cam = {
     Sound.fx.chime();
   },
   async accept() {
-    if (!this.dna) return;
+    if (!this.dna || this.saving) return;
+
     const name = ($('miiName').value || '').trim().slice(0, 14) || 'New Person';
+    const email = ($('miiEmail').value || '').trim();
+
+    // Email is only required once there is a server to hold it; opened as a
+    // bare file the plaza still works without one.
+    const needsEmail = Store.mode === 'server';
+    if (needsEmail) {
+      if (!email) {
+        this.showBanner('Add your email so we can send your badge.', 'bad');
+        $('miiEmail').focus();
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        this.showBanner('That email does not look right — check it and try again.', 'bad');
+        $('miiEmail').focus();
+        return;
+      }
+    }
+
     const dna = this.dna;
     dna.name = name;
-    this.close();
-    const rec = await Store.add(dna);
-    if (!rec) return;
-    // drop them in front of wherever the camera is looking so they always land on screen,
-    // then let them wander out into the plaza on their own
+
+    this.saving = true;
+    const btn = $('btnAccept');
+    const label = btn.querySelector('.lbl');
+    const was = label.textContent;
+    label.textContent = 'Saving…';
+    btn.disabled = true;
+    this.hideBanner();
+
+    // Captured before the modal tears the renderer down.
+    const preview = Preview.snapshot();
+
+    const res = await Store.add({ dna, email, name, preview });
+
+    this.saving = false;
+    btn.disabled = false;
+    label.textContent = was;
+
+    if (!res.ok) {
+      if (res.code === 'email_taken') {
+        this.showBanner(
+          'An account with this email already exists. ' +
+          '<button type="button" class="link" id="bannerManage">Click here to manage your Mii</button>',
+          'bad'
+        );
+        const link = $('bannerManage');
+        if (link) link.addEventListener('click', () => this.showRecover(email));
+        return;
+      }
+      this.showBanner(res.error, 'bad');
+      return;
+    }
+
+    const rec = res.record;
+
+    // Drop them in front of wherever the camera is looking so they always land
+    // on screen, then let them wander out into the plaza on their own.
     const cam = World.camera, tgt = World.controls.target;
     const az = Math.atan2(cam.position.z - tgt.z, cam.position.x - tgt.x);
     World.add(dna, { record: rec, angle: az + rand(-0.55, 0.55), radius: rand(1.2, 2.9) });
-    toast(`${name} joined the plaza!`);
+    Sound.fx.chime();
+    toast(`${name} joined the office!`, 3000);
+
+    if (res.local) {
+      this.close();
+      return;
+    }
+
+    Store.session = {
+      id: rec.id, name, email,
+      walletUrl: rec.walletUrl || null,
+      qrUrl: rec.qrUrl || null,
+      previewUrl: rec.previewUrl || null
+    };
+    refreshMineChip();
+    this.showBadge(rec, { name, email });
+  },
+
+  /* Replaces the camera panes with the issued badge: QR, name, and the
+     handoff to Google Wallet. */
+  showBadge(rec, { name, email }) {
+    Preview.stop();
+    if (this.stream) { this.stream.getTracks().forEach((t) => t.stop()); this.stream = null; }
+    this.video.srcObject = null;
+
+    $('camStage').style.display = 'none';
+    $('camRerolls').style.display = 'none';
+    $('camPalette').style.display = 'none';
+    $('camTray').style.display = 'none';
+    $('camNameRow').style.display = 'none';
+    $('camEmailRow').style.display = 'none';
+    $('camRowLive').style.display = 'none';
+    $('camRowDone').style.display = 'none';
+    $('camRowEdit').style.display = 'none';
+    $('camTiny').style.display = 'none';
+    $('camMinor').style.display = 'none';
+    this.hideBanner();
+    this.hideRecover();
+
+    $('camTitle').textContent = 'Your badge is ready';
+    $('camSub').textContent = rec.emailed
+      ? `Sent to ${email}. Add it to your phone so you never have to dig for it.`
+      : 'Save it to your phone now — scan this at the door.';
+
+    $('badgeWho').textContent = name;
+
+    const qr = $('badgeQr');
+    if (rec.qrUrl) { qr.src = rec.qrUrl; qr.style.display = ''; }
+    else qr.style.display = 'none';
+
+    const wallet = $('badgeWallet');
+    if (rec.walletUrl) {
+      wallet.href = rec.walletUrl;
+      wallet.style.display = '';
+    } else {
+      wallet.style.display = 'none';
+    }
+
+    const notes = [];
+    if (!rec.walletUrl) notes.push('Google Wallet is not switched on for this site yet.');
+    if (!rec.emailed) notes.push('We could not email it just now, so screenshot this.');
+    $('badgeNote').textContent = notes.join(' ');
+
+    $('camBadge').classList.add('show');
+    $('camRowBadge').style.display = 'flex';
   }
 };
 
@@ -2857,10 +4613,12 @@ function bindButtons() {
     fn(Cam.dna);
     Preview.build(Cam.dna);
     renderPickers();
+    renderTray();
     Sound.fx.boing();
   };
   $('btnHair').addEventListener('click', reroll(rerollHair));
   $('btnFace').addEventListener('click', reroll(rerollFace));
+  $('btnFit').addEventListener('click', reroll(rerollFit));
 
   $('btnCamera').addEventListener('click', () => Cam.open());
   $('btnCamClose').addEventListener('click', () => Cam.close());
@@ -2869,6 +4627,41 @@ function bindButtons() {
   $('btnAccept').addEventListener('click', () => Cam.accept());
   $('btnEditSave').addEventListener('click', () => Cam.saveEdit());
   $('btnEditCancel').addEventListener('click', () => Cam.close());
+  $('btnBadgeDone').addEventListener('click', () => Cam.close());
+  $('mineManage').addEventListener('click', () => Cam.openMyBadge());
+
+  $('btnRecover').addEventListener('click', () => {
+    if ($('camRecover').classList.contains('show')) Cam.hideRecover();
+    else Cam.showRecover(($('miiEmail').value || '').trim());
+    Sound.fx.click();
+  });
+
+  const sendRecovery = async () => {
+    const email = ($('recoverEmail').value || '').trim();
+    const out = $('recoverBanner');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      out.className = 'banner show bad';
+      out.textContent = 'Enter the email you signed up with.';
+      return;
+    }
+    const btn = $('btnRecoverSend');
+    const label = btn.querySelector('.lbl');
+    const was = label.textContent;
+    btn.disabled = true; label.textContent = 'Sending…';
+
+    const res = await Store.requestMagicLink(email);
+
+    btn.disabled = false; label.textContent = was;
+    out.className = 'banner show ' + (res.ok ? 'good' : 'bad');
+    out.textContent = res.ok
+      ? (res.message || 'Check your inbox for a link to load your Mii.')
+      : res.error;
+  };
+  $('btnRecoverSend').addEventListener('click', sendRecovery);
+  $('recoverEmail').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); sendRecovery(); }
+  });
+  $('miiEmail').addEventListener('input', () => Cam.hideBanner());
   $('btnUpload').addEventListener('click', () => $('fileIn').click());
   $('fileIn').addEventListener('change', (e) => {
     const f = e.target.files && e.target.files[0];
@@ -2914,8 +4707,10 @@ $('toolDelete').addEventListener('click', async () => {
   $('miiTools').classList.remove('show');
   Sound.fx.drop();
   const name = m.dna.name;
+  const wasMine = Boolean(Store.session && Store.session.id === m.recordId);
   if (m.recordId) await Store.remove(m.recordId);
   World.remove(m);
+  if (wasMine) refreshMineChip();
   toast(`${name} left`);
 });
 
@@ -3024,20 +4819,85 @@ for (const e of ['pointerdown', 'keydown', 'wheel', 'touchstart']) {
 
 started = true;
 
-Store.list().then((list) => {
+/* The corner chip is the only always-visible sign that this browser owns a
+   character, since the session cookie is invisible to script. */
+function refreshMineChip() {
+  const chip = $('mineChip');
+  const s = Store.session;
+  if (!s) { chip.classList.remove('show'); return; }
+  $('mineName').textContent = s.name || 'a coworker';
+  chip.classList.add('show');
+}
+
+/* Outcome of a magic link, handed over as ?auth= by /api/auth/verify. */
+function reportAuthResult() {
+  const params = new URLSearchParams(location.search);
+  const status = params.get('auth');
+  if (!status) return;
+
+  const messages = {
+    ok: 'Welcome back — this browser is linked to your Mii again.',
+    expired: 'That link had expired. Request a fresh one.',
+    used: 'That link was already used. Request a fresh one.',
+    invalid: 'That link is not valid any more.',
+    missing: 'That link was incomplete.',
+    unavailable: 'Mii recovery is not switched on for this site yet.',
+    error: 'Something went wrong loading that link.'
+  };
+  setTimeout(() => toast(messages[status] || messages.error, 4200), 900);
+
+  // Keep the URL clean so a refresh does not replay the message.
+  const url = new URL(location.href);
+  url.searchParams.delete('auth');
+  history.replaceState({}, '', url.pathname + (url.search || '') + url.hash);
+
+  if (status !== 'ok') setTimeout(() => { Cam.open(); Cam.showRecover(''); }, 1400);
+}
+
+(async function boot() {
+  await Config.load();
+
+  // Identity first: the plaza list marks `mine` off the same cookie, and the
+  // chip should not flicker in after the crowd lands.
+  const [session, list] = await Promise.all([
+    Config.features.sessions ? Store.me() : Promise.resolve(null),
+    Store.list()
+  ]);
+  if (session) refreshMineChip();
+
   list.forEach((rec, i) => setTimeout(() => {
-    if (rec && rec.dna) World.add(rec.dna, { record: rec });
+    if (!rec || !rec.dna) return;
+    if (findByRecordId(rec.id)) return;   // Realtime may have beaten the list
+    safeAdd(rec.dna, { record: rec });
   }, 150 + i * 140));
+
   if (list.length) setTimeout(() => toast(`${list.length} already here`, 2200), 400);
-  console.log('[Mii Plaza] storage:', Store.mode);
-});
+
+  reportAuthResult();
+
+  const live = await Realtime.connect();
+  console.log(
+    '[Mii Plaza] storage:', Store.mode,
+    '· backend:', Config.storage,
+    '· realtime:', live ? 'live' : 'off',
+    '· wallet:', Config.features.googleWallet ? 'on' : 'off'
+  );
+})();
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) { clock.getDelta(); Sound.resume(); }
 });
 
-// expose a little for tinkering in the console
-window.MiiPlaza = { World, Sound, Store, Preview, randomDNA, Mii, Cam };
+// expose a little for tinkering in the console — and for the style contact
+// sheets in scripts/style-shots.mjs, which drive the real builder
+window.MiiPlaza = {
+  World, Sound, Store, Preview, randomDNA, normalizeDNA, buildMii, Mii, Cam, Config, Realtime,
+  THREE,
+  catalog: {
+    EYEWEAR, FACIAL_HAIR, PIERCINGS, EAR_STYLES, TATTOOS, APPAREL, BADGES,
+    HAIRSTYLES, HAT_STYLES, KIT_COLORS, SKINS, HAIRS, SHIRTS, EYECOL
+  }
+};
 </script>
 </body>
 </html>
