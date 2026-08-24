@@ -2366,6 +2366,69 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
+  quiff: (r) => geoCache(`quiffE${r}`, () => {
+    /* One shell. Extra balls on a cap were a crown bun. Short sides,
+       hairline at the brow, a forehead lift that reads from head-on —
+       smaller than pomp. Head scale squashes z, so the bump lives
+       forward. */
+    const tl = 1.40;
+    const g = new THREE.SphereGeometry(r, 44, 36, 0, TAU, 0, tl);
+    const p = g.attributes.position, v = new THREE.Vector3();
+    const n = HEAD_N;
+    const faceTh = 1.34;
+    const sideTh = 1.12;
+    const backTh = 1.16;
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      const L = v.length() || 1;
+      const ux = v.x / L, uy = v.y / L, uz = v.z / L;
+      const th = Math.acos(Math.max(-1, Math.min(1, uy)));
+      const rs0 = Math.hypot(ux, uz) || 1e-6;
+      const azFront = Math.max(0, uz / rs0);
+      const azBack = Math.max(0, -uz / rs0);
+      const faceWin = Math.pow(Math.max(0, azFront - 0.10) / 0.90, 1.35);
+      const backAmt = Math.pow(azBack, 1.7);
+      const maxTh = sideTh
+        + (faceTh - sideTh) * faceWin
+        + (backTh - sideTh) * backAmt;
+      const th2 = (th / tl) * maxTh;
+      const rs = Math.sin(th2);
+      let nx = ux / rs0 * rs;
+      let ny = Math.cos(th2);
+      let nz = uz / rs0 * rs;
+      const s = Math.pow(
+        Math.pow(Math.abs(nx), n) + Math.pow(Math.abs(ny), n) + Math.pow(Math.abs(nz), n),
+        -1 / n
+      );
+      nx *= s * r; ny *= s * r; nz *= s * r;
+
+      /* Flatten the crop crown so the front lift can beat the pole. */
+      ny -= Math.max(0, ny - 0.70) * 0.14 * (1 - azFront * 0.9);
+
+      /* Forehead-wide lift, gated off the hem so the bump does not
+         drag the hairline up into a bun. Peak still has to beat the pole. */
+      const dx = nx * 1.05, dy = ny - 0.52, dz = nz - 0.80;
+      const bump = Math.exp(-(dx * dx + dy * dy + dz * dz * 0.72) * 2.30);
+      const lift = bump * Math.max(0, Math.min(1, (ny - 0.40) / 0.22));
+      ny += lift * 0.50;
+      nz += lift * 0.26;
+
+      /* Front hem hugs the skull so it is a hairline, not a visor.
+         Stay above the brow (y≈0.29). */
+      if (azFront > 0.32 && ny < 0.58) {
+        const t = Math.pow((azFront - 0.32) / 0.68, 1.2)
+          * Math.min(1, (0.58 - ny) / 0.28);
+        const Lh = Math.hypot(nx, ny, nz) || 1;
+        const k = 1 - t + t * (1.045 / Lh);
+        nx *= k; ny *= k; nz *= k;
+        if (ny < 0.31) ny = 0.31;
+      }
+      p.setXYZ(i, nx, ny, nz);
+    }
+    p.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  }),
   curtains: (r, tl) => geoCache(`curt${r}_${tl}`, () => {
     const g = superball(r, 36, 28, HEAD_N, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
@@ -3196,12 +3259,8 @@ function buildHair(dna, mat, extraMats) {
     top.rotation.z = 0.16;
     add(G.ball(), 0.42, 0.66, 0.3, 0.2, 0.16, 0.44);       // raised edge of the part
   } else if (st === 'quiff') {
-    // short sides, a lifted front that reads from head-on — not a bump on
-    // the crown that disappears in three-quarter
-    cap(1.028, 1.18, 0.82);
-    const q = add(G.ball(), 0.04, 0.86, 0.58, 0.58, 0.42, 0.4);
-    q.rotation.x = -0.62;
-    add(G.ball(), 0, 0.72, 0.16, 0.66, 0.28, 0.52);
+    /* One lifted shell. Extra primitives on a cap always read as a bun. */
+    add(G.quiff(1.05), 0, 0, 0);
   } else if (st === 'pompadour') {
     // One puffed shell. Extra primitives on a cap always read as a bun.
     add(G.pomp(1.05, 1.48), 0, 0, 0);
