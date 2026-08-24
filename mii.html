@@ -1534,46 +1534,299 @@ function drawEyewear(g, U, dna) {
   g.globalAlpha = 1;
 }
 
+/* ---- tattoo flash -------------------------------------------
+   Original canvas drawings in American-traditional grammar (bold outline,
+   limited colour, flat fill), not copies of any flash sheet or celebrity
+   piece. Motifs: rose, swallow, nautical star, empty banner, botanical
+   vine, asemic script, knuckle bars that only look like lettering.
+
+   Palette lives here, above the painters, so the fills are in scope when
+   the module evaluates — ketchup / relish / navy packed hard enough that
+   a 20px-tall Mii still reads as a flower or a bird. */
+const INK = '#141c26';
+const INK_RED  = '#c41e2a';
+const INK_LEAF = '#2f6a3c';
+const INK_NAVY = '#1a2838';
+
+function inkOutline(g, w) {
+  g.strokeStyle = INK;
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+  g.lineWidth = w;
+}
+
+function inkStar(g, r) {
+  /* Nautical star: five points, each split, red / black counterchange. */
+  const n = 5, inner = r * 0.36;
+  const ang = (i) => -Math.PI / 2 + i * Math.PI / n;
+  const pt = (i, rad) => [Math.cos(ang(i)) * rad, Math.sin(ang(i)) * rad];
+  for (let i = 0; i < n; i++) {
+    const tip = pt(i * 2, r);
+    const L = pt(i * 2 - 1, inner);
+    const Rgt = pt(i * 2 + 1, inner);
+    g.beginPath();
+    g.moveTo(0, 0); g.lineTo(L[0], L[1]); g.lineTo(tip[0], tip[1]); g.closePath();
+    g.fillStyle = INK; g.fill();
+    g.beginPath();
+    g.moveTo(0, 0); g.lineTo(Rgt[0], Rgt[1]); g.lineTo(tip[0], tip[1]); g.closePath();
+    g.fillStyle = INK_RED; g.fill();
+  }
+  g.beginPath();
+  const t0 = pt(0, r);
+  g.moveTo(t0[0], t0[1]);
+  for (let i = 1; i < n * 2; i++) {
+    const p = i % 2 === 0 ? pt(i, r) : pt(i, inner);
+    g.lineTo(p[0], p[1]);
+  }
+  g.closePath();
+  inkOutline(g, Math.max(1.5, r * 0.14));
+  g.stroke();
+}
+
+function inkRose(g, r) {
+  /* Traditional rose as a red disc with five petal lobes and two leaves.
+     A dark inner ring used to swallow the red; keep the centre small so
+     the ketchup fill survives minification. */
+  const lw = Math.max(2.2, r * 0.14);
+  const leaf = (ang, lr) => {
+    g.save();
+    g.rotate(ang);
+    g.beginPath();
+    g.moveTo(r * 0.2, 0);
+    g.quadraticCurveTo(lr * 0.6, -lr * 0.48, lr * 1.2, 0);
+    g.quadraticCurveTo(lr * 0.6, lr * 0.48, r * 0.2, 0);
+    g.closePath();
+    g.fillStyle = INK_LEAF; g.fill();
+    inkOutline(g, lw); g.stroke();
+    g.beginPath();
+    g.moveTo(r * 0.32, 0); g.lineTo(lr * 1.02, 0);
+    g.lineWidth = lw * 0.65; g.stroke();
+    g.restore();
+  };
+  leaf(2.5, r * 1.05);
+  leaf(-2.5, r * 1.0);
+
+  g.fillStyle = INK_RED;
+  inkOutline(g, lw);
+  const petals = 5;
+  for (let i = 0; i < petals; i++) {
+    const a = -Math.PI / 2 + i * TAU / petals;
+    g.beginPath();
+    g.arc(Math.cos(a) * r * 0.42, Math.sin(a) * r * 0.42, r * 0.46, 0, TAU);
+    g.fill(); g.stroke();
+  }
+  g.beginPath();
+  g.arc(0, 0, r * 0.52, 0, TAU);
+  g.fill(); g.stroke();
+  g.beginPath();
+  g.arc(0, 0, r * 0.18, 0, TAU);
+  g.fillStyle = INK; g.fill();
+  inkOutline(g, lw);
+  g.beginPath();
+  g.arc(r * 0.04, -r * 0.02, r * 0.1, 0.2 * Math.PI, 1.5 * Math.PI);
+  g.stroke();
+}
+
+function inkSwallow(g, s) {
+  /* Heart-body swallow, swept wings, forked tail — the three marks that
+     keep it a swallow rather than a sparrow at this scale. */
+  const lw = Math.max(1.5, s * 0.08);
+  inkOutline(g, lw);
+
+  g.fillStyle = INK;
+  g.beginPath();
+  g.moveTo(-s * 0.04, 0);
+  g.lineTo(-s * 0.58, -s * 0.26);
+  g.lineTo(-s * 0.2, 0);
+  g.lineTo(-s * 0.58, s * 0.26);
+  g.closePath();
+  g.fill(); g.stroke();
+
+  g.fillStyle = INK_NAVY;
+  g.beginPath();
+  g.moveTo(-s * 0.04, -s * 0.05);
+  g.quadraticCurveTo(s * 0.06, -s * 0.52, s * 0.44, -s * 0.64);
+  g.quadraticCurveTo(s * 0.1, -s * 0.26, s * 0.16, -s * 0.02);
+  g.closePath();
+  g.fill(); g.stroke();
+  g.beginPath();
+  g.moveTo(-s * 0.02, s * 0.05);
+  g.quadraticCurveTo(s * 0.02, s * 0.4, s * 0.3, s * 0.56);
+  g.quadraticCurveTo(s * 0.08, s * 0.2, s * 0.14, s * 0.05);
+  g.closePath();
+  g.fill(); g.stroke();
+
+  g.fillStyle = INK_RED;
+  g.beginPath();
+  g.ellipse(s * 0.1, 0.02 * s, s * 0.28, s * 0.15, -0.18, 0, TAU);
+  g.fill(); g.stroke();
+
+  g.fillStyle = INK_NAVY;
+  g.beginPath();
+  g.arc(s * 0.34, -s * 0.05, s * 0.11, 0, TAU);
+  g.fill(); g.stroke();
+  g.fillStyle = INK;
+  g.beginPath();
+  g.moveTo(s * 0.42, -s * 0.05);
+  g.lineTo(s * 0.58, -s * 0.01);
+  g.lineTo(s * 0.42, s * 0.03);
+  g.closePath();
+  g.fill();
+}
+
+function inkBanner(g, w, h) {
+  /* Empty scroll — forked ends, no names, no wordmarks. Interior bars are
+     generic blackletter slabs, not letters. */
+  const lw = Math.max(1.4, h * 0.16);
+  inkOutline(g, lw);
+  g.fillStyle = INK_RED;
+  g.beginPath();
+  g.moveTo(-w * 0.26, -h * 0.4);
+  g.lineTo(w * 0.26, -h * 0.4);
+  g.lineTo(w * 0.32, 0);
+  g.lineTo(w * 0.26, h * 0.4);
+  g.lineTo(-w * 0.26, h * 0.4);
+  g.lineTo(-w * 0.32, 0);
+  g.closePath();
+  g.fill(); g.stroke();
+  for (const sx of [-1, 1]) {
+    g.beginPath();
+    g.moveTo(sx * w * 0.26, -h * 0.4);
+    g.lineTo(sx * w * 0.55, -h * 0.72);
+    g.lineTo(sx * w * 0.4, 0);
+    g.lineTo(sx * w * 0.55, h * 0.72);
+    g.lineTo(sx * w * 0.26, h * 0.4);
+    g.lineTo(sx * w * 0.32, 0);
+    g.closePath();
+    g.fill(); g.stroke();
+  }
+  g.fillStyle = INK;
+  const n = 4, bw = w * 0.05, gap = w * 0.085, x0 = -((n - 1) * gap + bw) / 2;
+  for (let i = 0; i < n; i++) {
+    const bh = h * (i === 1 || i === 2 ? 0.42 : 0.32);
+    g.fillRect(x0 + i * gap, -bh / 2, bw, bh);
+  }
+}
+
+function inkVine(g, len, u) {
+  inkOutline(g, u);
+  g.beginPath();
+  g.moveTo(0, 0);
+  g.bezierCurveTo(len * 0.28, -len * 0.16, len * 0.62, len * 0.14, len, 0);
+  g.stroke();
+  for (let i = 0; i < 4; i++) {
+    const t = 0.18 + i * 0.2;
+    const x = t * len;
+    const y = Math.sin(t * 5.5) * len * 0.07;
+    g.save();
+    g.translate(x, y);
+    g.rotate((i % 2 ? 0.95 : -0.95));
+    g.fillStyle = INK_LEAF;
+    g.beginPath();
+    g.ellipse(0, 0, u * 2.4, u * 1.15, 0, 0, TAU);
+    g.fill();
+    inkOutline(g, Math.max(1.2, u * 0.7));
+    g.stroke();
+    g.restore();
+  }
+  g.save();
+  g.translate(len * 0.96, 0);
+  g.fillStyle = INK_RED;
+  g.beginPath(); g.arc(0, 0, u * 1.15, 0, TAU); g.fill();
+  inkOutline(g, Math.max(1.2, u * 0.7)); g.stroke();
+  g.restore();
+}
+
+function inkScript(g, w, u) {
+  /* Asemic copperplate — loops that read as script without forming a word. */
+  inkOutline(g, u);
+  g.beginPath();
+  g.moveTo(-w / 2, 0);
+  const n = 7;
+  for (let i = 0; i < n; i++) {
+    const x0 = -w / 2 + (i / n) * w;
+    const x1 = -w / 2 + ((i + 1) / n) * w;
+    const peak = (i % 2 === 0 ? -1 : 0.7) * u * 2.6;
+    g.quadraticCurveTo((x0 + x1) / 2, peak, x1, i === n - 1 ? u * 0.4 : 0);
+  }
+  g.stroke();
+}
+
+function inkKnuckleBars(g, s) {
+  /* Four blackletter-like slabs. Not a word: caps and widths vary so they
+     cannot be read as LOVE / HATE or any name. */
+  const slabs = [
+    { w: 0.2,  h: 0.9,  cap: 'top' },
+    { w: 0.16, h: 1.0,  cap: 'both' },
+    { w: 0.22, h: 0.86, cap: 'mid' },
+    { w: 0.17, h: 0.94, cap: 'top' }
+  ];
+  const H = s * 0.5;
+  let x = -s * 0.5;
+  g.fillStyle = INK;
+  for (const sl of slabs) {
+    const w = sl.w * s, h = sl.h * H;
+    const y = -h / 2;
+    g.fillRect(x, y, w, h);
+    const capH = h * 0.2, capW = w * 1.18;
+    if (sl.cap === 'top' || sl.cap === 'both') {
+      g.fillRect(x - (capW - w) / 2, y, capW, capH);
+    }
+    if (sl.cap === 'both') {
+      g.fillRect(x - (capW - w) / 2, y + h - capH, capW, capH);
+    }
+    if (sl.cap === 'mid') {
+      g.fillRect(x - w * 0.08, y + h * 0.4, w * 1.16, h * 0.18);
+    }
+    x += w + s * 0.09;
+  }
+}
+
 /* ---- neck ink -----------------------------------------------
    Painted along the jaw rather than on the neck mesh, because the head
-   hides that mesh entirely. Mirrored on both sides so it reads at any
-   angle, and drawn before facial hair so a beard covers it the way one
-   actually would. */
+   hides that mesh entirely. Drawn before facial hair so a beard covers
+   it the way one actually would. Stays below the eyes — never the forehead. */
 function drawNeckInk(g, U, dna) {
   if (dna.tattoo !== 'neck' && dna.tattoo !== 'both') return;
 
   g.setTransform(1, 0, 0, 1, 0, 0);
-  g.strokeStyle = INK;
-  g.fillStyle = INK;
   g.lineCap = 'round';
   g.lineJoin = 'round';
 
-  for (const sgn of [-1, 1]) {
-    g.save();
-    g.translate(50 * U, 0);
-    g.scale(sgn, 1);
+  /* Left jaw: a big traditional rose plus a nautical star. Vines at this
+     scale collapsed into slashes, so the flower has to carry the read. */
+  g.save();
+  g.translate(24 * U, 78 * U);
+  inkRose(g, 14.5 * U);
+  g.restore();
 
-    // three tapering bars sweeping up the side of the jaw
-    g.lineWidth = 3.4 * U;
-    for (let i = 0; i < 3; i++) {
-      const x = 21 + i * 5.4;
-      g.beginPath();
-      g.moveTo(x * U, (88 - i * 3) * U);
-      g.lineTo((x + 4.6) * U, (72 - i * 4) * U);
-      g.stroke();
-    }
+  g.save();
+  g.translate(16.5 * U, 64 * U);
+  inkStar(g, 6.4 * U);
+  g.restore();
 
-    // a solid wedge at the corner of the jaw to anchor them
-    g.beginPath();
-    g.moveTo(19 * U, 78 * U);
-    g.lineTo(27 * U, 68 * U);
-    g.lineTo(29 * U, 74 * U);
-    g.lineTo(22 * U, 84 * U);
-    g.closePath();
-    g.fill();
+  /* Right jaw: swallow in a dive, empty banner, matching star. */
+  g.save();
+  g.translate(74 * U, 75 * U);
+  g.rotate(-0.28);
+  inkSwallow(g, 17.5 * U);
+  g.restore();
 
-    g.restore();
-  }
+  g.save();
+  g.translate(76 * U, 90 * U);
+  inkBanner(g, 22 * U, 7.4 * U);
+  g.restore();
+
+  g.save();
+  g.translate(84.5 * U, 64 * U);
+  inkStar(g, 6.0 * U);
+  g.restore();
+
+  /* Chin: script-like band. Loops only — no readable word. */
+  g.save();
+  g.translate(50 * U, 91 * U);
+  inkScript(g, 22 * U, 3.1 * U);
+  g.restore();
 }
 
 /* ---- facial hair --------------------------------------------
@@ -1638,20 +1891,36 @@ function drawFacialHair(g, U, dna) {
   g.setTransform(1, 0, 0, 1, 0, 0);
 
   if (st === 'stubble') {
-    /* Stipple, not a wash: a translucent blob vanished against skin and
-       shimmered on every redraw when it was Math.random. */
+    /* Light 5-o'clock shadow across the beard zone — both cheeks, jaw,
+       chin, philtrum — not a dense chin island. A translucent wash vanished
+       against skin, so this stays stipple, just finer and quieter. Seeded
+       so it does not shimmer on redraw. */
     let s = 2166136261;
     const key = String(dna.hair.color) + st;
     for (let i = 0; i < key.length; i++) s = Math.imul(s ^ key.charCodeAt(i), 16777619);
     const rnd = () => { s = Math.imul(s ^ (s >>> 15), 2246822519); return (s >>> 0) / 4294967296; };
     g.fillStyle = col;
-    for (let i = 0; i < 140; i++) {
-      const t = rnd();
-      const x = (50 + (rnd() - 0.5) * 28) * U;
-      const y = (56 + t * 30) * U;
-      const r = (0.45 + rnd() * 0.7) * U;
-      g.globalAlpha = 0.55 + rnd() * 0.4;
-      g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+    /* Cheeks live out at x≈26/74 (same place as blush). A 28-wide
+       rectangle sat between the eyes and read as a goatee. Keep the
+       jaw a little narrower so wrap does not become a chinstrap. */
+    let placed = 0, guard = 0;
+    while (placed < 1500 && guard < 12000) {
+      guard++;
+      const x = 22 + rnd() * 56;
+      const y = 51 + rnd() * 43;
+      const dx = Math.abs(x - 50);
+      const t = (y - 51) / 43;
+      let outer;
+      if (t < 0.12) outer = 22;
+      else if (t < 0.58) outer = 26.5;
+      else if (t < 0.82) outer = 22;
+      else outer = 22 - (t - 0.82) * 48;
+      const inner = t < 0.14 ? 9 : 0;
+      if (dx < inner || dx > outer) continue;
+      const r = (0.26 + rnd() * 0.28) * U;
+      g.globalAlpha = 0.32 + rnd() * 0.16;
+      g.beginPath(); g.arc(x * U, y * U, r, 0, TAU); g.fill();
+      placed++;
     }
     g.globalAlpha = 1;
     return;
@@ -1936,9 +2205,6 @@ const TATTOOS = [
   { id: 'neck',  label: 'Jaw' },
   { id: 'both',  label: 'Both' }
 ];
-/* Near-black with a blue cast, the way healed ink actually looks. The earlier
-   value was light enough that it disappeared against darker skin tones. */
-const INK = '#141c26';
 
 /* ---- apparel ------------------------------------------------
    `kind` selects the torso texture painter; `hood`/`open` add
@@ -2111,6 +2377,69 @@ const G = {
       v.y += bump * 0.44;
       v.z += bump * 0.16;
       p.setXYZ(i, v.x, v.y, v.z);
+    }
+    p.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  }),
+  quiff: (r) => geoCache(`quiffE${r}`, () => {
+    /* One shell. Extra balls on a cap were a crown bun. Short sides,
+       hairline at the brow, a forehead lift that reads from head-on —
+       smaller than pomp. Head scale squashes z, so the bump lives
+       forward. */
+    const tl = 1.40;
+    const g = new THREE.SphereGeometry(r, 44, 36, 0, TAU, 0, tl);
+    const p = g.attributes.position, v = new THREE.Vector3();
+    const n = HEAD_N;
+    const faceTh = 1.34;
+    const sideTh = 1.12;
+    const backTh = 1.16;
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      const L = v.length() || 1;
+      const ux = v.x / L, uy = v.y / L, uz = v.z / L;
+      const th = Math.acos(Math.max(-1, Math.min(1, uy)));
+      const rs0 = Math.hypot(ux, uz) || 1e-6;
+      const azFront = Math.max(0, uz / rs0);
+      const azBack = Math.max(0, -uz / rs0);
+      const faceWin = Math.pow(Math.max(0, azFront - 0.10) / 0.90, 1.35);
+      const backAmt = Math.pow(azBack, 1.7);
+      const maxTh = sideTh
+        + (faceTh - sideTh) * faceWin
+        + (backTh - sideTh) * backAmt;
+      const th2 = (th / tl) * maxTh;
+      const rs = Math.sin(th2);
+      let nx = ux / rs0 * rs;
+      let ny = Math.cos(th2);
+      let nz = uz / rs0 * rs;
+      const s = Math.pow(
+        Math.pow(Math.abs(nx), n) + Math.pow(Math.abs(ny), n) + Math.pow(Math.abs(nz), n),
+        -1 / n
+      );
+      nx *= s * r; ny *= s * r; nz *= s * r;
+
+      /* Flatten the crop crown so the front lift can beat the pole. */
+      ny -= Math.max(0, ny - 0.70) * 0.14 * (1 - azFront * 0.9);
+
+      /* Forehead-wide lift, gated off the hem so the bump does not
+         drag the hairline up into a bun. Peak still has to beat the pole. */
+      const dx = nx * 1.05, dy = ny - 0.52, dz = nz - 0.80;
+      const bump = Math.exp(-(dx * dx + dy * dy + dz * dz * 0.72) * 2.30);
+      const lift = bump * Math.max(0, Math.min(1, (ny - 0.40) / 0.22));
+      ny += lift * 0.50;
+      nz += lift * 0.26;
+
+      /* Front hem hugs the skull so it is a hairline, not a visor.
+         Stay above the brow (y≈0.29). */
+      if (azFront > 0.32 && ny < 0.58) {
+        const t = Math.pow((azFront - 0.32) / 0.68, 1.2)
+          * Math.min(1, (0.58 - ny) / 0.28);
+        const Lh = Math.hypot(nx, ny, nz) || 1;
+        const k = 1 - t + t * (1.045 / Lh);
+        nx *= k; ny *= k; nz *= k;
+        if (ny < 0.31) ny = 0.31;
+      }
+      p.setXYZ(i, nx, ny, nz);
     }
     p.needsUpdate = true;
     g.computeVertexNormals();
@@ -2346,6 +2675,65 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
+  flow: (r) => geoCache(`flowC${r}`, () => {
+    /* Medium-long through the sides and nape, swept off the forehead.
+       A cap plus top/side/nape balls was a helmet with earmuffs — the
+       hem has to be the same surface as the crown. */
+    const tl = 2.42;
+    const g = new THREE.SphereGeometry(r, 48, 40, 0, TAU, 0, tl);
+    const p = g.attributes.position, v = new THREE.Vector3();
+    const n = HEAD_N;
+    const faceTh = 1.08;
+    const sideTh = 2.16;
+    const napeTh = 2.28;
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      const L = v.length() || 1;
+      const ux = v.x / L, uy = v.y / L, uz = v.z / L;
+      const th = Math.acos(Math.max(-1, Math.min(1, uy)));
+      const rs0 = Math.hypot(ux, uz) || 1e-6;
+      const azFront = Math.max(0, uz / rs0);
+      const azBack = Math.max(0, -uz / rs0);
+      const faceWin = Math.pow(Math.max(0, azFront - 0.18) / 0.82, 2);
+      const backAmt = Math.pow(azBack, 1.25);
+      const maxTh = sideTh
+        + (faceTh - sideTh) * faceWin
+        + (napeTh - sideTh) * backAmt;
+      const th2 = (th / tl) * maxTh;
+      const rs = Math.sin(th2);
+      let nx = ux / rs0 * rs;
+      let ny = Math.cos(th2);
+      let nz = uz / rs0 * rs;
+      const s = Math.pow(
+        Math.pow(Math.abs(nx), n) + Math.pow(Math.abs(ny), n) + Math.pow(Math.abs(nz), n),
+        -1 / n
+      );
+      nx *= s * r; ny *= s * r; nz *= s * r;
+      /* Slight crown, more toward the back. Length is in theta + hang. */
+      ny += Math.max(0, ny - 0.55) * (0.10 + azBack * 0.18);
+      nz -= Math.max(0, ny + 0.02) * 0.08;
+      if (azFront > 0.4 && ny < 0.62) {
+        const t = Math.pow((azFront - 0.4) / 0.6, 1.3) * Math.min(1, (0.62 - ny) / 0.32);
+        const Lh = Math.hypot(nx, ny, nz) || 1;
+        const k = 1 - t + t * (1.05 / Lh);
+        nx *= k; ny *= k; nz *= k;
+      }
+      /* Sides stay outside the skull and have length. A pinch would bald
+         them; extra balls would read as earmuffs. */
+      const side = Math.abs(ux) / rs0;
+      const move = Math.max(0, 0.08 - ny) * side * 0.10;
+      nx *= 1 + move;
+      /* Hang at sides and nape, mostly backward — not down the face. */
+      const rear = Math.max(0, 1 - azFront * 1.8);
+      const drop = rear * Math.max(0, -ny + 0.06);
+      ny -= drop * 0.28;
+      nz -= drop * (0.18 + azBack * 0.20);
+      p.setXYZ(i, nx, ny, nz);
+    }
+    p.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  }),
   /* Hat rims need far more radial segments than a 32-gon or a 48-gon.
      At Mii scale those read as stop-signs from below. Crowns stay at
      HEAD_N so they still cover the skull; only the tessellation goes up.
@@ -2516,10 +2904,10 @@ function makeApparelTexture(dna) {
       g.fillRect(front - 46, vy(0.42), 92, vy(0.86) - vy(0.42));
       g.strokeStyle = shade(base, -40); g.lineWidth = 5;
       g.strokeRect(front - 46, vy(0.42), 92, vy(0.86) - vy(0.42));
-      g.strokeStyle = '#f4f6f8'; g.lineWidth = 10; g.lineCap = 'round';
+      g.strokeStyle = '#f4f6f8'; g.lineWidth = 2; g.lineCap = 'round';
       g.beginPath();                                          // drawcords
-      g.moveTo(front - 17, vy(0.0)); g.lineTo(front - 11, vy(0.34));
-      g.moveTo(front + 17, vy(0.0)); g.lineTo(front + 11, vy(0.34));
+      g.moveTo(front - 17, vy(0.0)); g.lineTo(front - 13, vy(0.22));
+      g.moveTo(front + 17, vy(0.0)); g.lineTo(front + 13, vy(0.22));
       g.stroke();
       break;
     }
@@ -2592,8 +2980,12 @@ function makeApparelTexture(dna) {
         for (let i = 0; i < n; i += 2) g.fillRect(i * w, 0, w, H);
       }
       g.fillStyle = spec.trim;
-      g.fillRect(0, H - 15, W, 15);                            // hem band
-      number(spec.num, spec.stripes ? '#ffffff' : spec.trim, vy(0.42), 72);
+      // Hem is a thin rib, not a second shirt. 72px digits used to cover the
+      // whole visible chest and wrap around the sides; 32 sits on the front
+      // and still reads at plaza distance. vy(0.42) keeps them below the
+      // head line (v≈0.36) on both front and back, without dropping to the hem.
+      g.fillRect(0, H - 10, W, 10);                            // hem band
+      number(spec.num, spec.stripes ? '#ffffff' : spec.trim, vy(0.42), 32);
       break;
     }
   }
@@ -2621,7 +3013,10 @@ function makeApparelTexture(dna) {
  * angle rather than only head-on.
  */
 function makeInkTexture(kind) {
-  const S = 256;
+  /* Jaw ink lives on the face patch (drawNeckInk). This map is the floating
+     hand sphere. 512px so a rose still has petal edges after minification. */
+  void kind;
+  const S = 512;
   const c = cv(S);
   const g = c.getContext('2d');
   g.clearRect(0, 0, S, S);
@@ -2638,49 +3033,39 @@ function makeInkTexture(kind) {
     }
   };
 
-  if (kind === 'neck') {
-    // Bands run the whole way round, so the tattoo reads from every angle.
-    g.lineWidth = 13;
-    g.beginPath(); g.moveTo(0, S * 0.46); g.lineTo(S, S * 0.46); g.stroke();
-    g.lineWidth = 7;
-    g.beginPath(); g.moveTo(0, S * 0.63); g.lineTo(S, S * 0.63); g.stroke();
+  // Sphere front is u=0.25: the back of the hand is what faces the camera.
+  const front = S * 0.25;
+  wrapped(front, () => {
+    g.save();
+    g.translate(0, S * 0.26);
+    inkKnuckleBars(g, S * 0.34);
+    g.restore();
 
-    // Chevrons hanging off the lower band, repeated around the circumference.
-    for (let i = 0; i < 6; i++) {
-      const cx = (i + 0.5) * (S / 6);
-      wrapped(cx, () => {
-        g.lineWidth = 9;
-        g.beginPath();
-        g.moveTo(-S * 0.05, S * 0.72);
-        g.lineTo(0, S * 0.85);
-        g.lineTo(S * 0.05, S * 0.72);
-        g.stroke();
-      });
-    }
+    g.save();
+    g.translate(0, S * 0.52);
+    inkRose(g, S * 0.18);
+    g.restore();
 
-    // A heavier mark on the front of the throat — cylinder front is u=0.
-    wrapped(0, () => {
-      g.lineWidth = 11;
-      g.beginPath(); g.arc(0, S * 0.3, S * 0.1, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
-      g.beginPath(); g.arc(0, S * 0.3, S * 0.045, 0, TAU); g.fill();
+    g.save();
+    g.translate(0, S * 0.74);
+    inkStar(g, S * 0.07);
+    g.restore();
+  });
+
+  // Wrist band all the way round, with stars so it reads from any angle.
+  g.lineWidth = S * 0.038;
+  g.strokeStyle = INK;
+  g.beginPath(); g.moveTo(0, S * 0.86); g.lineTo(S, S * 0.86); g.stroke();
+  g.lineWidth = S * 0.016;
+  g.beginPath(); g.moveTo(0, S * 0.915); g.lineTo(S, S * 0.915); g.stroke();
+  for (let i = 0; i < 4; i++) {
+    const cx = (i + 0.5) * (S / 4);
+    wrapped(cx, () => {
+      g.save();
+      g.translate(0, S * 0.888);
+      inkStar(g, S * 0.032);
+      g.restore();
     });
-  } else {
-    // Sphere front is u=0.25: knuckle bars belong on the back of the hand,
-    // which is what faces the camera.
-    const front = S * 0.25;
-    wrapped(front, () => {
-      g.lineWidth = 14;
-      for (let i = 0; i < 3; i++) {
-        const y = S * (0.42 + i * 0.15);
-        g.beginPath(); g.moveTo(-S * 0.14, y); g.lineTo(S * 0.14, y); g.stroke();
-      }
-      g.lineWidth = 12;
-      g.beginPath(); g.arc(0, S * 0.24, S * 0.1, 0, TAU); g.stroke();
-    });
-
-    // Ring right round the wrist so ink is visible however the hand turns.
-    g.lineWidth = 12;
-    g.beginPath(); g.moveTo(0, S * 0.86); g.lineTo(S, S * 0.86); g.stroke();
   }
 
   const t = new THREE.CanvasTexture(c);
@@ -2932,12 +3317,8 @@ function buildHair(dna, mat, extraMats) {
     top.rotation.z = 0.16;
     add(G.ball(), 0.42, 0.66, 0.3, 0.2, 0.16, 0.44);       // raised edge of the part
   } else if (st === 'quiff') {
-    // short sides, a lifted front that reads from head-on — not a bump on
-    // the crown that disappears in three-quarter
-    cap(1.028, 1.18, 0.82);
-    const q = add(G.ball(), 0.04, 0.86, 0.58, 0.58, 0.42, 0.4);
-    q.rotation.x = -0.62;
-    add(G.ball(), 0, 0.72, 0.16, 0.66, 0.28, 0.52);
+    /* One lifted shell. Extra primitives on a cap always read as a bun. */
+    add(G.quiff(1.05), 0, 0, 0);
   } else if (st === 'pompadour') {
     // One puffed shell. Extra primitives on a cap always read as a bun.
     add(G.pomp(1.05, 1.48), 0, 0, 0);
@@ -3025,15 +3406,9 @@ function buildHair(dna, mat, extraMats) {
        stripe — the hem has to be the same surface as the crown. */
     add(G.mullet(1.09), 0, 0, 0, 1, 1.04, 1);
   } else if (st === 'flow') {
-    // medium-long, swept back, moving at the sides — the hockey flow
-    cap(1.056, 1.78, 1.08);
-    const top = add(G.ball(), 0, 0.62, -0.08, 0.82, 0.36, 0.88);
-    top.rotation.x = -0.28;
-    for (const sx of [-1, 1]) {
-      const s = add(G.ball(), sx * 0.78, -0.22, 0.08, 0.28, 0.7, 0.42);
-      s.rotation.z = -sx * 0.12;
-    }
-    add(G.ball(), 0, -0.48, -0.68, 0.68, 0.78, 0.44);
+    /* One swept-back shell. A cap plus top/side/nape balls was a helmet
+       with earmuffs — the hem has to be the same surface as the crown. */
+    add(G.flow(1.09), 0, 0, 0, 1, 1.04, 1);
   }
   return out;
 }
@@ -3100,7 +3475,11 @@ function buildMii(dna) {
 
   /* ---- torso ---- */
   const torso = new THREE.Mesh(G.torso(), shirtMat);
-  torso.scale.set(0.33 * dna.girth, 0.28, 0.27 * dna.girth);
+  /* A kit is cut closer than streetwear. The same sphere as a hoodie makes
+     the jersey look padded, so only football gets a tighter xz — height stays
+     so the collar and pants still meet. */
+  const kit = apparel.kind === 'football';
+  torso.scale.set((kit ? 0.29 : 0.33) * dna.girth, 0.28, (kit ? 0.235 : 0.27) * dna.girth);
   torso.position.y = 0.5;
   body.add(torso);
 
