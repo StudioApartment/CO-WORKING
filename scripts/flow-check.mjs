@@ -163,6 +163,18 @@ try {
   check('character built from the photo', await evaluate('!!MiiPlaza.Cam.dna'));
   check('email field now required',
     await evaluate("getComputedStyle(document.getElementById('camEmailRow')).display !== 'none'"));
+  check('email field is labelled Email',
+    await evaluate("document.querySelector('label[for=\"miiEmail\"]').textContent.trim() === 'Email'"));
+  check('name and email sit one under the other at half width', await evaluate(`(() => {
+    const card = document.querySelector('#modal .card').getBoundingClientRect();
+    const name = document.getElementById('miiName').getBoundingClientRect();
+    const emailRow = document.getElementById('camEmailRow');
+    const email = document.getElementById('miiEmail').getBoundingClientRect();
+    const half = card.width * 0.5;
+    const nearHalf = (w) => Math.abs(w - half) < card.width * 0.14;
+    if (getComputedStyle(emailRow).display === 'none') return nearHalf(name.width);
+    return nearHalf(name.width) && nearHalf(email.width) && email.top > name.bottom - 1;
+  })()`));
   check('preview renders to a PNG',
     await evaluate("(MiiPlaza.Preview.snapshot() || '').startsWith('data:image/png')"));
 
