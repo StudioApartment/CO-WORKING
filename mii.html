@@ -1651,7 +1651,7 @@ function drawFacialHair(g, U, dna) {
        rectangle sat between the eyes and read as a goatee. Keep the
        jaw a little narrower so wrap does not become a chinstrap. */
     let placed = 0, guard = 0;
-    while (placed < 720 && guard < 6000) {
+    while (placed < 1500 && guard < 12000) {
       guard++;
       const x = 22 + rnd() * 56;
       const y = 51 + rnd() * 43;
@@ -1664,8 +1664,8 @@ function drawFacialHair(g, U, dna) {
       else outer = 22 - (t - 0.82) * 48;
       const inner = t < 0.14 ? 9 : 0;
       if (dx < inner || dx > outer) continue;
-      const r = (0.24 + rnd() * 0.28) * U;
-      g.globalAlpha = 0.28 + rnd() * 0.18;
+      const r = (0.26 + rnd() * 0.28) * U;
+      g.globalAlpha = 0.32 + rnd() * 0.16;
       g.beginPath(); g.arc(x * U, y * U, r, 0, TAU); g.fill();
       placed++;
     }
