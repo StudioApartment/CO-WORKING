@@ -2346,17 +2346,17 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  flow: (r) => geoCache(`flowB${r}`, () => {
+  flow: (r) => geoCache(`flowC${r}`, () => {
     /* Medium-long through the sides and nape, swept off the forehead.
        A cap plus top/side/nape balls was a helmet with earmuffs — the
        hem has to be the same surface as the crown. */
-    const tl = 2.52;
+    const tl = 2.42;
     const g = new THREE.SphereGeometry(r, 48, 40, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     const n = HEAD_N;
     const faceTh = 1.08;
-    const sideTh = 2.28;
-    const napeTh = 2.42;
+    const sideTh = 2.16;
+    const napeTh = 2.28;
     for (let i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i);
       const L = v.length() || 1;
@@ -2366,7 +2366,7 @@ const G = {
       const azFront = Math.max(0, uz / rs0);
       const azBack = Math.max(0, -uz / rs0);
       const faceWin = Math.pow(Math.max(0, azFront - 0.18) / 0.82, 2);
-      const backAmt = Math.pow(azBack, 1.15);
+      const backAmt = Math.pow(azBack, 1.25);
       const maxTh = sideTh
         + (faceTh - sideTh) * faceWin
         + (napeTh - sideTh) * backAmt;
@@ -2380,9 +2380,9 @@ const G = {
         -1 / n
       );
       nx *= s * r; ny *= s * r; nz *= s * r;
-      /* Slight back-biased crown. Length is in theta + hang, not y-scale. */
-      ny += Math.max(0, ny - 0.55) * (0.10 + azBack * 0.14);
-      nz -= Math.max(0, ny + 0.05) * (0.06 + azBack * 0.04);
+      /* Slight crown, more toward the back. Length is in theta + hang. */
+      ny += Math.max(0, ny - 0.55) * (0.10 + azBack * 0.18);
+      nz -= Math.max(0, ny + 0.02) * 0.08;
       if (azFront > 0.4 && ny < 0.62) {
         const t = Math.pow((azFront - 0.4) / 0.6, 1.3) * Math.min(1, (0.62 - ny) / 0.32);
         const Lh = Math.hypot(nx, ny, nz) || 1;
@@ -2392,13 +2392,13 @@ const G = {
       /* Sides stay outside the skull and have length. A pinch would bald
          them; extra balls would read as earmuffs. */
       const side = Math.abs(ux) / rs0;
-      const move = Math.max(0, 0.06 - ny) * side * 0.12;
+      const move = Math.max(0, 0.08 - ny) * side * 0.10;
       nx *= 1 + move;
-      /* Hang at sides and nape only — not down the face. */
-      const rear = Math.max(0, 1 - azFront * 1.7);
-      const drop = rear * Math.max(0, -ny + 0.12);
-      ny -= drop * 0.55;
-      nz -= drop * (0.10 + azBack * 0.22);
+      /* Hang at sides and nape, mostly backward — not down the face. */
+      const rear = Math.max(0, 1 - azFront * 1.8);
+      const drop = rear * Math.max(0, -ny + 0.06);
+      ny -= drop * 0.28;
+      nz -= drop * (0.18 + azBack * 0.20);
       p.setXYZ(i, nx, ny, nz);
     }
     p.needsUpdate = true;
