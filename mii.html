@@ -2346,18 +2346,22 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  cyl:  () => geoCache('cyl', () => new THREE.CylinderGeometry(1, 1, 1, 32)),
-  frus: (rt) => geoCache(`fr${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 32)),
-  /* Hats that cross the skull cannot be capped cylinders. The end discs
+  /* Hat rims need far more radial segments than a 32-gon or a 48-gon.
+     At Mii scale those read as stop-signs from below. Crowns stay at
+     HEAD_N so they still cover the skull; only the tessellation goes up.
+
+     Hats that cross the skull cannot be capped cylinders. The end discs
      cut through the head and read as jagged holes along every band and
      brim. Open tubes and rings sit outside the superellipsoid instead. */
-  tube: () => geoCache('htube', () => new THREE.CylinderGeometry(1, 1, 1, 48, 1, true)),
-  frusTube: (rt) => geoCache(`frt${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 48, 1, true)),
-  disc: () => geoCache('hdisc', () => new THREE.CircleGeometry(1, 48)),
-  ring: (inner) => geoCache(`hring${inner}`, () => new THREE.RingGeometry(inner, 1, 48)),
+  cyl:  () => geoCache('cyl', () => new THREE.CylinderGeometry(1, 1, 1, 256)),
+  frus: (rt) => geoCache(`fr${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 256)),
+  tube: () => geoCache('htube', () => new THREE.CylinderGeometry(1, 1, 1, 256, 1, true)),
+  frusTube: (rt) => geoCache(`frt${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 256, 1, true)),
+  disc: () => geoCache('hdisc', () => new THREE.CircleGeometry(1, 256)),
+  ring: (inner) => geoCache(`hring${inner}`, () => new THREE.RingGeometry(inner, 1, 256)),
   visor: (inner) => geoCache(`hvis${inner}`, () =>
-    new THREE.RingGeometry(inner, 1, 36, 1, -Math.PI / 2 - 1.15, 2.3)),
-  hatDome: (r, tl) => geoCache(`hdm${r}_${tl}`, () => superball(r, 48, 28, HEAD_N, 0, TAU, 0, tl)),
+    new THREE.RingGeometry(inner, 1, 256, 1, -Math.PI / 2 - 1.15, 2.3)),
+  hatDome: (r, tl) => geoCache(`hdm${r}_${tl}`, () => superball(r, 128, 32, HEAD_N, 0, TAU, 0, tl)),
 };
 
 /* ══════════════════════════════════════════════════════════════
