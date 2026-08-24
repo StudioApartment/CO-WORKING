@@ -2712,45 +2712,51 @@ function buildHair(dna, mat, extraMats) {
     add(G.curtains(1.06, 1.28), 0, 0, 0, 1, 1.05, 1);
     add(G.hairBack(1.065, 1.52, 1.14), 0, 0, 0);
   } else if (st === 'dreads') {
-    /* Locs are sausages from the pole down, not a bowl with tubes glued to
-       the rim. A smooth extra dome was reading as a helmet. The thin cap
-       only stops scalp flashing between nubs; the nubs are the cut. */
-    cap(1.026, 1.16, 1.02);
+    /* The skull is a superellipsoid, so the crown is a wide plateau. A
+       dome there is a helmet; tubes hung from the plateau drop through
+       the skull and read as pillars. Nubs pack the plateau. A small
+       round core sits inside them so gaps do not flash sky. Locs hang
+       from a ring that sits in those nubs. */
+    add(G.ball(), 0, 0.92, 0, 0.52, 0.38, 0.52);
     const n = HEAD_N;
-    const R = 1.10;
-    const putLoc = (th, phi, rad, hang) => {
-      const ux = Math.sin(th) * Math.sin(phi);
-      const uy = Math.cos(th);
-      const uz = Math.sin(th) * Math.cos(phi);
+    const R = 1.12;
+    const surf = (x, y, z) => {
+      const L = Math.hypot(x, y, z) || 1;
+      const ux = x / L, uy = y / L, uz = z / L;
       const s = Math.pow(
         Math.pow(Math.abs(ux), n) + Math.pow(Math.abs(uy), n) + Math.pow(Math.abs(uz), n),
         -1 / n
       );
-      const x = ux * s * R, y = uy * s * R, z = uz * s * R;
-      /* Hairline sits above the brow (y≈0.29). Front nubs below that cover
-         the eyes. */
-      if (y < 0.38 && z > 0.40) return;
-      add(G.ball(), x, y, z, rad, rad, rad);
-      if (hang > 0.08) {
-        add(G.neck(), x, y - hang / 2, z, rad * 0.9, hang, rad * 0.9);
-        add(G.ball(), x, y - hang, z, rad * 0.9, rad * 0.9, rad * 0.9);
-      }
+      return { x: ux * s * R, y: uy * s * R, z: uz * s * R, uy, uz };
     };
-    putLoc(0, 0, 0.20, 0.08);
-    const rings = [
-      { th: 0.28, count: 6,  rad: 0.18,  hang: 0.10, off: 0 },
-      { th: 0.50, count: 10, rad: 0.17,  hang: 0.22, off: 0.18 },
-      { th: 0.72, count: 12, rad: 0.155, hang: 0.40, off: 0.08 },
-      { th: 0.94, count: 12, rad: 0.145, hang: 0.62, off: 0.18 }
-    ];
-    for (const ring of rings) {
-      for (let i = 0; i < ring.count; i++) {
-        const phi = (i / ring.count) * TAU + ring.off;
-        const uz = Math.sin(ring.th) * Math.cos(phi);
-        /* Front locs stay as nubs; length lives at the sides and nape. */
-        const hang = ring.hang * Math.max(0.12, 0.55 - uz) + (i % 3) * 0.05;
-        putLoc(ring.th, phi, ring.rad, hang);
+    const pole = surf(0, 1, 0);
+    add(G.ball(), pole.x, pole.y + 0.06, pole.z, 0.26, 0.26, 0.26);
+    for (let k = 0; k < 5; k++) {
+      const a = (k / 5) * TAU;
+      add(G.ball(), Math.sin(a) * 0.18, pole.y + 0.05, Math.cos(a) * 0.18, 0.22, 0.22, 0.22);
+    }
+    for (let row = -4; row <= 4; row++) {
+      const z0 = row * 0.17 + ((Math.abs(row) * 7 + 3) % 5 - 2) * 0.02;
+      const odd = Math.abs(row) % 2;
+      for (let col = -4; col <= 4; col++) {
+        const x0 = (col + odd * 0.5) * 0.18 + ((Math.abs(col) * 11 + Math.abs(row) * 3) % 5 - 2) * 0.02;
+        if (x0 * x0 + z0 * z0 > 0.95) continue;
+        const p = surf(x0, 1, z0);
+        if (p.z > 0.55 && p.y < 0.58) continue;
+        const rad = 0.24 + ((Math.abs(row) + Math.abs(col)) % 3) * 0.012;
+        add(G.ball(), p.x, p.y + 0.05, p.z, rad, rad, rad);
       }
+    }
+    for (let i = 0; i < 16; i++) {
+      const phi = (i / 16) * TAU + 0.10;
+      const th = 0.80;
+      const p = surf(Math.sin(th) * Math.sin(phi), Math.cos(th), Math.sin(th) * Math.cos(phi));
+      if (p.uz > 0.42) continue;
+      const rad = 0.16 + (i % 3) * 0.012;
+      const hang = 0.50 + (i % 3) * 0.12 + Math.max(0, -p.uz) * 0.16;
+      add(G.ball(), p.x, p.y + 0.04, p.z, rad * 1.15, rad * 1.15, rad * 1.15);
+      add(G.neck(), p.x, p.y - hang / 2, p.z, rad, hang, rad);
+      add(G.ball(), p.x, p.y - hang, p.z, rad, rad, rad);
     }
   } else if (st === 'bob') {
     // blunt, jaw length, tucked in at the ends
