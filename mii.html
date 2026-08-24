@@ -333,6 +333,100 @@ body.native-cursor #pointer{display:none}
 .tiny{margin-top:10px;text-align:center;font-size:11.5px;font-weight:700;color:#a4b6c2;line-height:1.5}
 #fileIn{display:none}
 
+/* ============================================================
+   BADGE FLOW — email capture, recovery, wallet handoff
+   ============================================================ */
+.namerow.stack{flex-direction:column;align-items:stretch;gap:6px;margin-top:14px}
+.namerow.stack label{margin-left:4px}
+.namerow.stack input{width:100%}
+.namerow + .namerow{margin-top:12px}
+.fieldnote{margin:6px 4px 0;font-size:11px;font-weight:700;color:#a4b6c2;line-height:1.5}
+
+/* inline notices inside the card */
+.banner{
+  display:none;margin:14px 0 0;padding:12px 15px;border-radius:16px;
+  font-size:12.5px;font-weight:800;line-height:1.5;
+  box-shadow:inset 0 1px 0 #fff,0 0 0 2px #fff,0 0 0 3.5px #e2cfa8;
+  background:linear-gradient(#fff8ea,#fdeed3);color:#8a6420;
+}
+.banner.show{display:block;animation:cardIn .3s cubic-bezier(.2,1.4,.4,1) both}
+.banner.bad{box-shadow:inset 0 1px 0 #fff,0 0 0 2px #fff,0 0 0 3.5px #eec0bb;
+  background:linear-gradient(#fff3f1,#fde3e0);color:#a53a31}
+.banner.good{box-shadow:inset 0 1px 0 #fff,0 0 0 2px #fff,0 0 0 3.5px #b6e0c6;
+  background:linear-gradient(#f1fbf5,#dff4e7);color:#1f7a4d}
+.banner a,.banner button.link{
+  color:inherit;font:inherit;font-weight:900;text-decoration:underline;
+  background:none;border:0;padding:0;cursor:pointer;
+}
+
+/* the "your badge is ready" panel that replaces the camera after saving */
+.badgeout{display:none;flex-direction:column;align-items:center;text-align:center;padding:6px 0 0}
+.badgeout.show{display:flex;animation:cardIn .34s cubic-bezier(.2,1.4,.4,1) both}
+.badgeout .qr{
+  width:150px;height:150px;border-radius:18px;background:#fff;padding:9px;
+  box-shadow:0 0 0 2px #fff,0 0 0 3.5px #d3dee5;
+}
+.badgeout .who{margin-top:12px;font-size:19px;font-weight:900;color:var(--ink-dk)}
+.badgeout .role{margin-top:2px;font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#a4b6c2}
+
+/* Google's brand guidance wants the button visually distinct from ours */
+.gwallet{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  margin-top:16px;height:50px;padding:0 22px;border:0;border-radius:999px;cursor:pointer;
+  background:linear-gradient(#3c4043,#202124);color:#fff;
+  font:inherit;font-size:13.5px;font-weight:800;letter-spacing:.01em;text-decoration:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 3px 8px rgba(32,33,36,.34);
+}
+.gwallet:hover{filter:brightness(1.12)}
+.gwallet:active{transform:translateY(1px)}
+.gwallet svg{flex:none}
+
+/* small text button row under the primary actions */
+.minor{display:flex;gap:16px;justify-content:center;align-items:center;margin-top:12px;flex-wrap:wrap}
+.minor button{
+  background:none;border:0;padding:4px 2px;cursor:pointer;
+  font:inherit;font-size:11.5px;font-weight:800;color:#8ba0ad;text-decoration:underline;
+}
+.minor button:hover{color:var(--blue-dk)}
+
+/* recovery sub-panel */
+.recover{display:none;margin-top:14px;padding:15px 16px 16px;border-radius:20px;
+  background:linear-gradient(#f7fbfd,#eef5f8);box-shadow:inset 0 1px 0 #fff,0 0 0 2px #fff,0 0 0 3.5px #d9e3ea}
+.recover.show{display:block;animation:cardIn .3s cubic-bezier(.2,1.4,.4,1) both}
+.recover h3{margin:0 0 4px;font-size:14.5px;font-weight:900;color:var(--ink-dk)}
+.recover p{margin:0 0 12px;font-size:12px;font-weight:700;color:#8ba0ad;line-height:1.5}
+.recover .rrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.recover input{
+  flex:1 1 180px;height:42px;border:0;outline:0;border-radius:999px;padding:0 16px;
+  font-size:15px;font-weight:800;color:var(--ink-dk);
+  background:linear-gradient(#eef4f7,#fff);
+  box-shadow:inset 0 2px 4px rgba(110,140,160,.22),0 0 0 2px #fff,0 0 0 3.5px #d3dee5;
+}
+.recover input:focus{box-shadow:inset 0 2px 4px rgba(110,140,160,.22),0 0 0 2px #fff,0 0 0 3.5px var(--blue)}
+.recover .wbtn{height:42px;font-size:12.5px;padding:0 18px;width:auto}
+.recover .wbtn .lbl{display:inline}
+
+/* the badge chip in the corner once this browser owns a Mii */
+.mine-chip{
+  display:none;align-items:center;gap:9px;height:38px;padding:0 6px 0 14px;border-radius:999px;
+  font-size:12px;font-weight:800;color:#7d8f9c;
+  background:linear-gradient(#fff,#eaf1f5);
+  box-shadow:inset 0 1px 0 #fff,0 1px 3px rgba(90,115,135,.22),0 0 0 2px #fff,0 0 0 3px #d2dde4;
+}
+.mine-chip.show{display:inline-flex}
+.mine-chip b{color:var(--blue-dk);max-width:12ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mine-chip button{
+  height:28px;padding:0 12px;border:0;border-radius:999px;cursor:pointer;
+  font:inherit;font-size:11px;font-weight:900;color:#fff;
+  background:linear-gradient(var(--blue),var(--blue-dk));
+}
+.mine-chip button:hover{filter:brightness(1.06)}
+
+@media (max-width:600px){
+  .mine-chip b{max-width:8ch}
+  .badgeout .qr{width:132px;height:132px}
+}
+
 .nomod{position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:30px;font-weight:800;color:#7d92a0;z-index:300;background:#eef4f8}
 </style>
 </head>
@@ -343,6 +437,10 @@ body.native-cursor #pointer{display:none}
 <div id="hud">
   <div class="topright pe">
     <div class="counter">Coworkers <b id="miiCount">0</b></div>
+    <div class="mine-chip" id="mineChip">
+      <span>You&rsquo;re <b id="mineName">–</b></span>
+      <button type="button" id="mineManage">Badge</button>
+    </div>
     <button class="wbtn primary" id="btnCamera" title="Make a Mii from your face">
       <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.4A2.4 2.4 0 0 1 5.4 6h2.1l1.3-2h6.4l1.3 2h2.1A2.4 2.4 0 0 1 21 8.4v9.2A2.4 2.4 0 0 1 18.6 20H5.4A2.4 2.4 0 0 1 3 17.6z"/><circle cx="12" cy="13" r="3.7"/></svg>
       <span class="lbl">Get my badge</span>
@@ -426,6 +524,31 @@ body.native-cursor #pointer{display:none}
       <input id="miiName" maxlength="14" value="New Person" spellcheck="false" autocomplete="off"/>
     </div>
 
+    <div class="namerow stack" id="camEmailRow" style="display:none">
+      <label for="miiEmail">Email &mdash; where your badge goes</label>
+      <input id="miiEmail" type="email" inputmode="email" autocomplete="email"
+             spellcheck="false" placeholder="you@studio.com" maxlength="254"/>
+      <p class="fieldnote">One badge per email. We use it to send your pass and to let you edit this character later &mdash; nothing else.</p>
+    </div>
+
+    <div class="banner" id="camBanner"></div>
+
+    <!-- shown after a badge is issued -->
+    <div class="badgeout" id="camBadge">
+      <img class="qr" id="badgeQr" alt="Your badge QR code" width="150" height="150"/>
+      <p class="who" id="badgeWho">–</p>
+      <p class="role">Coworker</p>
+      <a class="gwallet" id="badgeWallet" href="#" target="_blank" rel="noopener noreferrer">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2.6" y="5.6" width="18.8" height="13.4" rx="3.2"/>
+          <path d="M2.6 10.4h18.8"/><path d="M16.4 14.7h2.4"/>
+        </svg>
+        <span>Add to Google Wallet</span>
+      </a>
+      <p class="tiny" id="badgeNote"></p>
+    </div>
+
     <div class="row" id="camRowLive">
       <button class="wbtn" id="btnUpload"><span class="lbl">Use a photo</span></button>
       <button class="wbtn primary" id="btnSnap"><span class="lbl">Take photo</span></button>
@@ -433,14 +556,32 @@ body.native-cursor #pointer{display:none}
     </div>
     <div class="row" id="camRowDone" style="display:none">
       <button class="wbtn" id="btnRetake"><span class="lbl">Retake</span></button>
-      <button class="wbtn primary" id="btnAccept"><span class="lbl">Add to Plaza</span></button>
+      <button class="wbtn primary" id="btnAccept"><span class="lbl">Get my badge</span></button>
     </div>
     <div class="row" id="camRowEdit" style="display:none">
       <button class="wbtn" id="btnEditCancel"><span class="lbl">Cancel</span></button>
       <button class="wbtn primary" id="btnEditSave"><span class="lbl">Save changes</span></button>
     </div>
+    <div class="row" id="camRowBadge" style="display:none">
+      <button class="wbtn primary" id="btnBadgeDone"><span class="lbl">Done</span></button>
+    </div>
 
-    <p class="tiny" id="camTiny">Colors are read straight from the pixels of your photo with a skin-tone mask &mdash; nothing is uploaded, stored or sent anywhere.</p>
+    <div class="minor" id="camMinor">
+      <button type="button" id="btnRecover">Already have a Mii? Load it</button>
+    </div>
+
+    <div class="recover" id="camRecover">
+      <h3>Load my Mii</h3>
+      <p>New device or cleared browser? Enter the email you used and we&rsquo;ll send a one-time link that reconnects you.</p>
+      <div class="rrow">
+        <input id="recoverEmail" type="email" inputmode="email" autocomplete="email"
+               spellcheck="false" placeholder="you@studio.com" maxlength="254"/>
+        <button class="wbtn primary" id="btnRecoverSend"><span class="lbl">Send link</span></button>
+      </div>
+      <div class="banner" id="recoverBanner" style="margin-top:12px"></div>
+    </div>
+
+    <p class="tiny" id="camTiny">Colors are read straight from the pixels of your photo with a skin-tone mask &mdash; the photo itself never leaves your device.</p>
     <input type="file" id="fileIn" accept="image/*"/>
   </div>
 </div>
@@ -2019,6 +2160,45 @@ const World = {
     m.dispose();
     updateCount();
   },
+
+  /* Leaving with some dignity: a hop, a shrink, then the usual teardown.
+     Used when someone else's delete arrives over Realtime, where a character
+     vanishing mid-stride would just read as a glitch. The Mii is pulled from
+     the simulation immediately so nothing can grab or collide with it while
+     the animation plays. */
+  exit(m) {
+    const i = this.miis.indexOf(m);
+    if (i < 0) return;
+    if (held === m) { held = null; controls.enabled = true; pointerEl.classList.remove('grab'); }
+    if (hovered === m) hovered = null;
+
+    this.miis.splice(i, 1);
+    updateCount();
+    if (toolsFor === m) { toolsFor = null; $('miiTools').classList.remove('show'); }
+
+    m.setMood('wow');
+    this.ringBurst(m.pos.x, m.pos.z, 0xffc4bd);
+    Sound.fx.drop();
+
+    const t0 = performance.now();
+    const DUR = 620;
+    const baseY = m.y;
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / DUR);
+      // small hop up, then away
+      m.y = baseY + Math.sin(k * Math.PI) * 1.5 + k * k * 3.2;
+      m.root.scale.setScalar(Math.max(0.001, 1 - k * k));
+      m.root.rotation.y += 0.22;
+      m.shadow.material.opacity = 0.5 * (1 - k);
+      m.root.position.set(m.pos.x, m.y, m.pos.z);
+      m.shadow.position.set(m.pos.x, 0.02, m.pos.z);
+      if (k < 1) return requestAnimationFrame(step);
+      this.puff(m.pos.x, m.pos.z, 1.1);
+      scene.remove(m.root); scene.remove(m.shadow);
+      m.dispose();
+    };
+    requestAnimationFrame(step);
+  },
   update(dt, t) {
     for (const m of this.miis) m.update(dt, t);
     this.updateFx(dt);
@@ -2027,25 +2207,54 @@ const World = {
 World.initFx();
 
 /* ══════════════════════════════════════════════════════════════
-   8b · STORAGE
+   8b · CONFIG
+   ---------------------------------------------------------------
+   No build step here, so the publishable Supabase keys are fetched at
+   runtime instead of being inlined. Everything downstream treats missing
+   config as "run in local mode" rather than as an error.
+   ══════════════════════════════════════════════════════════════ */
+const Config = {
+  loaded: false,
+  storage: 'legacy',
+  realtime: false,
+  supabaseUrl: null,
+  supabaseAnonKey: null,
+  features: { sessions: false, email: false, googleWallet: false, admin: false },
+
+  async load() {
+    try {
+      const r = await fetch('api/config', { cache: 'no-store' });
+      if (!r.ok) throw new Error(r.status);
+      Object.assign(this, await r.json());
+    } catch {
+      /* left at defaults: the plaza still runs off localStorage */
+    }
+    this.loaded = true;
+    return this;
+  }
+};
+
+/* ══════════════════════════════════════════════════════════════
+   8c · STORAGE
    ---------------------------------------------------------------
    Talks to the /api routes when they exist, and quietly falls back to
    localStorage so the page still works opened on its own.
-   Ownership is a capability token issued once at create time and kept in
-   localStorage — the server only ever stores its hash, and no response
-   ever reveals it. Lose the browser profile and you lose the ability to
-   edit those Miis; that is the trade for having no sign-in.
+
+   Ownership is an HTTP-only session cookie naming one row, set by the
+   server when a badge is claimed. Page scripts cannot read it, so "is this
+   mine?" is answered by /api/me rather than by anything kept here. A
+   browser that loses the cookie recovers by email, not by password.
+
+   The legacy capability token is still sent when present so characters
+   made before the cookie existed stay editable.
    ══════════════════════════════════════════════════════════════ */
 const Store = {
-  mode: 'local', token: null,
+  mode: 'local',
+  token: null,
+  session: null,   // { id, email, walletUrl, qrUrl } once /api/me answers
 
   init() {
     try { this.token = localStorage.getItem('miiplaza-token') || null; } catch { this.token = null; }
-  },
-  _saveToken(t) {
-    if (!t) return;
-    this.token = t;
-    try { localStorage.setItem('miiplaza-token', t); } catch {}
   },
   _head(extra) {
     const h = Object.assign({ 'content-type': 'application/json' }, extra || {});
@@ -2056,9 +2265,35 @@ const Store = {
   _localList() { try { return JSON.parse(localStorage.getItem('miiplaza-miis') || '[]'); } catch { return []; } },
   _localSave(l) { try { localStorage.setItem('miiplaza-miis', JSON.stringify(l)); } catch {} },
 
+  /* Who this browser is. Also the only way to learn our own row id, since
+     the cookie is invisible to script. */
+  async me() {
+    try {
+      const r = await fetch('api/me', { cache: 'no-store', credentials: 'same-origin' });
+      if (!r.ok) throw new Error(r.status);
+      const data = await r.json();
+      this.session = data.signedIn
+        ? {
+            id: data.mii.id,
+            name: data.mii.name,
+            email: data.email,
+            walletUrl: data.walletUrl || null,
+            qrUrl: data.qrUrl || null,
+            previewUrl: data.previewUrl || null
+          }
+        : null;
+      return this.session;
+    } catch {
+      this.session = null;
+      return null;
+    }
+  },
+
   async list() {
     try {
-      const r = await fetch('api/miis', { cache: 'no-store', headers: this._head() });
+      const r = await fetch('api/miis', {
+        cache: 'no-store', credentials: 'same-origin', headers: this._head()
+      });
       if (!r.ok) throw new Error(r.status);
       const list = await r.json();
       if (!Array.isArray(list)) throw new Error('bad payload');
@@ -2070,56 +2305,199 @@ const Store = {
     }
   },
 
-  async add(dna) {
+  /**
+   * Claim a badge. Resolves to { ok:true, record } or { ok:false, ... } so
+   * the caller can render the duplicate-email banner rather than a toast.
+   */
+  async add({ dna, email, name, preview }) {
     if (this.mode === 'server') {
       try {
         const r = await fetch('api/miis', {
-          method: 'POST', headers: this._head(),
-          body: JSON.stringify({ dna, token: this.token || undefined })
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: this._head(),
+          body: JSON.stringify({ dna, email, name, preview })
         });
+        const body = await r.json().catch(() => ({}));
         if (r.ok) {
-          const rec = await r.json();
-          this._saveToken(rec.token);       // returned once, on first create
-          rec.mine = true;
-          return rec;
+          body.mine = true;
+          return { ok: true, record: body };
         }
-        const err = await r.json().catch(() => ({}));
-        toast(err.error || 'Could not save that one', 3200);
-        return null;
-      } catch {}
+        return {
+          ok: false,
+          status: r.status,
+          code: body.code || null,
+          error: body.error || 'Could not save that one',
+          manageUrl: body.manageUrl || null
+        };
+      } catch {
+        return { ok: false, status: 0, error: 'Network hiccup — try that again.' };
+      }
     }
-    const rec = { id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), dna, created: Date.now(), mine: true };
+
+    const rec = {
+      id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      dna, name, created: Date.now(), mine: true
+    };
     const l = this._localList(); l.push(rec); this._localSave(l);
-    return rec;
+    return { ok: true, record: rec, local: true };
   },
 
-  async update(id, dna) {
+  async update(id, dna, preview) {
     if (this.mode === 'server') {
       try {
         const r = await fetch('api/miis/' + encodeURIComponent(id), {
-          method: 'PUT', headers: this._head(), body: JSON.stringify({ dna })
+          method: 'PUT',
+          credentials: 'same-origin',
+          headers: this._head(),
+          body: JSON.stringify({ dna, name: dna.name, preview })
         });
-        if (!r.ok) { const e = await r.json().catch(() => ({})); toast(e.error || 'Could not update'); }
-        return;
-      } catch {}
+        if (!r.ok) {
+          const e = await r.json().catch(() => ({}));
+          toast(e.error || 'Could not update');
+          return false;
+        }
+        return true;
+      } catch {
+        return false;
+      }
     }
     const l = this._localList(); const i = l.findIndex((m) => m.id === id);
     if (i >= 0) { l[i].dna = dna; this._localSave(l); }
+    return true;
   },
 
   async remove(id) {
     if (this.mode === 'server') {
       try {
-        const r = await fetch('api/miis/' + encodeURIComponent(id), { method: 'DELETE', headers: this._head() });
-        if (!r.ok) { const e = await r.json().catch(() => ({})); toast(e.error || 'Could not remove'); return false; }
+        const r = await fetch('api/miis/' + encodeURIComponent(id), {
+          method: 'DELETE', credentials: 'same-origin', headers: this._head()
+        });
+        if (!r.ok) {
+          const e = await r.json().catch(() => ({}));
+          toast(e.error || 'Could not remove');
+          return false;
+        }
+        if (this.session && this.session.id === id) this.session = null;
         return true;
-      } catch {}
+      } catch {
+        return false;
+      }
     }
     this._localSave(this._localList().filter((m) => m.id !== id));
     return true;
+  },
+
+  async requestMagicLink(email) {
+    try {
+      const r = await fetch('api/auth/magic-link', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) return { ok: false, error: body.error || 'Could not send that link.' };
+      return { ok: true, message: body.message };
+    } catch {
+      return { ok: false, error: 'Network hiccup — try that again.' };
+    }
   }
 };
 Store.init();
+
+/* ══════════════════════════════════════════════════════════════
+   8d · REALTIME
+   ---------------------------------------------------------------
+   Postgres change feed straight from Supabase, so a badge claimed on
+   someone else's phone walks into this plaza without a refresh. The
+   publication only carries public columns, so no email arrives here.
+
+   Events for rows we already hold are ignored: the client that created a
+   Mii has already drawn it, and echoing would double it.
+   ══════════════════════════════════════════════════════════════ */
+const Realtime = {
+  client: null,
+  channel: null,
+  ready: false,
+
+  async connect() {
+    if (!Config.realtime || !Config.supabaseUrl || !Config.supabaseAnonKey) return false;
+    try {
+      const { createClient } = await import(
+        'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm'
+      );
+      this.client = createClient(Config.supabaseUrl, Config.supabaseAnonKey, {
+        auth: { persistSession: false },
+        realtime: { params: { eventsPerSecond: 6 } }
+      });
+
+      this.channel = this.client
+        .channel('plaza')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'miis' },
+          (p) => this.onInsert(p.new))
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'miis' },
+          (p) => this.onDelete(p.old))
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'miis' },
+          (p) => this.onUpdate(p.new));
+
+      await new Promise((resolve) => {
+        this.channel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') { this.ready = true; resolve(); }
+          else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') resolve();
+        });
+        setTimeout(resolve, 6000);
+      });
+
+      return this.ready;
+    } catch {
+      return false;
+    }
+  },
+
+  onInsert(row) {
+    if (!row || !row.id || findByRecordId(row.id)) return;
+    const dna = row.mii_data;
+    if (!dna) return;
+
+    const m = World.add(dna, { record: { id: row.id, mine: false } });
+    World.ringBurst(m.pos.x, m.pos.z);
+    Sound.fx.chime();
+    toast(`${row.name || dna.name || 'Someone'} joined the office!`, 3000);
+  },
+
+  onUpdate(row) {
+    if (!row || !row.id || !row.mii_data) return;
+    const m = findByRecordId(row.id);
+    if (!m) return;
+    // Our own edit already rebuilt the model locally.
+    if (Store.session && Store.session.id === row.id) return;
+    respawnFrom(m, row.mii_data, { id: row.id, mine: false });
+  },
+
+  onDelete(row) {
+    const m = row && row.id ? findByRecordId(row.id) : null;
+    if (!m) return;
+    const name = m.dna.name;
+    World.exit(m);
+    toast(`${name} left the office`, 2400);
+  }
+};
+
+const findByRecordId = (id) => World.miis.find((m) => m.recordId === id) || null;
+
+/* Rebuild a Mii in place from new DNA, keeping where they were standing. */
+function respawnFrom(m, dna, record) {
+  const pos = m.pos.clone(), facing = m.facing, y = m.y;
+  World.remove(m);
+  const nm = World.add(dna, { record, fromSky: false });
+  nm.pos.copy(pos); nm.y = y; nm.facing = facing; nm.targetFacing = facing;
+  nm.sq = 0.7; nm.sqv = 0; nm.setMood('happy');
+  if (y > 0.01) { nm.state = 'fall'; nm.vy = 0; }
+  nm.sync();
+  World.ringBurst(pos.x, pos.z);
+  return nm;
+}
 
 /* ══════════════════════════════════════════════════════════════
    9 · POINTER + DRAG INTERACTION
@@ -2526,6 +2904,37 @@ const Preview = {
     this.raf = requestAnimationFrame(tick);
   },
   stop() { if (this.raf) { cancelAnimationFrame(this.raf); this.raf = 0; } },
+
+  /* A square PNG of the character, face on, for the badge artwork and the
+     email. Rendering happens here because the server has no WebGL — the
+     turntable is briefly straightened so every badge is shot from the same
+     angle instead of wherever the spin happened to be. */
+  snapshot(size = 384) {
+    if (!this.renderer || !this.mii) return null;
+    const cvs = this.renderer.domElement;
+    const prevSpin = this.holder.rotation.y;
+    const prevW = this._w, prevH = this._h;
+    const prevAspect = this.camera.aspect;
+
+    try {
+      this.holder.rotation.y = 0;
+      this.renderer.setSize(size, size, false);
+      this.camera.aspect = 1;
+      this.camera.position.set(0, 1.25, 4.9);
+      this.camera.lookAt(0, 0.92, 0);
+      this.camera.updateProjectionMatrix();
+      this.renderer.render(this.scene, this.camera);
+      return cvs.toDataURL('image/png');
+    } catch {
+      return null;
+    } finally {
+      // Force the next animation frame to re-fit the canvas.
+      this.holder.rotation.y = prevSpin;
+      this.camera.aspect = prevAspect;
+      this._w = prevW === size ? -1 : -1;
+      this._h = prevH === size ? -1 : -1;
+    }
+  }
 };
 
 /* ---------------- colour pickers ---------------- */
@@ -2695,6 +3104,9 @@ const Cam = {
   reset() {
     this.result = null; this.dna = null; this.editing = null; this.shooting = false;
     $('camStage').classList.remove('done', 'edit');
+    $('camStage').style.display = '';
+    $('camRerolls').style.display = '';
+    $('camPalette').style.display = '';
     $('camRowEdit').style.display = 'none';
     $('camTiny').style.display = '';
     Preview.stop(); Preview.clearMii();
@@ -2705,12 +3117,56 @@ const Cam = {
     $('camFail').style.display = 'none';
     $('camGuide').style.display = '';
     $('camNameRow').style.display = 'none';
+    $('camEmailRow').style.display = 'none';
     $('camRowLive').style.display = 'flex';
     $('camRowDone').style.display = 'none';
+    $('camRowBadge').style.display = 'none';
     $('btnSnap').style.display = '';
+    $('camBadge').classList.remove('show');
+    $('camMinor').style.display = '';
+    this.hideBanner();
+    this.hideRecover();
     $('camTitle').textContent = 'Get your badge';
     $('camSub').innerHTML = 'Line your face up with the oval and smile. Everything happens on this page &mdash; the photo never leaves your device.';
   },
+
+  /* ---------------- inline notices ---------------- */
+  showBanner(html, kind) {
+    const el = $('camBanner');
+    el.innerHTML = html;
+    el.className = 'banner show' + (kind ? ' ' + kind : '');
+  },
+  hideBanner() {
+    const el = $('camBanner');
+    el.className = 'banner';
+    el.innerHTML = '';
+  },
+
+  showRecover(prefill) {
+    $('camRecover').classList.add('show');
+    $('recoverBanner').className = 'banner';
+    if (prefill) $('recoverEmail').value = prefill;
+    setTimeout(() => $('recoverEmail').focus(), 80);
+  },
+  hideRecover() {
+    $('camRecover').classList.remove('show');
+    $('recoverBanner').className = 'banner';
+  },
+  /* The badge this browser already owns — reached from the corner chip, so
+     someone can re-save the pass without editing anything. */
+  openMyBadge() {
+    const s = Store.session;
+    if (!s) { this.open(); return; }
+    this.el.classList.add('open');
+    this.reset();
+    this.showBadge(
+      { qrUrl: s.qrUrl, walletUrl: s.walletUrl, emailed: true },
+      { name: s.name || 'You', email: s.email || '' }
+    );
+    $('camSub').textContent = 'Scan this at the door, or add it to your phone.';
+    Sound.fx.click();
+  },
+
   /* reopen the panel on an existing Mii, working on a copy so Cancel really cancels */
   openEdit(mii) {
     this.el.classList.add('open');
@@ -2737,20 +3193,18 @@ const Cam = {
     const dna = this.dna;
     dna.name = ($('miiName').value || '').trim().slice(0, 14) || dna.name || 'New Person';
     const rec = { id: m.recordId, mine: true };
-    const pos = m.pos.clone(), facing = m.facing, y = m.y;
+
+    const preview = Preview.snapshot();
     this.close();
 
-    World.remove(m);
-    const nm = World.add(dna, { record: rec, fromSky: false });
-    nm.pos.copy(pos); nm.y = y; nm.facing = facing; nm.targetFacing = facing;
-    nm.sq = 0.7; nm.sqv = 0; nm.setMood('happy');
-    // if they were still dropping in when the panel opened, let them finish the fall
-    // rather than freezing them mid-air
-    if (y > 0.01) { nm.state = 'fall'; nm.vy = 0; } 
-    nm.sync();
-    World.ringBurst(pos.x, pos.z);
+    respawnFrom(m, dna, rec);
     Sound.fx.chime();
-    if (rec.id) await Store.update(rec.id, dna);
+
+    if (rec.id) await Store.update(rec.id, dna, preview);
+    if (Store.session && Store.session.id === rec.id) {
+      Store.session.name = dna.name;
+      refreshMineChip();
+    }
     toast(`${dna.name} updated`);
   },
 
@@ -2809,6 +3263,7 @@ const Cam = {
     renderPickers(); closePalette();
 
     $('camNameRow').style.display = 'flex';
+    if (Store.mode === 'server') $('camEmailRow').style.display = 'flex';
     $('camRowLive').style.display = 'none';
     $('camRowDone').style.display = 'flex';
     $('camTitle').textContent = a.confident ? 'Looking good!' : 'Best guess…';
@@ -2820,19 +3275,133 @@ const Cam = {
     Sound.fx.chime();
   },
   async accept() {
-    if (!this.dna) return;
+    if (!this.dna || this.saving) return;
+
     const name = ($('miiName').value || '').trim().slice(0, 14) || 'New Person';
+    const email = ($('miiEmail').value || '').trim();
+
+    // Email is only required once there is a server to hold it; opened as a
+    // bare file the plaza still works without one.
+    const needsEmail = Store.mode === 'server';
+    if (needsEmail) {
+      if (!email) {
+        this.showBanner('Add your email so we can send your badge.', 'bad');
+        $('miiEmail').focus();
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        this.showBanner('That email does not look right — check it and try again.', 'bad');
+        $('miiEmail').focus();
+        return;
+      }
+    }
+
     const dna = this.dna;
     dna.name = name;
-    this.close();
-    const rec = await Store.add(dna);
-    if (!rec) return;
-    // drop them in front of wherever the camera is looking so they always land on screen,
-    // then let them wander out into the plaza on their own
+
+    this.saving = true;
+    const btn = $('btnAccept');
+    const label = btn.querySelector('.lbl');
+    const was = label.textContent;
+    label.textContent = 'Saving…';
+    btn.disabled = true;
+    this.hideBanner();
+
+    // Captured before the modal tears the renderer down.
+    const preview = Preview.snapshot();
+
+    const res = await Store.add({ dna, email, name, preview });
+
+    this.saving = false;
+    btn.disabled = false;
+    label.textContent = was;
+
+    if (!res.ok) {
+      if (res.code === 'email_taken') {
+        this.showBanner(
+          'An account with this email already exists. ' +
+          '<button type="button" class="link" id="bannerManage">Click here to manage your Mii</button>',
+          'bad'
+        );
+        const link = $('bannerManage');
+        if (link) link.addEventListener('click', () => this.showRecover(email));
+        return;
+      }
+      this.showBanner(res.error, 'bad');
+      return;
+    }
+
+    const rec = res.record;
+
+    // Drop them in front of wherever the camera is looking so they always land
+    // on screen, then let them wander out into the plaza on their own.
     const cam = World.camera, tgt = World.controls.target;
     const az = Math.atan2(cam.position.z - tgt.z, cam.position.x - tgt.x);
     World.add(dna, { record: rec, angle: az + rand(-0.55, 0.55), radius: rand(1.2, 2.9) });
-    toast(`${name} joined the plaza!`);
+    Sound.fx.chime();
+    toast(`${name} joined the office!`, 3000);
+
+    if (res.local) {
+      this.close();
+      return;
+    }
+
+    Store.session = {
+      id: rec.id, name, email,
+      walletUrl: rec.walletUrl || null,
+      qrUrl: rec.qrUrl || null,
+      previewUrl: rec.previewUrl || null
+    };
+    refreshMineChip();
+    this.showBadge(rec, { name, email });
+  },
+
+  /* Replaces the camera panes with the issued badge: QR, name, and the
+     handoff to Google Wallet. */
+  showBadge(rec, { name, email }) {
+    Preview.stop();
+    if (this.stream) { this.stream.getTracks().forEach((t) => t.stop()); this.stream = null; }
+    this.video.srcObject = null;
+
+    $('camStage').style.display = 'none';
+    $('camRerolls').style.display = 'none';
+    $('camPalette').style.display = 'none';
+    $('camNameRow').style.display = 'none';
+    $('camEmailRow').style.display = 'none';
+    $('camRowLive').style.display = 'none';
+    $('camRowDone').style.display = 'none';
+    $('camRowEdit').style.display = 'none';
+    $('camTiny').style.display = 'none';
+    $('camMinor').style.display = 'none';
+    this.hideBanner();
+    this.hideRecover();
+
+    $('camTitle').textContent = 'Your badge is ready';
+    $('camSub').textContent = rec.emailed
+      ? `Sent to ${email}. Add it to your phone so you never have to dig for it.`
+      : 'Save it to your phone now — scan this at the door.';
+
+    $('badgeWho').textContent = name;
+
+    const qr = $('badgeQr');
+    if (rec.qrUrl) { qr.src = rec.qrUrl; qr.style.display = ''; }
+    else qr.style.display = 'none';
+
+    const wallet = $('badgeWallet');
+    if (rec.walletUrl) {
+      wallet.href = rec.walletUrl;
+      wallet.style.display = '';
+    } else {
+      wallet.style.display = 'none';
+    }
+
+    const notes = [];
+    if (!rec.walletUrl) notes.push('Google Wallet is not switched on for this site yet.');
+    if (!rec.emailed) notes.push('We could not email it just now, so screenshot this.');
+    $('badgeNote').textContent = notes.join(' ');
+
+    $('camBadge').classList.add('show');
+    $('camRowBadge').style.display = 'flex';
   }
 };
 
@@ -2869,6 +3438,41 @@ function bindButtons() {
   $('btnAccept').addEventListener('click', () => Cam.accept());
   $('btnEditSave').addEventListener('click', () => Cam.saveEdit());
   $('btnEditCancel').addEventListener('click', () => Cam.close());
+  $('btnBadgeDone').addEventListener('click', () => Cam.close());
+  $('mineManage').addEventListener('click', () => Cam.openMyBadge());
+
+  $('btnRecover').addEventListener('click', () => {
+    if ($('camRecover').classList.contains('show')) Cam.hideRecover();
+    else Cam.showRecover(($('miiEmail').value || '').trim());
+    Sound.fx.click();
+  });
+
+  const sendRecovery = async () => {
+    const email = ($('recoverEmail').value || '').trim();
+    const out = $('recoverBanner');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      out.className = 'banner show bad';
+      out.textContent = 'Enter the email you signed up with.';
+      return;
+    }
+    const btn = $('btnRecoverSend');
+    const label = btn.querySelector('.lbl');
+    const was = label.textContent;
+    btn.disabled = true; label.textContent = 'Sending…';
+
+    const res = await Store.requestMagicLink(email);
+
+    btn.disabled = false; label.textContent = was;
+    out.className = 'banner show ' + (res.ok ? 'good' : 'bad');
+    out.textContent = res.ok
+      ? (res.message || 'Check your inbox for a link to load your Mii.')
+      : res.error;
+  };
+  $('btnRecoverSend').addEventListener('click', sendRecovery);
+  $('recoverEmail').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); sendRecovery(); }
+  });
+  $('miiEmail').addEventListener('input', () => Cam.hideBanner());
   $('btnUpload').addEventListener('click', () => $('fileIn').click());
   $('fileIn').addEventListener('change', (e) => {
     const f = e.target.files && e.target.files[0];
@@ -2914,8 +3518,10 @@ $('toolDelete').addEventListener('click', async () => {
   $('miiTools').classList.remove('show');
   Sound.fx.drop();
   const name = m.dna.name;
+  const wasMine = Boolean(Store.session && Store.session.id === m.recordId);
   if (m.recordId) await Store.remove(m.recordId);
   World.remove(m);
+  if (wasMine) refreshMineChip();
   toast(`${name} left`);
 });
 
@@ -3024,20 +3630,77 @@ for (const e of ['pointerdown', 'keydown', 'wheel', 'touchstart']) {
 
 started = true;
 
-Store.list().then((list) => {
+/* The corner chip is the only always-visible sign that this browser owns a
+   character, since the session cookie is invisible to script. */
+function refreshMineChip() {
+  const chip = $('mineChip');
+  const s = Store.session;
+  if (!s) { chip.classList.remove('show'); return; }
+  $('mineName').textContent = s.name || 'a coworker';
+  chip.classList.add('show');
+}
+
+/* Outcome of a magic link, handed over as ?auth= by /api/auth/verify. */
+function reportAuthResult() {
+  const params = new URLSearchParams(location.search);
+  const status = params.get('auth');
+  if (!status) return;
+
+  const messages = {
+    ok: 'Welcome back — this browser is linked to your Mii again.',
+    expired: 'That link had expired. Request a fresh one.',
+    used: 'That link was already used. Request a fresh one.',
+    invalid: 'That link is not valid any more.',
+    missing: 'That link was incomplete.',
+    unavailable: 'Mii recovery is not switched on for this site yet.',
+    error: 'Something went wrong loading that link.'
+  };
+  setTimeout(() => toast(messages[status] || messages.error, 4200), 900);
+
+  // Keep the URL clean so a refresh does not replay the message.
+  const url = new URL(location.href);
+  url.searchParams.delete('auth');
+  history.replaceState({}, '', url.pathname + (url.search || '') + url.hash);
+
+  if (status !== 'ok') setTimeout(() => { Cam.open(); Cam.showRecover(''); }, 1400);
+}
+
+(async function boot() {
+  await Config.load();
+
+  // Identity first: the plaza list marks `mine` off the same cookie, and the
+  // chip should not flicker in after the crowd lands.
+  const [session, list] = await Promise.all([
+    Config.features.sessions ? Store.me() : Promise.resolve(null),
+    Store.list()
+  ]);
+  if (session) refreshMineChip();
+
   list.forEach((rec, i) => setTimeout(() => {
-    if (rec && rec.dna) World.add(rec.dna, { record: rec });
+    if (!rec || !rec.dna) return;
+    if (findByRecordId(rec.id)) return;   // Realtime may have beaten the list
+    World.add(rec.dna, { record: rec });
   }, 150 + i * 140));
+
   if (list.length) setTimeout(() => toast(`${list.length} already here`, 2200), 400);
-  console.log('[Mii Plaza] storage:', Store.mode);
-});
+
+  reportAuthResult();
+
+  const live = await Realtime.connect();
+  console.log(
+    '[Mii Plaza] storage:', Store.mode,
+    '· backend:', Config.storage,
+    '· realtime:', live ? 'live' : 'off',
+    '· wallet:', Config.features.googleWallet ? 'on' : 'off'
+  );
+})();
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) { clock.getDelta(); Sound.resume(); }
 });
 
 // expose a little for tinkering in the console
-window.MiiPlaza = { World, Sound, Store, Preview, randomDNA, Mii, Cam };
+window.MiiPlaza = { World, Sound, Store, Preview, randomDNA, Mii, Cam, Config, Realtime };
 </script>
 </body>
 </html>

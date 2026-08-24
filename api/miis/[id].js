@@ -1,44 +1,95 @@
-/* PUT    /api/miis/:id  -> { dna }   requires x-token (or x-admin)
- * DELETE /api/miis/:id              requires x-token (or x-admin)
+/* PUT    /api/miis/:id  -> edit your own character
+ * DELETE /api/miis/:id  -> take it down
+ *
+ * Ownership comes from the HTTP-only session cookie, or the admin key. The
+ * legacy capability token is still honoured so Miis created before Supabase
+ * existed stay editable by the browser that made them.
  */
-import {
-  getOne, putOne, delOne, allowWrite, tokenMatches, isAdmin,
-  cleanDna, clientIp, readJson, send, publicView
-} from '../_store.js';
+
+import { send, readJson, clientIp, methodNotAllowed } from '../_lib/http.js';
+import { updateMiiSchema, parseOr400 } from '../_lib/validation.js';
+import { limitWrite, tooMany } from '../_lib/ratelimit.js';
+import * as store from '../_lib/store.js';
+import { uploadPreview } from '../_lib/supabase.js';
+import { readSession, isAdmin, clearSession } from '../_lib/session.js';
+import { badgeUrl, qrImageUrl } from '../_lib/badge.js';
+import { walletSaveUrl } from '../_lib/googleWallet.js';
+import { sendBadgeEmail } from '../_lib/email.js';
+import { originFrom } from '../_lib/env.js';
+import { tokenMatches } from '../_store.js';
+
+function mayWrite(req, record) {
+  if (isAdmin(req)) return true;
+
+  const session = readSession(req);
+  if (session && session.miiId === record.id) return true;
+
+  const legacy = record._legacy;
+  const token = String(req.headers['x-token'] || '');
+  return Boolean(legacy && token && tokenMatches(legacy, token));
+}
 
 export default async function handler(req, res) {
   try {
     const id = String((req.query && req.query.id) || '').slice(0, 64);
     if (!id) return send(res, 400, { error: 'missing id' });
 
-    const rec = await getOne(id);
-    if (!rec) return send(res, 404, { error: 'not found' });
+    if (req.method !== 'PUT' && req.method !== 'DELETE') {
+      return methodNotAllowed(res, ['PUT', 'DELETE']);
+    }
 
-    const token = String(req.headers['x-token'] || '');
-    if (!isAdmin(req) && !tokenMatches(rec, token)) {
-      return send(res, 403, { error: 'not yours' });
-    }
-    if (!(await allowWrite(clientIp(req)))) {
-      return send(res, 429, { error: 'Too many for now — try again later.' });
-    }
+    const record = await store.getById(id);
+    if (!record) return send(res, 404, { error: 'not found' });
+    if (!mayWrite(req, record)) return send(res, 403, { error: 'not yours' });
+
+    const limit = await limitWrite(clientIp(req));
+    if (!limit.allowed) return tooMany(res, send, limit);
 
     if (req.method === 'DELETE') {
-      await delOne(id);
-      return send(res, 200, { ok: true });
+      await store.remove(id);
+      // The cookie only ever named this row, so it is now meaningless.
+      const session = readSession(req);
+      if (session && session.miiId === id) clearSession(res);
+      return send(res, 200, { ok: true, id });
     }
 
-    if (req.method === 'PUT') {
-      const body = await readJson(req);
-      const dna = cleanDna(body.dna);
-      if (!dna) return send(res, 400, { error: 'bad dna' });
-      rec.dna = dna;
-      await putOne(rec);
-      return send(res, 200, publicView(rec));
+    const parsed = parseOr400(updateMiiSchema, await readJson(req));
+    if (!parsed.ok) return send(res, 400, { error: parsed.error });
+    const { dna, preview } = parsed.data;
+    const name = parsed.data.name || dna.name || record.name;
+
+    const updated = await store.update(id, { name, dna: { ...dna, name } });
+
+    const origin = originFrom(req);
+    const previewUrl = preview ? await uploadPreview(id, preview) : null;
+
+    // Re-send so the pass in their inbox matches the character in the plaza.
+    let emailed = false;
+    const email = record.email;
+    if (email) {
+      const qrUrl = qrImageUrl(id, origin);
+      const badgeValue = badgeUrl({ id, name, email }, origin);
+      const walletUrl = walletSaveUrl({
+        id, name, email, previewUrl, qrUrl, badgeValue, origin
+      });
+      const mail = await sendBadgeEmail({
+        to: email, name, miiId: id, previewUrl, qrUrl, walletUrl,
+        manageUrl: `${origin}/mii`, origin, isUpdate: true
+      });
+      emailed = mail.sent;
     }
 
-    res.setHeader('allow', 'PUT, DELETE');
-    return send(res, 405, { error: 'method not allowed' });
+    return send(res, 200, {
+      id: updated.id,
+      dna: updated.mii_data,
+      name: updated.name,
+      created: new Date(updated.created_at).getTime(),
+      mine: true,
+      previewUrl,
+      emailed
+    });
   } catch (e) {
+    if (e instanceof store.StoreError) return send(res, e.status, { error: e.message });
     return send(res, 500, { error: String((e && e.message) || e) });
   }
 }

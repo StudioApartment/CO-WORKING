@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Mii Plaza · Admin</title>
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<style>
+  :root{
+    --paper:#fff; --bg:#eef4f8; --line:#dbe5ec; --line-soft:#eaf0f4;
+    --ink:#33434e; --muted:#7d8f9c; --blue:#3fa9e0; --blue-dk:#1b7fbc;
+    --danger:#d0453c; --ok:#2fae76;
+    color-scheme:light;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{
+    min-height:100dvh;background:var(--bg);color:var(--ink);
+    font-family:"Avenir Next Rounded","Nunito","Varela Round","Trebuchet MS",system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--blue-dk)}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 64px}
+
+  header.bar{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:22px}
+  .eyebrow{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#a4b6c2;font-weight:800}
+  h1{font-size:23px;line-height:1.2}
+  .spacer{flex:1 1 auto}
+
+  .btn{
+    appearance:none;border:0;cursor:pointer;font:inherit;font-weight:800;font-size:13px;
+    padding:11px 18px;border-radius:999px;color:#fff;
+    background:linear-gradient(var(--blue),var(--blue-dk));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 1px 3px rgba(90,115,135,.25);
+  }
+  .btn:hover{filter:brightness(1.05)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.ghost{background:linear-gradient(#fff,#eef4f7);color:var(--ink);box-shadow:inset 0 1px 0 #fff,0 1px 3px rgba(90,115,135,.2),0 0 0 1px var(--line)}
+  .btn.sm{padding:8px 13px;font-size:12px}
+  .btn.danger{background:linear-gradient(#e8776e,#c93f36)}
+
+  .card{background:var(--paper);border-radius:16px;box-shadow:0 1px 4px rgba(90,115,135,.13),0 0 0 1px var(--line-soft)}
+  .pad{padding:22px}
+
+  /* gate */
+  #gate{max-width:400px;margin:8vh auto 0}
+  #gate p{font-size:13px;color:var(--muted);line-height:1.65;margin:8px 0 18px}
+  label{display:block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  input[type=password],input[type=search]{
+    width:100%;font:inherit;font-size:14px;padding:12px 14px;border-radius:11px;
+    border:1px solid var(--line);background:#fbfdfe;color:var(--ink)
+  }
+  input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(63,169,224,.18)}
+
+  /* stats */
+  .stats{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+  .stat{flex:1 1 150px;background:var(--paper);border-radius:14px;padding:15px 17px;box-shadow:0 1px 4px rgba(90,115,135,.12),0 0 0 1px var(--line-soft)}
+  .stat b{display:block;font-size:24px;color:var(--blue-dk)}
+  .stat span{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+  .toolbar input[type=search]{flex:1 1 220px;max-width:340px}
+
+  /* table */
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:680px}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  th{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:800;background:#f8fbfc;position:sticky;top:0}
+  tbody tr:hover{background:#f7fbfd}
+  td.email{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;word-break:break-all}
+  .avatar{width:44px;height:44px;border-radius:10px;object-fit:contain;background:#f1f6f9;display:block}
+  .avatar.ph{display:grid;place-items:center;font-size:15px;font-weight:800;color:#9db0bd}
+  .when{white-space:nowrap;color:var(--muted);font-size:12.5px}
+  .empty,.err{padding:34px 20px;text-align:center;color:var(--muted);font-size:13.5px}
+  .err{color:var(--danger)}
+
+  .note{margin-top:14px;font-size:11.5px;color:#9db0bd;line-height:1.6}
+  .pill{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    padding:4px 9px;border-radius:999px;background:#eaf6fd;color:var(--blue-dk)}
+  .pill.warn{background:#fdf3e7;color:#b4762a}
+
+  #toasts{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:50}
+  .toast{background:rgba(38,52,62,.95);color:#fff;font-size:13px;font-weight:700;padding:11px 18px;border-radius:999px;
+    box-shadow:0 6px 18px rgba(40,60,75,.3);animation:tin .25s ease both}
+  @keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  @media (max-width:600px){
+    .wrap{padding:20px 14px 56px}
+    h1{font-size:20px}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- ───────────────────────── gate ───────────────────────── -->
+  <section class="card pad" id="gate">
+    <p class="eyebrow">CO—WORKING</p>
+    <h1>Plaza admin</h1>
+    <p>Enter the admin key to manage registered coworkers. The key is held in this tab only and sent per request.</p>
+    <form id="gateForm" autocomplete="off">
+      <label for="key">Admin key</label>
+      <input id="key" type="password" placeholder="ADMIN_SECRET_KEY" autocomplete="current-password" required>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn" type="submit" id="gateGo">Unlock</button>
+        <a class="btn ghost" href="/mii" style="text-decoration:none;display:inline-flex;align-items:center">Back to plaza</a>
+      </div>
+      <p id="gateErr" class="err" style="display:none;padding:12px 0 0;text-align:left"></p>
+    </form>
+  </section>
+
+  <!-- ───────────────────────── console ───────────────────────── -->
+  <main id="console" hidden>
+    <header class="bar">
+      <div>
+        <p class="eyebrow">CO—WORKING</p>
+        <h1>Plaza admin</h1>
+      </div>
+      <div class="spacer"></div>
+      <span class="pill" id="storagePill">…</span>
+      <button class="btn ghost sm" id="btnRefresh">Refresh</button>
+      <button class="btn sm" id="btnExport">Export to CSV</button>
+      <button class="btn ghost sm" id="btnLock">Lock</button>
+    </header>
+
+    <div class="stats">
+      <div class="stat"><b id="statTotal">–</b><span>Registered</span></div>
+      <div class="stat"><b id="statToday">–</b><span>Joined today</span></div>
+      <div class="stat"><b id="statWeek">–</b><span>Last 7 days</span></div>
+    </div>
+
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Filter by name or email…" autocomplete="off">
+      <span class="note" id="shown" style="margin:0"></span>
+    </div>
+
+    <div class="card">
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:64px">Mii</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Created</th>
+              <th style="width:96px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="state">Loading…</div>
+    </div>
+
+    <p class="note">
+      Deleting removes the row, its stored preview, and — with Supabase Realtime on — animates the
+      character out of every open plaza immediately.
+    </p>
+  </main>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const KEY_STORAGE = 'mii-admin-key';
+
+  let adminKey = '';
+  let all = [];
+
+  /* ------------------------------------------------------------ helpers -- */
+
+  function toast(msg, ms) {
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    $('toasts').appendChild(el);
+    setTimeout(() => {
+      el.style.transition = 'opacity .25s, transform .25s';
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(6px)';
+      setTimeout(() => el.remove(), 260);
+    }, ms || 2600);
+  }
+
+  const headers = () => ({ 'x-admin-key': adminKey });
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d)) return '—';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
+      ' · ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  const initials = (name) =>
+    String(name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase() || '?';
+
+  /* --------------------------------------------------------------- gate -- */
+
+  async function unlock(key) {
+    const r = await fetch('/api/admin/miis', { headers: { 'x-admin-key': key }, cache: 'no-store' });
+    if (r.status === 401) throw new Error('That key was not accepted.');
+    if (!r.ok) throw new Error('Could not reach the admin API (' + r.status + ').');
+    return r.json();
+  }
+
+  $('gateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const key = $('key').value.trim();
+    if (!key) return;
+    $('gateGo').disabled = true;
+    $('gateErr').style.display = 'none';
+    try {
+      const data = await unlock(key);
+      adminKey = key;
+      try { sessionStorage.setItem(KEY_STORAGE, key); } catch (_) {}
+      $('gate').hidden = true;
+      $('console').hidden = false;
+      render(data);
+    } catch (err) {
+      $('gateErr').textContent = err.message;
+      $('gateErr').style.display = 'block';
+    } finally {
+      $('gateGo').disabled = false;
+    }
+  });
+
+  $('btnLock').addEventListener('click', () => {
+    adminKey = '';
+    all = [];
+    try { sessionStorage.removeItem(KEY_STORAGE); } catch (_) {}
+    $('console').hidden = true;
+    $('gate').hidden = false;
+    $('key').value = '';
+  });
+
+  /* ------------------------------------------------------------- render -- */
+
+  function render(data) {
+    all = Array.isArray(data.miis) ? data.miis : [];
+
+    const pill = $('storagePill');
+    if (data.storage === 'supabase') {
+      pill.textContent = 'Supabase';
+      pill.className = 'pill';
+    } else {
+      pill.textContent = 'Fallback store';
+      pill.className = 'pill warn';
+    }
+
+    const now = Date.now();
+    const DAY = 86400000;
+    const since = (ms) => all.filter((m) => now - new Date(m.created_at).getTime() <= ms).length;
+
+    $('statTotal').textContent = all.length;
+    $('statToday').textContent = since(DAY);
+    $('statWeek').textContent = since(DAY * 7);
+
+    paint();
+  }
+
+  function paint() {
+    const q = $('search').value.trim().toLowerCase();
+    const rows = q
+      ? all.filter((m) =>
+          String(m.name || '').toLowerCase().includes(q) ||
+          String(m.email || '').toLowerCase().includes(q))
+      : all;
+
+    const tbody = $('rows');
+    tbody.textContent = '';
+
+    $('shown').textContent = rows.length === all.length
+      ? ''
+      : 'Showing ' + rows.length + ' of ' + all.length;
+
+    if (!rows.length) {
+      $('state').textContent = all.length ? 'Nothing matches that filter.' : 'No coworkers registered yet.';
+      $('state').style.display = 'block';
+      return;
+    }
+    $('state').style.display = 'none';
+
+    for (const m of rows) {
+      const tr = document.createElement('tr');
+
+      const tdA = document.createElement('td');
+      if (m.previewUrl) {
+        const img = document.createElement('img');
+        img.className = 'avatar';
+        img.src = m.previewUrl;
+        img.alt = m.name || '';
+        img.loading = 'lazy';
+        img.addEventListener('error', () => {
+          const ph = document.createElement('div');
+          ph.className = 'avatar ph';
+          ph.textContent = initials(m.name);
+          img.replaceWith(ph);
+        });
+        tdA.appendChild(img);
+      } else {
+        const ph = document.createElement('div');
+        ph.className = 'avatar ph';
+        ph.textContent = initials(m.name);
+        tdA.appendChild(ph);
+      }
+
+      const tdN = document.createElement('td');
+      tdN.style.fontWeight = '800';
+      tdN.textContent = m.name || '—';
+
+      const tdE = document.createElement('td');
+      tdE.className = 'email';
+      tdE.textContent = m.email || '—';
+
+      const tdC = document.createElement('td');
+      tdC.className = 'when';
+      tdC.textContent = fmtDate(m.created_at);
+
+      const tdX = document.createElement('td');
+      const del = document.createElement('button');
+      del.className = 'btn danger sm';
+      del.textContent = 'Delete';
+      del.addEventListener('click', () => remove(m, del));
+      tdX.appendChild(del);
+
+      tr.append(tdA, tdN, tdE, tdC, tdX);
+      tbody.appendChild(tr);
+    }
+  }
+
+  $('search').addEventListener('input', paint);
+
+  /* ------------------------------------------------------------ actions -- */
+
+  async function refresh() {
+    $('btnRefresh').disabled = true;
+    try {
+      const r = await fetch('/api/admin/miis', { headers: headers(), cache: 'no-store' });
+      if (!r.ok) throw new Error('Refresh failed (' + r.status + ')');
+      render(await r.json());
+    } catch (e) {
+      toast(e.message);
+    } finally {
+      $('btnRefresh').disabled = false;
+    }
+  }
+  $('btnRefresh').addEventListener('click', refresh);
+
+  async function remove(m, btn) {
+    const label = m.name || m.email || 'this character';
+    if (!confirm('Delete ' + label + '? This removes them from the database and every open plaza.')) return;
+
+    btn.disabled = true;
+    btn.textContent = '…';
+    try {
+      const r = await fetch('/api/admin/miis?id=' + encodeURIComponent(m.id), {
+        method: 'DELETE',
+        headers: headers()
+      });
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({}));
+        throw new Error(e.error || 'Delete failed');
+      }
+      all = all.filter((x) => x.id !== m.id);
+      render({ miis: all, storage: $('storagePill').textContent === 'Supabase' ? 'supabase' : 'legacy' });
+      toast(label + ' removed');
+    } catch (e) {
+      toast(e.message);
+      btn.disabled = false;
+      btn.textContent = 'Delete';
+    }
+  }
+
+  /* The CSV route needs the admin header, so it cannot be a plain link —
+     fetch it and hand the browser a blob instead. */
+  $('btnExport').addEventListener('click', async () => {
+    const btn = $('btnExport');
+    btn.disabled = true;
+    try {
+      const r = await fetch('/api/admin/export', { headers: headers() });
+      if (!r.ok) throw new Error('Export failed (' + r.status + ')');
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'coworking-miis-' + new Date().toISOString().slice(0, 10) + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      toast('CSV downloaded');
+    } catch (e) {
+      toast(e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  /* Survive a reload within the tab without re-typing the key. */
+  (async function boot() {
+    let saved = '';
+    try { saved = sessionStorage.getItem(KEY_STORAGE) || ''; } catch (_) {}
+    if (!saved) return;
+    try {
+      const data = await unlock(saved);
+      adminKey = saved;
+      $('gate').hidden = true;
+      $('console').hidden = false;
+      render(data);
+    } catch (_) {
+      try { sessionStorage.removeItem(KEY_STORAGE); } catch (__) {}
+    }
+  })();
+})();
+</script>
+</body>
+</html>
