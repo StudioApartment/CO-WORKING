@@ -71,7 +71,7 @@ for (const page of ['mii.html', 'admin.html']) {
 }
 
 const required = [
-  ['mii.html', ['camEmailRow', 'camBanner', 'camBadge', 'badgeWallet', 'camRecover', 'mineChip']],
+  ['mii.html', ['camEmailRow', 'camBanner', 'camBadge', 'badgeWallet', 'badgeAppleWallet', 'camRecover', 'mineChip']],
   ['admin.html', ['gateForm', 'rows', 'btnExport']]
 ];
 for (const [page, ids] of required) {

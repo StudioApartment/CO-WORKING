@@ -51,12 +51,18 @@ function button(href, label) {
   return `<a href="${esc(href)}" style="display:inline-block;background:${BLUE};background-image:linear-gradient(${BLUE},${BLUE_DK});color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:999px;">${esc(label)}</a>`;
 }
 
+function darkButton(href, label) {
+  return `<a href="${esc(href)}" style="display:inline-block;background:#111111;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:999px;">${esc(label)}</a>`;
+}
+
 /**
  * Badge delivery — sent on create, and again on edit so the QR in the inbox
- * always matches what is in the plaza.
+ * always matches what is in the plaza. When Apple Wallet is configured the
+ * .pkpass is attached so Mail on iPhone can add it in one tap.
  */
 export async function sendBadgeEmail({
-  to, name, miiId, previewUrl, qrUrl, walletUrl, manageUrl, origin, isUpdate = false
+  to, name, miiId, previewUrl, qrUrl, walletUrl, appleWalletUrl, applePass,
+  manageUrl, origin, isUpdate = false
 }) {
   const api = resend();
   if (!api) return { sent: false, reason: 'resend_not_configured' };
@@ -66,8 +72,13 @@ export async function sendBadgeEmail({
 
   const heading = isUpdate ? 'Your badge has been updated' : 'Your Coworking Badge is ready!';
   const intro = isUpdate
-    ? 'You just changed your character, so here is a fresh badge. The old QR still works.'
-    : 'You are officially on the floor. Here is your badge — add it to your phone so you never have to look for it.';
+    ? 'You just changed your character, so here is a fresh badge. The old QR still works — add the new pass to replace the one in Apple Wallet.'
+    : 'You are officially on the floor. Here is your badge and QR — add the pass to Apple Wallet so you never have to look for it.';
+
+  const walletButtons = [
+    appleWalletUrl ? darkButton(appleWalletUrl, 'Add to Apple Wallet') : '',
+    walletUrl ? button(walletUrl, 'Add to Google Wallet') : ''
+  ].filter(Boolean).join('&nbsp;&nbsp;');
 
   const html = shell(`
     <tr>
@@ -98,11 +109,16 @@ export async function sendBadgeEmail({
     </tr>` : ''}
     <tr>
       <td align="center" style="padding:26px 32px 0;">
-        ${walletUrl
-          ? button(walletUrl, 'Add to Google Wallet')
-          : `<p style="margin:0;font-size:13px;color:${MUTED};">Google Wallet passes are not switched on yet — your QR above works in the meantime.</p>`}
+        ${walletButtons
+          || `<p style="margin:0;font-size:13px;color:${MUTED};">Wallet passes are not switched on yet — your QR above works in the meantime.</p>`}
       </td>
     </tr>
+    ${applePass ? `
+    <tr>
+      <td align="center" style="padding:12px 32px 0;">
+        <p style="margin:0;font-size:12px;color:${MUTED};">A Wallet pass is attached to this email. On iPhone, tap it to Add to Apple Wallet.</p>
+      </td>
+    </tr>` : ''}
     <tr>
       <td style="padding:26px 32px 30px;">
         <hr style="border:0;border-top:1px solid #e9eff3;margin:0 0 16px;">
@@ -122,11 +138,21 @@ export async function sendBadgeEmail({
     intro,
     '',
     `Name: ${name}`,
+    appleWalletUrl ? `Add to Apple Wallet: ${appleWalletUrl}` : '',
     walletUrl ? `Add to Google Wallet: ${walletUrl}` : '',
     qrUrl ? `Badge QR: ${qrUrl}` : '',
     '',
     `Manage your Mii: ${manage}`
   ].filter(Boolean).join('\n');
+
+  const attachments = [];
+  if (applePass && Buffer.isBuffer(applePass)) {
+    attachments.push({
+      filename: `${String(name || 'coworker').replace(/[^\w.-]+/g, '-').slice(0, 24) || 'coworker'}-badge.pkpass`,
+      content: applePass,
+      contentType: 'application/vnd.apple.pkpass'
+    });
+  }
 
   try {
     const { data, error } = await api.emails.send({
@@ -134,7 +160,8 @@ export async function sendBadgeEmail({
       to: [to],
       subject: isUpdate ? 'Your Coworking Badge was updated' : 'Your Coworking Badge is ready!',
       html,
-      text
+      text,
+      ...(attachments.length ? { attachments } : {})
     });
     if (error) return { sent: false, reason: error.message || 'resend_error' };
     return { sent: true, id: data?.id || null };
