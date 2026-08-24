@@ -15,7 +15,16 @@ const pick = (...names) => {
   return '';
 };
 
-export const SUPABASE_URL = pick('SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL');
+/* supabase-js builds `<base>/rest/v1/...` itself, and the same base is handed
+ * to the browser for Realtime. A URL copied from the project's API settings
+ * often already ends in /rest/v1, which doubles the path: every query comes
+ * back PGRST125 "Invalid path specified in request URL", the routes 502, and
+ * the plaza quietly falls back to per-device storage — so a character made on
+ * one device never reaches another. Accept either spelling. */
+export const projectBase = (raw) =>
+  String(raw || '').replace(/\/+$/, '').replace(/\/(rest|auth|realtime|storage)\/v1$/, '');
+
+export const SUPABASE_URL = projectBase(pick('SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL'));
 export const SUPABASE_ANON_KEY = pick('SUPABASE_ANON_KEY', 'NEXT_PUBLIC_SUPABASE_ANON_KEY');
 export const SUPABASE_SERVICE_ROLE_KEY = pick('SUPABASE_SERVICE_ROLE_KEY');
 
