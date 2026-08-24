@@ -2357,10 +2357,26 @@ const G = {
   frus: (rt) => geoCache(`fr${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 256)),
   tube: () => geoCache('htube', () => new THREE.CylinderGeometry(1, 1, 1, 256, 1, true)),
   frusTube: (rt) => geoCache(`frt${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 256, 1, true)),
-  disc: () => geoCache('hdisc', () => new THREE.CircleGeometry(1, 256)),
-  ring: (inner) => geoCache(`hring${inner}`, () => new THREE.RingGeometry(inner, 1, 256)),
-  visor: (inner) => geoCache(`hvis${inner}`, () =>
-    new THREE.RingGeometry(inner, 1, 256, 1, -Math.PI / 2 - 1.15, 2.3)),
+  disc: () => geoCache('hdisc', () => {
+    const g = new THREE.CircleGeometry(1, 96);
+    g.rotateX(-Math.PI / 2);
+    g.computeVertexNormals();
+    return g;
+  }),
+  /* Annulus with thickness, already in XZ. A flat RingGeometry vanished
+     edge-on and left a sky halo between inner radius and the skull. */
+  ring: (inner) => geoCache(`hring${inner}`, () => {
+    const s = new THREE.Shape();
+    s.absarc(0, 0, 1, 0, TAU, false);
+    const hole = new THREE.Path();
+    hole.absarc(0, 0, inner, 0, TAU, true);
+    s.holes.push(hole);
+    const g = new THREE.ExtrudeGeometry(s, { depth: 0.06, bevelEnabled: false, steps: 1, curveSegments: 96 });
+    g.rotateX(-Math.PI / 2);
+    g.translate(0, 0.03, 0);
+    g.computeVertexNormals();
+    return g;
+  }),
   hatDome: (r, tl) => geoCache(`hdm${r}_${tl}`, () => superball(r, 128, 32, HEAD_N, 0, TAU, 0, tl)),
 };
 
@@ -2726,9 +2742,6 @@ function buildHair(dna, mat, extraMats) {
        temple rather than as hair. */
     cap(1.022, 1.28, 1.0);
 
-    /* Rings live in XY; spin them into XZ so they sit as a brim. */
-    const lay = (m, tilt = 0) => { m.rotation.x = -Math.PI / 2 + tilt; return m; };
-
     if (st === 'tophat') {
       /* CylinderGeometry is height 1 centred, so scale.y is the total height:
          the crown has to be centred half its height above the brim or it
@@ -2739,12 +2752,12 @@ function buildHair(dna, mat, extraMats) {
          at 45° — a cylinder of r=1.0 still let the temples poke through.
          Capped cylinders made it worse: their end discs sliced the skull
          and showed as jagged holes in the band. */
-      lay(put(G.ring(1.12 / 1.50), accMat, 0, 0.42, 0, 1.50, 1.50, 1));
+      put(G.ring(1.06 / 1.50), accMat, 0, 0.42, 0, 1.50, 1, 1.50);
       put(G.tube(), hatMat, 0, 0.78, 0, 1.12, 0.68, 1.12);        // crown 0.440..1.120
-      lay(put(G.disc(), hatMat, 0, 1.12, 0, 1.12, 1.12, 1));      // lid above the pole
+      put(G.disc(), hatMat, 0, 1.12, 0, 1.12, 1, 1.12);           // lid above the pole
       put(G.tube(), accMat, 0, 0.51, 0, 1.16, 0.13, 1.16);        // band
     } else if (st === 'bucket') {
-      put(G.hatDome(1.09, 1.22), hatMat, 0, 0.02, 0, 1, 1.04, 1);
+      put(G.hatDome(1.11, 1.22), hatMat, 0, 0.02, 0, 1, 1.06, 1);
       put(G.frusTube(0.78), hatMat, 0, 0.34, 0, 1.52, 0.36, 1.52); // floppy flare
       put(G.tube(), accMat, 0, 0.50, 0, 1.20, 0.10, 1.20);
     } else if (st === 'cowboy') {
@@ -2759,7 +2772,7 @@ function buildHair(dna, mat, extraMats) {
       // (the plateau is wider on the diagonal) and the end disc at y=1.0
       // sat on the pole. A tube at r≈1.12 plus a lid above the apex
       // encloses the skull the way a real one does.
-      lay(put(G.ring(1.14 / 1.58), hatMat, 0, 0.30, 0.02, 1.74, 1.58, 1));
+      put(G.ring(1.08 / 1.58), hatMat, 0, 0.30, 0.02, 1.74, 1, 1.58);
       put(G.tube(), hatMat, 0, 0.68, 0, 1.14, 0.70, 1.12);        // crown 0.330..1.030
       put(G.ball(), hatMat, 0, 1.08, 0, 1.14, 0.26, 1.12);        // rounded top
       put(G.ball(), hatMat, 0, 1.14, 0, 0.34, 0.14, 0.58);        // centre crease
@@ -2767,15 +2780,15 @@ function buildHair(dna, mat, extraMats) {
     } else if (st === 'beanie') {
       // Same depth as the baseball crown, so the edge lands on the brow
       // rather than across the eyes. y-scale clears the flattened pole.
-      put(G.hatDome(1.09, 1.3), hatMat, 0, 0.02, 0, 1, 1.05, 1);
-      put(G.tube(), accMat, 0, 0.33, 0, 1.16, 0.14, 1.14);        // folded cuff
+      put(G.hatDome(1.11, 1.3), hatMat, 0, 0.02, 0, 1, 1.06, 1);
+      put(G.tube(), accMat, 0, 0.33, 0, 1.18, 0.16, 1.16);        // folded cuff
       put(G.ball(), accMat, 0, 1.16, 0, 0.2, 0.2, 0.2);           // bobble
     } else if (st === 'bandana' || st === 'bandanablue' || st === 'bandanagreen' || st === 'bandanaback') {
       // Tied around the head, so it comes down to the brow like the cap
       // crowns do. Stopping high up read as a small skullcap instead.
       // r=1.05 with no y-scale still let the pole and hem facets clip.
-      put(G.hatDome(1.09, 1.28), hatMat, 0, 0.02, 0, 1, 1.04, 1);
-      put(G.tube(), hatMat, 0, 0.34, 0, 1.16, 0.16, 1.14);        // rolled edge
+      put(G.hatDome(1.11, 1.28), hatMat, 0, 0.02, 0, 1, 1.06, 1);
+      put(G.tube(), hatMat, 0, 0.34, 0, 1.18, 0.16, 1.16);        // rolled edge
       const front = st !== 'bandanaback';
       const z = front ? 1.0 : -1.0;
       const knot = put(G.ball(), hatMat, 0, 0.34, z * 0.72, 0.2, 0.2, 0.2);
@@ -2795,10 +2808,10 @@ function buildHair(dna, mat, extraMats) {
          its slouch from the brim angle instead.
 
          A G.foot() visor centred at z=0.96 spanned back through the
-         forehead — the skull punched a hole in the brim. The visor is
-         a front-arc ring that stays outside the head. */
+         forehead — the skull punched a hole in the brim. Parked fully
+         in front of the brow it still reads as a visor without a hole. */
       const soft = H.soft;
-      put(G.hatDome(1.09, soft ? 1.38 : 1.32), hatMat, 0, soft ? 0.0 : 0.02, 0, 1, 1.04, 1);
+      put(G.hatDome(1.11, soft ? 1.38 : 1.32), hatMat, 0, soft ? 0.0 : 0.02, 0, 1, 1.06, 1);
       put(G.ball(), accMat, 0, 1.14, 0, 0.11, 0.11, 0.11);       // button
 
       /* A dome ends in an open edge, and with DoubleSide you see its inside —
@@ -2808,10 +2821,11 @@ function buildHair(dna, mat, extraMats) {
 
       const visorMat = st === 'yankees' ? hatMat : accMat;
       if (H.flat) {
-        lay(put(G.visor(1.12 / 1.72), accMat, 0, 0.29, 0, 1.78, 1.62, 1));
+        put(G.foot(), accMat, 0, 0.29, 1.28, 0.72, 0.06, 0.34);
       } else {
-        lay(put(G.visor(1.12 / 1.68), visorMat, 0, soft ? 0.26 : 0.28, 0,
-          1.70, soft ? 1.64 : 1.58, 1), soft ? -0.28 : -0.16);
+        const brim = put(G.foot(), visorMat, 0, soft ? 0.26 : 0.28, 1.26,
+          0.68, 0.055, soft ? 0.36 : 0.32);
+        brim.rotation.x = soft ? -0.28 : -0.16;
       }
 
       // Abstract monogram, not a team wordmark.
