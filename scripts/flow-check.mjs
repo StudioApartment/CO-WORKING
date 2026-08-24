@@ -148,48 +148,65 @@ try {
 
   console.log('\ncustomisation');
   {
-    const cats = await evaluate(`[...document.querySelectorAll('.tray-tab')].map(b => b.textContent)`);
-    check('style tray offers every category', cats.length >= 11, `got ${cats.length}: ${cats}`);
-    // Compared with bounding rects, not offsetLeft: the tab row is not a
-    // positioned ancestor, so offsetLeft is measured against the card.
-    check('all tabs are visible without scrolling', await evaluate(`(() => {
-      const box = document.getElementById('trayTabs');
-      const r = box.getBoundingClientRect();
-      return [...box.querySelectorAll('.tray-tab')].every(b => {
-        const t = b.getBoundingClientRect();
-        return t.left >= r.left - 1 && t.right <= r.right + 1;
-      });
-    })()`));
-    check('tabs wrap onto more than one row', await evaluate(`(() => {
-      const tops = new Set([...document.querySelectorAll('.tray-tab')]
-        .map(b => Math.round(b.getBoundingClientRect().top)));
-      return tops.size > 1;
-    })()`));
+    const cats = await evaluate(
+      `[...document.querySelectorAll('.cyc .cat')].map(b => b.textContent)`);
+    check('one stepper per category', cats.length >= 11, `got ${cats.length}: ${cats}`);
+    check('every stepper shows its current value', await evaluate(`
+      [...document.querySelectorAll('.cyc')]
+        .every(b => b.querySelector('.val') || b.querySelector('.kit'))`));
 
-    // Every option in every category must build without throwing. This is the
-    // check that actually matters: the catalogues are data, and a bad entry
-    // would only surface as an unrenderable character.
+    // The whole point of the rewrite: far fewer controls on screen than a
+    // tab row plus a grid of every option.
+    const controls = await evaluate(`document.querySelectorAll('#camTray button').length`);
+    check('the tray stays compact', controls <= 14, `${controls} controls`);
+
+    // Cycling must visit every value and come back round. This is the check
+    // that actually matters: the catalogues are data, and a bad entry would
+    // only surface as an unrenderable character.
     const sweep = await evaluate(`(() => {
       const failures = [];
-      let built = 0;
-      const tabs = [...document.querySelectorAll('.tray-tab')];
-      for (const tab of tabs) {
-        tab.click();
-        const opts = [...document.querySelectorAll('#trayOpts .opt')];
-        for (let i = 0; i < opts.length; i++) {
-          try {
-            document.querySelectorAll('#trayOpts .opt')[i].click();
-            built++;
-          } catch (e) {
-            failures.push(tab.textContent + '/' + i + ': ' + e.message);
-          }
+      let clicks = 0;
+      const cats = [...document.querySelectorAll('.cyc .cat')].map(c => c.textContent);
+      for (const name of cats) {
+        const seen = new Set();
+        // 40 taps is past the longest list, so this also proves it wraps
+        // rather than sticking at the end.
+        for (let i = 0; i < 40; i++) {
+          const btn = [...document.querySelectorAll('.cyc')]
+            .find(b => b.querySelector('.cat').textContent === name);
+          if (!btn) { failures.push(name + ': stepper vanished'); break; }
+          const v = btn.querySelector('.val');
+          seen.add(v ? v.textContent : 'swatch' + i);
+          try { btn.click(); clicks++; }
+          catch (e) { failures.push(name + ': ' + e.message); break; }
         }
+        if (seen.size < 2) failures.push(name + ': never changed value');
       }
-      return { built, failures };
+      return { clicks, failures };
     })()`);
-    check('every option builds a character', sweep.failures.length === 0,
+    check('every stepper cycles without throwing', sweep.failures.length === 0,
       sweep.failures.slice(0, 3).join(' | '));
-    check('swept a meaningful number of options', sweep.built > 80, `built ${sweep.built}`);
+    check('swept a meaningful number of steps', sweep.clicks > 300, `${sweep.clicks} steps`);
+
+    // Hair and headwear share a slot, so the labels have to stay truthful.
+    const slot = await evaluate(`(() => {
+      const byCat = (n) => [...document.querySelectorAll('.cyc')]
+        .find(b => b.querySelector('.cat').textContent === n);
+      const valOf = (n) => byCat(n).querySelector('.val').textContent;
+
+      // step Headwear off None so a hat is definitely on
+      while (valOf('Headwear') === 'None') byCat('Headwear').click();
+      const hatOn = valOf('Headwear');
+      const hairUnder = valOf('Hair');
+
+      // one tap on Hair should reveal that same cut, not skip past it
+      byCat('Hair').click();
+      return { hatOn, hairUnder, afterClaim: valOf('Hair'), hatAfter: valOf('Headwear') };
+    })()`);
+    check('hair reports the cut under a hat, not the hat', slot.hairUnder !== 'None' && slot.hairUnder !== slot.hatOn,
+      JSON.stringify(slot));
+    check('tapping hair reveals that same cut', slot.afterClaim === slot.hairUnder, JSON.stringify(slot));
+    check('and takes the hat off', slot.hatAfter === 'None', JSON.stringify(slot));
 
     // Hair and hats share one slot, and volume has to stay above the brow
     // line or it starts covering the eyes.
