@@ -150,8 +150,12 @@ try {
   {
     const cats = await evaluate(
       `[...document.querySelectorAll('.cyc .cat')].map(b => b.textContent)`);
-    check('one stepper per category', cats.length >= 10, `got ${cats.length}: ${cats}`);
+    check('one stepper per category', cats.length >= 8, `got ${cats.length}: ${cats}`);
     check('ear jewellery is gone', !cats.includes('Ears'), cats.join(', '));
+    // Kit colour and squad number are baked into each shirt now, so those two
+    // steppers should be gone rather than sitting there doing nothing.
+    check('kit colour and number steppers are gone',
+      !cats.includes('Kit colours') && !cats.includes('Number'), cats.join(', '));
     check('every stepper shows its current value', await evaluate(`
       [...document.querySelectorAll('.cyc')]
         .every(b => b.querySelector('.val') || b.querySelector('.kit'))`));
@@ -279,6 +283,24 @@ try {
       } catch (e) { out.builds = false; out.error = e.message; }
       return out;
     })()`);
+    // Outfits that were removed should land on the nearest survivor rather
+    // than silently resetting someone to a plain tee.
+    const outfits = await evaluate(`(() => {
+      const out = {};
+      for (const o of ['washed', 'crop', 'denim', 'techwear', 'hoops', 'hoopsretro', 'soccer', 'soccerfed']) {
+        out[o] = MiiPlaza.normalizeDNA({ hair: { style: 'bowl', color: '#333' }, apparel: o }).apparel;
+      }
+      out.ids = MiiPlaza.catalog.APPAREL.map(a => a.id);
+      return out;
+    })()`);
+    check('retired outfits map onto current ones',
+      ['washed','crop','denim','techwear','hoops','hoopsretro','soccer','soccerfed']
+        .every((o) => outfits.ids.includes(outfits[o])),
+      JSON.stringify(outfits));
+    check('the jerseys survived the remap',
+      outfits.hoops.startsWith('kit-') && outfits.soccer.startsWith('kit-'),
+      `${outfits.hoops}, ${outfits.soccer}`);
+
     check('retired piercings fall back to none', retired.brow === 'none' && retired.lip === 'none',
       JSON.stringify(retired));
     check('nose piercings are untouched', retired.nose === 'nose', retired.nose);

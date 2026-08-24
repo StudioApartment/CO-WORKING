@@ -140,6 +140,10 @@ window.__styleSheet = async function (opts) {
     holder.rotation.y = base.turn != null ? base.turn : 0;
     if (framing === 'head') {
       cam.position.set(0, 1.5, 3.5); cam.lookAt(0, 1.34, 0);
+    } else if (framing === 'torso') {
+      // Close on the chest — a garment's detail is a few dozen pixels at
+      // full-body framing, which is too small to judge.
+      cam.position.set(0, 0.62, 1.9); cam.lookAt(0, 0.52, 0);
     } else {
       cam.position.set(0, 1.05, 5.0); cam.lookAt(0, 0.86, 0);
     }
@@ -272,13 +276,26 @@ try {
                      hair: { style: 'buzz', color: '#2b1d15' } } }
     },
     {
+      file: 'style-05b-apparel-close',
+      title: 'Apparel — chest detail',
+      field: 'apparel',
+      pick: `MiiPlaza.catalog.APPAREL.map(a => a.id)`,
+      labelExpr: `MiiPlaza.catalog.APPAREL.map(a => a.label)`,
+      cols: 6,
+      base: { framing: 'torso', turn: 0,
+              dna: { hair: { style: 'crop', color: '#2b1d15' }, facialHair: 'none',
+                     glasses: 0, tattoo: 'none' } }
+    },
+    {
       file: 'style-05-apparel',
       title: 'Apparel — streetwear and kits',
       field: 'apparel',
       pick: `MiiPlaza.catalog.APPAREL.map(a => a.id)`,
       labelExpr: `MiiPlaza.catalog.APPAREL.map(a => a.label)`,
       cols: 6,
-      base: { framing: 'body' }
+      base: { framing: 'body', turn: -0.25,
+              dna: { hair: { style: 'crop', color: '#2b1d15' }, facialHair: 'none',
+                     glasses: 0, tattoo: 'none' } }
     },
     {
       file: 'style-06-badges',

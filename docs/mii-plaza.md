@@ -197,8 +197,7 @@ only takes the hat off — nothing gets skipped on the way in.
 | Facial hair | Stubble, lineup, full, goatee, moustache, handlebar |
 | Piercings | Nose stud, double nostril, septum |
 | Ink | Hands, jaw, both |
-| Outfits | 11 including hoodie, flannel, denim, techwear, cardigan, basketball, soccer |
-| Kit | 6 colourways plus squad number |
+| Outfits | 11: t-shirt, cutoff, no shirt, button-up, flannel, hoodie, suit, plus two football and two basketball shirts |
 | ID badge | Chest patch, floating tag, @ tag, envelope |
 
 ### Where each layer is rendered
@@ -211,6 +210,15 @@ Three surfaces, chosen by what the feature needs:
   silhouette has to be geometry.
 - **Torso texture** (256px canvas) — garments. Jersey numbers and pocket
   details are painted, then hoods and open plackets are added as geometry.
+
+  Two things govern where detail can go. Horizontally the chest is at u=0.25
+  and the back at u=0.75, not 0.5. Vertically the head is wider than the chest
+  everywhere above y≈0.58, so the top third of the texture is never seen: only
+  v 0.36–1.0 is visible, which is what `vy()` maps into. Squad numbers were
+  originally centred at v 0.44–0.50 and sat entirely behind the head.
+
+  Kit shirts carry their own colourway and number rather than borrowing a
+  shared random palette, because a jersey only looks right in its own colours.
 
 ### Working in head space
 

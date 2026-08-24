@@ -1746,30 +1746,45 @@ const INK = '#141c26';
 /* ---- apparel ------------------------------------------------
    `kind` selects the torso texture painter; `hood`/`open` add
    geometry on top of it. */
+/* Everyday clothes take the wearer's shirt colour. Kit shirts carry their own
+   palette and squad number, because a jersey only looks right in its own
+   colours — leaving them on a shared random colourway is what made the
+   earlier ones look off. */
 const APPAREL = [
-  { id: 'tee',       label: 'Tee',        kind: 'plain'   },
-  { id: 'washed',    label: 'Washed tee', kind: 'washed'  },
-  { id: 'hoodie',    label: 'Hoodie',     kind: 'hoodie', hood: true },
-  { id: 'crop',      label: 'Cardigan',   kind: 'cardi',  open: true },
-  { id: 'flannel',   label: 'Flannel',    kind: 'flannel',open: true },
-  { id: 'denim',     label: 'Denim',      kind: 'denim',  open: true },
-  { id: 'techwear',  label: 'Techwear',   kind: 'tech'    },
-  { id: 'hoops',     label: 'Basketball', kind: 'jersey'  },
-  { id: 'hoopsretro',label: 'Retro hoops',kind: 'jersey', retro: true },
-  { id: 'soccer',    label: 'Soccer',     kind: 'stripes' },
-  { id: 'soccerfed', label: 'Federation', kind: 'fed'     }
+  { id: 'tee',      label: 'T-shirt',   kind: 'plain'    },
+  { id: 'cutoff',   label: 'Cutoff',    kind: 'cutoff'   },
+  { id: 'bare',     label: 'No shirt',  kind: 'bare', bare: true },
+  { id: 'buttonup', label: 'Button-up', kind: 'buttonup' },
+  { id: 'flannel',  label: 'Flannel',   kind: 'flannel', open: true },
+  { id: 'hoodie',   label: 'Hoodie',    kind: 'hoodie',  hood: true },
+  { id: 'suit',     label: 'Suit',      kind: 'suit'     },
+
+  /* Football and basketball shirts, as shape, colourway and number only.
+     Club crests, wordmarks and player names are trademarks and personality
+     rights — not ours to put on a public site — so none appear here. */
+  { id: 'kit-pink',   label: 'Pink 10',   kind: 'football',
+    body: '#f4589b', trim: '#12121a', num: 10 },
+  { id: 'kit-claret', label: 'Claret 19', kind: 'football',
+    body: '#a01141', trim: '#16407e', num: 19, stripes: true },
+  { id: 'kit-blue',   label: 'Blue 11',   kind: 'hoops',
+    body: '#1d5cab', trim: '#f28022', num: 11 },
+  { id: 'kit-white',  label: 'White 23',  kind: 'hoops',
+    body: '#f2f4f7', trim: '#c8102e', trim2: '#12467f', num: 23, darkNum: true }
 ];
 const APPAREL_BY_ID = new Map(APPAREL.map((a) => [a.id, a]));
 
-/* Abstract colourways, no marks. */
-const KIT_COLORS = [
-  { a: '#f4842a', b: '#0d5eab' },   // orange / blue
-  { a: '#132448', b: '#e8e8ee' },   // navy / white
-  { a: '#1d7a4c', b: '#f2f4f5' },   // green / white
-  { a: '#8e1b2e', b: '#f0e2c8' },   // claret / cream
-  { a: '#2b2f36', b: '#f5c542' },   // charcoal / gold
-  { a: '#5a3fa8', b: '#e9e4f7' }    // purple / lilac
-];
+/* Outfits that no longer exist, so a stored character does not fall back to
+   a plain tee and lose whatever it was wearing. */
+const APPAREL_ALIASES = {
+  washed: 'tee',
+  crop: 'buttonup',
+  denim: 'buttonup',
+  techwear: 'hoodie',
+  hoops: 'kit-blue',
+  hoopsretro: 'kit-white',
+  soccer: 'kit-claret',
+  soccerfed: 'kit-pink'
+};
 
 /* ---- digital ID badge ---------------------------------------
    The plaza deliberately never receives other people's email
@@ -1823,8 +1838,6 @@ function randomDNA(opts = {}) {
     piercing: chance(0.2) ? pickOne(['nose','nostril2','septum']) : 'none',
     tattoo: chance(0.16) ? pickOne(['hand','neck','both']) : 'none',
     apparel: opts.apparel || pickOne(APPAREL).id,
-    kit: randi(0, KIT_COLORS.length - 1),
-    kitNumber: pickOne([0, 3, 6, 7, 8, 9, 10, 11, 21, 23, 24, 30]),
     badge: 'none',
     hue: Math.random()
   };
@@ -1854,10 +1867,9 @@ function normalizeDNA(d) {
   if (PIERCING_ALIASES[d.piercing]) d.piercing = PIERCING_ALIASES[d.piercing];
   delete d.ears;                       // ear jewellery was removed
   if (typeof d.tattoo !== 'string') d.tattoo = 'none';
+  if (APPAREL_ALIASES[d.apparel]) d.apparel = APPAREL_ALIASES[d.apparel];
   if (typeof d.apparel !== 'string' || !APPAREL_BY_ID.has(d.apparel)) d.apparel = 'tee';
   if (typeof d.badge !== 'string') d.badge = 'none';
-  if (!Number.isInteger(d.kit)) d.kit = 0;
-  if (!Number.isInteger(d.kitNumber)) d.kitNumber = 10;
   if (!EYEWEAR_BY_ID.has(d.glasses)) d.glasses = 0;
   if (!d.glassCol) d.glassCol = '#3c4a55';
   if (!d.hatColor) d.hatColor = d.shirt || pickOne(SHIRTS);
@@ -1955,7 +1967,6 @@ function makeApparelTexture(dna) {
   const c = cv(TORSO_W, TORSO_H);
   const g = c.getContext('2d');
   const base = dna.shirt;
-  const kit = KIT_COLORS[dna.kit % KIT_COLORS.length];
   const W = TORSO_W, H = TORSO_H;
 
   /* Three.js sphere UVs start at -x and run anticlockwise, which puts the
@@ -1964,6 +1975,14 @@ function makeApparelTexture(dna) {
      `back` so a jersey reads from behind too. */
   const front = W * 0.25;
   const back = W * 0.75;
+
+  /* Vertically, the head hides the top of the torso: it is wider than the
+     chest everywhere above y≈0.58, which is texture v≈0.36. Only the lower
+     two thirds is ever seen, so detail is placed through vy(), where 0 is the
+     top of what is visible and 1 is the hem. Numbers and pockets were
+     previously centred around v 0.44–0.50 and sat behind the head. */
+  const VIS_TOP = 0.36;
+  const vy = (f) => H * (VIS_TOP + f * (1 - VIS_TOP));
 
   g.fillStyle = base;
   g.fillRect(0, 0, W, H);
@@ -1988,52 +2007,75 @@ function makeApparelTexture(dna) {
   };
 
   switch (spec.kind) {
-    case 'washed': {
-      // uneven bleach: soft light blooms over the base
-      for (let i = 0; i < 26; i++) {
-        const x = Math.random() * W, y = Math.random() * H, r = 14 + Math.random() * 34;
-        const grd = g.createRadialGradient(x, y, 1, x, y, r);
-        grd.addColorStop(0, 'rgba(255,255,255,.14)');
-        grd.addColorStop(1, 'rgba(255,255,255,0)');
-        g.fillStyle = grd; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+    case 'bare': {
+      // Skin, with just enough shading to read as a chest rather than a
+      // flat cylinder. All of it sits in the visible band.
+      g.fillStyle = dna.skin; g.fillRect(0, 0, W, H);
+      const shadow = shade(dna.skin, -20);
+      g.strokeStyle = shadow; g.lineWidth = 4; g.lineCap = 'round';
+      g.globalAlpha = 0.55;
+      g.beginPath();                                        // sternum
+      g.moveTo(front, vy(0.05)); g.lineTo(front, vy(0.42));
+      g.stroke();
+      g.beginPath();                                        // pectoral crease
+      g.moveTo(front - 40, vy(0.06));
+      g.quadraticCurveTo(front, vy(0.2), front + 40, vy(0.06));
+      g.stroke();
+      g.globalAlpha = 0.34;
+      for (let i = 0; i < 2; i++) {                          // abdomen
+        const y = vy(0.56 + i * 0.16);
+        g.beginPath(); g.moveTo(front - 26, y); g.lineTo(front + 26, y); g.stroke();
+      }
+      g.globalAlpha = 1;
+      break;
+    }
+    case 'cutoff': {
+      g.fillStyle = base; g.fillRect(0, 0, W, H);
+      // Armholes cut in at the side seams, where u=0 and u=0.5 sit. They are
+      // high up and mostly behind the head, so the look is carried by the
+      // frayed hem, which is always in view.
+      g.fillStyle = dna.skin;
+      for (const x of [0, W * 0.5]) {
+        g.beginPath();
+        g.moveTo(x - 30, 0);
+        g.quadraticCurveTo(x, vy(0.3), x + 30, 0);
+        g.closePath(); g.fill();
+      }
+      g.fillStyle = shade(base, -26);
+      for (let x = 0; x < W; x += 13) {                       // raw edge
+        g.fillRect(x, H - 14 - (x % 3) * 6, 11, 20 + (x % 3) * 6);
       }
       break;
     }
     case 'hoodie': {
-      g.fillStyle = shade(base, -18);
-      g.fillRect(0, H * 0.76, W, H * 0.24);              // waist ribbing
-      // kangaroo pocket as a filled shape, not an outline — a 3px line
-      // disappears once this is wrapped onto the torso
-      g.fillStyle = shade(base, -10);
-      g.fillRect(front - 42, H * 0.5, 84, H * 0.26);
+      g.fillStyle = shade(base, -20);
+      g.fillRect(0, vy(0.86), W, H);                          // waist ribbing
+      // Kangaroo pocket as a filled shape, not an outline — a thin line
+      // disappears once this is wrapped onto the torso.
+      g.fillStyle = shade(base, -9);
+      g.fillRect(front - 46, vy(0.42), 92, vy(0.86) - vy(0.42));
       g.strokeStyle = shade(base, -40); g.lineWidth = 5;
-      g.strokeRect(front - 42, H * 0.5, 84, H * 0.26);
-      g.strokeStyle = '#f4f6f8'; g.lineWidth = 9; g.lineCap = 'round';
-      g.beginPath();
-      g.moveTo(front - 16, H * 0.1); g.lineTo(front - 11, H * 0.42);
-      g.moveTo(front + 16, H * 0.1); g.lineTo(front + 11, H * 0.42);
-      g.stroke();                                        // drawcords
+      g.strokeRect(front - 46, vy(0.42), 92, vy(0.86) - vy(0.42));
+      g.strokeStyle = '#f4f6f8'; g.lineWidth = 10; g.lineCap = 'round';
+      g.beginPath();                                          // drawcords
+      g.moveTo(front - 17, vy(0.0)); g.lineTo(front - 11, vy(0.34));
+      g.moveTo(front + 17, vy(0.0)); g.lineTo(front + 11, vy(0.34));
+      g.stroke();
       break;
     }
-    case 'cardi':
-    case 'denim': {
-      const body = spec.kind === 'denim' ? '#4d6f9a' : base;
-      g.fillStyle = body; g.fillRect(0, 0, W, H);
-      if (spec.kind === 'denim') {
-        g.globalAlpha = 0.14; g.fillStyle = '#ffffff';
-        for (let i = 0; i < W; i += 4) g.fillRect(i, 0, 2, H);   // twill
-        g.globalAlpha = 1;
-        g.strokeStyle = '#e0b769'; g.lineWidth = 4; g.setLineDash([9, 7]);
-        g.beginPath();
-        g.moveTo(front - 34, 0); g.lineTo(front - 34, H);
-        g.moveTo(front + 34, 0); g.lineTo(front + 34, H);
-        g.stroke(); g.setLineDash([]);                            // contrast stitch
-        g.fillStyle = '#cfd6dc';
-        g.fillRect(front - 44, H * 0.42, 20, 12);                 // chest pocket flap
-        g.fillRect(front + 24, H * 0.42, 20, 12);
+    case 'buttonup': {
+      g.fillStyle = base; g.fillRect(0, 0, W, H);
+      g.fillStyle = shade(base, -12);                         // placket
+      g.fillRect(front - 14, 0, 28, H);
+      g.fillStyle = shade(base, -32);
+      g.fillRect(front - 15, 0, 3, H);
+      g.fillRect(front + 12, 0, 3, H);
+      g.fillStyle = '#f7fafc';                                // buttons
+      for (let i = 0; i < 4; i++) {
+        g.beginPath(); g.arc(front, vy(0.14 + i * 0.24), 5.5, 0, TAU); g.fill();
       }
-      g.fillStyle = shade(body, -34);
-      g.fillRect(front - 9, 0, 18, H);                            // centre opening
+      g.fillStyle = shade(base, -20);                         // chest pocket
+      g.fillRect(front + 32, vy(0.12), 34, 30);
       break;
     }
     case 'flannel': {
@@ -2043,55 +2085,73 @@ function makeApparelTexture(dna) {
       const hh = H / 6;
       for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? b : a; g.fillRect(0, i * hh, W, hh + 1); }
       g.globalAlpha = 1;
-      g.strokeStyle = 'rgba(255,255,255,.4)'; g.lineWidth = 3;
+      g.strokeStyle = 'rgba(255,255,255,.42)'; g.lineWidth = 3;
       for (let i = 0; i <= 6; i++) {
         g.beginPath(); g.moveTo(i * (W / 6), 0); g.lineTo(i * (W / 6), H); g.stroke();
       }
-      g.fillStyle = shade(base, -58); g.fillRect(front - 8, 0, 16, H);
+      g.fillStyle = shade(base, -58); g.fillRect(front - 9, 0, 18, H);
       break;
     }
-    case 'tech': {
-      g.fillStyle = shade(base, -48); g.fillRect(0, 0, W, H);
-      g.fillStyle = shade(base, -14);
-      g.fillRect(0, H * 0.3, W, H * 0.14);                         // chest panel seam
-      g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 4;
-      g.beginPath(); g.moveTo(0, H * 0.62); g.lineTo(W, H * 0.62); g.stroke();
-      g.fillStyle = '#cfd6dc';
-      g.fillRect(front - 3, H * 0.1, 6, H * 0.5);                  // centre zip
-      g.fillRect(front + 22, H * 0.46, 30, 14);                    // pocket flap
-      g.fillStyle = '#8f9aa4';
-      g.fillRect(front - 52, H * 0.5, 24, 10);                     // strap detail
+    case 'suit': {
+      const jacket = '#2b3038';
+      g.fillStyle = jacket; g.fillRect(0, 0, W, H);
+      // Shirt and tie have to live below the head line to be seen at all.
+      g.fillStyle = '#f4f7fa';
+      g.beginPath();
+      g.moveTo(front - 34, vy(-0.1));
+      g.lineTo(front + 34, vy(-0.1));
+      g.lineTo(front + 15, vy(0.6));
+      g.lineTo(front - 15, vy(0.6));
+      g.closePath(); g.fill();
+      g.fillStyle = '#8c2230';                                 // tie
+      g.beginPath();
+      g.moveTo(front - 11, vy(0.0));
+      g.lineTo(front + 11, vy(0.0));
+      g.lineTo(front + 7, vy(0.56));
+      g.lineTo(front, vy(0.66));
+      g.lineTo(front - 7, vy(0.56));
+      g.closePath(); g.fill();
+      g.fillStyle = shade(jacket, 18);                         // lapels
+      for (const sx of [-1, 1]) {
+        g.beginPath();
+        g.moveTo(front + sx * 34, vy(-0.1));
+        g.lineTo(front + sx * 60, vy(-0.1));
+        g.lineTo(front + sx * 22, vy(0.64));
+        g.lineTo(front + sx * 14, vy(0.6));
+        g.closePath(); g.fill();
+      }
+      g.fillStyle = '#f4f7fa';                                 // pocket square
+      g.fillRect(front + 44, vy(0.3), 18, 10);
       break;
     }
-    case 'jersey': {
-      g.fillStyle = spec.retro ? kit.b : kit.a;
-      g.fillRect(0, 0, W, H);
-      const trim = spec.retro ? kit.a : kit.b;
-      g.fillStyle = trim;
-      g.fillRect(0, 0, W, 18);                                     // shoulder trim
-      g.fillRect(0, H - 24, W, 24);                                // hem
-      // Side piping sits at the seams: u=0 and u=0.5 are the body's sides.
-      g.fillRect(0, 0, 10, H);
-      g.fillRect(W * 0.5 - 5, 0, 10, H);
-      g.fillRect(W - 10, 0, 10, H);
-      number(dna.kitNumber, trim, H * 0.5, 112);
+    case 'football': {
+      g.fillStyle = spec.body; g.fillRect(0, 0, W, H);
+      if (spec.stripes) {
+        g.fillStyle = spec.trim;
+        const n = 10, w = W / n;
+        for (let i = 0; i < n; i += 2) g.fillRect(i * w, 0, w, H);
+      }
+      g.fillStyle = spec.trim;
+      g.fillRect(0, H - 15, W, 15);                            // hem band
+      number(spec.num, spec.stripes ? '#ffffff' : spec.trim, vy(0.42), 72);
       break;
     }
-    case 'stripes': {
-      vstripes(kit.a, kit.b, 8);                                   // classic verticals
-      g.fillStyle = shade(kit.a, -40);
-      g.fillRect(0, H - 20, W, 20);
-      number(dna.kitNumber, '#ffffff', H * 0.52, 96);
-      break;
-    }
-    case 'fed': {
-      // modern minimalist: single body, one sash, small number
-      g.fillStyle = kit.a; g.fillRect(0, 0, W, H);
-      g.save();
-      g.translate(0, H * 0.46); g.rotate(-0.16);
-      g.fillStyle = kit.b; g.fillRect(-W, -22, W * 3, 44);
-      g.restore();
-      number(dna.kitNumber, kit.b, H * 0.78, 66);
+    case 'hoops': {
+      g.fillStyle = spec.body; g.fillRect(0, 0, W, H);
+      // Tank armholes cut in at the side seams.
+      g.fillStyle = dna.skin;
+      for (const x of [0, W * 0.5]) {
+        g.beginPath();
+        g.moveTo(x - 34, 0);
+        g.quadraticCurveTo(x, vy(0.24), x + 34, 0);
+        g.closePath(); g.fill();
+      }
+      g.fillStyle = spec.trim;                                 // side piping
+      for (const x of [front - 78, front + 71, back - 78, back + 71]) {
+        g.fillRect(x, 0, 8, H);
+      }
+      if (spec.trim2) { g.fillStyle = spec.trim2; g.fillRect(0, H - 18, W, 18); }
+      number(spec.num, spec.darkNum ? spec.trim : '#ffffff', vy(0.44), 80);
       break;
     }
   }
@@ -2588,7 +2648,8 @@ function buildMii(dna) {
   const shirtMat = new THREE.MeshStandardMaterial({
     color: apparelTex ? '#ffffff' : dna.shirt,
     map: apparelTex || null,
-    roughness: apparel.kind === 'tech' ? 0.42 : 0.72,
+    // Bare skin is softer than fabric; a suit has a slight sheen.
+    roughness: apparel.bare ? 0.82 : apparel.kind === 'suit' ? 0.55 : 0.72,
     metalness: 0
   });
   const pantMat  = new THREE.MeshStandardMaterial({ color: dna.pants, roughness: 0.85 });
@@ -2646,15 +2707,18 @@ function buildMii(dna) {
      collar covers whatever is left. It is painted onto the jaw in the face
      texture instead — see drawNeckInk(). */
 
-  // Cardigans, flannels and denim read as layers, so the collar picks up
-  // the garment instead of staying a white tee crew neck.
-  const collarMat = apparel.open
-    ? new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -30), roughness: 0.7 })
-    : whiteMat;
-  if (apparel.open) M.mats.push(collarMat);
-  const collar = new THREE.Mesh(G.collar(), collarMat);
-  collar.scale.set(0.135, 0.135, 0.13); collar.rotation.x = Math.PI / 2;
-  collar.position.y = 0.7; body.add(collar);
+  /* The collar is a white crew neck by default. Layered garments take it in
+     their own colour, a suit gets a shirt collar, and bare skin gets none at
+     all — a floating white ring above an undressed chest looks like a bug. */
+  if (!apparel.bare) {
+    const collarMat = apparel.open
+      ? new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -30), roughness: 0.7 })
+      : whiteMat;
+    if (apparel.open) M.mats.push(collarMat);
+    const collar = new THREE.Mesh(G.collar(), collarMat);
+    collar.scale.set(0.135, 0.135, 0.13); collar.rotation.x = Math.PI / 2;
+    collar.position.y = 0.7; body.add(collar);
+  }
 
   // A hood is a shell behind the head, not headwear — it coexists with hats.
   if (apparel.hood) {
@@ -4167,19 +4231,6 @@ const TRAY = [
     set: (d, v) => { d.apparel = v; }
   },
   {
-    key: 'kit', label: 'Kit colours',
-    options: () => KIT_COLORS.map((k, i) => ({ v: i, swatch: k.a, swatch2: k.b })),
-    get: (d) => d.kit,
-    set: (d, v) => { d.kit = v; }
-  },
-  {
-    key: 'kitNumber', label: 'Number',
-    options: () => [0, 3, 6, 7, 8, 9, 10, 11, 21, 23, 24, 30, 77, 99]
-      .map((n) => ({ v: n, label: String(n) })),
-    get: (d) => d.kitNumber,
-    set: (d, v) => { d.kitNumber = v; }
-  },
-  {
     key: 'badge', label: 'ID badge',
     options: () => BADGES.map((b) => ({ v: b.id, label: b.label })),
     get: (d) => d.badge,
@@ -5013,7 +5064,7 @@ window.MiiPlaza = {
   THREE, styleLabel,
   catalog: {
     EYEWEAR, FACIAL_HAIR, PIERCINGS, TATTOOS, APPAREL, BADGES,
-    HAIRSTYLES, HAT_STYLES, KIT_COLORS, SKINS, HAIRS, SHIRTS, EYECOL
+    HAIRSTYLES, HAT_STYLES, SKINS, HAIRS, SHIRTS, EYECOL
   }
 };
 </script>
