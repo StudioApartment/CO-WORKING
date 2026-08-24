@@ -146,8 +146,9 @@ at `api/_lib/certs/AppleWWDRCAG4.pem`.
 
 Create mails the `.pkpass` as an attachment (Mail on iPhone offers Add to
 Wallet) and also serves it at `/api/wallet/apple/:id` for the on-page button.
-The QR on the pass is the same signed door URL as the PNG in the email. Email
-stays on the back of the card, not on the lock-screen face.
+A later look change does not send another pass — the QR is the row id, not
+the outfit. The QR on the pass is the same signed door URL as the PNG in the
+email. Email stays on the back of the card, not on the lock-screen face.
 
 ### 5. Resend
 
