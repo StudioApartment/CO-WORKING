@@ -356,15 +356,20 @@ body.native-cursor #pointer{display:none}
 .sw{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:10.5px;font-weight:900;color:#8ba0ad;letter-spacing:.08em;text-transform:uppercase}
 .sw i{width:34px;height:34px;border-radius:50%;box-shadow:inset 0 -4px 8px rgba(0,0,0,.14),0 0 0 3px #fff,0 0 0 4.5px #d3dee5;animation:swIn .4s cubic-bezier(.2,1.6,.4,1) both}
 @keyframes swIn{from{transform:scale(0)}to{transform:scale(1)}}
-.namerow{display:flex;align-items:center;gap:12px;margin:34px 2px 2px}
-.namerow label{font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#93a7b4}
+.namerow{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:34px 2px 2px}
+.namerow label{
+  flex:0 0 5.2em;font-size:11px;font-weight:900;letter-spacing:.12em;
+  text-transform:uppercase;color:#93a7b4;
+}
 .namerow input{
-  flex:1;height:44px;border:0;outline:0;border-radius:999px;padding:0 18px;
+  flex:1 1 0;width:50%;max-width:50%;min-width:0;box-sizing:border-box;
+  height:44px;border:0;outline:0;border-radius:999px;padding:0 18px;
   font-size:16px;font-weight:800;color:var(--ink-dk);
   background:linear-gradient(#eef4f7,#fff);
   box-shadow:inset 0 2px 4px rgba(110,140,160,.22),0 0 0 2px #fff,0 0 0 3.5px #d3dee5;
 }
 .namerow input:focus{box-shadow:inset 0 2px 4px rgba(110,140,160,.22),0 0 0 2px #fff,0 0 0 3.5px var(--blue)}
+.namerow input[readonly]{opacity:.88;cursor:default}
 .row{display:flex;gap:14px;justify-content:center;margin-top:18px;flex-wrap:wrap}
 .row .wbtn{height:52px;font-size:14px}
 .row .wbtn .lbl{display:inline}
@@ -426,12 +431,8 @@ body.native-cursor #pointer{display:none}
 /* ============================================================
    BADGE FLOW — email capture, recovery, wallet handoff
    ============================================================ */
-.namerow.stack{flex-direction:column;align-items:stretch;gap:6px;margin-top:14px}
-.namerow.stack label{margin-left:4px}
-.namerow.stack input{width:100%}
-.namerow.stack input[readonly]{opacity:.88;cursor:default}
 .namerow + .namerow{margin-top:12px}
-.fieldnote{margin:6px 4px 0;font-size:11px;font-weight:700;color:#a4b6c2;line-height:1.5}
+.namerow .fieldnote{flex:1 0 100%;margin:2px 0 0 5.2em;font-size:11px;font-weight:700;color:#a4b6c2;line-height:1.5}
 
 /* inline notices inside the card */
 .banner{
@@ -638,8 +639,8 @@ body.native-cursor #pointer{display:none}
       <input id="miiName" maxlength="14" value="New Person" spellcheck="false" autocomplete="off"/>
     </div>
 
-    <div class="namerow stack" id="camEmailRow" style="display:none">
-      <label for="miiEmail">Email &mdash; where your badge goes</label>
+    <div class="namerow" id="camEmailRow" style="display:none">
+      <label for="miiEmail">Email</label>
       <input id="miiEmail" type="email" inputmode="email" autocomplete="email"
              spellcheck="false" placeholder="you@studio.com" maxlength="254"/>
       <p class="fieldnote" id="camEmailNote">One badge per email. We send your pass and QR here so you can add it to Apple Wallet &mdash; nothing else.</p>

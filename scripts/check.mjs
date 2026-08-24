@@ -125,6 +125,22 @@ for (const [page, ids] of required) {
   }
 }
 
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes('for="miiEmail">Email</label>')) {
+    note('✗', 'mii.html — email field should just say Email');
+    failures++;
+  } else if (src.includes('where your badge goes')) {
+    note('✗', 'mii.html — email label still has the long badge copy');
+    failures++;
+  } else if (!/max-width:\s*50%/.test(src) || !src.includes("id=\"camNameRow\"")) {
+    note('✗', 'mii.html — name and email inputs should be half width');
+    failures++;
+  } else {
+    note('✓', 'mii.html puts a half-width Email field under Name');
+  }
+}
+
 /* A broken vercel.json fails the production deploy while GitHub still
    merges — the last plaza fix never reached phones because of that. */
 {
