@@ -1891,20 +1891,36 @@ function drawFacialHair(g, U, dna) {
   g.setTransform(1, 0, 0, 1, 0, 0);
 
   if (st === 'stubble') {
-    /* Stipple, not a wash: a translucent blob vanished against skin and
-       shimmered on every redraw when it was Math.random. */
+    /* Light 5-o'clock shadow across the beard zone — both cheeks, jaw,
+       chin, philtrum — not a dense chin island. A translucent wash vanished
+       against skin, so this stays stipple, just finer and quieter. Seeded
+       so it does not shimmer on redraw. */
     let s = 2166136261;
     const key = String(dna.hair.color) + st;
     for (let i = 0; i < key.length; i++) s = Math.imul(s ^ key.charCodeAt(i), 16777619);
     const rnd = () => { s = Math.imul(s ^ (s >>> 15), 2246822519); return (s >>> 0) / 4294967296; };
     g.fillStyle = col;
-    for (let i = 0; i < 140; i++) {
-      const t = rnd();
-      const x = (50 + (rnd() - 0.5) * 28) * U;
-      const y = (56 + t * 30) * U;
-      const r = (0.45 + rnd() * 0.7) * U;
-      g.globalAlpha = 0.55 + rnd() * 0.4;
-      g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+    /* Cheeks live out at x≈26/74 (same place as blush). A 28-wide
+       rectangle sat between the eyes and read as a goatee. Keep the
+       jaw a little narrower so wrap does not become a chinstrap. */
+    let placed = 0, guard = 0;
+    while (placed < 1500 && guard < 12000) {
+      guard++;
+      const x = 22 + rnd() * 56;
+      const y = 51 + rnd() * 43;
+      const dx = Math.abs(x - 50);
+      const t = (y - 51) / 43;
+      let outer;
+      if (t < 0.12) outer = 22;
+      else if (t < 0.58) outer = 26.5;
+      else if (t < 0.82) outer = 22;
+      else outer = 22 - (t - 0.82) * 48;
+      const inner = t < 0.14 ? 9 : 0;
+      if (dx < inner || dx > outer) continue;
+      const r = (0.26 + rnd() * 0.28) * U;
+      g.globalAlpha = 0.32 + rnd() * 0.16;
+      g.beginPath(); g.arc(x * U, y * U, r, 0, TAU); g.fill();
+      placed++;
     }
     g.globalAlpha = 1;
     return;
