@@ -454,12 +454,30 @@ body.native-cursor #pointer{display:none}
 /* the "your badge is ready" panel that replaces the camera after saving */
 .badgeout{display:none;flex-direction:column;align-items:center;text-align:center;padding:6px 0 0}
 .badgeout.show{display:flex;animation:cardIn .34s cubic-bezier(.2,1.4,.4,1) both}
+.badge-id{width:100%;margin:0 0 14px}
+.badgeout .who{margin:0;font-size:20px;font-weight:900;color:var(--ink-dk)}
+.badgeout .mail{
+  margin:4px 0 0;font-size:13px;font-weight:700;color:#8ba0ad;
+  word-break:break-word;
+}
+.badgeout .since{
+  margin:6px 0 0;font-size:11.5px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;color:#93a7b4;
+}
+.badge-pair{
+  display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;
+}
+.badgeout .mii,.badgeout .qr{
+  width:150px;height:150px;object-fit:cover;flex:none;
+}
+.badgeout .mii{
+  border-radius:22px;background:linear-gradient(180deg,#f4f9fc,#dfeaf3);
+  box-shadow:inset 0 0 0 3px #fff,0 0 0 3px #cfdbe3;
+}
 .badgeout .qr{
-  width:150px;height:150px;border-radius:18px;background:#fff;padding:9px;
+  border-radius:18px;background:#fff;padding:9px;box-sizing:border-box;
   box-shadow:0 0 0 2px #fff,0 0 0 3.5px #d3dee5;
 }
-.badgeout .who{margin-top:12px;font-size:19px;font-weight:900;color:var(--ink-dk)}
-.badgeout .role{margin-top:2px;font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#a4b6c2}
 
 /* Google's brand guidance wants the button visually distinct from ours */
 .gwallet{
@@ -527,7 +545,8 @@ body.native-cursor #pointer{display:none}
 
 @media (max-width:600px){
   .mine-chip b{max-width:8ch}
-  .badgeout .qr{width:132px;height:132px}
+  .badgeout .mii,.badgeout .qr{width:124px;height:124px}
+  .badge-pair{gap:12px}
 }
 
 .nomod{position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:30px;font-weight:800;color:#7d92a0;z-index:300;background:#eef4f8}
@@ -650,9 +669,15 @@ body.native-cursor #pointer{display:none}
 
     <!-- shown after a badge is issued -->
     <div class="badgeout" id="camBadge">
-      <img class="qr" id="badgeQr" alt="Your badge QR code" width="150" height="150"/>
-      <p class="who" id="badgeWho">–</p>
-      <p class="role">Coworker</p>
+      <div class="badge-id">
+        <p class="who" id="badgeWho">–</p>
+        <p class="mail" id="badgeEmail"></p>
+        <p class="since" id="badgeSince"></p>
+      </div>
+      <div class="badge-pair">
+        <img class="mii" id="badgeMii" alt="" width="150" height="150"/>
+        <img class="qr" id="badgeQr" alt="Your badge QR code" width="150" height="150"/>
+      </div>
       <a class="awallet" id="badgeAppleWallet" href="#" style="display:none" rel="noopener noreferrer">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -4503,6 +4528,7 @@ const World = {
     if (opts.record) {
       m.recordId = opts.record.id;
       m.mine = opts.record.mine === true;
+      m.created = opts.record.created || null;
     }
     const a = opts.angle ?? rand(0, TAU), r = opts.radius ?? rand(1.2, this.bounds * 0.8);
     scene.add(m.root); scene.add(m.shadow);
@@ -4689,7 +4715,8 @@ const Store = {
               walletUrl: data.walletUrl || null,
               appleWalletUrl: data.appleWalletUrl || null,
               qrUrl: data.qrUrl || null,
-              previewUrl: data.previewUrl || null
+              previewUrl: data.previewUrl || null,
+              created: data.mii.created || null
             }
           : null;
         return this.session;
@@ -5741,9 +5768,19 @@ const Cam = {
     const s = Store.session;
     if (!s) { this.open(); return; }
     this.el.classList.add('open');
+    const live = World.miis.find((m) => m.recordId === s.id);
     this.reset();
+    if (live && live.dna) Preview.build(live.dna);
     this.showBadge(
-      { qrUrl: s.qrUrl, walletUrl: s.walletUrl, appleWalletUrl: s.appleWalletUrl, emailed: true },
+      {
+        id: s.id,
+        qrUrl: s.qrUrl,
+        walletUrl: s.walletUrl,
+        appleWalletUrl: s.appleWalletUrl,
+        previewUrl: s.previewUrl,
+        created: s.created || (live && live.created),
+        emailed: true
+      },
       { name: s.name || 'You', email: s.email || '' }
     );
     $('camSub').textContent = 'Scan this at the door, or add it to your phone.';
@@ -5945,15 +5982,17 @@ const Cam = {
       walletUrl: rec.walletUrl || null,
       appleWalletUrl: rec.appleWalletUrl || null,
       qrUrl: rec.qrUrl || null,
-      previewUrl: rec.previewUrl || null
+      previewUrl: rec.previewUrl || preview || null,
+      created: rec.created || Date.now()
     };
     refreshMineChip();
-    this.showBadge(rec, { name, email });
+    this.showBadge(rec, { name, email, portrait: preview });
   },
 
-  /* Replaces the camera panes with the issued badge: QR, name, and the
-     handoff to Apple / Google Wallet. */
-  showBadge(rec, { name, email }) {
+  /* Replaces the camera panes with the issued badge: name, email and
+     membership above a Mii + QR pair, then the Wallet handoff. */
+  showBadge(rec, { name, email, portrait } = {}) {
+    const shot = portrait || Preview.snapshot() || (rec && rec.previewUrl) || null;
     Preview.stop();
     if (this.stream) { this.stream.getTracks().forEach((t) => t.stop()); this.stream = null; }
     this.video.srcObject = null;
@@ -5977,7 +6016,31 @@ const Cam = {
       ? `Sent to ${email}. Open the pass on your iPhone to add it to Apple Wallet.`
       : 'Save it to your phone now — scan this at the door.';
 
-    $('badgeWho').textContent = name;
+    $('badgeWho').textContent = name || '–';
+
+    const mail = $('badgeEmail');
+    if (email) { mail.textContent = email; mail.style.display = ''; }
+    else { mail.textContent = ''; mail.style.display = 'none'; }
+
+    const created = (rec && rec.created) || (Store.session && Store.session.created) || Date.now();
+    const days = Math.max(0, Math.floor((Date.now() - Number(created)) / 86400000));
+    $('badgeSince').textContent = !Number(created)
+      ? ''
+      : (days === 0
+          ? 'Member of CO—WORKING · today'
+          : (days === 1 ? '1 day at CO—WORKING' : days + ' days at CO—WORKING'));
+    $('badgeSince').style.display = $('badgeSince').textContent ? '' : 'none';
+
+    const face = $('badgeMii');
+    if (shot) {
+      face.src = shot;
+      face.alt = (name || 'Your') + ' Mii';
+      face.style.display = '';
+    } else {
+      face.removeAttribute('src');
+      face.alt = '';
+      face.style.display = 'none';
+    }
 
     const qr = $('badgeQr');
     if (rec.qrUrl) { qr.src = rec.qrUrl; qr.style.display = ''; }

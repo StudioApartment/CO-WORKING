@@ -162,7 +162,7 @@ try {
   console.log(`\nLoading pages from ${ORIGIN}\n`);
 
   await checkPage('/mii.html', {
-    expectIds: ['scene', 'camEmailRow', 'camBadge', 'badgeWallet', 'badgeAppleWallet', 'camRecover', 'mineChip'],
+    expectIds: ['scene', 'camEmailRow', 'camBadge', 'badgeWallet', 'badgeAppleWallet', 'badgeMii', 'badgeEmail', 'badgeSince', 'camRecover', 'mineChip'],
     settle: 5000
   });
   console.log('  mii.html   loaded');
