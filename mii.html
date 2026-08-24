@@ -5417,7 +5417,7 @@ const TRAY = [
     set: (d, v) => { d.hair.style = v; d._hairUnder = v; }
   },
   {
-    key: 'hat', label: 'Headwear',
+    key: 'hat', label: 'Hat',
     options: () => [{ v: '', label: 'None' }]
       .concat(HAT_STYLES.map((s) => ({ v: s, label: styleLabel(s) }))),
     get: (d) => (HATS[d.hair.style] ? d.hair.style : ''),
@@ -5455,7 +5455,7 @@ const TRAY = [
     set: (d, v) => { d.tattoo = v; }
   },
   {
-    key: 'apparel', label: 'Outfit',
+    key: 'apparel', label: 'Top',
     options: () => APPAREL.map((a) => ({ v: a.id, label: a.label })),
     get: (d) => d.apparel,
     set: (d, v) => { d.apparel = v; }
@@ -5757,7 +5757,7 @@ const Cam = {
     this.dna = JSON.parse(JSON.stringify(mii.dna));
     $('camStage').classList.add('done', 'edit');
     $('camTitle').textContent = 'Edit ' + (mii.dna.name || 'this Mii');
-    $('camSub').textContent = 'Change their look — hair, glasses, outfit, ink. Everything else stays put.';
+    $('camSub').textContent = 'Change their look — hair, glasses, top, ink. Everything else stays put.';
     $('camRowLive').style.display = 'none';
     $('camRowDone').style.display = 'none';
     $('camRowEdit').style.display = 'flex';
@@ -6103,10 +6103,21 @@ function bindButtons() {
   });
 
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') Cam.close();
+    if (e.key === 'Escape') {
+      const pal = $('camPalette');
+      if (pal && pal.classList.contains('open')) { closePalette(); return; }
+      Cam.close();
+    }
     if (e.key === 'm' || e.key === 'M') $('btnSound').click();
   });
-  // Removed: clicking outside modal no longer closes it - only Cancel/X buttons do
+  // The dimmed backdrop must not close the whole modal — only Cancel / X.
+  // The colour chip overlay should still dismiss when you tap anywhere else.
+  $('modal').addEventListener('pointerdown', (e) => {
+    const pal = $('camPalette');
+    if (!pal || !pal.classList.contains('open')) return;
+    if (e.target.closest('#camPalette') || e.target.closest('.pick')) return;
+    closePalette();
+  });
 }
 bindButtons();
 
