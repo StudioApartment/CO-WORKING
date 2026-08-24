@@ -198,7 +198,6 @@ only takes the hat off — nothing gets skipped on the way in.
 | Piercings | Nose stud, double nostril, septum |
 | Ink | Hands, jaw, both |
 | Outfits | 11: t-shirt, cutoff, no shirt, button-up, flannel, hoodie, suit, plus two football and two basketball shirts |
-| ID badge | Chest patch, floating tag, @ tag, envelope |
 
 ### Where each layer is rendered
 
@@ -278,17 +277,18 @@ monograms. Real club and franchise logos are trademarks; shipping them on a
 public site is not ours to do. The palettes evoke the right cities without
 reproducing anything.
 
-### The ID badge and email privacy
+### The dropped ID badge overlay
 
-The brief asked for badges showing the wearer's email address. Rendered
-literally, that would undo the whole privacy design: the API deliberately
-never sends anyone else's email to the browser, and the Realtime publication
-is column-filtered to keep it out of change events.
+The brief asked for a 3D badge on the character showing the wearer's email.
+That was built and then removed at the client's request — it is not the same
+thing as the actual badge, which is still very much here: the QR, the Google
+Wallet pass and the email all remain.
 
-So the badge renders text **only on your own character**, after `/api/me`
-confirms the session. Everyone else's badge draws as an envelope or an `@`
-mark — the brief's own "custom email icons" option. `applyBadgeIdentity()`
-repaints the texture once ownership is known.
+Worth recording why the overlay was awkward regardless. Rendering an address
+above someone's head would have undone the privacy design: the API never
+sends anyone else's email to the browser, and the Realtime publication is
+column-filtered to keep it out of change events. So it could only ever have
+shown text on your own character, and a mark for everyone else.
 
 ## Decisions worth knowing
 

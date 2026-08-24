@@ -1786,18 +1786,6 @@ const APPAREL_ALIASES = {
   soccerfed: 'kit-pink'
 };
 
-/* ---- digital ID badge ---------------------------------------
-   The plaza deliberately never receives other people's email
-   addresses, so only the owner's own badge can render text. For
-   everyone else these draw as a mark. See applyBadgeIdentity(). */
-const BADGES = [
-  { id: 'none',     label: 'Off' },
-  { id: 'patch',    label: 'Chest patch' },
-  { id: 'pill',     label: 'Floating tag' },
-  { id: 'at',       label: '@ tag' },
-  { id: 'envelope', label: 'Envelope' }
-];
-
 function randomDNA(opts = {}) {
   const male = chance(0.5);
   // Weighted toward cuts rather than headwear, so a random crowd is not all
@@ -1838,7 +1826,6 @@ function randomDNA(opts = {}) {
     piercing: chance(0.2) ? pickOne(['nose','nostril2','septum']) : 'none',
     tattoo: chance(0.16) ? pickOne(['hand','neck','both']) : 'none',
     apparel: opts.apparel || pickOne(APPAREL).id,
-    badge: 'none',
     hue: Math.random()
   };
   if (!d.brows.color) d.brows.color = shade(d.hair.color, d.hair.style === 'bald' ? -10 : -18);
@@ -1869,7 +1856,7 @@ function normalizeDNA(d) {
   if (typeof d.tattoo !== 'string') d.tattoo = 'none';
   if (APPAREL_ALIASES[d.apparel]) d.apparel = APPAREL_ALIASES[d.apparel];
   if (typeof d.apparel !== 'string' || !APPAREL_BY_ID.has(d.apparel)) d.apparel = 'tee';
-  if (typeof d.badge !== 'string') d.badge = 'none';
+  delete d.badge;                      // the 3D ID badge overlay was removed
   if (!EYEWEAR_BY_ID.has(d.glasses)) d.glasses = 0;
   if (!d.glassCol) d.glassCol = '#3c4a55';
   if (!d.hatColor) d.hatColor = d.shirt || pickOne(SHIRTS);
@@ -2161,117 +2148,6 @@ function makeApparelTexture(dna) {
   t.anisotropy = 4;
   t.userData.own = true;      // dispose() looks for this
   return t;
-}
-
-/* ---- digital ID badge --------------------------------------
-   Rendered in the Mii Channel's UI language: a glossy pill with a
-   soft inner highlight.
-
-   `email` is null for everyone except the signed-in owner, because
-   the plaza is never sent other people's addresses — the API only
-   publishes id, name and character data. A badge with no address
-   still works: it draws as an envelope or an @ mark. */
-function makeIdBadgeTexture(style, email) {
-  const wide = style === 'pill' || (style === 'patch' && email);
-  const W = wide ? 512 : 192, H = 192;
-  const c = cv(W, H);
-  const g = c.getContext('2d');
-  g.clearRect(0, 0, W, H);
-
-  const pad = 12;
-  const r = (H - pad * 2) / 2;
-  const x0 = pad, y0 = pad, w = W - pad * 2, h = H - pad * 2;
-
-  const pill = () => {
-    g.beginPath();
-    g.moveTo(x0 + r, y0);
-    g.lineTo(x0 + w - r, y0);
-    g.arcTo(x0 + w, y0, x0 + w, y0 + r, r);
-    g.lineTo(x0 + w, y0 + h - r);
-    g.arcTo(x0 + w, y0 + h, x0 + w - r, y0 + h, r);
-    g.lineTo(x0 + r, y0 + h);
-    g.arcTo(x0, y0 + h, x0, y0 + h - r, r);
-    g.lineTo(x0, y0 + r);
-    g.arcTo(x0, y0, x0 + r, y0, r);
-    g.closePath();
-  };
-
-  // drop shadow, then the body, then a top gloss — the Wii UI recipe
-  g.save();
-  g.shadowColor = 'rgba(60,90,115,.35)';
-  g.shadowBlur = 14; g.shadowOffsetY = 5;
-  const body = g.createLinearGradient(0, y0, 0, y0 + h);
-  body.addColorStop(0, '#ffffff');
-  body.addColorStop(1, '#dce7ee');
-  g.fillStyle = body;
-  pill(); g.fill();
-  g.restore();
-
-  g.strokeStyle = '#c6d2da'; g.lineWidth = 4; pill(); g.stroke();
-
-  g.save();
-  pill(); g.clip();
-  const gloss = g.createLinearGradient(0, y0, 0, y0 + h * 0.5);
-  gloss.addColorStop(0, 'rgba(255,255,255,.95)');
-  gloss.addColorStop(1, 'rgba(255,255,255,0)');
-  g.fillStyle = gloss;
-  g.fillRect(x0, y0, w, h * 0.5);
-  g.restore();
-
-  const INK_BLUE = '#1b7fbc';
-  const cx = x0 + (email ? r + 6 : w / 2);
-  const cy = H / 2;
-
-  if (style === 'envelope' || (!email && style !== 'at')) {
-    // envelope mark
-    const ew = 62, eh = 42;
-    g.strokeStyle = INK_BLUE; g.lineWidth = 6; g.lineJoin = 'round';
-    g.strokeRect(cx - ew / 2, cy - eh / 2, ew, eh);
-    g.beginPath();
-    g.moveTo(cx - ew / 2, cy - eh / 2);
-    g.lineTo(cx, cy + eh * 0.16);
-    g.lineTo(cx + ew / 2, cy - eh / 2);
-    g.stroke();
-  } else if (style === 'at' || !email) {
-    g.font = '800 96px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif';
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillStyle = INK_BLUE;
-    g.fillText('@', cx, cy + 4);
-  }
-
-  if (email) {
-    // Long addresses get squeezed rather than clipped mid-domain.
-    const left = style === 'patch' ? x0 + 18 : cx + r + 4;
-    const room = x0 + w - left - 14;
-    let size = 52;
-    g.textAlign = 'left'; g.textBaseline = 'middle';
-    do {
-      g.font = `700 ${size}px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif`;
-      size -= 2;
-    } while (g.measureText(email).width > room && size > 20);
-    g.fillStyle = '#3d4d58';
-    g.fillText(email, left, cy + 2);
-  }
-
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 4;
-  t.userData.own = true;
-  return t;
-}
-
-/* Swap in the real address once we know it is our own Mii. Called after
-   /api/me resolves, so it has to repaint an already-built badge. */
-function applyBadgeIdentity(mii, email) {
-  if (!mii || !mii.badgeMat || !mii.badgeStyle || !email) return;
-  const next = makeIdBadgeTexture(mii.badgeStyle, email);
-  const prev = mii.badgeMat.map;
-  mii.badgeMat.map = next;
-  mii.badgeMat.needsUpdate = true;
-  if (prev && prev.userData && prev.userData.own) prev.dispose();
-
-  if (mii.badgeStyle === 'patch') mii.badgeMesh.scale.set(0.3, 0.11, 1);
-  else if (mii.badgeStyle !== 'pill') mii.badgeMesh.scale.set(0.5, 0.18, 1);
 }
 
 /* Ink is painted into its own small texture so it can sit on the neck
@@ -2776,40 +2652,6 @@ function buildMii(dna) {
     f.userData.hip = hip;
     f.userData.sx = sx;
     hip.add(f); M.feet.push(f);
-  }
-
-  /* ---- digital ID badge ----
-     Text is only ever filled in for the signed-in owner; see
-     applyBadgeIdentity(). Everyone else gets the mark on its own. */
-  if (dna.badge && dna.badge !== 'none') {
-    const style = dna.badge;
-    if (style === 'patch') {
-      const patchMat = new THREE.MeshStandardMaterial({
-        map: makeIdBadgeTexture(style, null), transparent: true, roughness: 0.7, depthWrite: false,
-        polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -3
-      });
-      M.mats.push(patchMat);
-      const patch = new THREE.Mesh(geoCache('quad', () => new THREE.PlaneGeometry(1, 1)), patchMat);
-      patch.scale.set(0.2, 0.075, 1);
-      patch.position.set(0.11, 0.6, 0.28 * dna.girth);
-      patch.renderOrder = 4;
-      body.add(patch);
-      M.badgeMesh = patch; M.badgeMat = patchMat;
-    } else {
-      // Floating variants hang just under the name plate and always face out.
-      const tagMat = new THREE.SpriteMaterial({
-        map: makeIdBadgeTexture(style, null), transparent: true, depthTest: false, opacity: 0.95
-      });
-      M.mats.push(tagMat);
-      const chip = new THREE.Sprite(tagMat);
-      const wide = style === 'pill';
-      chip.scale.set(wide ? 0.5 : 0.18, 0.18, 1);
-      chip.position.y = HANG * S + 0.13;
-      chip.renderOrder = 19;
-      root.add(chip);
-      M.badgeMesh = chip; M.badgeMat = tagMat;
-    }
-    M.badgeStyle = style;
   }
 
   /* ---- name tag ---- */
@@ -4230,12 +4072,6 @@ const TRAY = [
     get: (d) => d.apparel,
     set: (d, v) => { d.apparel = v; }
   },
-  {
-    key: 'badge', label: 'ID badge',
-    options: () => BADGES.map((b) => ({ v: b.id, label: b.label })),
-    get: (d) => d.badge,
-    set: (d, v) => { d.badge = v; }
-  }
 ];
 
 /* One button per category. It names what is currently picked, and a tap
@@ -5063,7 +4899,7 @@ window.MiiPlaza = {
   World, Sound, Store, Preview, randomDNA, normalizeDNA, buildMii, Mii, Cam, Config, Realtime,
   THREE, styleLabel,
   catalog: {
-    EYEWEAR, FACIAL_HAIR, PIERCINGS, TATTOOS, APPAREL, BADGES,
+    EYEWEAR, FACIAL_HAIR, PIERCINGS, TATTOOS, APPAREL,
     HAIRSTYLES, HAT_STYLES, SKINS, HAIRS, SHIRTS, EYECOL
   }
 };

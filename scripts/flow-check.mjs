@@ -150,12 +150,15 @@ try {
   {
     const cats = await evaluate(
       `[...document.querySelectorAll('.cyc .cat')].map(b => b.textContent)`);
-    check('one stepper per category', cats.length >= 8, `got ${cats.length}: ${cats}`);
+    check('one stepper per category', cats.length >= 7, `got ${cats.length}: ${cats}`);
     check('ear jewellery is gone', !cats.includes('Ears'), cats.join(', '));
     // Kit colour and squad number are baked into each shirt now, so those two
     // steppers should be gone rather than sitting there doing nothing.
     check('kit colour and number steppers are gone',
       !cats.includes('Kit colours') && !cats.includes('Number'), cats.join(', '));
+    // The 3D ID badge overlay on the character was removed. The real badge —
+    // the QR, the Wallet pass, the email — is a separate thing and must stay.
+    check('the character ID badge overlay is gone', !cats.includes('ID badge'), cats.join(', '));
     check('every stepper shows its current value', await evaluate(`
       [...document.querySelectorAll('.cyc')]
         .every(b => b.querySelector('.val') || b.querySelector('.kit'))`));
@@ -191,7 +194,10 @@ try {
     })()`);
     check('every stepper cycles without throwing', sweep.failures.length === 0,
       sweep.failures.slice(0, 3).join(' | '));
-    check('swept a meaningful number of steps', sweep.clicks > 300, `${sweep.clicks} steps`);
+    // Derived from the stepper count rather than a fixed number, so removing
+    // a category does not fail this instead of the thing it is checking.
+    check('swept every stepper the full 40 taps', sweep.clicks === cats.length * 40,
+      `${sweep.clicks} steps across ${cats.length} steppers`);
 
     // Hair and headwear share a slot, so the labels have to stay truthful.
     const slot = await evaluate(`(() => {

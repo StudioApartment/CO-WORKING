@@ -297,15 +297,6 @@ try {
               dna: { hair: { style: 'crop', color: '#2b1d15' }, facialHair: 'none',
                      glasses: 0, tattoo: 'none' } }
     },
-    {
-      file: 'style-06-badges',
-      title: 'Digital ID badge',
-      field: 'badge',
-      pick: `MiiPlaza.catalog.BADGES.map(b => b.id)`,
-      labelExpr: `MiiPlaza.catalog.BADGES.map(b => b.label)`,
-      cols: 5,
-      base: { framing: 'body' }
-    }
   ];
 
   console.log('\nContact sheets:');
