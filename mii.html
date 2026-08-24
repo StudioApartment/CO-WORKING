@@ -2183,6 +2183,58 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
+  shag: (r) => geoCache(`shagE${r}`, () => {
+    /* One shell. Balls on a cap were puffs; extra length or z-puff at
+       the front is a visor. Same face opening as the bob, then a
+       piecey hem and flicked sides so it is not a bowl. */
+    const tl = 2.28;
+    const g = new THREE.SphereGeometry(r, 48, 36, 0, TAU, 0, tl);
+    const p = g.attributes.position, v = new THREE.Vector3();
+    const n = HEAD_N;
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      const L = v.length() || 1;
+      const ux = v.x / L, uy = v.y / L, uz = v.z / L;
+      const th = Math.acos(Math.max(-1, Math.min(1, uy)));
+      const rs0 = Math.hypot(ux, uz) || 1e-6;
+      const azFront = Math.max(0, uz / rs0);
+      const phi = Math.atan2(ux, uz);
+      const faceWin = Math.pow(Math.max(0, azFront - 0.18) / 0.82, 2);
+      const chop = (0.04 * Math.sin(phi * 8.0) + 0.02 * Math.sin(phi * 15.0 + 0.7))
+        * (1 - faceWin);
+      const maxTh = 2.12 - faceWin * 1.04 + chop;
+      const th2 = (th / tl) * maxTh;
+      const rs = Math.sin(th2);
+      let nx = ux / rs0 * rs;
+      let ny = Math.cos(th2);
+      let nz = uz / rs0 * rs;
+      const s = Math.pow(
+        Math.pow(Math.abs(nx), n) + Math.pow(Math.abs(ny), n) + Math.pow(Math.abs(nz), n),
+        -1 / n
+      );
+      nx *= s * r; ny *= s * r; nz *= s * r;
+      ny += Math.max(0, ny - 0.48) * 0.32;
+      if (azFront > 0.4 && ny < 0.62) {
+        const t = Math.pow((azFront - 0.4) / 0.6, 1.3) * Math.min(1, (0.62 - ny) / 0.32);
+        const Lh = Math.hypot(nx, ny, nz) || 1;
+        const k = 1 - t + t * (1.05 / Lh);
+        nx *= k; ny *= k; nz *= k;
+      }
+      const side = Math.abs(ux) / rs0;
+      const flick = Math.max(0, 0.08 - ny) * (0.10 + side * 0.28);
+      nx *= 1 + flick;
+      nz *= 1 + flick * Math.max(0, -uz) * 0.40;
+      const hem = Math.max(0, Math.min(1, (th2 - 1.4) / 0.7));
+      const jag = (Math.sin(phi * 8) * 0.016 + Math.sin(phi * 17 + 0.9) * 0.01)
+        * hem * (1 - faceWin);
+      nx *= 1 + jag;
+      nz *= 1 + jag * 0.5;
+      p.setXYZ(i, nx, ny, nz);
+    }
+    p.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  }),
   cyl:  () => geoCache('cyl', () => new THREE.CylinderGeometry(1, 1, 1, 32)),
   frus: (rt) => geoCache(`fr${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 32)),
 };
@@ -2808,17 +2860,9 @@ function buildHair(dna, mat, extraMats) {
        earmuffs — the hem has to be the same surface as the crown. */
     add(G.bob(1.09), 0, 0, 0, 1, 1.08, 1);
   } else if (st === 'shag') {
-    // layered and choppy: fringe at the front, flicked ends at the sides
-    cap(1.058, 1.48, 1.2);
-    for (const sx of [-1, 1]) {
-      const s = add(G.ball(), sx * 0.82, -0.26, 0.16, 0.28, 0.5, 0.4);
-      s.rotation.z = -sx * 0.22;
-      const flick = add(G.ball(), sx * 0.9, -0.66, -0.1, 0.2, 0.24, 0.26);
-      flick.rotation.z = -sx * 0.5;
-    }
-    add(G.ball(), 0, -0.34, -0.7, 0.66, 0.46, 0.36);
-    const fringe = add(G.ball(), 0, 0.44, 0.78, 0.6, 0.2, 0.2);
-    fringe.rotation.x = 0.26;
+    /* One choppy shell. A cap plus side puffs plus a fringe ball on the
+       face was three haircuts glued together. */
+    add(G.shag(1.09), 0, 0, 0, 1, 1.08, 1);
   } else if (st === 'wolf') {
     // shaggy layers, curtain bangs, length through the sides and nape
     cap(1.054, 1.7, 1.18);
