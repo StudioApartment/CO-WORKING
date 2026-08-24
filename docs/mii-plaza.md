@@ -254,8 +254,10 @@ include the north pole produce a floating lid — the front polar fan sits
 above the back one, which is what the bowl cut used to show from above.
 
 The pompadour is that same dome with a smooth front-upper bump, not a second
-object parked on the crown. Extra loc volume sits at y = 0 on a slightly
-larger radius rather than being translated up.
+object parked on the crown. Curtains are two forehead lobes on one shell
+with a narrow part; extra balls on the cap pitted the crown. Extra loc
+volume sits at y = 0 on a slightly larger radius rather than being
+translated up.
 
 ### Things the rig cannot do
 

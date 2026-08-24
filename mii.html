@@ -2119,6 +2119,24 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
+  curtains: (r, tl) => geoCache(`curt${r}_${tl}`, () => {
+    const g = superball(r, 36, 28, HEAD_N, 0, TAU, 0, tl);
+    const p = g.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      /* Hang two panels at the front hairline, not on the crown. Puffing
+         the top made a canyon; a long dome covered the eyes. */
+      const ax = Math.abs(v.x);
+      const dx = ax - 0.44, dy = v.y - 0.34, dz = v.z - 0.86;
+      const bump = Math.exp(-(dx * dx * 2.6 + dy * dy * 2.0 + dz * dz) * 2.8);
+      v.y -= bump * 0.08;
+      v.z += bump * 0.28;
+      p.setXYZ(i, v.x, v.y, v.z);
+    }
+    p.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  }),
   cyl:  () => geoCache('cyl', () => new THREE.CylinderGeometry(1, 1, 1, 32)),
   frus: (rt) => geoCache(`fr${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 32)),
 };
@@ -2687,13 +2705,8 @@ function buildHair(dna, mat, extraMats) {
     s.rotation.x = -0.16;
     add(G.ball(), 0, 0.32, -0.86, 0.5, 0.28, 0.3);         // slight tail at the nape
   } else if (st === 'curtains') {
-    // middle part, falling either side of the forehead
-    cap(1.052, 1.4, 1.16);
-    for (const sx of [-1, 1]) {
-      const s = add(G.ball(), sx * 0.4, 0.4, 0.74, 0.34, 0.34, 0.22);
-      s.rotation.z = sx * 0.36;
-      s.rotation.x = 0.18;
-    }
+    add(G.curtains(1.05, 1.26), 0, 0, 0, 1, 1.03, 1);
+    add(G.hairBack(1.058, 1.52, 1.12), 0, 0, 0);
   } else if (st === 'dreads') {
     // Deep enough at the back and sides that scalp does not show between
     // the crown and where the locs start hanging.
