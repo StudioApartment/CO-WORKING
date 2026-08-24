@@ -243,6 +243,42 @@ console.log('\nrate limiting');
   check('limit is per IP, not global', other.statusCode === 201, `got ${other.statusCode}`);
 }
 
+console.log('\nbadge signature');
+{
+  const { badgeUrl, badgeSignature, verifyBadgeSignature } = await import('../api/_lib/badge.js');
+  const badgeVerify = (await import('../api/badge/verify.js')).default;
+
+  const url = badgeUrl({ id: createdId }, 'https://example.test');
+  check('badge url stays short enough to scan', url.length < 140, `${url.length} chars`);
+  check('badge url carries a signature', /[?&]s=/.test(url));
+
+  const sig = badgeSignature(createdId);
+  check('signature verifies', verifyBadgeSignature(createdId, sig) === true);
+  check('signature is bound to the id', verifyBadgeSignature('someone-else', sig) === false);
+  check('tampered signature fails', verifyBadgeSignature(createdId, sig.slice(0, -1) + 'A') === false);
+
+  const good = await call(badgeVerify, {
+    method: 'GET', query: { id: createdId, s: sig }, headers: { accept: 'application/json' }
+  });
+  check('signed badge verifies over HTTP', good.statusCode === 200 && good.json().signed === true,
+    JSON.stringify(good.json()));
+
+  const forged = await call(badgeVerify, {
+    method: 'GET', query: { id: createdId, s: 'AAAAAAAAAAAAAAAA' }, headers: { accept: 'application/json' }
+  });
+  check('forged signature is refused', forged.statusCode === 404, `got ${forged.statusCode}`);
+
+  const unsigned = await call(badgeVerify, {
+    method: 'GET', query: { id: createdId }, headers: { accept: 'application/json' }
+  });
+  check('unsigned legacy link still resolves', unsigned.statusCode === 200);
+  check('but is reported as unsigned', unsigned.json().signed === false);
+
+  const html = await call(badgeVerify, { method: 'GET', query: { id: createdId, s: sig } });
+  check('serves HTML to a phone camera', /text\/html/.test(html.getHeader('content-type')));
+  check('HTML names the holder', String(html.body).includes('Gage II'));
+}
+
 console.log('\nwallet');
 {
   const res = await call(walletGoogle, { method: 'GET', query: { id: createdId } });

@@ -2460,7 +2460,8 @@ const Realtime = {
     const dna = row.mii_data;
     if (!dna) return;
 
-    const m = World.add(dna, { record: { id: row.id, mine: false } });
+    const m = safeAdd(dna, { record: { id: row.id, mine: false } });
+    if (!m) return;
     World.ringBurst(m.pos.x, m.pos.z);
     Sound.fx.chime();
     toast(`${row.name || dna.name || 'Someone'} joined the office!`, 3000);
@@ -2486,11 +2487,25 @@ const Realtime = {
 
 const findByRecordId = (id) => World.miis.find((m) => m.recordId === id) || null;
 
+/* mii_data is stored opaquely, so a row written by an older version of the
+   character schema — or by hand — can be missing fields the builder expects.
+   One unrenderable row must not take the plaza down with it, so failures are
+   logged and skipped rather than thrown. */
+function safeAdd(dna, opts) {
+  try {
+    return World.add(dna, opts);
+  } catch (err) {
+    console.warn('[Mii Plaza] skipped a character that could not be built', opts?.record?.id, err);
+    return null;
+  }
+}
+
 /* Rebuild a Mii in place from new DNA, keeping where they were standing. */
 function respawnFrom(m, dna, record) {
   const pos = m.pos.clone(), facing = m.facing, y = m.y;
   World.remove(m);
-  const nm = World.add(dna, { record, fromSky: false });
+  const nm = safeAdd(dna, { record, fromSky: false });
+  if (!nm) return null;
   nm.pos.copy(pos); nm.y = y; nm.facing = facing; nm.targetFacing = facing;
   nm.sq = 0.7; nm.sqv = 0; nm.setMood('happy');
   if (y > 0.01) { nm.state = 'fall'; nm.vy = 0; }
@@ -3679,7 +3694,7 @@ function reportAuthResult() {
   list.forEach((rec, i) => setTimeout(() => {
     if (!rec || !rec.dna) return;
     if (findByRecordId(rec.id)) return;   // Realtime may have beaten the list
-    World.add(rec.dna, { record: rec });
+    safeAdd(rec.dna, { record: rec });
   }, 150 + i * 140));
 
   if (list.length) setTimeout(() => toast(`${list.length} already here`, 2200), 400);

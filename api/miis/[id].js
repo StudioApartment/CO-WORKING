@@ -68,7 +68,7 @@ export default async function handler(req, res) {
     const email = record.email;
     if (email) {
       const qrUrl = qrImageUrl(id, origin);
-      const badgeValue = badgeUrl({ id, name, email }, origin);
+      const badgeValue = badgeUrl({ id }, origin);
       const walletUrl = walletSaveUrl({
         id, name, email, previewUrl, qrUrl, badgeValue, origin
       });

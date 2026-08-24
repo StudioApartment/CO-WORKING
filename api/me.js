@@ -42,7 +42,7 @@ export default async function handler(req, res) {
       email: record.email,
       previewUrl,
       qrUrl,
-      badgeValue: badgeUrl({ id: record.id, name: record.name, email: record.email }, origin),
+      badgeValue: badgeUrl({ id: record.id }, origin),
       origin
     });
 

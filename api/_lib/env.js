@@ -51,8 +51,16 @@ export const hasAdmin = Boolean(ADMIN_SECRET_KEY);
 export const hasSessions = Boolean(JWT_SECRET && JWT_SECRET.length >= 16);
 
 export function originFrom(req) {
-  const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
-  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '')
+    .split(',')[0].trim();
   if (!host) return PUBLIC_ORIGIN;
-  return `${proto || 'https'}://${host}`;
+
+  const forwarded = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+  // Behind Vercel the header is always set. Locally it is absent, and assuming
+  // https there produces links that refuse to load over a plain dev server.
+  const proto = forwarded
+    || (req.socket && req.socket.encrypted ? 'https' : null)
+    || (/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(host) ? 'http' : 'https');
+
+  return `${proto}://${host}`;
 }

@@ -5,8 +5,11 @@
   "description": "CO—WORKING public landing site",
   "scripts": {
     "dev": "npx --yes serve -l 4444",
+    "dev:local": "node scripts/dev-server.mjs",
     "dev:api": "vercel dev --listen 4444",
-    "check": "node scripts/check.mjs"
+    "check": "node scripts/check.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "check:browser": "node scripts/browser-check.mjs"
   },
   "type": "module",
   "engines": {

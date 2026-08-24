@@ -1,13 +1,17 @@
-/* GET /api/badge/verify?t=<signed token>   (or ?id=<legacy id>)
+/* GET /api/badge/verify?id=<row id>&s=<signature>
  *
  * Where a scanned badge QR lands. Phone cameras open this in a browser, so it
  * answers in HTML for people and JSON for anything asking for it.
+ *
+ * An unsigned link still resolves, so a badge issued before JWT_SECRET was
+ * configured keeps working, but the response reports whether it was signed.
  */
 
 import { send, sendText, methodNotAllowed } from '../_lib/http.js';
-import { verifyBadgeToken } from '../_lib/badge.js';
+import { verifyBadgeSignature } from '../_lib/badge.js';
 import * as store from '../_lib/store.js';
 import { previewUrlFor } from '../_lib/supabase.js';
+import { hasSessions } from '../_lib/env.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
@@ -65,16 +69,19 @@ export default async function handler(req, res) {
     if (req.method !== 'GET') return methodNotAllowed(res, ['GET']);
 
     const q = req.query || {};
-    const token = String(q.t || q.token || '');
-    const claims = token ? verifyBadgeToken(token) : null;
-    const id = claims?.sub || String(q.id || '');
+    const id = String(q.id || '').slice(0, 64);
+    const sig = String(q.s || '');
 
     const fail = (reason) => wantsJson(req)
       ? send(res, 404, { valid: false, reason })
       : sendText(res, 404, page({ ok: false, reason }), 'text/html; charset=utf-8');
 
-    if (token && !claims) return fail('This badge signature did not check out.');
     if (!id) return fail('No badge in that link.');
+
+    // A present-but-wrong signature is a forgery attempt; a missing one is
+    // just an older badge, so only the former is rejected outright.
+    const signed = hasSessions && sig ? verifyBadgeSignature(id, sig) : false;
+    if (sig && !signed) return fail('This badge signature did not check out.');
 
     const record = await store.getById(id);
     if (!record) return fail('That badge is no longer active.');
@@ -84,13 +91,7 @@ export default async function handler(req, res) {
       : '';
 
     if (wantsJson(req)) {
-      return send(res, 200, {
-        valid: true,
-        id: record.id,
-        name: record.name,
-        since,
-        signed: Boolean(claims)
-      });
+      return send(res, 200, { valid: true, id: record.id, name: record.name, since, signed });
     }
 
     res.setHeader('cache-control', 'no-store');

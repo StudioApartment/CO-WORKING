@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     if (!record) return send(res, 404, { error: 'not found' });
 
     const png = await qrPngBuffer(
-      badgeUrl({ id: record.id, name: record.name, email: record.email }, originFrom(req))
+      badgeUrl({ id: record.id }, originFrom(req))
     );
 
     res.statusCode = 200;

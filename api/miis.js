@@ -66,7 +66,7 @@ export default async function handler(req, res) {
 
     const previewUrl = preview ? await uploadPreview(record.id, preview) : null;
     const qrUrl = qrImageUrl(record.id, origin);
-    const badgeValue = badgeUrl({ id: record.id, name, email }, origin);
+    const badgeValue = badgeUrl({ id: record.id }, origin);
     const walletUrl = walletSaveUrl({
       id: record.id, name, email, previewUrl, qrUrl, badgeValue, origin
     });

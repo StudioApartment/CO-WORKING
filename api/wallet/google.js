@@ -24,10 +24,7 @@ async function build(req, rawId) {
   const origin = originFrom(req);
   const previewUrl = previewUrlFor(record.id);
   const qrUrl = qrImageUrl(record.id, origin);
-  const badgeValue = badgeUrl(
-    { id: record.id, name: record.name, email: record.email },
-    origin
-  );
+  const badgeValue = badgeUrl({ id: record.id }, origin);
 
   const saveUrl = walletSaveUrl({
     id: record.id,
