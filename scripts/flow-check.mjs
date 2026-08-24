@@ -187,6 +187,11 @@ try {
     // tab row plus a grid of every option.
     const controls = await evaluate(`document.querySelectorAll('#camTray button').length`);
     check('the tray stays compact', controls <= 14, `${controls} controls`);
+    check('steppers sit in one row', await evaluate(`(() => {
+      const tops = [...document.querySelectorAll('.cyc')]
+        .map(b => Math.round(b.getBoundingClientRect().top));
+      return tops.length >= 7 && tops.every(t => t === tops[0]);
+    })()`));
 
     // Cycling must visit every value and come back round. This is the check
     // that actually matters: the catalogues are data, and a bad entry would
@@ -272,6 +277,9 @@ try {
       };
     })()`);
     check('James Dean swoop is in the list', extras.hasSwoop);
+    check('new characters start without piercings',
+      await evaluate(`Array.from({length: 16}, () => MiiPlaza.randomDNA().piercing)
+        .every(p => p === 'none')`));
     check('flowy mens cuts are in the list', extras.hasFlow && extras.hasMullet && extras.hasWolf);
     check('bandanas come in red, blue and green',
       extras.bandanas.includes('bandana') && extras.bandanas.includes('bandanablue')
@@ -341,19 +349,24 @@ try {
     // than silently resetting someone to a plain tee.
     const outfits = await evaluate(`(() => {
       const out = {};
-      for (const o of ['washed', 'crop', 'denim', 'techwear', 'hoops', 'hoopsretro', 'soccer', 'soccerfed']) {
+      for (const o of ['washed', 'crop', 'denim', 'techwear', 'hoops', 'hoopsretro',
+                       'soccer', 'soccerfed', 'kit-pink', 'kit-claret', 'kit-blue', 'kit-white']) {
         out[o] = MiiPlaza.normalizeDNA({ hair: { style: 'bowl', color: '#333' }, apparel: o }).apparel;
       }
       out.ids = MiiPlaza.catalog.APPAREL.map(a => a.id);
       return out;
     })()`);
     check('retired outfits map onto current ones',
-      ['washed','crop','denim','techwear','hoops','hoopsretro','soccer','soccerfed']
+      ['washed','crop','denim','techwear','hoops','hoopsretro','soccer','soccerfed',
+       'kit-pink','kit-claret','kit-blue','kit-white']
         .every((o) => outfits.ids.includes(outfits[o])),
       JSON.stringify(outfits));
-    check('the jerseys survived the remap',
-      outfits.hoops.startsWith('kit-') && outfits.soccer.startsWith('kit-'),
-      `${outfits.hoops}, ${outfits.soccer}`);
+    check('old kits land on the one jersey',
+      outfits.hoops === 'jersey' && outfits.soccer === 'jersey' && outfits['kit-pink'] === 'jersey',
+      `${outfits.hoops}, ${outfits.soccer}, ${outfits['kit-pink']}`);
+    check('the outfit list has a single jersey',
+      outfits.ids.filter((id) => id === 'jersey' || id.startsWith('kit-')).length === 1,
+      outfits.ids.join(', '));
 
     check('retired piercings fall back to none', retired.brow === 'none' && retired.lip === 'none',
       JSON.stringify(retired));
