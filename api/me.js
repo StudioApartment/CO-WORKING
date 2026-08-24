@@ -5,7 +5,7 @@
  * how the client discovers on load that it already owns a character.
  */
 
-import { send, methodNotAllowed } from './_lib/http.js';
+import { send, methodNotAllowed, preflight } from './_lib/http.js';
 import { readSession, clearSession } from './_lib/session.js';
 import * as store from './_lib/store.js';
 import { previewUrlFor } from './_lib/supabase.js';
@@ -14,6 +14,7 @@ import { walletSaveUrl } from './_lib/googleWallet.js';
 import { originFrom, hasSessions } from './_lib/env.js';
 
 export default async function handler(req, res) {
+  if (preflight(req, res)) return;
   try {
     if (req.method === 'DELETE') {
       clearSession(res);

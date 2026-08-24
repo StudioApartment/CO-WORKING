@@ -4553,12 +4553,15 @@ const Config = {
   features: { sessions: false, email: false, googleWallet: false, admin: false },
 
   async load() {
-    try {
-      const r = await fetch('api/config', { cache: 'no-store' });
-      if (!r.ok) throw new Error(r.status);
-      Object.assign(this, await r.json());
-    } catch {
-      /* left at defaults: the plaza still runs off localStorage */
+    for (let i = 0; i < 3; i++) {
+      try {
+        const r = await fetch('/api/config', { cache: 'no-store' });
+        if (!r.ok) throw new Error(r.status);
+        Object.assign(this, await r.json());
+        break;
+      } catch {
+        if (i < 2) await new Promise((ok) => setTimeout(ok, 300 * (i + 1)));
+      }
     }
     this.loaded = true;
     return this;
@@ -4589,6 +4592,15 @@ const Store = {
   init() {
     try { this.token = localStorage.getItem('miiplaza-token') || null; } catch { this.token = null; }
   },
+  /* Config, not the first list() result, decides whether a character belongs
+     in the shared plaza. A missed GET used to flip mode to local, hide the
+     email field, and write the new Mii only to this browser. */
+  expectsCloud() {
+    return Config.storage !== 'legacy' || Config.features.sessions;
+  },
+  _api(path) { return '/api/' + String(path || '').replace(/^\/+/, ''); },
+  _sleep(ms) { return new Promise((ok) => setTimeout(ok, ms)); },
+  _isLocalId(id) { return typeof id === 'string' && id.charAt(0) === 'l'; },
   /* Only issued when the server could not sign a session cookie. Returned
      once at create time, so it has to be kept the moment we see it. */
   _saveToken(t) {
@@ -4596,60 +4608,86 @@ const Store = {
     this.token = t;
     try { localStorage.setItem('miiplaza-token', t); } catch {}
   },
-  _head(extra) {
-    const h = Object.assign({ 'content-type': 'application/json' }, extra || {});
+  /* JSON content-type only when there is a body. Putting it on GET/DELETE
+     makes the request non-simple, so a cross-origin hop (apex → www) OPTIONS
+     first and used to 405. */
+  _head(json) {
+    const h = {};
+    if (json) h['content-type'] = 'application/json';
     if (this.token) h['x-token'] = this.token;
     return h;
   },
 
   _localList() { try { return JSON.parse(localStorage.getItem('miiplaza-miis') || '[]'); } catch { return []; } },
   _localSave(l) { try { localStorage.setItem('miiplaza-miis', JSON.stringify(l)); } catch {} },
+  /* Characters saved while the office was unreachable stay on this device.
+     Keep them in the plaza when the server list comes back so they do not
+     vanish, tagged local so we never PUT them as if they had a row. */
+  _withLocal(server) {
+    const ids = new Set((server || []).map((r) => r && r.id));
+    const extra = this._localList()
+      .filter((r) => r && r.id && !ids.has(r.id))
+      .map((r) => Object.assign({ mine: true, local: true }, r));
+    return extra.length ? server.concat(extra) : server;
+  },
 
   /* Who this browser is. Also the only way to learn our own row id, since
      the cookie is invisible to script. */
   async me() {
-    try {
-      const r = await fetch('api/me', { cache: 'no-store', credentials: 'same-origin' });
-      if (!r.ok) throw new Error(r.status);
-      const data = await r.json();
-      this.session = data.signedIn
-        ? {
-            id: data.mii.id,
-            name: data.mii.name,
-            email: data.email,
-            walletUrl: data.walletUrl || null,
-            qrUrl: data.qrUrl || null,
-            previewUrl: data.previewUrl || null
-          }
-        : null;
-      return this.session;
-    } catch {
-      this.session = null;
-      return null;
+    if (!this.expectsCloud()) { this.session = null; return null; }
+    for (let i = 0; i < 2; i++) {
+      try {
+        const r = await fetch(this._api('me'), { cache: 'no-store', credentials: 'same-origin' });
+        if (!r.ok) throw new Error(r.status);
+        const data = await r.json();
+        this.session = data.signedIn
+          ? {
+              id: data.mii.id,
+              name: data.mii.name,
+              email: data.email,
+              walletUrl: data.walletUrl || null,
+              qrUrl: data.qrUrl || null,
+              previewUrl: data.previewUrl || null
+            }
+          : null;
+        return this.session;
+      } catch {
+        if (i === 0) await this._sleep(350);
+      }
     }
+    this.session = null;
+    return null;
   },
 
   async list() {
-    try {
-      const r = await fetch('api/miis', {
-        cache: 'no-store', credentials: 'same-origin', headers: this._head()
-      });
-      if (!r.ok) throw new Error(r.status);
-      const list = await r.json();
-      if (!Array.isArray(list)) throw new Error('bad payload');
-      this.mode = 'server';
-      this.degraded = false;
-      return list;
-    } catch (e) {
-      /* Falling back is right when the page is opened on its own, but when
-         /api/config says there is a backend it means the shared plaza is
-         down. Record that: a silent downgrade to per-device storage looks
-         exactly like "my Mii did not sync" and hides the real fault. */
-      this.mode = 'local';
-      this.degraded = Config.storage !== 'legacy' || Config.features.sessions;
-      this.lastError = String(e && e.message || e);
-      return this._localList().map((r) => Object.assign({ mine: true }, r));
+    const cloud = this.expectsCloud();
+    const attempts = cloud ? 3 : 1;
+    let lastErr = null;
+    for (let i = 0; i < attempts; i++) {
+      try {
+        const r = await fetch(this._api('miis'), {
+          cache: 'no-store', credentials: 'same-origin', headers: this._head(false)
+        });
+        if (!r.ok) throw new Error(r.status);
+        const list = await r.json();
+        if (!Array.isArray(list)) throw new Error('bad payload');
+        this.mode = 'server';
+        this.degraded = false;
+        this.lastError = null;
+        return this._withLocal(list);
+      } catch (e) {
+        lastErr = e;
+        if (i < attempts - 1) await this._sleep(350 * (i + 1));
+      }
     }
+    /* Falling back is right when the page is opened on its own, but when
+       /api/config says there is a backend it means the shared plaza is
+       down. Record that: a silent downgrade to per-device storage looks
+       exactly like "my Mii did not sync" and hides the real fault. */
+    this.mode = 'local';
+    this.degraded = cloud;
+    this.lastError = String(lastErr && lastErr.message || lastErr);
+    return this._localList().map((r) => Object.assign({ mine: true, local: true }, r));
   },
 
   /**
@@ -4657,30 +4695,36 @@ const Store = {
    * the caller can render the duplicate-email banner rather than a toast.
    */
   async add({ dna, email, name, preview }) {
-    if (this.mode === 'server') {
-      try {
-        const r = await fetch('api/miis', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: this._head(),
-          body: JSON.stringify({ dna, email, name, preview })
-        });
-        const body = await r.json().catch(() => ({}));
-        if (r.ok) {
-          this._saveToken(body.token);
-          body.mine = true;
-          return { ok: true, record: body };
+    if (this.expectsCloud()) {
+      for (let i = 0; i < 2; i++) {
+        try {
+          const r = await fetch(this._api('miis'), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: this._head(true),
+            body: JSON.stringify({ dna, email, name, preview })
+          });
+          const body = await r.json().catch(() => ({}));
+          if (r.ok) {
+            this.mode = 'server';
+            this.degraded = false;
+            this._saveToken(body.token);
+            body.mine = true;
+            return { ok: true, record: body };
+          }
+          return {
+            ok: false,
+            status: r.status,
+            code: body.code || null,
+            error: body.error || 'Could not save that one',
+            manageUrl: body.manageUrl || null
+          };
+        } catch {
+          if (i === 0) { await this._sleep(400); continue; }
+          return { ok: false, status: 0, error: 'Network hiccup — try that again.' };
         }
-        return {
-          ok: false,
-          status: r.status,
-          code: body.code || null,
-          error: body.error || 'Could not save that one',
-          manageUrl: body.manageUrl || null
-        };
-      } catch {
-        return { ok: false, status: 0, error: 'Network hiccup — try that again.' };
       }
+      return { ok: false, status: 0, error: 'Network hiccup — try that again.' };
     }
 
     const rec = {
@@ -4692,53 +4736,53 @@ const Store = {
   },
 
   async update(id, dna, preview) {
-    if (this.mode === 'server') {
-      try {
-        const r = await fetch('api/miis/' + encodeURIComponent(id), {
-          method: 'PUT',
-          credentials: 'same-origin',
-          headers: this._head(),
-          body: JSON.stringify({ dna, name: dna.name, preview })
-        });
-        if (!r.ok) {
-          const e = await r.json().catch(() => ({}));
-          toast(e.error || 'Could not update');
-          return false;
-        }
-        return true;
-      } catch {
+    if (this._isLocalId(id) || !this.expectsCloud()) {
+      const l = this._localList(); const i = l.findIndex((m) => m.id === id);
+      if (i >= 0) { l[i].dna = dna; this._localSave(l); }
+      return true;
+    }
+    try {
+      const r = await fetch(this._api('miis/' + encodeURIComponent(id)), {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: this._head(true),
+        body: JSON.stringify({ dna, name: dna.name, preview })
+      });
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({}));
+        toast(e.error || 'Could not update');
         return false;
       }
+      return true;
+    } catch {
+      return false;
     }
-    const l = this._localList(); const i = l.findIndex((m) => m.id === id);
-    if (i >= 0) { l[i].dna = dna; this._localSave(l); }
-    return true;
   },
 
   async remove(id) {
-    if (this.mode === 'server') {
-      try {
-        const r = await fetch('api/miis/' + encodeURIComponent(id), {
-          method: 'DELETE', credentials: 'same-origin', headers: this._head()
-        });
-        if (!r.ok) {
-          const e = await r.json().catch(() => ({}));
-          toast(e.error || 'Could not remove');
-          return false;
-        }
-        if (this.session && this.session.id === id) this.session = null;
-        return true;
-      } catch {
+    if (this._isLocalId(id) || !this.expectsCloud()) {
+      this._localSave(this._localList().filter((m) => m.id !== id));
+      return true;
+    }
+    try {
+      const r = await fetch(this._api('miis/' + encodeURIComponent(id)), {
+        method: 'DELETE', credentials: 'same-origin', headers: this._head(false)
+      });
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({}));
+        toast(e.error || 'Could not remove');
         return false;
       }
+      if (this.session && this.session.id === id) this.session = null;
+      return true;
+    } catch {
+      return false;
     }
-    this._localSave(this._localList().filter((m) => m.id !== id));
-    return true;
   },
 
   async requestMagicLink(email) {
     try {
-      const r = await fetch('api/auth/magic-link', {
+      const r = await fetch(this._api('auth/magic-link'), {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'content-type': 'application/json' },
@@ -5751,7 +5795,7 @@ const Cam = {
     renderPickers(); renderTray(); closePalette();
 
     $('camNameRow').style.display = 'flex';
-    if (Store.mode === 'server') $('camEmailRow').style.display = 'flex';
+    if (Store.expectsCloud()) $('camEmailRow').style.display = 'flex';
     $('camRowLive').style.display = 'none';
     $('camRowDone').style.display = 'flex';
     $('camTitle').textContent = a.confident ? 'Looking good!' : 'Best guess…';
@@ -5769,8 +5813,10 @@ const Cam = {
     const email = ($('miiEmail').value || '').trim();
 
     // Email is only required once there is a server to hold it; opened as a
-    // bare file the plaza still works without one.
-    const needsEmail = Store.mode === 'server';
+    // bare file the plaza still works without one. Use Config, not whether
+    // the first list() succeeded — a missed GET used to skip email and save
+    // the character only on this device.
+    const needsEmail = Store.expectsCloud();
     if (needsEmail) {
       if (!email) {
         this.showBanner('Add your email so we can send your badge.', 'bad');
@@ -6172,13 +6218,21 @@ function reportAuthResult() {
     safeAdd(rec.dna, { record: rec });
   }, 150 + i * 140));
 
-  if (list.length) setTimeout(() => toast(`${list.length} already here`, 2200), 400);
-
   /* Say so rather than pretending. Characters made now stay on this device
      and will not appear on another one. */
   if (Store.degraded) {
     console.warn('[Mii Plaza] shared plaza unreachable (' + Store.lastError + ') — saving to this device only');
     setTimeout(() => toast('Office is offline — this one stays on this device', 4200), 900);
+  } else {
+    const localN = list.filter((r) => r && r.local).length;
+    const cloudN = list.length - localN;
+    if (cloudN) setTimeout(() => toast(`${cloudN} already here`, 2200), 400);
+    if (localN) setTimeout(() => toast(
+      localN === 1
+        ? 'One character on this device hasn’t joined the office yet'
+        : localN + ' on this device haven’t joined the office yet',
+      3600
+    ), 900);
   }
 
   reportAuthResult();

@@ -84,6 +84,22 @@ for (const [page, ids] of required) {
   }
 }
 
+/* Relative `api/miis` from a nested path 404s, the plaza falls back to
+ * localStorage, and the "Office is offline" toast fires even when the
+ * functions are healthy. The client must pin every route at /api/. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (src.includes("fetch('api/") || src.includes('fetch("api/')) {
+    note('✗', 'mii.html — relative api/ fetch would 404 from a nested path');
+    failures++;
+  } else if (!src.includes("fetch('/api/config'") || !src.includes("expectsCloud()")) {
+    note('✗', 'mii.html — missing root-absolute /api/config fetch or expectsCloud()');
+    failures++;
+  } else {
+    note('✓', 'mii.html pins API calls at /api/ and keys claiming off Config');
+  }
+}
+
 console.log(
   failures ? `\n${failures} problem(s) found\n` : '\nAll clear\n'
 );

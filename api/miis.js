@@ -3,7 +3,7 @@
  *                    cookie, mails the pass
  */
 
-import { send, readJson, clientIp, methodNotAllowed } from './_lib/http.js';
+import { send, readJson, clientIp, methodNotAllowed, preflight } from './_lib/http.js';
 import { createMiiSchema, parseOr400 } from './_lib/validation.js';
 import { limitCreate, tooMany } from './_lib/ratelimit.js';
 import * as store from './_lib/store.js';
@@ -16,6 +16,7 @@ import { originFrom, hasSessions } from './_lib/env.js';
 import { makeToken, hashToken } from './_store.js';
 
 export default async function handler(req, res) {
+  if (preflight(req, res)) return;
   try {
     if (req.method === 'GET') {
       const session = readSession(req);

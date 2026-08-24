@@ -95,6 +95,37 @@ console.log('\nconfig');
   check('sessions on (JWT_SECRET set)', b.features.sessions === true);
 }
 
+console.log('\ncors');
+{
+  const opt = await call(miis, {
+    method: 'OPTIONS',
+    headers: { origin: 'https://www.coworking.fyi' }
+  });
+  check('OPTIONS /api/miis is a preflight 204', opt.statusCode === 204, `got ${opt.statusCode}`);
+  check('echoes the asking origin', opt.getHeader('access-control-allow-origin') === 'https://www.coworking.fyi');
+  check('allows credentials', opt.getHeader('access-control-allow-credentials') === 'true');
+  check('allows x-token on preflight', /x-token/i.test(String(opt.getHeader('access-control-allow-headers') || '')));
+
+  const get = await call(miis, {
+    method: 'GET',
+    headers: { origin: 'https://coworking.fyi' }
+  });
+  check('GET still lists when Origin is the apex', get.statusCode === 200 && Array.isArray(get.json()), `got ${get.statusCode}`);
+  check('GET also echoes CORS', get.getHeader('access-control-allow-origin') === 'https://coworking.fyi');
+
+  const stray = await call(miis, {
+    method: 'OPTIONS',
+    headers: { origin: 'https://evil.example' }
+  });
+  check('ignores an unknown origin', stray.getHeader('access-control-allow-origin') == null);
+
+  const cfg = await call(config, {
+    method: 'OPTIONS',
+    headers: { origin: 'http://localhost:4444' }
+  });
+  check('OPTIONS /api/config from local dev', cfg.statusCode === 204 && cfg.getHeader('access-control-allow-origin') === 'http://localhost:4444');
+}
+
 console.log('\nvalidation');
 {
   const bad = await call(miis, { method: 'POST', body: { email: 'nope', name: 'X', dna: DNA } });

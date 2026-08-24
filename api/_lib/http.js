@@ -4,6 +4,43 @@ import crypto from 'node:crypto';
 
 export const MAX_BODY_BYTES = 2 * 1024 * 1024; // previews arrive as data URLs
 
+/* Apex ↔ www is a cross-origin redirect, and a GET that carries x-token or
+ * Content-Type: application/json is not a "simple" request — the browser
+ * OPTIONS first. A 405 there aborts the real call, the plaza falls back to
+ * localStorage, and you get "Office is offline — this one stays on this
+ * device". Echo the asking origin when we know it. */
+const LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i;
+const VERCEL_PREVIEW = /^https:\/\/[\w.-]+\.vercel\.app$/i;
+const SITE_ORIGINS = new Set([
+  'https://www.coworking.fyi',
+  'https://coworking.fyi'
+]);
+
+export function applyCors(req, res) {
+  const origin = String((req && req.headers && req.headers.origin) || '');
+  if (!origin) return;
+  if (!SITE_ORIGINS.has(origin) && !LOCAL_ORIGIN.test(origin) && !VERCEL_PREVIEW.test(origin)) {
+    return;
+  }
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', 'content-type, x-token, x-admin-key');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Max-Age', '86400');
+}
+
+export function preflight(req, res) {
+  applyCors(req, res);
+  if (req.method === 'OPTIONS') {
+    res.statusCode = 204;
+    res.setHeader('cache-control', 'no-store');
+    res.end();
+    return true;
+  }
+  return false;
+}
+
 export function send(res, code, body) {
   res.statusCode = code;
   res.setHeader('content-type', 'application/json; charset=utf-8');
