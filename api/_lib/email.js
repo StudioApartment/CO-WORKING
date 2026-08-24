@@ -56,9 +56,9 @@ function darkButton(href, label) {
 }
 
 /**
- * Badge delivery — sent on create, and again on edit so the QR in the inbox
- * always matches what is in the plaza. When Apple Wallet is configured the
- * .pkpass is attached so Mail on iPhone can add it in one tap.
+ * Badge delivery — sent when a badge is claimed, not when someone later
+ * changes their hair. The QR is the row id, so a new look does not need a
+ * new pass.
  */
 export async function sendBadgeEmail({
   to, name, miiId, previewUrl, qrUrl, walletUrl, appleWalletUrl, applePass,

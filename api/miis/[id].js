@@ -12,11 +12,6 @@ import { limitWrite, tooMany } from '../_lib/ratelimit.js';
 import * as store from '../_lib/store.js';
 import { uploadPreview } from '../_lib/supabase.js';
 import { readSession, isAdmin, clearSession } from '../_lib/session.js';
-import { badgeUrl, qrImageUrl } from '../_lib/badge.js';
-import { walletSaveUrl } from '../_lib/googleWallet.js';
-import { applePassUrl, buildApplePass } from '../_lib/appleWallet.js';
-import { sendBadgeEmail } from '../_lib/email.js';
-import { originFrom } from '../_lib/env.js';
 import { tokenMatches } from '../_store.js';
 
 function mayWrite(req, record) {
@@ -65,28 +60,7 @@ export default async function handler(req, res) {
     const name = parsed.data.name || dna.name || record.name;
 
     const updated = await store.update(id, { name, dna: { ...dna, name } });
-
-    const origin = originFrom(req);
     const previewUrl = preview ? await uploadPreview(id, preview) : null;
-
-    // Re-send so the pass in their inbox matches the character in the plaza.
-    let emailed = false;
-    const email = record.email;
-    if (email) {
-      const qrUrl = qrImageUrl(id, origin);
-      const badgeValue = badgeUrl({ id }, origin);
-      const walletUrl = walletSaveUrl({
-        id, name, email, previewUrl, qrUrl, badgeValue, origin
-      });
-      const appleWalletUrl = applePassUrl(id, origin);
-      const applePass = await buildApplePass({ id, name, email, badgeValue, origin });
-      const mail = await sendBadgeEmail({
-        to: email, name, miiId: id, previewUrl, qrUrl, walletUrl,
-        appleWalletUrl, applePass,
-        manageUrl: `${origin}/mii`, origin, isUpdate: true
-      });
-      emailed = mail.sent;
-    }
 
     return send(res, 200, {
       id: updated.id,
@@ -94,8 +68,7 @@ export default async function handler(req, res) {
       name: updated.name,
       created: new Date(updated.created_at).getTime(),
       mine: true,
-      previewUrl,
-      emailed
+      previewUrl
     });
   } catch (e) {
     if (e instanceof store.StoreError) return send(res, e.status, { error: e.message });

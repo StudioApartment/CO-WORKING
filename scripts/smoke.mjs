@@ -253,6 +253,7 @@ console.log('\nownership');
   });
   check('owner may edit', mine.statusCode === 200, `${mine.statusCode} ${mine.body}`);
   check('edit renames', mine.json().name === 'Gage II', mine.json().name);
+  check('edit does not mail a new pass', mine.json().emailed == null);
 
   const missing = await call(miiById, { method: 'PUT', query: { id: 'nope' }, cookies: cookie });
   check('unknown id is 404', missing.statusCode === 404, `got ${missing.statusCode}`);

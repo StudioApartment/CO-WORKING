@@ -420,6 +420,7 @@ body.native-cursor #pointer{display:none}
 .namerow.stack{flex-direction:column;align-items:stretch;gap:6px;margin-top:14px}
 .namerow.stack label{margin-left:4px}
 .namerow.stack input{width:100%}
+.namerow.stack input[readonly]{opacity:.88;cursor:default}
 .namerow + .namerow{margin-top:12px}
 .fieldnote{margin:6px 4px 0;font-size:11px;font-weight:700;color:#a4b6c2;line-height:1.5}
 
@@ -632,7 +633,7 @@ body.native-cursor #pointer{display:none}
       <label for="miiEmail">Email &mdash; where your badge goes</label>
       <input id="miiEmail" type="email" inputmode="email" autocomplete="email"
              spellcheck="false" placeholder="you@studio.com" maxlength="254"/>
-      <p class="fieldnote">One badge per email. We send your pass and QR here so you can add it to Apple Wallet &mdash; nothing else.</p>
+      <p class="fieldnote" id="camEmailNote">One badge per email. We send your pass and QR here so you can add it to Apple Wallet &mdash; nothing else.</p>
     </div>
 
     <div class="banner" id="camBanner"></div>
@@ -5670,6 +5671,8 @@ const Cam = {
     $('camGuide').style.display = '';
     $('camNameRow').style.display = 'none';
     $('camEmailRow').style.display = 'none';
+    $('miiEmail').readOnly = false;
+    $('camEmailNote').innerHTML = 'One badge per email. We send your pass and QR here so you can add it to Apple Wallet &mdash; nothing else.';
     $('camRowLive').style.display = 'flex';
     $('camRowDone').style.display = 'none';
     $('camRowBadge').style.display = 'none';
@@ -5736,6 +5739,13 @@ const Cam = {
     $('camNameRow').style.display = 'flex';
     $('camTiny').style.display = 'none';
     $('miiName').value = mii.dna.name || '';
+    const emailOnFile = (Store.session && Store.session.id === mii.recordId && Store.session.email) || '';
+    if (emailOnFile) {
+      $('miiEmail').value = emailOnFile;
+      $('miiEmail').readOnly = true;
+      $('camEmailNote').textContent = 'Already on file from when you claimed this badge. Changing a look does not send a new pass.';
+      $('camEmailRow').style.display = 'flex';
+    }
     Preview.build(this.dna);
     renderPickers(); renderTray(); closePalette();
     Sound.fx.click();
