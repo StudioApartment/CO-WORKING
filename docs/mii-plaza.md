@@ -191,16 +191,13 @@ only takes the hat off — nothing gets skipped on the way in.
 
 | Category | Options |
 |---|---|
-| Eyewear | 16 across plastic, metal and sunglasses |
-| Hair | 23 real cuts: buzz, crew, French crop, waves, pixie, bowl, comb over, side part, quiff, pompadour, slick back, swept, spiky, curtains, afro, afro fade, locs, bob, shag, long, bun, ponytail, bald |
-| Headwear | 11 including flat-brim, dad hat, bucket, cowboy, beanie, bandana front/back |
+| Eyewear | 19 across plastic, metal, sunglasses and wrap-around baseball shades |
+| Hair | 27 real cuts: buzz, crew, French crop, waves, pixie, bowl, comb over, side part, quiff, pompadour, swoop, slick back, swept, spiky, curtains, afro, afro fade, locs, bob, shag, wolf cut, mullet, flow, long, bun, ponytail, bald |
+| Headwear | 13 including flat-brim, dad hat, bucket, cowboy, beanie, paisley bandanas in red / blue / green |
 | Facial hair | Stubble, lineup, full, goatee, moustache, handlebar |
-| Piercings | Nose, double nostril, septum, eyebrow bar, lip |
-| Ears | Hoops, studs, stacked |
-| Ink | Hands, neck, both |
-| Outfits | 11 including hoodie, flannel, denim, techwear, cardigan, basketball, soccer |
-| Kit | 6 colourways plus squad number |
-| ID badge | Chest patch, floating tag, @ tag, envelope |
+| Piercings | Nose stud, double nostril, septum |
+| Ink | Hands, jaw, both |
+| Outfits | 11: t-shirt, cutoff, no shirt, button-up, flannel, hoodie, suit, plus two football and two basketball shirts |
 
 ### Where each layer is rendered
 
@@ -208,10 +205,19 @@ Three surfaces, chosen by what the feature needs:
 
 - **Face texture** (512px canvas on the head patch) — eyewear, facial hair,
   piercings, blush, freckles. Cheap, and it deforms with the head.
-- **Meshes** — hair, hats, ear jewellery. Anything that has to break the
+- **Meshes** — hair and hats. Anything that has to break the
   silhouette has to be geometry.
 - **Torso texture** (256px canvas) — garments. Jersey numbers and pocket
   details are painted, then hoods and open plackets are added as geometry.
+
+  Two things govern where detail can go. Horizontally the chest is at u=0.25
+  and the back at u=0.75, not 0.5. Vertically the head is wider than the chest
+  everywhere above y≈0.58, so the top third of the texture is never seen: only
+  v 0.36–1.0 is visible, which is what `vy()` maps into. Squad numbers were
+  originally centred at v 0.44–0.50 and sat entirely behind the head.
+
+  Kit shirts carry their own colourway and number rather than borrowing a
+  shared random palette, because a jersey only looks right in its own colours.
 
 ### Working in head space
 
@@ -246,7 +252,18 @@ camera shows straight through.
 **No forearm or sleeve tattoos.** A Wii Mii has floating hands and no arms —
 that is the silhouette, not an omission. There is no forearm to ink, so the
 brief's sleeve tattoos are not implementable without abandoning the base
-aesthetic. Hands and neck are supported instead.
+aesthetic.
+
+**And no neck tattoos either, strictly speaking.** The head is between 0.33
+and 0.54 wide across the neck's entire height while the neck is only 0.115, so
+the head hides that mesh completely and the collar covers what is left — ink
+painted there was invisible at every angle. The "Jaw" option paints it into
+the face texture along the jawline instead, which is visible, and a beard
+grows over it because the ink is drawn first.
+
+Hand ink also has to fight for space: the hands are spheres about a tenth of
+the body tall, so the motif is heavy bars at full opacity rather than line
+art, repeated around the sphere so it reads whichever way the hand drifts.
 
 **Fades are implied, not shaded.** A character carries one hair colour, so
 `crop`, `dreads` and `afrofade` fake the taper by capping the sides short and
@@ -260,17 +277,18 @@ monograms. Real club and franchise logos are trademarks; shipping them on a
 public site is not ours to do. The palettes evoke the right cities without
 reproducing anything.
 
-### The ID badge and email privacy
+### The dropped ID badge overlay
 
-The brief asked for badges showing the wearer's email address. Rendered
-literally, that would undo the whole privacy design: the API deliberately
-never sends anyone else's email to the browser, and the Realtime publication
-is column-filtered to keep it out of change events.
+The brief asked for a 3D badge on the character showing the wearer's email.
+That was built and then removed at the client's request — it is not the same
+thing as the actual badge, which is still very much here: the QR, the Google
+Wallet pass and the email all remain.
 
-So the badge renders text **only on your own character**, after `/api/me`
-confirms the session. Everyone else's badge draws as an envelope or an `@`
-mark — the brief's own "custom email icons" option. `applyBadgeIdentity()`
-repaints the texture once ownership is known.
+Worth recording why the overlay was awkward regardless. Rendering an address
+above someone's head would have undone the privacy design: the API never
+sends anyone else's email to the browser, and the Realtime publication is
+column-filtered to keep it out of change events. So it could only ever have
+shown text on your own character, and a mark for everyone else.
 
 ## Decisions worth knowing
 

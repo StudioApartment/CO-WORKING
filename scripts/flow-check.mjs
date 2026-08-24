@@ -122,6 +122,26 @@ try {
   check('email field hidden before a photo',
     await evaluate("getComputedStyle(document.getElementById('camEmailRow')).display === 'none'"));
 
+  // A dismiss control has to be present and reachable in every state, not
+  // just the ones that happen to carry a Cancel button.
+  check('close button is visible on open', await evaluate(`(() => {
+    const x = document.getElementById('camX');
+    const r = x.getBoundingClientRect();
+    return r.width >= 30 && r.height >= 30 && getComputedStyle(x).visibility === 'visible';
+  })()`));
+  check('close button is labelled for screen readers',
+    await evaluate("document.getElementById('camX').getAttribute('aria-label') === 'Close'"));
+  check('the dialog announces itself',
+    await evaluate("document.getElementById('modal').getAttribute('role') === 'dialog'"));
+  check('close button dismisses the modal', await evaluate(`(() => {
+    document.getElementById('camX').click();
+    return !document.getElementById('modal').classList.contains('open');
+  })()`));
+  await evaluate("document.getElementById('btnCamera').click()");
+  await sleep(500);
+  check('and the modal reopens cleanly',
+    await evaluate("document.getElementById('modal').classList.contains('open')"));
+
   // A photo is normally captured from a webcam; a synthetic face-ish canvas
   // exercises the same analyze -> DNA -> preview path headlessly.
   await evaluate(`(async () => {
@@ -150,7 +170,15 @@ try {
   {
     const cats = await evaluate(
       `[...document.querySelectorAll('.cyc .cat')].map(b => b.textContent)`);
-    check('one stepper per category', cats.length >= 11, `got ${cats.length}: ${cats}`);
+    check('one stepper per category', cats.length >= 7, `got ${cats.length}: ${cats}`);
+    check('ear jewellery is gone', !cats.includes('Ears'), cats.join(', '));
+    // Kit colour and squad number are baked into each shirt now, so those two
+    // steppers should be gone rather than sitting there doing nothing.
+    check('kit colour and number steppers are gone',
+      !cats.includes('Kit colours') && !cats.includes('Number'), cats.join(', '));
+    // The 3D ID badge overlay on the character was removed. The real badge —
+    // the QR, the Wallet pass, the email — is a separate thing and must stay.
+    check('the character ID badge overlay is gone', !cats.includes('ID badge'), cats.join(', '));
     check('every stepper shows its current value', await evaluate(`
       [...document.querySelectorAll('.cyc')]
         .every(b => b.querySelector('.val') || b.querySelector('.kit'))`));
@@ -186,7 +214,10 @@ try {
     })()`);
     check('every stepper cycles without throwing', sweep.failures.length === 0,
       sweep.failures.slice(0, 3).join(' | '));
-    check('swept a meaningful number of steps', sweep.clicks > 300, `${sweep.clicks} steps`);
+    // Derived from the stepper count rather than a fixed number, so removing
+    // a category does not fail this instead of the thing it is checking.
+    check('swept every stepper the full 40 taps', sweep.clicks === cats.length * 40,
+      `${sweep.clicks} steps across ${cats.length} steppers`);
 
     // Hair and headwear share a slot, so the labels have to stay truthful.
     const slot = await evaluate(`(() => {
@@ -225,6 +256,34 @@ try {
       MiiPlaza.catalog.HAIRSTYLES.filter(s => !/^[A-Z]/.test(MiiPlaza.styleLabel(s)))`);
     check('every style has a display label', unlabelled.length === 0, unlabelled.join(', '));
 
+    const extras = await evaluate(`(() => {
+      const cat = MiiPlaza.catalog;
+      const cuts = cat.HAIRSTYLES.filter(s => !cat.HAT_STYLES.includes(s));
+      const glasses = cat.EYEWEAR;
+      return {
+        hasSwoop: cuts.includes('swoop'),
+        hasFlow: cuts.includes('flow'),
+        hasMullet: cuts.includes('mullet'),
+        hasWolf: cuts.includes('wolf'),
+        bandanas: cat.HAT_STYLES.filter(s => s.startsWith('bandana')),
+        wedge: glasses.filter(e => e.frame === 'wedge').map(e => e.id),
+        wrap: glasses.filter(e => e.frame === 'wrap').map(e => e.label),
+        tints: glasses.filter(e => e.tint).map(e => e.tint)
+      };
+    })()`);
+    check('James Dean swoop is in the list', extras.hasSwoop);
+    check('flowy mens cuts are in the list', extras.hasFlow && extras.hasMullet && extras.hasWolf);
+    check('bandanas come in red, blue and green',
+      extras.bandanas.includes('bandana') && extras.bandanas.includes('bandanablue')
+        && extras.bandanas.includes('bandanagreen'),
+      JSON.stringify(extras.bandanas));
+    check('no triangular wedge frames', extras.wedge.length === 0, extras.wedge.join(','));
+    check('wrap-around baseball shades are in the list', extras.wrap.length >= 3, extras.wrap.join(', '));
+    check('tinted lenses are actually tinted', extras.tints.every((t) => {
+      const m = /,\s*([0-9.]+)\)/.exec(t);
+      return m && Number(m[1]) >= 0.85;
+    }), extras.tints.join(', '));
+
     // Retired novelty styles must not leave a stored character bald.
     const aliased = await evaluate(`(() => {
       const out = {};
@@ -254,15 +313,63 @@ try {
     check('a pre-update character still builds', legacy.ok === true, legacy.error);
     check('old stache boolean carries over', legacy.facialHair === 'stache', legacy.facialHair);
     check('missing outfit defaults to a tee', legacy.apparel === 'tee', legacy.apparel);
+
+    // Retired piercings and ear jewellery must not leave a stored character
+    // asking for a piece that no longer renders.
+    const retired = await evaluate(`(() => {
+      const out = {};
+      for (const p of ['brow', 'lip', 'nose']) {
+        out[p] = MiiPlaza.normalizeDNA({ hair: { style: 'bowl', color: '#333' }, piercing: p }).piercing;
+      }
+      const withEars = MiiPlaza.normalizeDNA({
+        hair: { style: 'bowl', color: '#333' }, ears: 'stacked'
+      });
+      out.earsDropped = withEars.ears === undefined;
+      try {
+        MiiPlaza.buildMii({ name: 'Old', skin: '#f3c9a8',
+          hair: { color: '#2b1d15', style: 'bowl' },
+          eyes: { color: '#333', style: 0, size: 13, spacing: 16, y: 40 },
+          brows: { color: '#222', style: 0, w: 13, h: 3, gap: 12, angle: 0 },
+          mouth: { style: 0, w: 16, h: 3, y: 68 }, nose: { size: 0.12, y: -0.08 },
+          shirt: '#3fa9e0', headSize: 1, height: 1, girth: 1,
+          piercing: 'lip', ears: 'hoop' });
+        out.builds = true;
+      } catch (e) { out.builds = false; out.error = e.message; }
+      return out;
+    })()`);
+    // Outfits that were removed should land on the nearest survivor rather
+    // than silently resetting someone to a plain tee.
+    const outfits = await evaluate(`(() => {
+      const out = {};
+      for (const o of ['washed', 'crop', 'denim', 'techwear', 'hoops', 'hoopsretro', 'soccer', 'soccerfed']) {
+        out[o] = MiiPlaza.normalizeDNA({ hair: { style: 'bowl', color: '#333' }, apparel: o }).apparel;
+      }
+      out.ids = MiiPlaza.catalog.APPAREL.map(a => a.id);
+      return out;
+    })()`);
+    check('retired outfits map onto current ones',
+      ['washed','crop','denim','techwear','hoops','hoopsretro','soccer','soccerfed']
+        .every((o) => outfits.ids.includes(outfits[o])),
+      JSON.stringify(outfits));
+    check('the jerseys survived the remap',
+      outfits.hoops.startsWith('kit-') && outfits.soccer.startsWith('kit-'),
+      `${outfits.hoops}, ${outfits.soccer}`);
+
+    check('retired piercings fall back to none', retired.brow === 'none' && retired.lip === 'none',
+      JSON.stringify(retired));
+    check('nose piercings are untouched', retired.nose === 'nose', retired.nose);
+    check('stored ear jewellery is dropped', retired.earsDropped === true);
+    check('a character with retired pieces still builds', retired.builds === true, retired.error);
   }
 
   console.log('\nvalidation in the UI');
+  const beforeClaim = await evaluate('MiiPlaza.World.miis.length');
   await evaluate("document.getElementById('miiEmail').value = 'not-an-email'");
   await evaluate("document.getElementById('btnAccept').click()");
   await sleep(500);
   check('blocks a malformed email inline',
     await evaluate("document.getElementById('camBanner').classList.contains('show')"));
-  check('nobody was added', await evaluate('MiiPlaza.World.miis.length === 0'));
+  check('nobody was added', await evaluate(`MiiPlaza.World.miis.length === ${beforeClaim}`));
 
   await evaluate("document.getElementById('miiEmail').value = ''");
   await evaluate("document.getElementById('btnAccept').click()");
@@ -276,7 +383,8 @@ try {
   await evaluate("document.getElementById('btnAccept').click()");
   await sleep(2500);
 
-  check('character joined the plaza', await evaluate('MiiPlaza.World.miis.length === 1'));
+  check('character joined the plaza',
+    await evaluate(`MiiPlaza.World.miis.length === ${beforeClaim + 1}`));
   check('session established', await evaluate('!!MiiPlaza.Store.session'));
   check('badge panel shown',
     await evaluate("document.getElementById('camBadge').classList.contains('show')"));
@@ -288,6 +396,11 @@ try {
     await evaluate("document.getElementById('badgeNote').textContent.includes('Wallet')"));
   check('badge chip now visible',
     await evaluate("document.getElementById('mineChip').classList.contains('show')"));
+  // The badge screen only carries a Done button, so the X is the other way out.
+  check('close button still reachable on the badge screen', await evaluate(`(() => {
+    const x = document.getElementById('camX');
+    return x.getBoundingClientRect().width >= 30 && x.offsetParent !== null;
+  })()`));
   check('chip shows the name',
     await evaluate("document.getElementById('mineName').textContent === 'Flow'"));
 

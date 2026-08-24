@@ -140,6 +140,10 @@ window.__styleSheet = async function (opts) {
     holder.rotation.y = base.turn != null ? base.turn : 0;
     if (framing === 'head') {
       cam.position.set(0, 1.5, 3.5); cam.lookAt(0, 1.34, 0);
+    } else if (framing === 'torso') {
+      // Close on the chest — a garment's detail is a few dozen pixels at
+      // full-body framing, which is too small to judge.
+      cam.position.set(0, 0.62, 1.9); cam.lookAt(0, 0.52, 0);
     } else {
       cam.position.set(0, 1.05, 5.0); cam.lookAt(0, 0.86, 0);
     }
@@ -242,12 +246,45 @@ try {
     },
     {
       file: 'style-04-piercings',
-      title: 'Piercings and ear jewellery',
+      title: 'Nose rings',
       field: 'piercing',
       pick: `MiiPlaza.catalog.PIERCINGS.map(p => p.id)`,
       labelExpr: `MiiPlaza.catalog.PIERCINGS.map(p => p.label)`,
       cols: 6,
       base: { framing: 'head' }
+    },
+    {
+      file: 'style-04b-tattoos',
+      title: 'Ink',
+      field: 'tattoo',
+      pick: `MiiPlaza.catalog.TATTOOS.map(t => t.id)`,
+      labelExpr: `MiiPlaza.catalog.TATTOOS.map(t => t.label)`,
+      cols: 4,
+      // no hat or beard in the way, and close enough to judge the jaw
+      base: { framing: 'head', turn: -0.3,
+              dna: { tattoo: 'none', facialHair: 'none', hair: { style: 'buzz', color: '#2b1d15' } } }
+    },
+    {
+      file: 'style-04c-tattoos-body',
+      title: 'Ink — full body, to check the hands',
+      field: 'tattoo',
+      pick: `MiiPlaza.catalog.TATTOOS.map(t => t.id)`,
+      labelExpr: `MiiPlaza.catalog.TATTOOS.map(t => t.label)`,
+      cols: 4,
+      base: { framing: 'body', turn: -0.2,
+              dna: { tattoo: 'none', facialHair: 'none', apparel: 'tee',
+                     hair: { style: 'buzz', color: '#2b1d15' } } }
+    },
+    {
+      file: 'style-05b-apparel-close',
+      title: 'Apparel — chest detail',
+      field: 'apparel',
+      pick: `MiiPlaza.catalog.APPAREL.map(a => a.id)`,
+      labelExpr: `MiiPlaza.catalog.APPAREL.map(a => a.label)`,
+      cols: 6,
+      base: { framing: 'torso', turn: 0,
+              dna: { hair: { style: 'crop', color: '#2b1d15' }, facialHair: 'none',
+                     glasses: 0, tattoo: 'none' } }
     },
     {
       file: 'style-05-apparel',
@@ -256,17 +293,10 @@ try {
       pick: `MiiPlaza.catalog.APPAREL.map(a => a.id)`,
       labelExpr: `MiiPlaza.catalog.APPAREL.map(a => a.label)`,
       cols: 6,
-      base: { framing: 'body' }
+      base: { framing: 'body', turn: -0.25,
+              dna: { hair: { style: 'crop', color: '#2b1d15' }, facialHair: 'none',
+                     glasses: 0, tattoo: 'none' } }
     },
-    {
-      file: 'style-06-badges',
-      title: 'Digital ID badge',
-      field: 'badge',
-      pick: `MiiPlaza.catalog.BADGES.map(b => b.id)`,
-      labelExpr: `MiiPlaza.catalog.BADGES.map(b => b.label)`,
-      cols: 5,
-      base: { framing: 'body' }
-    }
   ];
 
   console.log('\nContact sheets:');

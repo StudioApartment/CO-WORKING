@@ -223,11 +223,40 @@ body.native-cursor #pointer{display:none}
 #modal.open{display:grid;animation:fadeIn .25s ease both}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .card{
+  position:relative;
   width:min(560px,94vw);max-height:94vh;overflow:auto;
   background:linear-gradient(180deg,#ffffff,#eef5f8);
   border-radius:30px;padding:20px 22px 16px;
   box-shadow:0 26px 70px rgba(60,90,115,.36),0 0 0 3px #fff,0 0 0 6px #cad7e0;
   animation:cardIn .4s cubic-bezier(.2,1.4,.4,1) both;
+}
+
+/* Dismiss control. The card scrolls, so a plain absolute corner button would
+   slide out of view on a long panel; a zero-height sticky row keeps it pinned
+   to whatever the top of the card currently is. */
+.card-xwrap{
+  position:sticky;top:0;height:0;z-index:6;
+  display:flex;justify-content:flex-end;pointer-events:none;
+}
+.card-x{
+  pointer-events:auto;
+  width:36px;height:36px;margin:-4px -4px 0 0;
+  border:0;border-radius:50%;cursor:pointer;
+  display:grid;place-items:center;color:#8ba0ad;
+  background:linear-gradient(#fff,#e9f0f4);
+  box-shadow:inset 0 1px 0 #fff,0 2px 5px rgba(90,115,135,.26),0 0 0 2px #fff,0 0 0 3px #d2dde4;
+  transition:transform .12s ease,color .12s ease;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.card-x:hover{color:#d0453c;transform:translateY(-1px)}
+.card-x:active{transform:translateY(1px)}
+/* keep long headings clear of it */
+.card h2{padding-right:42px}
+
+@media (max-width:560px){
+  /* 44px minimum for a thumb */
+  .card-x{width:44px;height:44px;margin:-2px -2px 0 0}
+  .card h2{padding-right:48px}
 }
 @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.94)}to{opacity:1;transform:none}}
 .card h2{margin:0 0 3px;font-size:21px;color:var(--ink-dk);font-weight:900}
@@ -543,8 +572,16 @@ body.native-cursor #pointer{display:none}
 </div>
 
 <!-- ========================= CAMERA MODAL ========================= -->
-<div id="modal">
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="camTitle">
   <div class="card">
+    <div class="card-xwrap">
+      <button type="button" class="card-x" id="camX" aria-label="Close" title="Close">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="3.2" stroke-linecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18"/>
+        </svg>
+      </button>
+    </div>
     <h2 id="camTitle">Get your badge</h2>
     <p class="sub" id="camSub">Line your face up with the oval and smile. Everything happens on this page &mdash; the photo never leaves your device.</p>
 
@@ -1055,6 +1092,62 @@ function makeCapLogo(text, color) {
   return t;
 }
 
+/* Classic paisley (buta) on a solid field. Motifs are oversized on purpose:
+   a fine print disappears once it is wrapped onto a dome the size of a head. */
+function makePaisleyTexture(base) {
+  const S = 256, c = cv(S), g = c.getContext('2d');
+  const dark = shade(base, -70);
+  const mid = shade(base, -28);
+  const light = mixHex('#f4ead2', base, 0.18);
+  g.fillStyle = base;
+  g.fillRect(0, 0, S, S);
+
+  const motif = (x, y, sc, rot) => {
+    g.save();
+    g.translate(x, y);
+    g.rotate(rot);
+    g.scale(sc, sc);
+    g.beginPath();
+    g.moveTo(0, -30);
+    g.bezierCurveTo(22, -28, 30, 4, 8, 30);
+    g.bezierCurveTo(-6, 22, -4, 8, -2, 0);
+    g.bezierCurveTo(-24, 6, -26, -22, 0, -30);
+    g.fillStyle = dark;
+    g.fill();
+    g.strokeStyle = light;
+    g.lineWidth = 2.4;
+    g.stroke();
+    g.beginPath();
+    g.moveTo(3, -12);
+    g.bezierCurveTo(12, -10, 14, 6, 3, 16);
+    g.bezierCurveTo(-4, 10, -6, -6, 3, -12);
+    g.fillStyle = light;
+    g.fill();
+    g.fillStyle = mid;
+    g.beginPath(); g.arc(-10, 6, 3.2, 0, TAU); g.fill();
+    g.beginPath(); g.arc(-6, 16, 2.2, 0, TAU); g.fill();
+    g.fillStyle = light;
+    g.beginPath(); g.arc(10, -4, 2.4, 0, TAU); g.fill();
+    g.restore();
+  };
+
+  const step = 72;
+  for (let row = -1; row < 6; row++) {
+    for (let col = -1; col < 6; col++) {
+      motif(col * step + (row % 2) * (step / 2), row * step * 0.72,
+        0.95, (row % 2 ? 0.45 : -0.35) + col * 0.04);
+    }
+  }
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(2, 2);
+  t.anisotropy = 4;
+  t.userData.own = true;
+  return t;
+}
+
 function makeNameTexture(name) {
   const label = String(name).slice(0, 14);
   if (!_measure) _measure = cv(8, 8).getContext('2d');
@@ -1242,18 +1335,72 @@ function drawEyewear(g, U, dna) {
   // make transparent plastic render as solid.
   const frame = spec.frameColor || spec.metal || (spec.shades ? '#1b1c22' : dna.glassCol);
 
+  /* One continuous shield, not two lenses. Wrap-around baseball shades only
+     read as wrap-around if they cover temple to temple as a single piece. */
+  if (spec.frame === 'wrap') {
+    g.save();
+    g.translate(50 * U, ey * U);
+    const W = gw * U, H = gh * U;
+    const shield = () => {
+      g.beginPath();
+      // More of the shield sits below the eye line so it covers the iris
+      // rather than hovering as a visor on the brow.
+      g.moveTo(-W * 0.5, -H * 0.12);
+      g.quadraticCurveTo(0, -H * 0.48, W * 0.5, -H * 0.12);
+      g.quadraticCurveTo(W * 0.58, H * 0.22, W * 0.5, H * 0.58);
+      g.quadraticCurveTo(0, H * 0.82, -W * 0.5, H * 0.58);
+      g.quadraticCurveTo(-W * 0.58, H * 0.22, -W * 0.5, -H * 0.12);
+      g.closePath();
+    };
+    shield();
+    g.fillStyle = spec.mirrorBot || '#1a0c04';
+    g.fill();
+    shield();
+    const grd = g.createLinearGradient(0, -H * 0.5, 0, H * 0.7);
+    grd.addColorStop(0, spec.mirrorTop || '#fff4b8');
+    grd.addColorStop(0.38, spec.mirrorMid || '#e07014');
+    grd.addColorStop(1, spec.mirrorBot || '#1a0c04');
+    g.fillStyle = grd;
+    g.fill();
+    g.save();
+    shield();
+    g.clip();
+    g.globalAlpha = 0.55;
+    g.fillStyle = '#ffffff';
+    g.beginPath();
+    g.moveTo(-W * 0.52, H * 0.06);
+    g.lineTo(W * 0.12, -H * 0.52);
+    g.lineTo(W * 0.28, -H * 0.52);
+    g.lineTo(-W * 0.32, H * 0.16);
+    g.closePath();
+    g.fill();
+    g.restore();
+    g.strokeStyle = frame;
+    g.lineWidth = spec.lw * U;
+    g.lineJoin = 'round';
+    shield();
+    g.stroke();
+    g.beginPath();
+    g.moveTo(-W * 0.46, -H * 0.08);
+    g.lineTo(W * 0.46, -H * 0.08);
+    g.lineWidth = spec.lw * U * 1.45;
+    g.stroke();
+    g.lineWidth = spec.lw * U * 0.9;
+    for (const sgn of [-1, 1]) {
+      g.beginPath();
+      g.moveTo(sgn * W * 0.5, 0);
+      g.lineTo(sgn * (W * 0.5 + 4.8 * U), -H * 0.22);
+      g.stroke();
+    }
+    g.restore();
+    return;
+  }
+
   const lensPath = (w, h) => {
     g.beginPath();
     switch (spec.frame) {
       case 'oval':
         g.ellipse(0, 0, w / 2, h / 2, 0, 0, TAU);
-        return;
-      case 'wedge':
-        g.moveTo(-w / 2, -h * 0.58);
-        g.lineTo(w * 0.5, -h * 0.1);
-        g.lineTo(w * 0.5, h * 0.06);
-        g.lineTo(-w / 2, h * 0.58);
-        g.closePath();
         return;
       case 'aviator': {
         // teardrop: wide flat brow, tapering to a low inner point
@@ -1305,10 +1452,10 @@ function drawEyewear(g, U, dna) {
 
     lensPath(lw, lh);
     if (spec.shades) {
-      g.fillStyle = spec.lens || 'rgba(26,28,38,.88)';
+      g.fillStyle = spec.lens || 'rgba(16,18,26,.96)';
       g.fill();
       g.save(); g.clip();
-      g.globalAlpha = 0.24; g.fillStyle = '#dff1ff';
+      g.globalAlpha = 0.22; g.fillStyle = '#dff1ff';
       g.beginPath();
       g.moveTo(-lw * 0.58, lh * 0.62); g.lineTo(lw * 0.02, -lh * 0.62);
       g.lineTo(lw * 0.24, -lh * 0.62); g.lineTo(-lw * 0.36, lh * 0.62);
@@ -1316,6 +1463,13 @@ function drawEyewear(g, U, dna) {
       g.restore();
     } else if (spec.tint) {
       g.fillStyle = spec.tint; g.fill();
+      g.save(); g.clip();
+      const tg = g.createLinearGradient(0, -lh / 2, 0, lh / 2);
+      tg.addColorStop(0, 'rgba(255,255,255,.32)');
+      tg.addColorStop(1, 'rgba(20,10,0,.28)');
+      g.fillStyle = tg;
+      g.fillRect(-lw, -lh, lw * 2, lh * 2);
+      g.restore();
     } else {
       // clear plastic still needs a hint of glass or the lens reads as a hole
       g.globalAlpha = spec.clear ? 0.1 : 0.16;
@@ -1325,7 +1479,7 @@ function drawEyewear(g, U, dna) {
 
     g.strokeStyle = strokeStyleFor(lh);
     g.lineWidth = spec.lw * U;
-    g.lineJoin = spec.frame === 'wedge' ? 'miter' : 'round';
+    g.lineJoin = 'round';
     g.miterLimit = 8;
     lensPath(lw, lh);
     g.stroke();
@@ -1380,6 +1534,48 @@ function drawEyewear(g, U, dna) {
   }
   g.restore();
   g.globalAlpha = 1;
+}
+
+/* ---- neck ink -----------------------------------------------
+   Painted along the jaw rather than on the neck mesh, because the head
+   hides that mesh entirely. Mirrored on both sides so it reads at any
+   angle, and drawn before facial hair so a beard covers it the way one
+   actually would. */
+function drawNeckInk(g, U, dna) {
+  if (dna.tattoo !== 'neck' && dna.tattoo !== 'both') return;
+
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.strokeStyle = INK;
+  g.fillStyle = INK;
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+
+  for (const sgn of [-1, 1]) {
+    g.save();
+    g.translate(50 * U, 0);
+    g.scale(sgn, 1);
+
+    // three tapering bars sweeping up the side of the jaw
+    g.lineWidth = 3.4 * U;
+    for (let i = 0; i < 3; i++) {
+      const x = 21 + i * 5.4;
+      g.beginPath();
+      g.moveTo(x * U, (88 - i * 3) * U);
+      g.lineTo((x + 4.6) * U, (72 - i * 4) * U);
+      g.stroke();
+    }
+
+    // a solid wedge at the corner of the jaw to anchor them
+    g.beginPath();
+    g.moveTo(19 * U, 78 * U);
+    g.lineTo(27 * U, 68 * U);
+    g.lineTo(29 * U, 74 * U);
+    g.lineTo(22 * U, 84 * U);
+    g.closePath();
+    g.fill();
+
+    g.restore();
+  }
 }
 
 /* ---- facial hair --------------------------------------------
@@ -1515,21 +1711,6 @@ function drawPiercings(g, U, dna) {
     g.arc(50 * U, (noseY + 1.5) * U, 4.2 * U, 0.1 * Math.PI, 0.9 * Math.PI);
     g.lineWidth = 2.4 * U; g.strokeStyle = rim; g.stroke();
     g.lineWidth = 1.4 * U; g.strokeStyle = metal; g.stroke();
-  } else if (st === 'brow') {
-    const bx = 50 - dna.eyes.spacing - 5;
-    const by = dna.eyes.y - dna.brows.gap - 1;
-    g.save();
-    g.translate(bx * U, by * U);
-    g.rotate(-0.4);
-    g.strokeStyle = rim; g.lineWidth = 0.9 * U;
-    g.fillStyle = metal;
-    g.fillRect(-1.1 * U, -4.4 * U, 2.2 * U, 8.8 * U);
-    g.strokeRect(-1.1 * U, -4.4 * U, 2.2 * U, 8.8 * U);
-    g.restore();
-    bead(bx - 1.8, by - 4.6, 1.9);
-    bead(bx + 1.8, by + 4.6, 1.9);
-  } else if (st === 'lip') {
-    ring(50 - dna.mouth.w * 0.36, dna.mouth.y + 6, 2.8);
   }
   g.globalAlpha = 1;
 }
@@ -1564,6 +1745,8 @@ function drawFace(dna, expr) {
   // eyes
   P(50 - dna.eyes.spacing, dna.eyes.y); drawEye(g, U, dna, 1, expr);
   P(50 + dna.eyes.spacing, dna.eyes.y); drawEye(g, U, dna, -1, expr);
+  // ink first, so a beard grows over it rather than under it
+  drawNeckInk(g, U, dna);
   // facial hair sits under the mouth so a moustache reads as hair on skin,
   // not a sticker over the lips
   drawFacialHair(g, U, dna);
@@ -1592,10 +1775,10 @@ const SHOES  = ['#2f3a45','#e8ecef','#c0392b','#33506b','#4a4a4a'];
 /* Real haircuts people ask for, rather than novelty shapes. Ordered roughly
    short to long so the picker reads sensibly. */
 const HAIRSTYLES = ['bald','buzz','taper','crop','waves','pixie','bowl','combover','sidepart',
-                    'quiff','pompadour','slickback','swept','spiky','curtains','afro','afrofade',
-                    'dreads','bob','shag','long','bun','pony',
+                    'quiff','pompadour','swoop','slickback','swept','spiky','curtains','afro','afrofade',
+                    'dreads','bob','shag','wolf','mullet','flow','long','bun','pony',
                     'cap','flatbrim','dadhat','knicks','yankees','bucket','cowboy','beanie',
-                    'bandana','bandanaback','tophat'];
+                    'bandana','bandanablue','bandanagreen','bandanaback','tophat'];
 
 /* Styles that existed before this list was rewritten. Stored characters keep
    working by landing on the nearest real cut instead of rendering bald. */
@@ -1611,13 +1794,15 @@ const HAIRSTYLE_ALIASES = {
 const STYLE_LABELS = {
   bald: 'Bald', buzz: 'Buzz cut', taper: 'Crew cut', crop: 'French crop',
   waves: 'Waves', pixie: 'Pixie', bowl: 'Bowl', combover: 'Comb over',
-  sidepart: 'Side part', quiff: 'Quiff', pompadour: 'Pompadour',
+  sidepart: 'Side part', quiff: 'Quiff', pompadour: 'Pompadour', swoop: 'Swoop',
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
   curtains: 'Curtains', afro: 'Afro', afrofade: 'Afro fade', dreads: 'Locs',
-  bob: 'Bob', shag: 'Shag', long: 'Long', bun: 'Bun', pony: 'Ponytail',
+  bob: 'Bob', shag: 'Shag', wolf: 'Wolf cut', mullet: 'Mullet', flow: 'Flow',
+  long: 'Long', bun: 'Bun', pony: 'Ponytail',
   cap: 'Cap', flatbrim: 'Flat brim', dadhat: 'Dad hat', knicks: 'Orange & blue',
   yankees: 'Navy & white', bucket: 'Bucket', cowboy: 'Cowboy', beanie: 'Beanie',
-  bandana: 'Bandana', bandanaback: 'Bandana back', tophat: 'Top hat'
+  bandana: 'Red bandana', bandanablue: 'Blue bandana', bandanagreen: 'Green bandana',
+  bandanaback: 'Bandana back', tophat: 'Top hat'
 };
 const styleLabel = (id) => STYLE_LABELS[id] || id;
 const NAMES = ['Yuki','Momo','Kai','Rin','Taro','Bea','Nico','Pim','Otto','Lulu','Sora','Ren','Miki','Bo','Gus','Ada','Ken','Emi','Hugo','Pia','Tobi','Zed','Coco','Finn','Nori','Vee','Sam','Juno','Milo','Bibi'];
@@ -1635,10 +1820,10 @@ const NAMES = ['Yuki','Momo','Kai','Rin','Taro','Bea','Nico','Pim','Otto','Lulu'
    ══════════════════════════════════════════════════════════════ */
 
 /* ---- eyewear -------------------------------------------------
-   Three families. `frame` drives geometry, `metal` switches the
-   stroke to a gradient, `tint` fills the lens. Legacy DNA stored
-   glasses as 1..4, so those ids are kept pointing at the same
-   shapes they always were. */
+   Four families. `frame` drives geometry, `metal` switches the
+   stroke to a gradient, `tint` fills the lens, `wrap` draws a
+   single shield. Legacy DNA stored glasses as 1..4, so those ids
+   are kept pointing at the same slots they always were. */
 const EYEWEAR = [
   { id: 0,  label: 'None',       group: null },
 
@@ -1653,9 +1838,9 @@ const EYEWEAR = [
 
   // metal
   { id: 20, label: 'Gold aviator', group: 'Metal', frame: 'aviator', w: 22, h: 18, lw: 1.5,
-    metal: '#d8b45e', tint: 'rgba(120,96,40,.22)' },
+    metal: '#d8b45e', tint: 'rgba(92,70,22,.90)' },
   { id: 21, label: 'Orange tint',  group: 'Metal', frame: 'aviator', w: 22, h: 18, lw: 1.5,
-    metal: '#c9a253', tint: 'rgba(214,118,42,.40)' },
+    metal: '#c9a253', tint: 'rgba(176,88,18,.92)' },
   { id: 22, label: 'Thin rect',    group: 'Metal', frame: 'square',  w: 17, h: 10, lw: 1.2,
     metal: '#b9c2c9' },
   { id: 23, label: 'Wire round',   group: 'Metal', frame: 'oval',    w: 18, h: 17, lw: 1.15,
@@ -1663,14 +1848,20 @@ const EYEWEAR = [
 
   // sunglasses
   { id: 3,  label: 'Big shades',  group: 'Sunglasses', frame: 'square',  w: 28, h: 22, lw: 2.6, shades: true },
-  { id: 4,  label: 'Angular',     group: 'Sunglasses', frame: 'wedge',   w: 20, h: 11, lw: 1.35, shades: true },
+  { id: 4,  label: 'Tiny square', group: 'Sunglasses', frame: 'square',  w: 16, h: 10, lw: 1.5, shades: true },
   { id: 30, label: 'Wayfarer',    group: 'Sunglasses', frame: 'wayfarer',w: 24, h: 17, lw: 3.4, shades: true },
   { id: 31, label: 'Italian',     group: 'Sunglasses', frame: 'oval',    w: 26, h: 21, lw: 3.0, shades: true,
-    lens: 'rgba(58,32,44,.86)' },
-  { id: 32, label: 'Narrow',      group: 'Sunglasses', frame: 'wedge',   w: 23, h: 8,  lw: 1.2, shades: true,
-    lens: 'rgba(18,20,30,.94)' },
+    lens: 'rgba(40,18,28,.96)' },
+  { id: 32, label: 'Tiny round',  group: 'Sunglasses', frame: 'oval',    w: 15, h: 15, lw: 1.45, shades: true,
+    lens: 'rgba(16,18,26,.96)' },
   { id: 33, label: 'Teardrop',    group: 'Sunglasses', frame: 'aviator', w: 23, h: 19, lw: 1.6, shades: true,
-    metal: '#cbb06a', lens: 'rgba(30,26,22,.80)' }
+    metal: '#cbb06a', lens: 'rgba(28,22,16,.94)' },
+  { id: 34, label: 'Amber wrap',  group: 'Sunglasses', frame: 'wrap',    w: 68, h: 24, lw: 2.8,
+    mirrorTop: '#fff4b8', mirrorMid: '#e07014', mirrorBot: '#1a0c04' },
+  { id: 35, label: 'Green wrap',  group: 'Sunglasses', frame: 'wrap',    w: 68, h: 24, lw: 2.8,
+    mirrorTop: '#e8ffb8', mirrorMid: '#2e8a24', mirrorBot: '#061408' },
+  { id: 36, label: 'Blue wrap',   group: 'Sunglasses', frame: 'wrap',    w: 68, h: 24, lw: 2.8,
+    mirrorTop: '#d8f0ff', mirrorMid: '#1e68c0', mirrorBot: '#040c20' }
 ];
 const EYEWEAR_BY_ID = new Map(EYEWEAR.map((e) => [e.id, e]));
 
@@ -1685,72 +1876,77 @@ const FACIAL_HAIR = [
   { id: 'handlebar', label: 'Handlebar' }
 ];
 
-/* ---- piercings ---- */
+/* ---- piercings ----------------------------------------------
+   Nose only. Ear jewellery, brow bars and lip rings were dropped:
+   the head carries no ear geometry, so hoops had to be guessed at
+   from the side of the skull, and at this scale the whole set was
+   more steppers than it was distinguishable detail. */
 const PIERCINGS = [
   { id: 'none',     label: 'None' },
   { id: 'nose',     label: 'Nose stud' },
   { id: 'nostril2', label: 'Double ring' },
-  { id: 'septum',   label: 'Septum' },
-  { id: 'brow',     label: 'Eyebrow bar' },
-  { id: 'lip',      label: 'Lip ring' }
+  { id: 'septum',   label: 'Septum' }
 ];
-const EAR_STYLES = [
-  { id: 'none',   label: 'None' },
-  { id: 'hoop',   label: 'Hoops' },
-  { id: 'stud',   label: 'Studs' },
-  { id: 'stacked',label: 'Stacked' }
-];
+
+/* Retired ids, so a stored character does not keep asking for a piece that
+   no longer renders. */
+const PIERCING_ALIASES = { brow: 'none', lip: 'none' };
 
 /* ---- tattoos ------------------------------------------------
    The Wii rig has floating hands and no arms, so forearm and
    sleeve ink has no surface to sit on. Hands and neck do. */
 const TATTOOS = [
   { id: 'none',  label: 'None' },
-  { id: 'hand',  label: 'Hand ink' },
-  { id: 'neck',  label: 'Neck' },
-  { id: 'both',  label: 'Hands + neck' }
+  { id: 'hand',  label: 'Hands' },
+  { id: 'neck',  label: 'Jaw' },
+  { id: 'both',  label: 'Both' }
 ];
-const INK = '#2a3340';
+/* Near-black with a blue cast, the way healed ink actually looks. The earlier
+   value was light enough that it disappeared against darker skin tones. */
+const INK = '#141c26';
 
 /* ---- apparel ------------------------------------------------
    `kind` selects the torso texture painter; `hood`/`open` add
    geometry on top of it. */
+/* Everyday clothes take the wearer's shirt colour. Kit shirts carry their own
+   palette and squad number, because a jersey only looks right in its own
+   colours — leaving them on a shared random colourway is what made the
+   earlier ones look off. */
 const APPAREL = [
-  { id: 'tee',       label: 'Tee',        kind: 'plain'   },
-  { id: 'washed',    label: 'Washed tee', kind: 'washed'  },
-  { id: 'hoodie',    label: 'Hoodie',     kind: 'hoodie', hood: true },
-  { id: 'crop',      label: 'Cardigan',   kind: 'cardi',  open: true },
-  { id: 'flannel',   label: 'Flannel',    kind: 'flannel',open: true },
-  { id: 'denim',     label: 'Denim',      kind: 'denim',  open: true },
-  { id: 'techwear',  label: 'Techwear',   kind: 'tech'    },
-  { id: 'hoops',     label: 'Basketball', kind: 'jersey'  },
-  { id: 'hoopsretro',label: 'Retro hoops',kind: 'jersey', retro: true },
-  { id: 'soccer',    label: 'Soccer',     kind: 'stripes' },
-  { id: 'soccerfed', label: 'Federation', kind: 'fed'     }
+  { id: 'tee',      label: 'T-shirt',   kind: 'plain'    },
+  { id: 'cutoff',   label: 'Cutoff',    kind: 'cutoff'   },
+  { id: 'bare',     label: 'No shirt',  kind: 'bare', bare: true },
+  { id: 'buttonup', label: 'Button-up', kind: 'buttonup' },
+  { id: 'flannel',  label: 'Flannel',   kind: 'flannel', open: true },
+  { id: 'hoodie',   label: 'Hoodie',    kind: 'hoodie',  hood: true },
+  { id: 'suit',     label: 'Suit',      kind: 'suit'     },
+
+  /* Football and basketball shirts, as shape, colourway and number only.
+     Club crests, wordmarks and player names are trademarks and personality
+     rights — not ours to put on a public site — so none appear here. */
+  { id: 'kit-pink',   label: 'Pink 10',   kind: 'football',
+    body: '#f4589b', trim: '#12121a', num: 10 },
+  { id: 'kit-claret', label: 'Claret 19', kind: 'football',
+    body: '#a01141', trim: '#16407e', num: 19, stripes: true },
+  { id: 'kit-blue',   label: 'Blue 11',   kind: 'hoops',
+    body: '#1d5cab', trim: '#f28022', num: 11 },
+  { id: 'kit-white',  label: 'White 23',  kind: 'hoops',
+    body: '#f2f4f7', trim: '#c8102e', trim2: '#12467f', num: 23, darkNum: true }
 ];
 const APPAREL_BY_ID = new Map(APPAREL.map((a) => [a.id, a]));
 
-/* Abstract colourways, no marks. */
-const KIT_COLORS = [
-  { a: '#f4842a', b: '#0d5eab' },   // orange / blue
-  { a: '#132448', b: '#e8e8ee' },   // navy / white
-  { a: '#1d7a4c', b: '#f2f4f5' },   // green / white
-  { a: '#8e1b2e', b: '#f0e2c8' },   // claret / cream
-  { a: '#2b2f36', b: '#f5c542' },   // charcoal / gold
-  { a: '#5a3fa8', b: '#e9e4f7' }    // purple / lilac
-];
-
-/* ---- digital ID badge ---------------------------------------
-   The plaza deliberately never receives other people's email
-   addresses, so only the owner's own badge can render text. For
-   everyone else these draw as a mark. See applyBadgeIdentity(). */
-const BADGES = [
-  { id: 'none',     label: 'Off' },
-  { id: 'patch',    label: 'Chest patch' },
-  { id: 'pill',     label: 'Floating tag' },
-  { id: 'at',       label: '@ tag' },
-  { id: 'envelope', label: 'Envelope' }
-];
+/* Outfits that no longer exist, so a stored character does not fall back to
+   a plain tee and lose whatever it was wearing. */
+const APPAREL_ALIASES = {
+  washed: 'tee',
+  crop: 'buttonup',
+  denim: 'buttonup',
+  techwear: 'hoodie',
+  hoops: 'kit-blue',
+  hoopsretro: 'kit-white',
+  soccer: 'kit-claret',
+  soccerfed: 'kit-pink'
+};
 
 function randomDNA(opts = {}) {
   const male = chance(0.5);
@@ -1789,13 +1985,9 @@ function randomDNA(opts = {}) {
     blush: chance(0.4),
     freckles: chance(0.18),
     facialHair: male && chance(0.42) ? pickOne(['stubble','lineup','full','goatee','stache','handlebar']) : 'none',
-    piercing: chance(0.2) ? pickOne(['nose','nostril2','septum','brow','lip']) : 'none',
-    ears: chance(0.22) ? pickOne(['hoop','stud','stacked']) : 'none',
+    piercing: chance(0.2) ? pickOne(['nose','nostril2','septum']) : 'none',
     tattoo: chance(0.16) ? pickOne(['hand','neck','both']) : 'none',
     apparel: opts.apparel || pickOne(APPAREL).id,
-    kit: randi(0, KIT_COLORS.length - 1),
-    kitNumber: pickOne([0, 3, 6, 7, 8, 9, 10, 11, 21, 23, 24, 30]),
-    badge: 'none',
     hue: Math.random()
   };
   if (!d.brows.color) d.brows.color = shade(d.hair.color, d.hair.style === 'bald' ? -10 : -18);
@@ -1821,12 +2013,12 @@ function normalizeDNA(d) {
     d.facialHair = d.beard ? 'full' : d.stache ? 'stache' : 'none';
   }
   if (typeof d.piercing !== 'string') d.piercing = 'none';
-  if (typeof d.ears !== 'string') d.ears = 'none';
+  if (PIERCING_ALIASES[d.piercing]) d.piercing = PIERCING_ALIASES[d.piercing];
+  delete d.ears;                       // ear jewellery was removed
   if (typeof d.tattoo !== 'string') d.tattoo = 'none';
+  if (APPAREL_ALIASES[d.apparel]) d.apparel = APPAREL_ALIASES[d.apparel];
   if (typeof d.apparel !== 'string' || !APPAREL_BY_ID.has(d.apparel)) d.apparel = 'tee';
-  if (typeof d.badge !== 'string') d.badge = 'none';
-  if (!Number.isInteger(d.kit)) d.kit = 0;
-  if (!Number.isInteger(d.kitNumber)) d.kitNumber = 10;
+  delete d.badge;                      // the 3D ID badge overlay was removed
   if (!EYEWEAR_BY_ID.has(d.glasses)) d.glasses = 0;
   if (!d.glassCol) d.glassCol = '#3c4a55';
   if (!d.hatColor) d.hatColor = d.shirt || pickOne(SHIRTS);
@@ -1899,9 +2091,11 @@ const HATS = {
   yankees:  { crown: '#132448', accent: '#e8e8ee', mark: 'NY' },
   bucket:   { crown: '#8d8f68', accent: '#6d6f4e' },
   cowboy:   { crown: '#8a6236', accent: '#5d4023' },
-  beanie:   { crown: null,      accent: null      },
-  bandana:      { crown: null,  accent: null      },
-  bandanaback:  { crown: null,  accent: null      }
+  beanie:       { crown: null,      accent: null      },
+  bandana:      { crown: '#c62828', paisley: true     },
+  bandanablue:  { crown: '#1565c0', paisley: true     },
+  bandanagreen: { crown: '#2e7d32', paisley: true     },
+  bandanaback:  { crown: '#c62828', paisley: true     }
 };
 const HAT_STYLES = Object.keys(HATS);
 
@@ -1924,7 +2118,6 @@ function makeApparelTexture(dna) {
   const c = cv(TORSO_W, TORSO_H);
   const g = c.getContext('2d');
   const base = dna.shirt;
-  const kit = KIT_COLORS[dna.kit % KIT_COLORS.length];
   const W = TORSO_W, H = TORSO_H;
 
   /* Three.js sphere UVs start at -x and run anticlockwise, which puts the
@@ -1933,6 +2126,14 @@ function makeApparelTexture(dna) {
      `back` so a jersey reads from behind too. */
   const front = W * 0.25;
   const back = W * 0.75;
+
+  /* Vertically, the head hides the top of the torso: it is wider than the
+     chest everywhere above y≈0.58, which is texture v≈0.36. Only the lower
+     two thirds is ever seen, so detail is placed through vy(), where 0 is the
+     top of what is visible and 1 is the hem. Numbers and pockets were
+     previously centred around v 0.44–0.50 and sat behind the head. */
+  const VIS_TOP = 0.36;
+  const vy = (f) => H * (VIS_TOP + f * (1 - VIS_TOP));
 
   g.fillStyle = base;
   g.fillRect(0, 0, W, H);
@@ -1957,52 +2158,75 @@ function makeApparelTexture(dna) {
   };
 
   switch (spec.kind) {
-    case 'washed': {
-      // uneven bleach: soft light blooms over the base
-      for (let i = 0; i < 26; i++) {
-        const x = Math.random() * W, y = Math.random() * H, r = 14 + Math.random() * 34;
-        const grd = g.createRadialGradient(x, y, 1, x, y, r);
-        grd.addColorStop(0, 'rgba(255,255,255,.14)');
-        grd.addColorStop(1, 'rgba(255,255,255,0)');
-        g.fillStyle = grd; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+    case 'bare': {
+      // Skin, with just enough shading to read as a chest rather than a
+      // flat cylinder. All of it sits in the visible band.
+      g.fillStyle = dna.skin; g.fillRect(0, 0, W, H);
+      const shadow = shade(dna.skin, -20);
+      g.strokeStyle = shadow; g.lineWidth = 4; g.lineCap = 'round';
+      g.globalAlpha = 0.55;
+      g.beginPath();                                        // sternum
+      g.moveTo(front, vy(0.05)); g.lineTo(front, vy(0.42));
+      g.stroke();
+      g.beginPath();                                        // pectoral crease
+      g.moveTo(front - 40, vy(0.06));
+      g.quadraticCurveTo(front, vy(0.2), front + 40, vy(0.06));
+      g.stroke();
+      g.globalAlpha = 0.34;
+      for (let i = 0; i < 2; i++) {                          // abdomen
+        const y = vy(0.56 + i * 0.16);
+        g.beginPath(); g.moveTo(front - 26, y); g.lineTo(front + 26, y); g.stroke();
+      }
+      g.globalAlpha = 1;
+      break;
+    }
+    case 'cutoff': {
+      g.fillStyle = base; g.fillRect(0, 0, W, H);
+      // Armholes cut in at the side seams, where u=0 and u=0.5 sit. They are
+      // high up and mostly behind the head, so the look is carried by the
+      // frayed hem, which is always in view.
+      g.fillStyle = dna.skin;
+      for (const x of [0, W * 0.5]) {
+        g.beginPath();
+        g.moveTo(x - 30, 0);
+        g.quadraticCurveTo(x, vy(0.3), x + 30, 0);
+        g.closePath(); g.fill();
+      }
+      g.fillStyle = shade(base, -26);
+      for (let x = 0; x < W; x += 13) {                       // raw edge
+        g.fillRect(x, H - 14 - (x % 3) * 6, 11, 20 + (x % 3) * 6);
       }
       break;
     }
     case 'hoodie': {
-      g.fillStyle = shade(base, -18);
-      g.fillRect(0, H * 0.76, W, H * 0.24);              // waist ribbing
-      // kangaroo pocket as a filled shape, not an outline — a 3px line
-      // disappears once this is wrapped onto the torso
-      g.fillStyle = shade(base, -10);
-      g.fillRect(front - 42, H * 0.5, 84, H * 0.26);
+      g.fillStyle = shade(base, -20);
+      g.fillRect(0, vy(0.86), W, H);                          // waist ribbing
+      // Kangaroo pocket as a filled shape, not an outline — a thin line
+      // disappears once this is wrapped onto the torso.
+      g.fillStyle = shade(base, -9);
+      g.fillRect(front - 46, vy(0.42), 92, vy(0.86) - vy(0.42));
       g.strokeStyle = shade(base, -40); g.lineWidth = 5;
-      g.strokeRect(front - 42, H * 0.5, 84, H * 0.26);
-      g.strokeStyle = '#f4f6f8'; g.lineWidth = 9; g.lineCap = 'round';
-      g.beginPath();
-      g.moveTo(front - 16, H * 0.1); g.lineTo(front - 11, H * 0.42);
-      g.moveTo(front + 16, H * 0.1); g.lineTo(front + 11, H * 0.42);
-      g.stroke();                                        // drawcords
+      g.strokeRect(front - 46, vy(0.42), 92, vy(0.86) - vy(0.42));
+      g.strokeStyle = '#f4f6f8'; g.lineWidth = 10; g.lineCap = 'round';
+      g.beginPath();                                          // drawcords
+      g.moveTo(front - 17, vy(0.0)); g.lineTo(front - 11, vy(0.34));
+      g.moveTo(front + 17, vy(0.0)); g.lineTo(front + 11, vy(0.34));
+      g.stroke();
       break;
     }
-    case 'cardi':
-    case 'denim': {
-      const body = spec.kind === 'denim' ? '#4d6f9a' : base;
-      g.fillStyle = body; g.fillRect(0, 0, W, H);
-      if (spec.kind === 'denim') {
-        g.globalAlpha = 0.14; g.fillStyle = '#ffffff';
-        for (let i = 0; i < W; i += 4) g.fillRect(i, 0, 2, H);   // twill
-        g.globalAlpha = 1;
-        g.strokeStyle = '#e0b769'; g.lineWidth = 4; g.setLineDash([9, 7]);
-        g.beginPath();
-        g.moveTo(front - 34, 0); g.lineTo(front - 34, H);
-        g.moveTo(front + 34, 0); g.lineTo(front + 34, H);
-        g.stroke(); g.setLineDash([]);                            // contrast stitch
-        g.fillStyle = '#cfd6dc';
-        g.fillRect(front - 44, H * 0.42, 20, 12);                 // chest pocket flap
-        g.fillRect(front + 24, H * 0.42, 20, 12);
+    case 'buttonup': {
+      g.fillStyle = base; g.fillRect(0, 0, W, H);
+      g.fillStyle = shade(base, -12);                         // placket
+      g.fillRect(front - 14, 0, 28, H);
+      g.fillStyle = shade(base, -32);
+      g.fillRect(front - 15, 0, 3, H);
+      g.fillRect(front + 12, 0, 3, H);
+      g.fillStyle = '#f7fafc';                                // buttons
+      for (let i = 0; i < 4; i++) {
+        g.beginPath(); g.arc(front, vy(0.14 + i * 0.24), 5.5, 0, TAU); g.fill();
       }
-      g.fillStyle = shade(body, -34);
-      g.fillRect(front - 9, 0, 18, H);                            // centre opening
+      g.fillStyle = shade(base, -20);                         // chest pocket
+      g.fillRect(front + 32, vy(0.12), 34, 30);
       break;
     }
     case 'flannel': {
@@ -2012,55 +2236,73 @@ function makeApparelTexture(dna) {
       const hh = H / 6;
       for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? b : a; g.fillRect(0, i * hh, W, hh + 1); }
       g.globalAlpha = 1;
-      g.strokeStyle = 'rgba(255,255,255,.4)'; g.lineWidth = 3;
+      g.strokeStyle = 'rgba(255,255,255,.42)'; g.lineWidth = 3;
       for (let i = 0; i <= 6; i++) {
         g.beginPath(); g.moveTo(i * (W / 6), 0); g.lineTo(i * (W / 6), H); g.stroke();
       }
-      g.fillStyle = shade(base, -58); g.fillRect(front - 8, 0, 16, H);
+      g.fillStyle = shade(base, -58); g.fillRect(front - 9, 0, 18, H);
       break;
     }
-    case 'tech': {
-      g.fillStyle = shade(base, -48); g.fillRect(0, 0, W, H);
-      g.fillStyle = shade(base, -14);
-      g.fillRect(0, H * 0.3, W, H * 0.14);                         // chest panel seam
-      g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 4;
-      g.beginPath(); g.moveTo(0, H * 0.62); g.lineTo(W, H * 0.62); g.stroke();
-      g.fillStyle = '#cfd6dc';
-      g.fillRect(front - 3, H * 0.1, 6, H * 0.5);                  // centre zip
-      g.fillRect(front + 22, H * 0.46, 30, 14);                    // pocket flap
-      g.fillStyle = '#8f9aa4';
-      g.fillRect(front - 52, H * 0.5, 24, 10);                     // strap detail
+    case 'suit': {
+      const jacket = '#2b3038';
+      g.fillStyle = jacket; g.fillRect(0, 0, W, H);
+      // Shirt and tie have to live below the head line to be seen at all.
+      g.fillStyle = '#f4f7fa';
+      g.beginPath();
+      g.moveTo(front - 34, vy(-0.1));
+      g.lineTo(front + 34, vy(-0.1));
+      g.lineTo(front + 15, vy(0.6));
+      g.lineTo(front - 15, vy(0.6));
+      g.closePath(); g.fill();
+      g.fillStyle = '#8c2230';                                 // tie
+      g.beginPath();
+      g.moveTo(front - 11, vy(0.0));
+      g.lineTo(front + 11, vy(0.0));
+      g.lineTo(front + 7, vy(0.56));
+      g.lineTo(front, vy(0.66));
+      g.lineTo(front - 7, vy(0.56));
+      g.closePath(); g.fill();
+      g.fillStyle = shade(jacket, 18);                         // lapels
+      for (const sx of [-1, 1]) {
+        g.beginPath();
+        g.moveTo(front + sx * 34, vy(-0.1));
+        g.lineTo(front + sx * 60, vy(-0.1));
+        g.lineTo(front + sx * 22, vy(0.64));
+        g.lineTo(front + sx * 14, vy(0.6));
+        g.closePath(); g.fill();
+      }
+      g.fillStyle = '#f4f7fa';                                 // pocket square
+      g.fillRect(front + 44, vy(0.3), 18, 10);
       break;
     }
-    case 'jersey': {
-      g.fillStyle = spec.retro ? kit.b : kit.a;
-      g.fillRect(0, 0, W, H);
-      const trim = spec.retro ? kit.a : kit.b;
-      g.fillStyle = trim;
-      g.fillRect(0, 0, W, 18);                                     // shoulder trim
-      g.fillRect(0, H - 24, W, 24);                                // hem
-      // Side piping sits at the seams: u=0 and u=0.5 are the body's sides.
-      g.fillRect(0, 0, 10, H);
-      g.fillRect(W * 0.5 - 5, 0, 10, H);
-      g.fillRect(W - 10, 0, 10, H);
-      number(dna.kitNumber, trim, H * 0.5, 112);
+    case 'football': {
+      g.fillStyle = spec.body; g.fillRect(0, 0, W, H);
+      if (spec.stripes) {
+        g.fillStyle = spec.trim;
+        const n = 10, w = W / n;
+        for (let i = 0; i < n; i += 2) g.fillRect(i * w, 0, w, H);
+      }
+      g.fillStyle = spec.trim;
+      g.fillRect(0, H - 15, W, 15);                            // hem band
+      number(spec.num, spec.stripes ? '#ffffff' : spec.trim, vy(0.42), 72);
       break;
     }
-    case 'stripes': {
-      vstripes(kit.a, kit.b, 8);                                   // classic verticals
-      g.fillStyle = shade(kit.a, -40);
-      g.fillRect(0, H - 20, W, 20);
-      number(dna.kitNumber, '#ffffff', H * 0.52, 96);
-      break;
-    }
-    case 'fed': {
-      // modern minimalist: single body, one sash, small number
-      g.fillStyle = kit.a; g.fillRect(0, 0, W, H);
-      g.save();
-      g.translate(0, H * 0.46); g.rotate(-0.16);
-      g.fillStyle = kit.b; g.fillRect(-W, -22, W * 3, 44);
-      g.restore();
-      number(dna.kitNumber, kit.b, H * 0.78, 66);
+    case 'hoops': {
+      g.fillStyle = spec.body; g.fillRect(0, 0, W, H);
+      // Tank armholes cut in at the side seams.
+      g.fillStyle = dna.skin;
+      for (const x of [0, W * 0.5]) {
+        g.beginPath();
+        g.moveTo(x - 34, 0);
+        g.quadraticCurveTo(x, vy(0.24), x + 34, 0);
+        g.closePath(); g.fill();
+      }
+      g.fillStyle = spec.trim;                                 // side piping
+      for (const x of [front - 78, front + 71, back - 78, back + 71]) {
+        g.fillRect(x, 0, 8, H);
+      }
+      if (spec.trim2) { g.fillStyle = spec.trim2; g.fillRect(0, H - 18, W, 18); }
+      number(spec.num, spec.darkNum ? spec.trim : '#ffffff', vy(0.44), 80);
       break;
     }
   }
@@ -2072,150 +2314,87 @@ function makeApparelTexture(dna) {
   return t;
 }
 
-/* ---- digital ID badge --------------------------------------
-   Rendered in the Mii Channel's UI language: a glossy pill with a
-   soft inner highlight.
-
-   `email` is null for everyone except the signed-in owner, because
-   the plaza is never sent other people's addresses — the API only
-   publishes id, name and character data. A badge with no address
-   still works: it draws as an envelope or an @ mark. */
-function makeIdBadgeTexture(style, email) {
-  const wide = style === 'pill' || (style === 'patch' && email);
-  const W = wide ? 512 : 192, H = 192;
-  const c = cv(W, H);
+/* Ink is painted into its own small texture so it can sit on the neck
+   cylinder and the hand spheres without touching the garment map. */
+/* Ink has very little canvas to work with: the rig shows a small neck and two
+ * hands barely a tenth of the body tall. Two things follow.
+ *
+ * First, alignment matters. Three.js puts the front of a sphere at u=0.25 and
+ * the front of a cylinder at u=0 — the first version drew both designs around
+ * u=0.5, which put the hand ink on the outside of the hand and the neck ink
+ * around the back of the neck, facing away from the camera.
+ *
+ * Second, subtlety does not survive. Thin low-opacity line art minified to a
+ * few dozen pixels reads as a smudge, so these are heavy strokes at full
+ * opacity, and the motifs repeat around the surface so they read from any
+ * angle rather than only head-on.
+ */
+function makeInkTexture(kind) {
+  const S = 256;
+  const c = cv(S);
   const g = c.getContext('2d');
-  g.clearRect(0, 0, W, H);
+  g.clearRect(0, 0, S, S);
+  g.strokeStyle = INK;
+  g.fillStyle = INK;
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
 
-  const pad = 12;
-  const r = (H - pad * 2) / 2;
-  const x0 = pad, y0 = pad, w = W - pad * 2, h = H - pad * 2;
-
-  const pill = () => {
-    g.beginPath();
-    g.moveTo(x0 + r, y0);
-    g.lineTo(x0 + w - r, y0);
-    g.arcTo(x0 + w, y0, x0 + w, y0 + r, r);
-    g.lineTo(x0 + w, y0 + h - r);
-    g.arcTo(x0 + w, y0 + h, x0 + w - r, y0 + h, r);
-    g.lineTo(x0 + r, y0 + h);
-    g.arcTo(x0, y0 + h, x0, y0 + h - r, r);
-    g.lineTo(x0, y0 + r);
-    g.arcTo(x0, y0, x0 + r, y0, r);
-    g.closePath();
+  /* Draws around the seam as well, so a motif centred on the front edge of a
+     cylinder is not sliced in half. */
+  const wrapped = (cx, draw) => {
+    for (const dx of [-S, 0, S]) {
+      g.save(); g.translate(cx + dx, 0); draw(); g.restore();
+    }
   };
 
-  // drop shadow, then the body, then a top gloss — the Wii UI recipe
-  g.save();
-  g.shadowColor = 'rgba(60,90,115,.35)';
-  g.shadowBlur = 14; g.shadowOffsetY = 5;
-  const body = g.createLinearGradient(0, y0, 0, y0 + h);
-  body.addColorStop(0, '#ffffff');
-  body.addColorStop(1, '#dce7ee');
-  g.fillStyle = body;
-  pill(); g.fill();
-  g.restore();
+  if (kind === 'neck') {
+    // Bands run the whole way round, so the tattoo reads from every angle.
+    g.lineWidth = 13;
+    g.beginPath(); g.moveTo(0, S * 0.46); g.lineTo(S, S * 0.46); g.stroke();
+    g.lineWidth = 7;
+    g.beginPath(); g.moveTo(0, S * 0.63); g.lineTo(S, S * 0.63); g.stroke();
 
-  g.strokeStyle = '#c6d2da'; g.lineWidth = 4; pill(); g.stroke();
+    // Chevrons hanging off the lower band, repeated around the circumference.
+    for (let i = 0; i < 6; i++) {
+      const cx = (i + 0.5) * (S / 6);
+      wrapped(cx, () => {
+        g.lineWidth = 9;
+        g.beginPath();
+        g.moveTo(-S * 0.05, S * 0.72);
+        g.lineTo(0, S * 0.85);
+        g.lineTo(S * 0.05, S * 0.72);
+        g.stroke();
+      });
+    }
 
-  g.save();
-  pill(); g.clip();
-  const gloss = g.createLinearGradient(0, y0, 0, y0 + h * 0.5);
-  gloss.addColorStop(0, 'rgba(255,255,255,.95)');
-  gloss.addColorStop(1, 'rgba(255,255,255,0)');
-  g.fillStyle = gloss;
-  g.fillRect(x0, y0, w, h * 0.5);
-  g.restore();
+    // A heavier mark on the front of the throat — cylinder front is u=0.
+    wrapped(0, () => {
+      g.lineWidth = 11;
+      g.beginPath(); g.arc(0, S * 0.3, S * 0.1, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
+      g.beginPath(); g.arc(0, S * 0.3, S * 0.045, 0, TAU); g.fill();
+    });
+  } else {
+    // Sphere front is u=0.25: knuckle bars belong on the back of the hand,
+    // which is what faces the camera.
+    const front = S * 0.25;
+    wrapped(front, () => {
+      g.lineWidth = 14;
+      for (let i = 0; i < 3; i++) {
+        const y = S * (0.42 + i * 0.15);
+        g.beginPath(); g.moveTo(-S * 0.14, y); g.lineTo(S * 0.14, y); g.stroke();
+      }
+      g.lineWidth = 12;
+      g.beginPath(); g.arc(0, S * 0.24, S * 0.1, 0, TAU); g.stroke();
+    });
 
-  const INK_BLUE = '#1b7fbc';
-  const cx = x0 + (email ? r + 6 : w / 2);
-  const cy = H / 2;
-
-  if (style === 'envelope' || (!email && style !== 'at')) {
-    // envelope mark
-    const ew = 62, eh = 42;
-    g.strokeStyle = INK_BLUE; g.lineWidth = 6; g.lineJoin = 'round';
-    g.strokeRect(cx - ew / 2, cy - eh / 2, ew, eh);
-    g.beginPath();
-    g.moveTo(cx - ew / 2, cy - eh / 2);
-    g.lineTo(cx, cy + eh * 0.16);
-    g.lineTo(cx + ew / 2, cy - eh / 2);
-    g.stroke();
-  } else if (style === 'at' || !email) {
-    g.font = '800 96px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif';
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillStyle = INK_BLUE;
-    g.fillText('@', cx, cy + 4);
-  }
-
-  if (email) {
-    // Long addresses get squeezed rather than clipped mid-domain.
-    const left = style === 'patch' ? x0 + 18 : cx + r + 4;
-    const room = x0 + w - left - 14;
-    let size = 52;
-    g.textAlign = 'left'; g.textBaseline = 'middle';
-    do {
-      g.font = `700 ${size}px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif`;
-      size -= 2;
-    } while (g.measureText(email).width > room && size > 20);
-    g.fillStyle = '#3d4d58';
-    g.fillText(email, left, cy + 2);
+    // Ring right round the wrist so ink is visible however the hand turns.
+    g.lineWidth = 12;
+    g.beginPath(); g.moveTo(0, S * 0.86); g.lineTo(S, S * 0.86); g.stroke();
   }
 
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
-  t.userData.own = true;
-  return t;
-}
-
-/* Swap in the real address once we know it is our own Mii. Called after
-   /api/me resolves, so it has to repaint an already-built badge. */
-function applyBadgeIdentity(mii, email) {
-  if (!mii || !mii.badgeMat || !mii.badgeStyle || !email) return;
-  const next = makeIdBadgeTexture(mii.badgeStyle, email);
-  const prev = mii.badgeMat.map;
-  mii.badgeMat.map = next;
-  mii.badgeMat.needsUpdate = true;
-  if (prev && prev.userData && prev.userData.own) prev.dispose();
-
-  if (mii.badgeStyle === 'patch') mii.badgeMesh.scale.set(0.3, 0.11, 1);
-  else if (mii.badgeStyle !== 'pill') mii.badgeMesh.scale.set(0.5, 0.18, 1);
-}
-
-/* Ink is painted into its own small texture so it can sit on the neck
-   cylinder and the hand spheres without touching the garment map. */
-function makeInkTexture(kind) {
-  const S = 128;
-  const c = cv(S);
-  const g = c.getContext('2d');
-  g.clearRect(0, 0, S, S);
-  g.strokeStyle = INK;
-  g.lineCap = 'round';
-
-  if (kind === 'neck') {
-    // minimalist line art: a few arcs and a short script-like stroke
-    g.globalAlpha = 0.85; g.lineWidth = 4;
-    g.beginPath(); g.arc(S * 0.32, S * 0.5, 16, -0.6, 2.2); g.stroke();
-    g.beginPath(); g.arc(S * 0.66, S * 0.46, 11, 0.4, 3.4); g.stroke();
-    g.lineWidth = 3;
-    g.beginPath();
-    g.moveTo(S * 0.2, S * 0.72);
-    g.bezierCurveTo(S * 0.36, S * 0.62, S * 0.5, S * 0.84, S * 0.78, S * 0.7);
-    g.stroke();
-  } else {
-    g.globalAlpha = 0.8; g.lineWidth = 5;
-    for (let i = 0; i < 3; i++) {                     // small knuckle bars
-      const y = S * (0.34 + i * 0.16);
-      g.beginPath(); g.moveTo(S * 0.3, y); g.lineTo(S * 0.7, y); g.stroke();
-    }
-    g.lineWidth = 4;
-    g.beginPath(); g.arc(S * 0.5, S * 0.2, 9, 0, TAU); g.stroke();
-  }
-  g.globalAlpha = 1;
-
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
   t.userData.own = true;
   return t;
 }
@@ -2252,6 +2431,11 @@ function buildHair(dna, mat, extraMats) {
       color: accCol, roughness: 0.55, metalness: 0.02, side: THREE.DoubleSide
     });
     if (extraMats) extraMats.push(hatMat, accMat);
+    if (H.paisley) {
+      hatMat.map = makePaisleyTexture(crownCol);
+      hatMat.color.set('#ffffff');
+      hatMat.roughness = 0.74;
+    }
 
     /* Hair still shows under a hat, but only down to the brow. Taken any
        lower it reaches eye level and reads as a coloured patch stuck to the
@@ -2259,12 +2443,16 @@ function buildHair(dna, mat, extraMats) {
     cap(1.022, 1.28, 1.0);
 
     if (st === 'tophat') {
-      // CylinderGeometry is height 1 centred, so scale.y is the total height:
-      // the crown has to be centred half its height above the brim, or it
-      // floats. It was doing exactly that.
-      put(G.cyl(), accMat, 0, 0.42, 0, 1.44, 0.07, 1.44);         // brim  0.385..0.455
-      put(G.cyl(), hatMat, 0, 0.75, 0, 0.93, 0.60, 0.93);         // crown 0.450..1.050
-      put(G.cyl(), accMat, 0, 0.52, 0, 0.96, 0.12, 0.96);         // band  0.460..0.580
+      /* CylinderGeometry is height 1 centred, so scale.y is the total height:
+         the crown has to be centred half its height above the brim or it
+         floats.
+
+         The crown also has to be wider than the skull along its whole span.
+         At r=0.93 it was narrower than the head at y=0.45, where the head is
+         0.947 across — so the head pushed out through the side of the hat. */
+      put(G.cyl(), accMat, 0, 0.42, 0, 1.46, 0.07, 1.46);         // brim  0.385..0.455
+      put(G.cyl(), hatMat, 0, 0.76, 0, 1.0,  0.64, 1.0);          // crown 0.440..1.080
+      put(G.cyl(), accMat, 0, 0.51, 0, 1.03, 0.13, 1.03);         // band  0.445..0.575
     } else if (st === 'bucket') {
       put(G.dome(1.07, 1.22), hatMat, 0, 0.02, 0, 1, 1, 1);
       put(G.frus(0.95), hatMat, 0, 0.36, 0, 1.46, 0.34, 1.46);   // floppy flare
@@ -2290,12 +2478,12 @@ function buildHair(dna, mat, extraMats) {
       put(G.dome(1.07, 1.3), hatMat, 0, 0.02, 0, 1, 1.04, 1);
       put(G.cyl(), accMat, 0, 0.33, 0, 1.1, 0.14, 1.05);          // folded cuff
       put(G.ball(), accMat, 0, 1.12, 0, 0.2, 0.2, 0.2);           // bobble
-    } else if (st === 'bandana' || st === 'bandanaback') {
+    } else if (st === 'bandana' || st === 'bandanablue' || st === 'bandanagreen' || st === 'bandanaback') {
       // Tied around the head, so it comes down to the brow like the cap
       // crowns do. Stopping high up read as a small skullcap instead.
       put(G.dome(1.05, 1.28), hatMat, 0, 0.02, 0, 1, 1, 1);
       put(G.cyl(), hatMat, 0, 0.34, 0, 1.07, 0.16, 1.02);         // rolled edge
-      const front = st === 'bandana';
+      const front = st !== 'bandanaback';
       const z = front ? 1.0 : -1.0;
       const knot = put(G.ball(), hatMat, 0, 0.34, z * 0.62, 0.2, 0.2, 0.2);
       knot.rotation.y = 0.4;
@@ -2305,16 +2493,27 @@ function buildHair(dna, mat, extraMats) {
         t.rotation.z = sx * 0.3;
       }
     } else {
-      // baseball family: cap, flatbrim, dadhat, and the two colourways
+      /* Baseball family: cap, flatbrim, dadhat, and the two colourways.
+
+         The dad hat used to squash the crown to 0.94 of its height, which put
+         its apex at 1.010 against a skull apex of 1.000. Ten thousandths is
+         less than the faceting error on an 18-segment dome, so the head
+         showed through the top. Crowns are full height now and a dad hat gets
+         its slouch from the brim angle instead. */
       const soft = H.soft;
-      put(G.dome(1.075, soft ? 1.36 : 1.3), hatMat, 0, soft ? 0.0 : 0.03, 0, 1, soft ? 0.94 : 1, 1);
-      put(G.ball(), accMat, 0, 1.03, 0, 0.11, 0.11, 0.11);       // button
+      put(G.dome(1.075, soft ? 1.36 : 1.3), hatMat, 0, soft ? 0.0 : 0.03, 0, 1, 1, 1);
+      put(G.ball(), accMat, 0, 1.05, 0, 0.11, 0.11, 0.11);       // button
+
+      /* A dome ends in an open edge, and with DoubleSide you see its inside —
+         which read as a gap between crown and brim. A sweatband closes the
+         edge and carries the line round to meet the brim. */
+      put(G.cyl(), hatMat, 0, 0.30, 0, 1.064, 0.11, 1.064);
 
       if (H.flat) {
         put(G.foot(), accMat, 0, 0.29, 0.96, 0.68, 0.07, 0.56);  // squared flat brim
       } else {
         const brim = put(G.foot(), st === 'yankees' ? hatMat : accMat,
-          0, soft ? 0.22 : 0.28, 0.95, 0.66, 0.06, soft ? 0.62 : 0.56);
+          0, soft ? 0.24 : 0.28, 0.95, 0.66, 0.06, soft ? 0.62 : 0.56);
         brim.rotation.x = soft ? -0.34 : -0.2;                   // dad hats sit lower
       }
 
@@ -2421,16 +2620,29 @@ function buildHair(dna, mat, extraMats) {
     top.rotation.z = 0.16;
     add(G.ball(), 0.42, 0.66, 0.3, 0.2, 0.16, 0.44);       // raised edge of the part
   } else if (st === 'quiff') {
-    // short sides, front lifted and swept back
-    cap(1.03, 1.2, 0.9);
-    const q = add(G.ball(), 0, 0.74, 0.5, 0.52, 0.36, 0.34);
-    q.rotation.x = -0.42;
-    add(G.ball(), 0, 0.66, 0.06, 0.66, 0.24, 0.5);
+    // short sides, a lifted front that reads from head-on — not a bump on
+    // the crown that disappears in three-quarter
+    cap(1.028, 1.18, 0.82);
+    const q = add(G.ball(), 0.04, 0.86, 0.58, 0.58, 0.42, 0.4);
+    q.rotation.x = -0.62;
+    add(G.ball(), 0, 0.72, 0.16, 0.66, 0.28, 0.52);
   } else if (st === 'pompadour') {
-    // taller and rounder than a quiff, volume held above the forehead
-    cap(1.03, 1.2, 0.86);
-    add(G.ball(), 0, 0.82, 0.3, 0.62, 0.46, 0.56);
-    add(G.ball(), 0, 0.7, -0.16, 0.7, 0.3, 0.6);
+    // taller and rounder: volume held above and in front of the forehead
+    cap(1.026, 1.16, 0.78);
+    add(G.ball(), 0, 0.94, 0.36, 0.62, 0.48, 0.5);
+    add(G.ball(), 0, 0.78, 0.64, 0.5, 0.32, 0.32);
+    add(G.ball(), 0, 0.64, -0.12, 0.7, 0.26, 0.58);
+  } else if (st === 'swoop') {
+    // 1950s James Dean: a wide curl that lifts off the forehead and falls
+    // to one side — not a thin vertical stack that reads as a mohawk.
+    cap(1.026, 1.14, 0.76);
+    const pad = add(G.ball(), 0.08, 0.8, 0.46, 0.72, 0.36, 0.52);
+    pad.rotation.x = -0.48;
+    pad.rotation.z = -0.24;
+    const curl = add(G.ball(), 0.22, 0.9, 0.68, 0.38, 0.26, 0.3);
+    curl.rotation.x = -0.85;
+    curl.rotation.z = -0.4;
+    add(G.ball(), 0.06, 0.68, -0.08, 0.64, 0.24, 0.56);
   } else if (st === 'slickback') {
     // flat to the head, combed straight back
     cap(1.028, 1.3, 0.96);
@@ -2446,22 +2658,23 @@ function buildHair(dna, mat, extraMats) {
       s.rotation.x = 0.18;
     }
   } else if (st === 'dreads') {
-    // Deep enough at the back that scalp does not show between the crown and
-    // where the locs start hanging.
-    cap(1.03, 1.6, 0.98);
-    add(G.dome(1.06, 0.66), 0, 0.06, 0);
-    // Locs ring the head and hang past the jaw so they stay visible head-on,
-    // not just in three-quarter view.
-    for (let i = 0; i < 12; i++) {
-      const a = Math.PI * 0.16 + (i / 11) * Math.PI * 1.68;
-      const r = 0.86;
-      const len = 0.62 + (i % 3) * 0.16;
-      const l = add(G.neck(), Math.sin(a) * r, -0.34 - (i % 3) * 0.12, Math.cos(a) * r * 0.86,
-        0.1, len, 0.1);
-      l.rotation.z = Math.sin(a) * 0.24;
-      l.rotation.x = -Math.cos(a) * 0.16;
-      add(G.ball(), Math.sin(a) * r, -0.34 - (i % 3) * 0.12 - len, Math.cos(a) * r * 0.86,
-        0.1, 0.1, 0.1);                                    // rounded tip
+    // Deep enough at the back and sides that scalp does not show between
+    // the crown and where the locs start hanging.
+    cap(1.045, 1.78, 1.35);
+    add(G.dome(1.07, 0.95), 0, 0.02, 0);
+    /* Locs grow out of the cap. A ring of root spheres sits on the shell so
+       the hanging cylinders are never a smaller, lower orbit of their own. */
+    const locRing = 1.08;
+    const topY = 0.22;
+    for (let i = 0; i < 14; i++) {
+      const a = Math.PI * 0.22 + (i / 13) * Math.PI * 1.56;
+      const len = 0.52 + (i % 3) * 0.14;
+      const x = Math.sin(a) * locRing;
+      const z = Math.cos(a) * locRing;
+      add(G.ball(), x * 0.96, topY + 0.06, z * 0.96, 0.14, 0.14, 0.14);
+      const y = topY - len / 2;
+      add(G.neck(), x, y, z, 0.11, len, 0.11);
+      add(G.ball(), x, y - len / 2, z, 0.11, 0.11, 0.11);
     }
   } else if (st === 'afrofade') {
     // tight at the temples, full and round above
@@ -2488,6 +2701,34 @@ function buildHair(dna, mat, extraMats) {
     add(G.ball(), 0, -0.34, -0.7, 0.66, 0.46, 0.36);
     const fringe = add(G.ball(), 0, 0.44, 0.78, 0.6, 0.2, 0.2);
     fringe.rotation.x = 0.26;
+  } else if (st === 'wolf') {
+    // shaggy layers, curtain bangs, length through the sides and nape
+    cap(1.054, 1.7, 1.18);
+    for (const sx of [-1, 1]) {
+      const bang = add(G.ball(), sx * 0.36, 0.42, 0.76, 0.32, 0.3, 0.22);
+      bang.rotation.z = sx * 0.32;
+      bang.rotation.x = 0.2;
+      const layer = add(G.ball(), sx * 0.86, -0.28, 0.02, 0.28, 0.62, 0.4);
+      layer.rotation.z = -sx * 0.18;
+    }
+    add(G.ball(), 0, -0.4, -0.68, 0.7, 0.62, 0.4);
+  } else if (st === 'mullet') {
+    // short on top, long at the back. The cap stays tight at the front so
+    // the party is all in the nape.
+    cap(1.034, 1.22, 1.0);
+    add(G.dome(1.05, 0.7), 0, 0.04, 0);
+    for (const sx of [-1, 1]) add(G.ball(), sx * 0.82, -0.42, -0.18, 0.26, 0.7, 0.36);
+    add(G.ball(), 0, -0.58, -0.72, 0.66, 0.92, 0.48);
+  } else if (st === 'flow') {
+    // medium-long, swept back, moving at the sides — the hockey flow
+    cap(1.056, 1.78, 1.08);
+    const top = add(G.ball(), 0, 0.62, -0.08, 0.82, 0.36, 0.88);
+    top.rotation.x = -0.28;
+    for (const sx of [-1, 1]) {
+      const s = add(G.ball(), sx * 0.78, -0.22, 0.08, 0.28, 0.7, 0.42);
+      s.rotation.z = -sx * 0.12;
+    }
+    add(G.ball(), 0, -0.48, -0.68, 0.68, 0.78, 0.44);
   }
   return out;
 }
@@ -2509,7 +2750,8 @@ function buildMii(dna) {
   const shirtMat = new THREE.MeshStandardMaterial({
     color: apparelTex ? '#ffffff' : dna.shirt,
     map: apparelTex || null,
-    roughness: apparel.kind === 'tech' ? 0.42 : 0.72,
+    // Bare skin is softer than fabric; a suit has a slight sheen.
+    roughness: apparel.bare ? 0.82 : apparel.kind === 'suit' ? 0.55 : 0.72,
     metalness: 0
   });
   const pantMat  = new THREE.MeshStandardMaterial({ color: dna.pants, roughness: 0.85 });
@@ -2551,38 +2793,6 @@ function buildMii(dna) {
 
   for (const h of buildHair(dna, hairMat, M.mats)) headScale.add(h);
 
-  /* ---- ear jewellery ----
-     The head has no ear geometry, so these hang off the sides of the skull
-     where an ear would be. Metal is a real material here rather than a
-     painted highlight, because a hoop has to catch the key light to read. */
-  if (dna.ears && dna.ears !== 'none') {
-    const jewelMat = new THREE.MeshStandardMaterial({
-      color: '#e4e9ee', roughness: 0.22, metalness: 0.85
-    });
-    M.mats.push(jewelMat);
-    for (const sx of [-1, 1]) {
-      if (dna.ears === 'hoop') {
-        const hoop = new THREE.Mesh(G.collar(), jewelMat);
-        hoop.scale.set(0.1, 0.1, 0.22);
-        hoop.position.set(sx * 0.97, -0.16, 0.02);
-        hoop.rotation.y = Math.PI / 2;
-        headScale.add(hoop);
-      } else if (dna.ears === 'stud') {
-        const stud = new THREE.Mesh(G.ball(), jewelMat);
-        stud.scale.setScalar(0.055);
-        stud.position.set(sx * 0.98, -0.12, 0.04);
-        headScale.add(stud);
-      } else if (dna.ears === 'stacked') {
-        for (let i = 0; i < 3; i++) {
-          const stud = new THREE.Mesh(G.ball(), jewelMat);
-          stud.scale.setScalar(0.045);
-          stud.position.set(sx * 0.98, -0.04 - i * 0.11, 0.04);
-          headScale.add(stud);
-        }
-      }
-    }
-  }
-
   /* ---- torso ---- */
   const torso = new THREE.Mesh(G.torso(), shirtMat);
   torso.scale.set(0.33 * dna.girth, 0.28, 0.27 * dna.girth);
@@ -2593,29 +2803,24 @@ function buildMii(dna) {
   neck.scale.set(0.115, 0.2, 0.105); neck.position.y = 0.7;
   body.add(neck);
 
-  // Neck ink rides a hair's breadth outside the neck so it never z-fights.
-  if (dna.tattoo === 'neck' || dna.tattoo === 'both') {
-    const inkTex = makeInkTexture('neck');
-    const inkMat = new THREE.MeshStandardMaterial({
-      map: inkTex, transparent: true, roughness: 0.85, depthWrite: false
-    });
-    M.mats.push(inkMat);
-    const inkNeck = new THREE.Mesh(G.neck(), inkMat);
-    inkNeck.scale.set(0.118, 0.19, 0.108);
-    inkNeck.position.y = 0.7;
-    inkNeck.renderOrder = 3;
-    body.add(inkNeck);
-  }
+  /* Neck ink used to be a shell over this cylinder. It was never visible: the
+     head is between 0.33 and 0.54 wide across the neck's whole height while
+     the neck itself is only 0.115, so the head hides it completely and the
+     collar covers whatever is left. It is painted onto the jaw in the face
+     texture instead — see drawNeckInk(). */
 
-  // Cardigans, flannels and denim read as layers, so the collar picks up
-  // the garment instead of staying a white tee crew neck.
-  const collarMat = apparel.open
-    ? new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -30), roughness: 0.7 })
-    : whiteMat;
-  if (apparel.open) M.mats.push(collarMat);
-  const collar = new THREE.Mesh(G.collar(), collarMat);
-  collar.scale.set(0.135, 0.135, 0.13); collar.rotation.x = Math.PI / 2;
-  collar.position.y = 0.7; body.add(collar);
+  /* The collar is a white crew neck by default. Layered garments take it in
+     their own colour, a suit gets a shirt collar, and bare skin gets none at
+     all — a floating white ring above an undressed chest looks like a bug. */
+  if (!apparel.bare) {
+    const collarMat = apparel.open
+      ? new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -30), roughness: 0.7 })
+      : whiteMat;
+    if (apparel.open) M.mats.push(collarMat);
+    const collar = new THREE.Mesh(G.collar(), collarMat);
+    collar.scale.set(0.135, 0.135, 0.13); collar.rotation.x = Math.PI / 2;
+    collar.position.y = 0.7; body.add(collar);
+  }
 
   // A hood is a shell behind the head, not headwear — it coexists with hats.
   if (apparel.hood) {
@@ -2673,40 +2878,6 @@ function buildMii(dna) {
     f.userData.hip = hip;
     f.userData.sx = sx;
     hip.add(f); M.feet.push(f);
-  }
-
-  /* ---- digital ID badge ----
-     Text is only ever filled in for the signed-in owner; see
-     applyBadgeIdentity(). Everyone else gets the mark on its own. */
-  if (dna.badge && dna.badge !== 'none') {
-    const style = dna.badge;
-    if (style === 'patch') {
-      const patchMat = new THREE.MeshStandardMaterial({
-        map: makeIdBadgeTexture(style, null), transparent: true, roughness: 0.7, depthWrite: false,
-        polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -3
-      });
-      M.mats.push(patchMat);
-      const patch = new THREE.Mesh(geoCache('quad', () => new THREE.PlaneGeometry(1, 1)), patchMat);
-      patch.scale.set(0.2, 0.075, 1);
-      patch.position.set(0.11, 0.6, 0.28 * dna.girth);
-      patch.renderOrder = 4;
-      body.add(patch);
-      M.badgeMesh = patch; M.badgeMat = patchMat;
-    } else {
-      // Floating variants hang just under the name plate and always face out.
-      const tagMat = new THREE.SpriteMaterial({
-        map: makeIdBadgeTexture(style, null), transparent: true, depthTest: false, opacity: 0.95
-      });
-      M.mats.push(tagMat);
-      const chip = new THREE.Sprite(tagMat);
-      const wide = style === 'pill';
-      chip.scale.set(wide ? 0.5 : 0.18, 0.18, 1);
-      chip.position.y = HANG * S + 0.13;
-      chip.renderOrder = 19;
-      root.add(chip);
-      M.badgeMesh = chip; M.badgeMat = tagMat;
-    }
-    M.badgeStyle = style;
   }
 
   /* ---- name tag ---- */
@@ -4110,16 +4281,10 @@ const TRAY = [
     set: (d, v) => { d.facialHair = v; }
   },
   {
-    key: 'piercing', label: 'Piercings',
+    key: 'piercing', label: 'Nose ring',
     options: () => PIERCINGS.map((p) => ({ v: p.id, label: p.label })),
     get: (d) => d.piercing,
     set: (d, v) => { d.piercing = v; }
-  },
-  {
-    key: 'ears', label: 'Ears',
-    options: () => EAR_STYLES.map((e) => ({ v: e.id, label: e.label })),
-    get: (d) => d.ears,
-    set: (d, v) => { d.ears = v; }
   },
   {
     key: 'tattoo', label: 'Ink',
@@ -4133,25 +4298,6 @@ const TRAY = [
     get: (d) => d.apparel,
     set: (d, v) => { d.apparel = v; }
   },
-  {
-    key: 'kit', label: 'Kit colours',
-    options: () => KIT_COLORS.map((k, i) => ({ v: i, swatch: k.a, swatch2: k.b })),
-    get: (d) => d.kit,
-    set: (d, v) => { d.kit = v; }
-  },
-  {
-    key: 'kitNumber', label: 'Number',
-    options: () => [0, 3, 6, 7, 8, 9, 10, 11, 21, 23, 24, 30, 77, 99]
-      .map((n) => ({ v: n, label: String(n) })),
-    get: (d) => d.kitNumber,
-    set: (d, v) => { d.kitNumber = v; }
-  },
-  {
-    key: 'badge', label: 'ID badge',
-    options: () => BADGES.map((b) => ({ v: b.id, label: b.label })),
-    get: (d) => d.badge,
-    set: (d, v) => { d.badge = v; }
-  }
 ];
 
 /* One button per category. It names what is currently picked, and a tap
@@ -4272,9 +4418,9 @@ function rerollFace(d) {
   d.mouth = r.mouth; d.nose = r.nose;
   d.blush = r.blush; d.freckles = r.freckles;
   d.headSize = r.headSize; d.height = r.height; d.girth = r.girth;
-  // Deliberately leaves eyewear, facial hair, piercings, ears and outfit
-  // alone: those have their own steppers, and shuffling them here would
-  // undo a choice the user just made by hand.
+  // Deliberately leaves eyewear, facial hair, piercings and outfit alone:
+  // those have their own steppers, and shuffling them here would undo a
+  // choice the user just made by hand.
 }
 
 /* ---------------- camera modal ---------------- */
@@ -4707,6 +4853,7 @@ function bindButtons() {
 
   $('btnCamera').addEventListener('click', () => Cam.open());
   $('btnCamClose').addEventListener('click', () => Cam.close());
+  $('camX').addEventListener('click', () => { Sound.fx.click(); Cam.close(); });
   $('btnSnap').addEventListener('click', () => Cam.snap());
   $('btnRetake').addEventListener('click', () => { Cam.reset(); if (!Cam.stream) Cam.open(); });
   $('btnAccept').addEventListener('click', () => Cam.accept());
@@ -4979,8 +5126,8 @@ window.MiiPlaza = {
   World, Sound, Store, Preview, randomDNA, normalizeDNA, buildMii, Mii, Cam, Config, Realtime,
   THREE, styleLabel,
   catalog: {
-    EYEWEAR, FACIAL_HAIR, PIERCINGS, EAR_STYLES, TATTOOS, APPAREL, BADGES,
-    HAIRSTYLES, HAT_STYLES, KIT_COLORS, SKINS, HAIRS, SHIRTS, EYECOL
+    EYEWEAR, FACIAL_HAIR, PIERCINGS, TATTOOS, APPAREL,
+    HAIRSTYLES, HAT_STYLES, SKINS, HAIRS, SHIRTS, EYECOL
   }
 };
 </script>
