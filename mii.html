@@ -2358,7 +2358,7 @@ const G = {
   tube: () => geoCache('htube', () => new THREE.CylinderGeometry(1, 1, 1, 256, 1, true)),
   frusTube: (rt) => geoCache(`frt${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 256, 1, true)),
   disc: () => geoCache('hdisc', () => {
-    const g = new THREE.CircleGeometry(1, 96);
+    const g = new THREE.CircleGeometry(1, 256);
     g.rotateX(-Math.PI / 2);
     g.computeVertexNormals();
     return g;
@@ -2371,13 +2371,14 @@ const G = {
     const hole = new THREE.Path();
     hole.absarc(0, 0, inner, 0, TAU, true);
     s.holes.push(hole);
-    const g = new THREE.ExtrudeGeometry(s, { depth: 0.06, bevelEnabled: false, steps: 1, curveSegments: 96 });
+    const g = new THREE.ExtrudeGeometry(s, { depth: 0.06, bevelEnabled: false, steps: 1, curveSegments: 256 });
     g.rotateX(-Math.PI / 2);
     g.translate(0, 0.03, 0);
     g.computeVertexNormals();
     return g;
   }),
   hatDome: (r, tl) => geoCache(`hdm${r}_${tl}`, () => superball(r, 128, 32, HEAD_N, 0, TAU, 0, tl)),
+  hatVisor: () => geoCache('hvis', () => superball(1, 64, 28, 3.0)),
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -2821,9 +2822,9 @@ function buildHair(dna, mat, extraMats) {
 
       const visorMat = st === 'yankees' ? hatMat : accMat;
       if (H.flat) {
-        put(G.foot(), accMat, 0, 0.29, 1.28, 0.72, 0.06, 0.34);
+        put(G.hatVisor(), accMat, 0, 0.29, 1.28, 0.72, 0.06, 0.34);
       } else {
-        const brim = put(G.foot(), visorMat, 0, soft ? 0.26 : 0.28, 1.26,
+        const brim = put(G.hatVisor(), visorMat, 0, soft ? 0.26 : 0.28, 1.26,
           0.68, 0.055, soft ? 0.36 : 0.32);
         brim.rotation.x = soft ? -0.28 : -0.16;
       }
