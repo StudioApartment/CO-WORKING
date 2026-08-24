@@ -13,16 +13,17 @@ import { badgeUrl, qrImageUrl } from './_lib/badge.js';
 import { walletSaveUrl } from './_lib/googleWallet.js';
 import { sendBadgeEmail } from './_lib/email.js';
 import { originFrom, hasSessions } from './_lib/env.js';
+import { makeToken, hashToken } from './_store.js';
 
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      const list = await store.listPublic();
       const session = readSession(req);
-      return send(res, 200, list.map((r) => ({
-        ...r,
-        mine: Boolean(session && session.miiId === r.id)
-      })));
+      const token = String(req.headers['x-token'] || '');
+      return send(res, 200, await store.listPublic({
+        sessionId: session ? session.miiId : null,
+        tokenHash: token ? hashToken(token) : null
+      }));
     }
 
     if (req.method !== 'POST') return methodNotAllowed(res, ['GET', 'POST']);
@@ -50,9 +51,19 @@ export default async function handler(req, res) {
       });
     }
 
+    /* Ownership has to come from somewhere. Normally that is the signed
+     * session cookie, but a deploy without JWT_SECRET cannot sign one — and a
+     * character nobody can edit is worse than a slightly weaker proof. So in
+     * that case fall back to the original capability token: random, returned
+     * exactly once, and only its hash is stored. */
+    const fallbackToken = hasSessions ? null : makeToken();
+
     let record;
     try {
-      record = await store.create({ email, name, dna: { ...dna, name } });
+      record = await store.create({
+        email, name, dna: { ...dna, name },
+        tokenHash: fallbackToken ? hashToken(fallbackToken) : null
+      });
     } catch (e) {
       if (e instanceof store.StoreError) {
         return send(res, e.status, { error: e.message, code: e.code || undefined });
@@ -89,6 +100,8 @@ export default async function handler(req, res) {
       created: new Date(record.created_at).getTime(),
       mine: true,
       sessioned: hasSessions,
+      // Shown once, only when there is no cookie to rely on.
+      token: fallbackToken || undefined,
       previewUrl,
       qrUrl,
       walletUrl,

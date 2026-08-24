@@ -34,19 +34,44 @@ export { StoreError };
 
 /* --------------------------------------------------------------- reading -- */
 
-export async function listPublic() {
+/**
+ * The plaza as the browser sees it. `viewer` decides which rows come back
+ * flagged as theirs — either the id named by a session cookie, or the hash of
+ * a capability token — so the client never has to keep its own list of what it
+ * owns. Emails are never included either way.
+ *
+ * @param {{ sessionId?: string|null, tokenHash?: string|null }} viewer
+ */
+export async function listPublic(viewer = {}) {
+  const { sessionId = null, tokenHash = null } = viewer;
+
+  // token_hash is only read when a token was actually presented, so the
+  // common request stays on the narrow public projection.
+  const columns = tokenHash ? `${PUBLIC_COLUMNS}, token_hash` : PUBLIC_COLUMNS;
+
   if (usingSupabase) {
     const { data, error } = await supabaseAdmin()
       .from('miis')
-      .select(PUBLIC_COLUMNS)
+      .select(columns)
       .order('created_at', { ascending: true });
     if (error) throw new StoreError(error.message, { status: 502 });
-    return (data || []).map(publicView);
+    return (data || []).map((r) => ({
+      ...publicView(r),
+      mine: (sessionId != null && r.id === sessionId) ||
+            (tokenHash != null && r.token_hash === tokenHash)
+    }));
   }
 
   const rows = await legacy.listAll();
   rows.sort((a, b) => (a.created || 0) - (b.created || 0));
-  return rows.map((r) => ({ id: r.id, dna: r.dna, name: r.dna?.name || r.name || '', created: r.created }));
+  return rows.map((r) => ({
+    id: r.id,
+    dna: r.dna,
+    name: r.dna?.name || r.name || '',
+    created: r.created,
+    mine: (sessionId != null && r.id === sessionId) ||
+          (tokenHash != null && r.tokenHash === tokenHash)
+  }));
 }
 
 export async function getById(id) {
@@ -116,13 +141,15 @@ export async function listAllAdmin() {
 
 /* --------------------------------------------------------------- writing -- */
 
-export async function create({ email, name, dna }) {
+export async function create({ email, name, dna, tokenHash = null }) {
   const clean = normalizeEmail(email);
 
   if (usingSupabase) {
+    const row = { email: clean, name, mii_data: dna };
+    if (tokenHash) row.token_hash = tokenHash;
     const { data, error } = await supabaseAdmin()
       .from('miis')
-      .insert({ email: clean, name, mii_data: dna })
+      .insert(row)
       .select(ADMIN_COLUMNS)
       .single();
 
@@ -149,9 +176,10 @@ export async function create({ email, name, dna }) {
     id: 'l' + now.toString(36) + Math.random().toString(36).slice(2, 8),
     dna, email: clean, name, created: now, updated: now
   };
+  if (tokenHash) rec.tokenHash = tokenHash;
   await legacy.putOne(rec);
   return {
-    id: rec.id, email: clean, name, mii_data: dna,
+    id: rec.id, email: clean, name, mii_data: dna, token_hash: tokenHash,
     created_at: new Date(now).toISOString(), updated_at: new Date(now).toISOString()
   };
 }

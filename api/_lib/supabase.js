@@ -25,10 +25,15 @@ export function supabaseAdmin() {
 
 export const PREVIEW_BUCKET = 'mii-previews';
 
-/* Public columns only. Anything that reaches the browser goes through here so
- * a new column cannot leak by being added to a `select('*')` somewhere. */
+/* Public columns are listed explicitly: anything that reaches the browser goes
+ * through here, so a column added later cannot leak by riding along. */
 export const PUBLIC_COLUMNS = 'id, name, mii_data, created_at, updated_at';
-export const ADMIN_COLUMNS = 'id, email, name, mii_data, created_at, updated_at';
+
+/* Server-side reads take the whole row. Naming columns here would 400 the
+ * request on a database that has not had a later migration applied yet, and
+ * every route maps fields explicitly before responding — nothing selected
+ * here is echoed to a client verbatim. */
+export const ADMIN_COLUMNS = '*';
 
 export const publicView = (row) => ({
   id: row.id,

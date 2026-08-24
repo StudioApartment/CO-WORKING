@@ -24,6 +24,12 @@ create table if not exists public.miis (
   updated_at timestamptz not null default now()
 );
 
+-- Fallback ownership for deploys with no JWT_SECRET, where no session cookie
+-- can be signed. Creating a Mii then returns a random capability token once
+-- and only its SHA-256 is kept here, so a character is never left with no way
+-- for its author to edit it. Null whenever a cookie was issued instead.
+alter table public.miis add column if not exists token_hash text;
+
 -- One Mii per person. Case/whitespace folded so Gage@x.com == gage@x.com.
 create unique index if not exists miis_email_key
   on public.miis (lower(btrim(email)));

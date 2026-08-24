@@ -24,9 +24,13 @@ function mayWrite(req, record) {
   const session = readSession(req);
   if (session && session.miiId === record.id) return true;
 
-  const legacy = record._legacy;
+  // Capability token, presented as x-token. Covers characters made before the
+  // cookie existed, and any made on a deploy with no JWT_SECRET to sign one.
   const token = String(req.headers['x-token'] || '');
-  return Boolean(legacy && token && tokenMatches(legacy, token));
+  if (!token) return false;
+
+  const hash = record.token_hash || (record._legacy && record._legacy.tokenHash);
+  return Boolean(hash && tokenMatches({ tokenHash: hash }, token));
 }
 
 export default async function handler(req, res) {

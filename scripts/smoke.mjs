@@ -10,6 +10,7 @@
 
 import { rmSync } from 'node:fs';
 import { EventEmitter } from 'node:events';
+import { spawnSync } from 'node:child_process';
 
 process.env.JWT_SECRET = 'smoke-test-secret-value-0123456789';
 process.env.ADMIN_SECRET_KEY = 'smoke-admin-key';
@@ -339,5 +340,24 @@ console.log('\nCSV injection');
 
 try { rmSync(STORE_FILE, { force: true }); } catch {}
 
-console.log(`\n${pass} passed, ${fail} failed\n`);
+/* The no-JWT_SECRET path needs a process where the secret was never set, since
+ * the env module reads it once at import. Run it as a child and fold the
+ * result in here so `npm run smoke` stays a single command. */
+const child = spawnSync(
+  process.execPath,
+  [new URL('./smoke-nosession.mjs', import.meta.url).pathname],
+  { encoding: 'utf8', env: { ...process.env, JWT_SECRET: '' } }
+);
+process.stdout.write(child.stdout || '');
+if (child.stderr) process.stderr.write(child.stderr);
+const childTally = /(\d+) passed, (\d+) failed/.exec(child.stdout || '');
+if (childTally) {
+  pass += Number(childTally[1]);
+  fail += Number(childTally[2]);
+} else {
+  fail++;
+  console.log('  ✗ no-session suite did not report a result');
+}
+
+console.log(`${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

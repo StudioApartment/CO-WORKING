@@ -3262,6 +3262,13 @@ const Store = {
   init() {
     try { this.token = localStorage.getItem('miiplaza-token') || null; } catch { this.token = null; }
   },
+  /* Only issued when the server could not sign a session cookie. Returned
+     once at create time, so it has to be kept the moment we see it. */
+  _saveToken(t) {
+    if (!t) return;
+    this.token = t;
+    try { localStorage.setItem('miiplaza-token', t); } catch {}
+  },
   _head(extra) {
     const h = Object.assign({ 'content-type': 'application/json' }, extra || {});
     if (this.token) h['x-token'] = this.token;
@@ -3326,6 +3333,7 @@ const Store = {
         });
         const body = await r.json().catch(() => ({}));
         if (r.ok) {
+          this._saveToken(body.token);
           body.mine = true;
           return { ok: true, record: body };
         }

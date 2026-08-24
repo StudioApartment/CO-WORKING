@@ -18,8 +18,10 @@ const REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_A
 export const usingRedis = Boolean(REST_URL && REST_TOKEN);
 
 const HASH_KEY = 'plaza:miis';
-// Use /tmp on Vercel (writable but ephemeral), local file otherwise
-const FILE = process.env.VERCEL ? '/tmp/miis.json' : path.join(process.cwd(), 'miis.json');
+// Use /tmp on Vercel (writable but ephemeral), local file otherwise.
+// MII_STORE_FILE overrides both, which lets a test run keep its own store.
+const FILE = process.env.MII_STORE_FILE
+  || (process.env.VERCEL ? '/tmp/miis.json' : path.join(process.cwd(), 'miis.json'));
 
 export const MAX_PER_TOKEN = Number(process.env.MAX_PER_OWNER || 3);
 export const WRITE_LIMIT = Number(process.env.WRITE_LIMIT || 12);      // writes per window, per IP
