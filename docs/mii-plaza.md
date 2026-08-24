@@ -248,6 +248,12 @@ Hair is built from open shells, so all hair and hat materials are
 `DoubleSide`. With backface culling on, any shell edge turning away from the
 camera shows straight through.
 
+The crown is a single full-azimuth dome. Split front/back shells start below
+the pole and overlap it. Two shells that both include the north pole produce
+a floating lid — the front polar fan sits above the back one, which is what
+the bowl cut used to show from above. Extra volume pieces (crew, crop, locs)
+sit at y = 0 on the same radius rather than being translated up.
+
 ### Things the rig cannot do
 
 **No forearm or sleeve tattoos.** A Wii Mii has floating hands and no arms —
