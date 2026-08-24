@@ -2617,7 +2617,10 @@ function buildHair(dna, mat, extraMats) {
     for (const sx of [-1, 1]) add(G.ball(), sx * 0.86, -0.34, -0.06, 0.3, 0.72, 0.44);
     add(G.ball(), 0, -0.44, -0.62, 0.7, 0.84, 0.46);
   } else if (st === 'afro') {
-    shells(1.24, 1.86, 0.94, 0.04);
+    /* A closed ball around the upper head. A dome's open edge is a flat
+       brim, and a skirt at afro radius hangs like long hair. Shifted back
+       so the front of the ball stays above the eyes. */
+    add(G.ball(), 0, 0.74, -0.08, 1.16, 0.98, 1.16);
   } else if (st === 'bun') {
     cap(1.05, 1.5, 1.04);
     add(G.ball(), 0, 0.86, -0.62, 0.42, 0.4, 0.4);
@@ -2727,9 +2730,8 @@ function buildHair(dna, mat, extraMats) {
       add(G.ball(), x, y - len / 2, z, 0.11, 0.11, 0.11);
     }
   } else if (st === 'afrofade') {
-    // tight at the temples, full and round above
-    cap(1.028, 1.1, 0.98);
-    shells(1.2, 1.5, 0.8, 0.18);
+    cap(1.028, 1.16, 1.04);
+    add(G.ball(), 0, 0.80, 0.0, 0.88, 0.72, 0.88);
   } else if (st === 'bob') {
     // blunt, jaw length, tucked in at the ends
     cap(1.058, 1.5, 1.14);

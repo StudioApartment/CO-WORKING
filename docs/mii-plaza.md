@@ -255,8 +255,10 @@ above the back one, which is what the bowl cut used to show from above.
 
 The pompadour is that same dome with a smooth front-upper bump, not a second
 object parked on the crown. Curtains are two forehead lobes on one shell
-with a narrow part; extra balls on the cap pitted the crown. Extra loc
-volume sits at y = 0 on a slightly larger radius rather than being
+with a narrow part; extra balls on the cap pitted the crown. An afro is a
+round puff on the skull — a nape skirt at afro radius hangs like long hair,
+and a dome's open edge reads as a brim. The afro is a closed ball around the
+upper head, shifted back so it does not cover the eyes. Extra loc volume sits at y = 0 on a slightly larger radius rather than being
 translated up.
 
 ### Things the rig cannot do
