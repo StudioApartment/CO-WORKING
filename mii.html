@@ -2235,9 +2235,9 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  wolf: (r) => geoCache(`wolfA${r}`, () => {
-    /* Long on top and down the back, short on the sides. A cap plus
-       cheek teardrops was earmuffs with a blunt nape — the opposite. */
+  wolf: (r) => geoCache(`wolfB${r}`, () => {
+    /* Long on top and down the back, crop on the sides. Pinching the
+       sides inside the skull made a mohawk with a hanging nape. */
     const tl = 2.62;
     const g = new THREE.SphereGeometry(r, 48, 40, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
@@ -2250,15 +2250,14 @@ const G = {
       const rs0 = Math.hypot(ux, uz) || 1e-6;
       const azFront = Math.max(0, uz / rs0);
       const azBack = Math.max(0, -uz / rs0);
-      const side = Math.abs(ux) / rs0;
       const phi = Math.atan2(ux, uz);
       const faceWin = Math.pow(Math.max(0, azFront - 0.18) / 0.82, 2);
-      const backAmt = Math.pow(azBack, 2.4);
-      const chop = (0.045 * Math.sin(phi * 7.0) + 0.02 * Math.sin(phi * 13.0 + 0.6))
+      const backAmt = Math.pow(azBack, 1.9);
+      const chop = (0.04 * Math.sin(phi * 7.0) + 0.018 * Math.sin(phi * 13.0 + 0.6))
         * backAmt;
-      const maxTh = 1.22 * (1 - faceWin - backAmt)
+      const maxTh = 1.40 * (1 - faceWin - backAmt)
         + 1.08 * faceWin
-        + 2.52 * backAmt
+        + 2.50 * backAmt
         + chop;
       const th2 = (th / tl) * maxTh;
       const rs = Math.sin(th2);
@@ -2270,7 +2269,7 @@ const G = {
         -1 / n
       );
       nx *= s * r; ny *= s * r; nz *= s * r;
-      ny += Math.max(0, ny - 0.38) * 0.50;
+      ny += Math.max(0, ny - 0.38) * 0.48;
       const mane = Math.exp(-ux * ux * 6.5) * Math.max(0, ny - 0.18);
       ny += mane * 0.12;
       if (azFront > 0.4 && ny < 0.62) {
@@ -2279,11 +2278,10 @@ const G = {
         const k = 1 - t + t * (1.05 / Lh);
         nx *= k; ny *= k; nz *= k;
       }
-      nx *= 1 - Math.pow(side, 2) * Math.max(0, 0.45 - Math.abs(ny)) * 0.14;
-      if (azBack > 0.35 && ny < 0.12) {
-        const drop = (0.12 - ny) * azBack;
-        ny -= drop * 0.10;
-        nz -= drop * 0.16;
+      if (azBack > 0.35 && ny < 0.10) {
+        const drop = (0.10 - ny) * azBack;
+        ny -= drop * 0.08;
+        nz -= drop * 0.14;
       }
       p.setXYZ(i, nx, ny, nz);
     }
