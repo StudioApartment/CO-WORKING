@@ -170,7 +170,7 @@ try {
   {
     const cats = await evaluate(
       `[...document.querySelectorAll('.cyc .cat')].map(b => b.textContent)`);
-    check('one stepper per category', cats.length >= 7, `got ${cats.length}: ${cats}`);
+    check('one shuffle button per category', cats.length >= 7, `got ${cats.length}: ${cats}`);
     check('ear jewellery is gone', !cats.includes('Ears'), cats.join(', '));
     // Kit colour and squad number are baked into each shirt now, so those two
     // steppers should be gone rather than sitting there doing nothing.
@@ -179,9 +179,10 @@ try {
     // The 3D ID badge overlay on the character was removed. The real badge —
     // the QR, the Wallet pass, the email — is a separate thing and must stay.
     check('the character ID badge overlay is gone', !cats.includes('ID badge'), cats.join(', '));
-    check('every stepper shows its current value', await evaluate(`
-      [...document.querySelectorAll('.cyc')]
-        .every(b => b.querySelector('.val') || b.querySelector('.kit'))`));
+    check('option names stay off the buttons', await evaluate(`
+      [...document.querySelectorAll('.cyc .val')].length === 0
+      && ![...document.querySelectorAll('#camTray button')]
+        .some(b => /crop|afro|locs|bowl|pompadour/i.test(b.textContent))`));
 
     // The whole point of the rewrite: far fewer controls on screen than a
     // tab row plus a grid of every option.
@@ -193,56 +194,61 @@ try {
       return tops.length >= 7 && tops.every(t => t === tops[0]);
     })()`));
 
-    // Cycling must visit every value and come back round. This is the check
-    // that actually matters: the catalogues are data, and a bad entry would
-    // only surface as an unrenderable character.
+    // Shuffling must actually change the character and not throw. Catalogues
+    // are data; a bad entry would only surface as an unrenderable mesh.
     const sweep = await evaluate(`(() => {
       const failures = [];
       let clicks = 0;
+      const snap = () => JSON.stringify({
+        h: MiiPlaza.Cam.dna.hair.style, u: MiiPlaza.Cam.dna._hairUnder,
+        g: MiiPlaza.Cam.dna.glasses, f: MiiPlaza.Cam.dna.facialHair,
+        p: MiiPlaza.Cam.dna.piercing, t: MiiPlaza.Cam.dna.tattoo,
+        a: MiiPlaza.Cam.dna.apparel
+      });
       const cats = [...document.querySelectorAll('.cyc .cat')].map(c => c.textContent);
       for (const name of cats) {
-        const seen = new Set();
-        // 40 taps is past the longest list, so this also proves it wraps
-        // rather than sticking at the end.
-        for (let i = 0; i < 40; i++) {
+        const before = snap();
+        let changed = false;
+        for (let i = 0; i < 12; i++) {
           const btn = [...document.querySelectorAll('.cyc')]
             .find(b => b.querySelector('.cat').textContent === name);
-          if (!btn) { failures.push(name + ': stepper vanished'); break; }
-          const v = btn.querySelector('.val');
-          seen.add(v ? v.textContent : 'swatch' + i);
+          if (!btn) { failures.push(name + ': button vanished'); break; }
           try { btn.click(); clicks++; }
           catch (e) { failures.push(name + ': ' + e.message); break; }
+          if (snap() !== before) changed = true;
         }
-        if (seen.size < 2) failures.push(name + ': never changed value');
+        if (!changed) failures.push(name + ': never changed');
       }
       return { clicks, failures };
     })()`);
-    check('every stepper cycles without throwing', sweep.failures.length === 0,
+    check('every shuffle button runs without throwing', sweep.failures.length === 0,
       sweep.failures.slice(0, 3).join(' | '));
-    // Derived from the stepper count rather than a fixed number, so removing
-    // a category does not fail this instead of the thing it is checking.
-    check('swept every stepper the full 40 taps', sweep.clicks === cats.length * 40,
-      `${sweep.clicks} steps across ${cats.length} steppers`);
+    check('tapped every shuffle button', sweep.clicks === cats.length * 12,
+      `${sweep.clicks} shuffles across ${cats.length} buttons`);
 
-    // Hair and headwear share a slot, so the labels have to stay truthful.
+    // Hair and headwear share one slot. The first tap on Hair has to take
+    // the hat off rather than also skipping the cut underneath.
     const slot = await evaluate(`(() => {
+      const hats = MiiPlaza.catalog.HAT_STYLES;
       const byCat = (n) => [...document.querySelectorAll('.cyc')]
         .find(b => b.querySelector('.cat').textContent === n);
-      const valOf = (n) => byCat(n).querySelector('.val').textContent;
-
-      // step Headwear off None so a hat is definitely on
-      while (valOf('Headwear') === 'None') byCat('Headwear').click();
-      const hatOn = valOf('Headwear');
-      const hairUnder = valOf('Hair');
-
-      // one tap on Hair should reveal that same cut, not skip past it
+      let guard = 0;
+      while (!hats.includes(MiiPlaza.Cam.dna.hair.style) && guard++ < 40) {
+        byCat('Headwear').click();
+      }
+      const hatOn = MiiPlaza.Cam.dna.hair.style;
+      const hairUnder = MiiPlaza.Cam.dna._hairUnder;
       byCat('Hair').click();
-      return { hatOn, hairUnder, afterClaim: valOf('Hair'), hatAfter: valOf('Headwear') };
+      return {
+        hatOn, hairUnder,
+        afterClaim: MiiPlaza.Cam.dna.hair.style,
+        hatAfter: hats.includes(MiiPlaza.Cam.dna.hair.style)
+      };
     })()`);
-    check('hair reports the cut under a hat, not the hat', slot.hairUnder !== 'None' && slot.hairUnder !== slot.hatOn,
+    check('a hat can be shuffled on', Boolean(slot.hatOn) && slot.hatOn !== slot.hairUnder,
       JSON.stringify(slot));
     check('tapping hair reveals that same cut', slot.afterClaim === slot.hairUnder, JSON.stringify(slot));
-    check('and takes the hat off', slot.hatAfter === 'None', JSON.stringify(slot));
+    check('and takes the hat off', slot.hatAfter === false, JSON.stringify(slot));
 
     // Hair and hats share one slot, and volume has to stay above the brow
     // line or it starts covering the eyes.

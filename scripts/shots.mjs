@@ -133,7 +133,7 @@ try {
   await sleep(300);
   await shoot('02-badge-form');
 
-  // the stepper tray, then the same tray after cycling a few categories
+  // the shuffle tray, then the same tray after a few rolls
   await viewport(1280, 940);
   await sleep(400);
   await shoot('02b-tray');
