@@ -1515,21 +1515,6 @@ function drawPiercings(g, U, dna) {
     g.arc(50 * U, (noseY + 1.5) * U, 4.2 * U, 0.1 * Math.PI, 0.9 * Math.PI);
     g.lineWidth = 2.4 * U; g.strokeStyle = rim; g.stroke();
     g.lineWidth = 1.4 * U; g.strokeStyle = metal; g.stroke();
-  } else if (st === 'brow') {
-    const bx = 50 - dna.eyes.spacing - 5;
-    const by = dna.eyes.y - dna.brows.gap - 1;
-    g.save();
-    g.translate(bx * U, by * U);
-    g.rotate(-0.4);
-    g.strokeStyle = rim; g.lineWidth = 0.9 * U;
-    g.fillStyle = metal;
-    g.fillRect(-1.1 * U, -4.4 * U, 2.2 * U, 8.8 * U);
-    g.strokeRect(-1.1 * U, -4.4 * U, 2.2 * U, 8.8 * U);
-    g.restore();
-    bead(bx - 1.8, by - 4.6, 1.9);
-    bead(bx + 1.8, by + 4.6, 1.9);
-  } else if (st === 'lip') {
-    ring(50 - dna.mouth.w * 0.36, dna.mouth.y + 6, 2.8);
   }
   g.globalAlpha = 1;
 }
@@ -1685,21 +1670,21 @@ const FACIAL_HAIR = [
   { id: 'handlebar', label: 'Handlebar' }
 ];
 
-/* ---- piercings ---- */
+/* ---- piercings ----------------------------------------------
+   Nose only. Ear jewellery, brow bars and lip rings were dropped:
+   the head carries no ear geometry, so hoops had to be guessed at
+   from the side of the skull, and at this scale the whole set was
+   more steppers than it was distinguishable detail. */
 const PIERCINGS = [
   { id: 'none',     label: 'None' },
   { id: 'nose',     label: 'Nose stud' },
   { id: 'nostril2', label: 'Double ring' },
-  { id: 'septum',   label: 'Septum' },
-  { id: 'brow',     label: 'Eyebrow bar' },
-  { id: 'lip',      label: 'Lip ring' }
+  { id: 'septum',   label: 'Septum' }
 ];
-const EAR_STYLES = [
-  { id: 'none',   label: 'None' },
-  { id: 'hoop',   label: 'Hoops' },
-  { id: 'stud',   label: 'Studs' },
-  { id: 'stacked',label: 'Stacked' }
-];
+
+/* Retired ids, so a stored character does not keep asking for a piece that
+   no longer renders. */
+const PIERCING_ALIASES = { brow: 'none', lip: 'none' };
 
 /* ---- tattoos ------------------------------------------------
    The Wii rig has floating hands and no arms, so forearm and
@@ -1789,8 +1774,7 @@ function randomDNA(opts = {}) {
     blush: chance(0.4),
     freckles: chance(0.18),
     facialHair: male && chance(0.42) ? pickOne(['stubble','lineup','full','goatee','stache','handlebar']) : 'none',
-    piercing: chance(0.2) ? pickOne(['nose','nostril2','septum','brow','lip']) : 'none',
-    ears: chance(0.22) ? pickOne(['hoop','stud','stacked']) : 'none',
+    piercing: chance(0.2) ? pickOne(['nose','nostril2','septum']) : 'none',
     tattoo: chance(0.16) ? pickOne(['hand','neck','both']) : 'none',
     apparel: opts.apparel || pickOne(APPAREL).id,
     kit: randi(0, KIT_COLORS.length - 1),
@@ -1821,7 +1805,8 @@ function normalizeDNA(d) {
     d.facialHair = d.beard ? 'full' : d.stache ? 'stache' : 'none';
   }
   if (typeof d.piercing !== 'string') d.piercing = 'none';
-  if (typeof d.ears !== 'string') d.ears = 'none';
+  if (PIERCING_ALIASES[d.piercing]) d.piercing = PIERCING_ALIASES[d.piercing];
+  delete d.ears;                       // ear jewellery was removed
   if (typeof d.tattoo !== 'string') d.tattoo = 'none';
   if (typeof d.apparel !== 'string' || !APPAREL_BY_ID.has(d.apparel)) d.apparel = 'tee';
   if (typeof d.badge !== 'string') d.badge = 'none';
@@ -2550,38 +2535,6 @@ function buildMii(dna) {
   headScale.add(nose);
 
   for (const h of buildHair(dna, hairMat, M.mats)) headScale.add(h);
-
-  /* ---- ear jewellery ----
-     The head has no ear geometry, so these hang off the sides of the skull
-     where an ear would be. Metal is a real material here rather than a
-     painted highlight, because a hoop has to catch the key light to read. */
-  if (dna.ears && dna.ears !== 'none') {
-    const jewelMat = new THREE.MeshStandardMaterial({
-      color: '#e4e9ee', roughness: 0.22, metalness: 0.85
-    });
-    M.mats.push(jewelMat);
-    for (const sx of [-1, 1]) {
-      if (dna.ears === 'hoop') {
-        const hoop = new THREE.Mesh(G.collar(), jewelMat);
-        hoop.scale.set(0.1, 0.1, 0.22);
-        hoop.position.set(sx * 0.97, -0.16, 0.02);
-        hoop.rotation.y = Math.PI / 2;
-        headScale.add(hoop);
-      } else if (dna.ears === 'stud') {
-        const stud = new THREE.Mesh(G.ball(), jewelMat);
-        stud.scale.setScalar(0.055);
-        stud.position.set(sx * 0.98, -0.12, 0.04);
-        headScale.add(stud);
-      } else if (dna.ears === 'stacked') {
-        for (let i = 0; i < 3; i++) {
-          const stud = new THREE.Mesh(G.ball(), jewelMat);
-          stud.scale.setScalar(0.045);
-          stud.position.set(sx * 0.98, -0.04 - i * 0.11, 0.04);
-          headScale.add(stud);
-        }
-      }
-    }
-  }
 
   /* ---- torso ---- */
   const torso = new THREE.Mesh(G.torso(), shirtMat);
@@ -4110,16 +4063,10 @@ const TRAY = [
     set: (d, v) => { d.facialHair = v; }
   },
   {
-    key: 'piercing', label: 'Piercings',
+    key: 'piercing', label: 'Nose ring',
     options: () => PIERCINGS.map((p) => ({ v: p.id, label: p.label })),
     get: (d) => d.piercing,
     set: (d, v) => { d.piercing = v; }
-  },
-  {
-    key: 'ears', label: 'Ears',
-    options: () => EAR_STYLES.map((e) => ({ v: e.id, label: e.label })),
-    get: (d) => d.ears,
-    set: (d, v) => { d.ears = v; }
   },
   {
     key: 'tattoo', label: 'Ink',
@@ -4272,9 +4219,9 @@ function rerollFace(d) {
   d.mouth = r.mouth; d.nose = r.nose;
   d.blush = r.blush; d.freckles = r.freckles;
   d.headSize = r.headSize; d.height = r.height; d.girth = r.girth;
-  // Deliberately leaves eyewear, facial hair, piercings, ears and outfit
-  // alone: those have their own steppers, and shuffling them here would
-  // undo a choice the user just made by hand.
+  // Deliberately leaves eyewear, facial hair, piercings and outfit alone:
+  // those have their own steppers, and shuffling them here would undo a
+  // choice the user just made by hand.
 }
 
 /* ---------------- camera modal ---------------- */
@@ -4979,7 +4926,7 @@ window.MiiPlaza = {
   World, Sound, Store, Preview, randomDNA, normalizeDNA, buildMii, Mii, Cam, Config, Realtime,
   THREE, styleLabel,
   catalog: {
-    EYEWEAR, FACIAL_HAIR, PIERCINGS, EAR_STYLES, TATTOOS, APPAREL, BADGES,
+    EYEWEAR, FACIAL_HAIR, PIERCINGS, TATTOOS, APPAREL, BADGES,
     HAIRSTYLES, HAT_STYLES, KIT_COLORS, SKINS, HAIRS, SHIRTS, EYECOL
   }
 };

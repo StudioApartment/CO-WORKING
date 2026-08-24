@@ -242,7 +242,7 @@ try {
     },
     {
       file: 'style-04-piercings',
-      title: 'Piercings and ear jewellery',
+      title: 'Nose rings',
       field: 'piercing',
       pick: `MiiPlaza.catalog.PIERCINGS.map(p => p.id)`,
       labelExpr: `MiiPlaza.catalog.PIERCINGS.map(p => p.label)`,

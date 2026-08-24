@@ -195,8 +195,7 @@ only takes the hat off — nothing gets skipped on the way in.
 | Hair | 23 real cuts: buzz, crew, French crop, waves, pixie, bowl, comb over, side part, quiff, pompadour, slick back, swept, spiky, curtains, afro, afro fade, locs, bob, shag, long, bun, ponytail, bald |
 | Headwear | 11 including flat-brim, dad hat, bucket, cowboy, beanie, bandana front/back |
 | Facial hair | Stubble, lineup, full, goatee, moustache, handlebar |
-| Piercings | Nose, double nostril, septum, eyebrow bar, lip |
-| Ears | Hoops, studs, stacked |
+| Piercings | Nose stud, double nostril, septum |
 | Ink | Hands, neck, both |
 | Outfits | 11 including hoodie, flannel, denim, techwear, cardigan, basketball, soccer |
 | Kit | 6 colourways plus squad number |
@@ -208,7 +207,7 @@ Three surfaces, chosen by what the feature needs:
 
 - **Face texture** (512px canvas on the head patch) — eyewear, facial hair,
   piercings, blush, freckles. Cheap, and it deforms with the head.
-- **Meshes** — hair, hats, ear jewellery. Anything that has to break the
+- **Meshes** — hair and hats. Anything that has to break the
   silhouette has to be geometry.
 - **Torso texture** (256px canvas) — garments. Jersey numbers and pocket
   details are painted, then hoods and open plackets are added as geometry.

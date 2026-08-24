@@ -150,7 +150,8 @@ try {
   {
     const cats = await evaluate(
       `[...document.querySelectorAll('.cyc .cat')].map(b => b.textContent)`);
-    check('one stepper per category', cats.length >= 11, `got ${cats.length}: ${cats}`);
+    check('one stepper per category', cats.length >= 10, `got ${cats.length}: ${cats}`);
+    check('ear jewellery is gone', !cats.includes('Ears'), cats.join(', '));
     check('every stepper shows its current value', await evaluate(`
       [...document.querySelectorAll('.cyc')]
         .every(b => b.querySelector('.val') || b.querySelector('.kit'))`));
@@ -254,6 +255,35 @@ try {
     check('a pre-update character still builds', legacy.ok === true, legacy.error);
     check('old stache boolean carries over', legacy.facialHair === 'stache', legacy.facialHair);
     check('missing outfit defaults to a tee', legacy.apparel === 'tee', legacy.apparel);
+
+    // Retired piercings and ear jewellery must not leave a stored character
+    // asking for a piece that no longer renders.
+    const retired = await evaluate(`(() => {
+      const out = {};
+      for (const p of ['brow', 'lip', 'nose']) {
+        out[p] = MiiPlaza.normalizeDNA({ hair: { style: 'bowl', color: '#333' }, piercing: p }).piercing;
+      }
+      const withEars = MiiPlaza.normalizeDNA({
+        hair: { style: 'bowl', color: '#333' }, ears: 'stacked'
+      });
+      out.earsDropped = withEars.ears === undefined;
+      try {
+        MiiPlaza.buildMii({ name: 'Old', skin: '#f3c9a8',
+          hair: { color: '#2b1d15', style: 'bowl' },
+          eyes: { color: '#333', style: 0, size: 13, spacing: 16, y: 40 },
+          brows: { color: '#222', style: 0, w: 13, h: 3, gap: 12, angle: 0 },
+          mouth: { style: 0, w: 16, h: 3, y: 68 }, nose: { size: 0.12, y: -0.08 },
+          shirt: '#3fa9e0', headSize: 1, height: 1, girth: 1,
+          piercing: 'lip', ears: 'hoop' });
+        out.builds = true;
+      } catch (e) { out.builds = false; out.error = e.message; }
+      return out;
+    })()`);
+    check('retired piercings fall back to none', retired.brow === 'none' && retired.lip === 'none',
+      JSON.stringify(retired));
+    check('nose piercings are untouched', retired.nose === 'nose', retired.nose);
+    check('stored ear jewellery is dropped', retired.earsDropped === true);
+    check('a character with retired pieces still builds', retired.builds === true, retired.error);
   }
 
   console.log('\nvalidation in the UI');
