@@ -1090,59 +1090,134 @@ function makeCapLogo(text, color) {
   return t;
 }
 
-/* Classic paisley (buta) on a solid field. Motifs are oversized on purpose:
-   a fine print disappears once it is wrapped onto a dome the size of a head. */
+/* Traditional cotton bandana print: dense repeating boteh / paisley
+   teardrops in black + cream ink on a solid field (red / blue / green).
+   Sampled from drugstore-style Western bandanas (Wikimedia scan
+   "Red and blue bandannas.jpg", Wikipedia paisley/buta): cream-filled
+   mangoes with a black rim — that is how a real red bandana reads at a
+   distance — plus packed fillers (flowers, little almonds, speckle).
+   Built from overlapping ellipses so the kidney survives dome UV wrap. */
 function makePaisleyTexture(base) {
-  const S = 256, c = cv(S), g = c.getContext('2d');
-  const dark = shade(base, -70);
-  const mid = shade(base, -28);
-  const light = mixHex('#f4ead2', base, 0.18);
+  const S = 512, c = cv(S), g = c.getContext('2d');
+  const ink = '#1a1210';
+  const chalk = '#f4ead8';
   g.fillStyle = base;
   g.fillRect(0, 0, S, S);
 
-  const motif = (x, y, sc, rot) => {
-    g.save();
-    g.translate(x, y);
-    g.rotate(rot);
-    g.scale(sc, sc);
-    g.beginPath();
-    g.moveTo(0, -30);
-    g.bezierCurveTo(22, -28, 30, 4, 8, 30);
-    g.bezierCurveTo(-6, 22, -4, 8, -2, 0);
-    g.bezierCurveTo(-24, 6, -26, -22, 0, -30);
-    g.fillStyle = dark;
-    g.fill();
-    g.strokeStyle = light;
-    g.lineWidth = 2.4;
-    g.stroke();
-    g.beginPath();
-    g.moveTo(3, -12);
-    g.bezierCurveTo(12, -10, 14, 6, 3, 16);
-    g.bezierCurveTo(-4, 10, -6, -6, 3, -12);
-    g.fillStyle = light;
-    g.fill();
-    g.fillStyle = mid;
-    g.beginPath(); g.arc(-10, 6, 3.2, 0, TAU); g.fill();
-    g.beginPath(); g.arc(-6, 16, 2.2, 0, TAU); g.fill();
-    g.fillStyle = light;
-    g.beginPath(); g.arc(10, -4, 2.4, 0, TAU); g.fill();
-    g.restore();
+  const stamp = (x, y, r, draw) => {
+    const wrap = x < r || x > S - r || y < r || y > S - r;
+    for (const dx of wrap ? [-S, 0, S] : [0]) {
+      for (const dy of wrap ? [-S, 0, S] : [0]) {
+        g.save();
+        g.translate(x + dx, y + dy);
+        draw();
+        g.restore();
+      }
+    }
   };
 
-  const step = 72;
-  for (let row = -1; row < 6; row++) {
-    for (let col = -1; col < 6; col++) {
-      motif(col * step + (row % 2) * (step / 2), row * step * 0.72,
-        0.95, (row % 2 ? 0.45 : -0.35) + col * 0.04);
+  const oval = (ox, oy, rx, ry, rot) => {
+    g.beginPath();
+    g.ellipse(ox, oy, rx, ry, rot, 0, TAU);
+    g.fill();
+  };
+
+  /* Three ovals = hooked mango. Black first (rim), cream inset (print). */
+  const mango = (s, fill) => {
+    g.fillStyle = fill;
+    oval(s * 0.10, s * 0.20, s * 0.48, s * 0.60, 0.32);
+    oval(-s * 0.08, -s * 0.20, s * 0.34, s * 0.50, -0.48);
+    oval(-s * 0.24, -s * 0.60, s * 0.18, s * 0.30, -0.90);
+  };
+
+  const boteh = (x, y, sc, rot) => {
+    const s = 20 * sc;
+    stamp(x, y, s * 1.7, () => {
+      g.rotate(rot);
+      mango(s, ink);
+      mango(s * 0.68, chalk);
+      g.fillStyle = ink;
+      oval(s * 0.08, s * 0.18, s * 0.08, s * 0.12, 0.32);
+      g.fillStyle = base;
+      oval(s * 0.08, s * 0.20, s * 0.035, s * 0.035, 0);
+    });
+  };
+
+  const flower = (x, y, r, rot) => {
+    stamp(x, y, r * 1.5, () => {
+      g.rotate(rot);
+      g.fillStyle = chalk;
+      for (let i = 0; i < 6; i++) {
+        const a = i * TAU / 6;
+        oval(Math.cos(a) * r * 0.48, Math.sin(a) * r * 0.48, r * 0.32, r * 0.15, a);
+      }
+      g.fillStyle = ink;
+      oval(0, 0, r * 0.12, r * 0.12, 0);
+    });
+  };
+
+  const almond = (x, y, rx, ry, rot) => {
+    stamp(x, y, ry + 3, () => {
+      g.rotate(rot);
+      g.beginPath();
+      g.moveTo(0, -ry);
+      g.bezierCurveTo(rx, -ry * 0.2, rx, ry * 0.2, 0, ry);
+      g.bezierCurveTo(-rx, ry * 0.2, -rx, -ry * 0.2, 0, -ry);
+      g.closePath();
+      g.fillStyle = chalk;
+      g.fill();
+      g.strokeStyle = ink;
+      g.lineWidth = 0.85;
+      g.stroke();
+    });
+  };
+
+  const cols = 8, rows = 9;
+  const stepX = S / cols, stepY = S / rows;
+
+  g.fillStyle = ink;
+  for (let y = 4; y < S; y += 9) {
+    for (let x = 4 + (y % 18 ? 0 : 4); x < S; x += 9) {
+      if (((x * 73 + y * 137) % 97) < 12) {
+        g.beginPath(); g.arc(x, y, 0.65, 0, TAU); g.fill();
+      }
+    }
+  }
+  g.fillStyle = chalk;
+  for (let y = 7; y < S; y += 11) {
+    for (let x = 6 + (y % 22 ? 0 : 5); x < S; x += 11) {
+      if (((x * 91 + y * 53) % 89) < 14) {
+        g.beginPath(); g.arc(x, y, 0.9, 0, TAU); g.fill();
+      }
+    }
+  }
+
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const x = (col * stepX + (row % 2) * (stepX / 2) + stepX * 0.04) % S;
+      const y = (row * stepY + stepY * 0.12) % S;
+      const rot = (row % 2 ? 0.52 : -0.46) + (col % 3) * 0.05;
+      boteh(x, y, (row + col) % 2 === 0 ? 1.28 : 0.92, rot);
+
+      const fx = (x + stepX * 0.48) % S;
+      const fy = (y + stepY * 0.46) % S;
+      const kind = (row * cols + col) % 3;
+      if (kind === 0) flower(fx, fy, 5.0, rot * 0.2);
+      else if (kind === 1) almond(fx, fy, 2.8, 5.2, rot + 0.65);
+      else {
+        almond(fx, fy, 2.2, 4.0, rot + 0.35);
+        almond((fx + 8) % S, (fy + 5) % S, 1.8, 3.3, rot - 0.5);
+      }
     }
   }
 
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(2, 2);
-  t.anisotropy = 4;
+  t.repeat.set(2.35, 2.05);
+  t.anisotropy = 8;
   t.userData.own = true;
+  t.userData.paisley = true;
   return t;
 }
 
