@@ -280,9 +280,8 @@ the body tall, so the motif is heavy bars at full opacity rather than line
 art, repeated around the sphere so it reads whichever way the hand drifts.
 
 **Fades are implied, not shaded.** A character carries one hair colour, so
-`crop` and `dreads` fake the taper by capping the sides short and massing
-the top. It reads correctly in silhouette, which is what this style leans
-on anyway.
+`crop` fakes the taper by capping the sides short and massing the top. It
+reads correctly in silhouette, which is what this style leans on anyway.
 
 ### No team marks
 
