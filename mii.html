@@ -5972,11 +5972,10 @@ const Cam = {
     Sound.fx.chime();
     toast(`${name} joined the office!`, 3000);
 
-    if (res.local) {
-      this.close();
-      return;
-    }
-
+    // Always show the badge card after a successful claim. `local` only means
+    // the office was unreachable (or this page was opened as a file) — the QR
+    // and Wallet links may be missing, but name, email, days, and the Mii
+    // still belong on the card. Closing here made a local save look broken.
     Store.session = {
       id: rec.id, name, email,
       walletUrl: rec.walletUrl || null,

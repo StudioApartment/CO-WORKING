@@ -127,6 +127,20 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const accept = src.match(/async accept\(\) \{[\s\S]*?this\.showBadge\(rec/);
+  if (!accept) {
+    note('✗', 'mii.html — could not find Cam.accept() → showBadge');
+    failures++;
+  } else if (/if\s*\(\s*res\.local\s*\)/.test(accept[0]) && accept[0].includes('this.close()')) {
+    note('✗', 'mii.html — a local save must still show the badge card');
+    failures++;
+  } else {
+    note('✓', 'mii.html shows the badge card after a local or server claim');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes('for="miiEmail">Email</label>')) {
     note('✗', 'mii.html — email field should just say Email');
     failures++;
