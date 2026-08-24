@@ -195,9 +195,9 @@ only takes the hat off — nothing gets skipped on the way in.
 | Hair | 27 real cuts: buzz, crew, French crop, waves, pixie, bowl, comb over, side part, quiff, pompadour, swoop, slick back, swept, spiky, curtains, afro, afro fade, locs, bob, shag, wolf cut, mullet, flow, long, bun, ponytail, bald |
 | Headwear | 13 including flat-brim, dad hat, bucket, cowboy, beanie, paisley bandanas in red / blue / green |
 | Facial hair | Stubble, lineup, full, goatee, moustache, handlebar |
-| Piercings | Nose stud, double nostril, septum |
+| Piercings | Nose stud, double nostril, septum — new characters start with none |
 | Ink | Hands, jaw, both |
-| Outfits | 11: t-shirt, cutoff, no shirt, button-up, flannel, hoodie, suit, plus two football and two basketball shirts |
+| Outfits | 8: t-shirt, cutoff, no shirt, button-up, flannel, hoodie, suit, jersey |
 
 ### Where each layer is rendered
 
@@ -216,8 +216,9 @@ Three surfaces, chosen by what the feature needs:
   v 0.36–1.0 is visible, which is what `vy()` maps into. Squad numbers were
   originally centred at v 0.44–0.50 and sat entirely behind the head.
 
-  Kit shirts carry their own colourway and number rather than borrowing a
-  shared random palette, because a jersey only looks right in its own colours.
+  There is a single jersey in the outfit list, with its own colourway and
+  number. Older kit ids alias onto it so a stored character does not drop
+  back to a plain tee.
 
 ### Working in head space
 

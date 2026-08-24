@@ -242,7 +242,9 @@ try {
       pick: `MiiPlaza.catalog.FACIAL_HAIR.map(f => f.id)`,
       labelExpr: `MiiPlaza.catalog.FACIAL_HAIR.map(f => f.label)`,
       cols: 7,
-      base: { framing: 'head' }
+      base: { framing: 'head',
+              dna: { piercing: 'none', glasses: 0,
+                     hair: { style: 'buzz', color: '#2b1d15' } } }
     },
     {
       file: 'style-04-piercings',
@@ -288,7 +290,7 @@ try {
     },
     {
       file: 'style-05-apparel',
-      title: 'Apparel — streetwear and kits',
+      title: 'Apparel — streetwear and jersey',
       field: 'apparel',
       pick: `MiiPlaza.catalog.APPAREL.map(a => a.id)`,
       labelExpr: `MiiPlaza.catalog.APPAREL.map(a => a.label)`,
