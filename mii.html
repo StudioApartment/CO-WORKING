@@ -2116,33 +2116,39 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  quiff: (r) => geoCache(`quiffA${r}`, () => {
+  quiff: (r) => geoCache(`quiffC${r}`, () => {
     /* One shell. Extra balls on a cap were a crown bun. Short sides,
-       a lifted front that reads from head-on — tighter than a pomp. */
-    const tl = 1.24;
-    const g = superball(r, 40, 32, HEAD_N, 0, TAU, 0, tl);
+       a lifted front that reads from head-on — a forehead sweep, not a
+       nipple on the pole. Head scale squashes z, so the bump has to live
+       forward and push out there. */
+    const tl = 1.20;
+    const g = superball(r, 44, 36, HEAD_N, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     for (let i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i);
-      const Lh = Math.hypot(v.x, v.y, v.z) || 1;
       const rs0 = Math.hypot(v.x, v.z) || 1e-6;
       const azFront = Math.max(0, v.z / rs0);
 
-      /* Front hem hugs the skull so the crop edge is a hairline, not a visor. */
-      if (azFront > 0.35 && v.y < 0.58) {
-        const t = Math.pow((azFront - 0.35) / 0.65, 1.3)
-          * Math.min(1, (0.58 - v.y) / 0.28);
-        const k = 1 - t + t * (1.04 / Lh);
-        v.x *= k; v.y *= k; v.z *= k;
-      }
+      /* Flatten the crop crown so the front lift can beat the pole. */
+      const crown = Math.max(0, v.y - 0.72);
+      v.y -= crown * 0.18 * (1 - azFront * 0.92);
 
-      /* Tight mound on the forehead. Peak has to beat the dome pole or
-         it still reads as a bowl from the front. Narrower and more
-         forward than pomp — a front lift, not a full mound. */
-      const dx = v.x * 1.48, dy = v.y - 0.66, dz = v.z - 0.68;
-      const bump = Math.exp(-(dx * dx + dy * dy + dz * dz) * 3.5);
-      v.y += bump * 0.42;
-      v.z += bump * 0.10;
+      /* Forehead-wide lift, smaller than pomp. Peak still has to beat
+         the (flattened) pole or it reads as a bowl from the front. */
+      const dx = v.x * 1.06, dy = v.y - 0.54, dz = v.z - 0.82;
+      const bump = Math.exp(-(dx * dx * 1.05 + dy * dy + dz * dz * 0.78) * 2.45);
+      v.y += bump * 0.52;
+      v.z += bump * 0.26;
+
+      /* Hairline stays above the brow (y≈0.29). A z-puff here is a visor. */
+      if (azFront > 0.2 && v.y < 0.34) {
+        v.y += (0.34 - v.y) * 0.85;
+        const Lh = Math.hypot(v.x, v.y, v.z) || 1;
+        if (Lh > 1.06) {
+          const k = 1.06 / Lh;
+          v.x *= k; v.y *= k; v.z *= k;
+        }
+      }
       p.setXYZ(i, v.x, v.y, v.z);
     }
     p.needsUpdate = true;
@@ -2924,7 +2930,7 @@ function buildHair(dna, mat, extraMats) {
     add(G.ball(), 0.42, 0.66, 0.3, 0.2, 0.16, 0.44);       // raised edge of the part
   } else if (st === 'quiff') {
     /* One lifted shell. Extra primitives on a cap always read as a bun. */
-    add(G.quiff(1.04), 0, 0, 0);
+    add(G.quiff(1.05), 0, 0, 0);
   } else if (st === 'pompadour') {
     // One puffed shell. Extra primitives on a cap always read as a bun.
     add(G.pomp(1.05, 1.48), 0, 0, 0);
