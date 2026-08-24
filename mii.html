@@ -2235,13 +2235,17 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  wolf: (r) => geoCache(`wolfB${r}`, () => {
-    /* Long on top and down the back, crop on the sides. Pinching the
-       sides inside the skull made a mohawk with a hanging nape. */
-    const tl = 2.62;
+  wolf: (r) => geoCache(`wolfD${r}`, () => {
+    /* Long on top and down the back, crop on the sides. Face-window
+       interpolation used to shave the temples; extra y-scale made a
+       tall egg instead of a nape. */
+    const tl = 2.55;
     const g = new THREE.SphereGeometry(r, 48, 40, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     const n = HEAD_N;
+    const faceTh = 1.08;
+    const sideTh = 1.58;
+    const napeTh = 2.42;
     for (let i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i);
       const L = v.length() || 1;
@@ -2252,12 +2256,12 @@ const G = {
       const azBack = Math.max(0, -uz / rs0);
       const phi = Math.atan2(ux, uz);
       const faceWin = Math.pow(Math.max(0, azFront - 0.18) / 0.82, 2);
-      const backAmt = Math.pow(azBack, 2.6);
-      const chop = (0.04 * Math.sin(phi * 7.0) + 0.018 * Math.sin(phi * 13.0 + 0.6))
+      const backAmt = Math.pow(azBack, 2.2);
+      const chop = (0.035 * Math.sin(phi * 7.0) + 0.016 * Math.sin(phi * 13.0 + 0.6))
         * backAmt;
-      const maxTh = 1.34 * (1 - faceWin - backAmt)
-        + 1.08 * faceWin
-        + 2.58 * backAmt
+      const maxTh = sideTh
+        + (faceTh - sideTh) * faceWin
+        + (napeTh - sideTh) * backAmt
         + chop;
       const th2 = (th / tl) * maxTh;
       const rs = Math.sin(th2);
@@ -2269,21 +2273,19 @@ const G = {
         -1 / n
       );
       nx *= s * r; ny *= s * r; nz *= s * r;
-      ny += Math.max(0, ny - 0.38) * 0.48;
-      const mane = Math.exp(-ux * ux * 6.5) * Math.max(0, ny - 0.18);
-      ny += mane * 0.14;
+      ny += Math.max(0, ny - 0.42) * 0.36;
+      const mane = Math.exp(-ux * ux * 7.0) * Math.max(0, ny - 0.22);
+      ny += mane * 0.10;
       if (azFront > 0.4 && ny < 0.62) {
         const t = Math.pow((azFront - 0.4) / 0.6, 1.3) * Math.min(1, (0.62 - ny) / 0.32);
         const Lh = Math.hypot(nx, ny, nz) || 1;
         const k = 1 - t + t * (1.05 / Lh);
         nx *= k; ny *= k; nz *= k;
       }
-      nx *= 1 - backAmt * 0.22;
-      if (azBack > 0.35 && ny < 0.10) {
-        const drop = (0.10 - ny) * azBack;
-        ny -= drop * 0.08;
-        nz -= drop * 0.14;
-      }
+      const hang = backAmt * Math.max(0, -ny + 0.15);
+      ny -= hang * 0.55;
+      nz -= hang * 0.22;
+      nx *= 1 - backAmt * 0.10;
       p.setXYZ(i, nx, ny, nz);
     }
     p.needsUpdate = true;
@@ -2921,7 +2923,7 @@ function buildHair(dna, mat, extraMats) {
   } else if (st === 'wolf') {
     /* Long on top and down the back, short on the sides. Side teardrops
        on a bowl were earmuffs; the nape has to be the same shell. */
-    add(G.wolf(1.09), 0, 0, 0, 1, 1.16, 1);
+    add(G.wolf(1.09), 0, 0, 0, 1, 1.08, 1);
   } else if (st === 'mullet') {
     // short on top, long at the back. The cap stays tight at the front so
     // the party is all in the nape.
