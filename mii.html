@@ -2183,12 +2183,12 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  shag: (r) => geoCache(`shag${r}`, () => {
-    /* One shell. The old cut was a helmet brim with puffs and a fringe
-       ball parked on the face. Length is choppy, the front hangs as a
-       fringe on the hairline, and the sides flick out instead of tucking. */
+  shag: (r) => geoCache(`shagC${r}`, () => {
+    /* One shell. Curtain lobes on a bob made a V over the eyes; extra
+       balls made puffs. Bangs sit on the forehead as a short centre
+       fringe. The hem is jagged and the sides flick out. */
     const tl = 2.28;
-    const g = new THREE.SphereGeometry(r, 40, 32, 0, TAU, 0, tl);
+    const g = new THREE.SphereGeometry(r, 48, 36, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     const n = HEAD_N;
     for (let i = 0; i < p.count; i++) {
@@ -2200,8 +2200,10 @@ const G = {
       const azFront = Math.max(0, uz / rs0);
       const phi = Math.atan2(ux, uz);
       const faceWin = Math.pow(Math.max(0, azFront - 0.18) / 0.82, 2);
-      const chop = 0.05 * Math.sin(phi * 4.0) * (1 - faceWin);
-      const maxTh = 2.12 - faceWin * 1.04 + chop;
+      const bang = Math.pow(azFront, 4) * Math.exp(-ux * ux * 10) * 0.14;
+      const chop = (0.16 * Math.sin(phi * 5.0) + 0.08 * Math.sin(phi * 11.0 + 0.8))
+        * (1 - faceWin * 0.75);
+      const maxTh = 2.10 - faceWin * 1.08 + bang + chop;
       const th2 = (th / tl) * maxTh;
       const rs = Math.sin(th2);
       let nx = ux / rs0 * rs;
@@ -2212,12 +2214,7 @@ const G = {
         -1 / n
       );
       nx *= s * r; ny *= s * r; nz *= s * r;
-      ny += Math.max(0, ny - 0.48) * 0.32;
-      const ax = Math.abs(nx);
-      const dx = ax - 0.40, dy = ny - 0.38, dz = nz - 0.88;
-      const fringe = Math.exp(-(dx * dx * 2.6 + dy * dy * 2.0 + dz * dz) * 2.8);
-      ny -= fringe * 0.06;
-      nz += fringe * 0.16;
+      ny += Math.max(0, ny - 0.48) * 0.36;
       if (azFront > 0.4 && ny < 0.62) {
         const t = Math.pow((azFront - 0.4) / 0.6, 1.3) * Math.min(1, (0.62 - ny) / 0.32);
         const Lh = Math.hypot(nx, ny, nz) || 1;
@@ -2225,8 +2222,14 @@ const G = {
         nx *= k; ny *= k; nz *= k;
       }
       const side = Math.abs(ux) / rs0;
-      const flick = Math.max(0, 0.04 - ny) * side * 0.22;
+      const flick = Math.max(0, 0.10 - ny) * (0.08 + side * 0.32);
       nx *= 1 + flick;
+      nz *= 1 + flick * Math.max(0, -uz) * 0.45;
+      const hem = Math.max(0, Math.min(1, (th2 - 1.35) / 0.75));
+      const jag = (Math.sin(phi * 7) * 0.045 + Math.sin(phi * 13 + 1.1) * 0.025)
+        * hem * (1 - faceWin);
+      nx *= 1 + jag;
+      nz *= 1 + jag * 0.55;
       p.setXYZ(i, nx, ny, nz);
     }
     p.needsUpdate = true;
