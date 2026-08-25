@@ -395,7 +395,7 @@ for (const [page, ids] of required) {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const shells = [
     'G.frenchCrop(1.05)', "G.pixieCut(1.05)", 'G.waves360(1.04)',
-    'G.crewCut(1.04)', "G.partedTop(1.05, 'combover')", "G.partedTop(1.05, 'side')",
+    'G.crewCut(1.04)', "G.partedTop(1.05, 'combover')", 'G.bedHead(1.06)',
     'G.swoopCurl(1.05)', 'G.slickBack(1.05)', 'G.sweptHair(1.05)',
     'G.spikes(1.05)', 'G.pomp(1.05)', 'sculptHair('
   ];
@@ -411,6 +411,21 @@ for (const [page, ids] of required) {
     failures++;
   } else {
     note('✓', 'mii.html barbershop cuts are single photo-matched shells');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("sculptHair(`bedA${r}`") || !src.includes('G.bedHead(1.06)')
+      || !src.includes('applyFrostedTips')
+      || !src.includes('Short shaggy bed head')
+      || src.includes("G.partedTop(1.05, 'side')")
+      || src.includes("sidepart: 'Side part'")
+      || !src.includes("sidepart: 'Frosted tips'")) {
+    note('✗', 'mii.html — side part should be a short shaggy bed head with frosted tips');
+    failures++;
+  } else {
+    note('✓', 'mii.html side part is a short shaggy bed head with frosted tips');
   }
 }
 
