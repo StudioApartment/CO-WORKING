@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -327,7 +327,7 @@ body.native-cursor #pointer{display:none}
 .flash.go{animation:fl .5s ease-out}
 @keyframes fl{0%{opacity:.95}100%{opacity:0}}
 .camfail{padding:26px;text-align:center;color:#c7d6e0;font-weight:800;font-size:14px;line-height:1.6}
-.pickers{display:flex;gap:12px;align-items:center;margin-left:10px}
+.pickers{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-left:10px}
 .pick{
   position:relative;width:42px;height:42px;border:0;outline:0;padding:0;border-radius:50%;
   box-shadow:inset 0 -4px 8px rgba(0,0,0,.16),0 2px 4px rgba(90,115,135,.25),0 0 0 3px #fff,0 0 0 4.5px #cfdae2;
@@ -1828,7 +1828,7 @@ function makeFurTexture(base) {
 }
 
 /* Traditional cotton bandana print: dense repeating boteh / paisley
-   teardrops in black + cream ink on a solid field (red / blue / green).
+   teardrops in black + cream ink on a solid field (any hat colour).
    Sampled from drugstore-style Western bandanas (Wikimedia scan
    "Red and blue bandannas.jpg", Wikipedia paisley/buta): cream-filled
    mangoes with a black rim — that is how a real red bandana reads at a
@@ -3098,7 +3098,7 @@ const HAIRSTYLES = ['bald','buzz','taper','crop','waves','fade','pixie','bowl','
                     'bun','pony',
                     'highpony','pigtails','layers','spacebuns',
                     'cap','flatbrim','dadhat','creamgreen','knicks','yankees','bucket','furry','furrysage','cowboy','cowboystraw','beanie',
-                    'fossil','fossilblack','conical','bandana','bandanablue','bandanagreen','tophat'];
+                    'fossil','fossilblack','conical','bandana','tophat'];
 
 /* Styles that existed before this list was rewritten. Stored characters keep
    working by landing on the nearest real cut instead of rendering bald. */
@@ -3109,8 +3109,17 @@ const HAIRSTYLE_ALIASES = {
   tails: 'pony',
   undercut: 'slickback',
   afrofade: 'afro',
-  // Every bandana knots at the back now, so the separate variant is the red one.
-  bandanaback: 'bandana'
+  // Every bandana knots at the back now, and colour lives on hatColor.
+  bandanaback: 'bandana',
+  bandanablue: 'bandana',
+  bandanagreen: 'bandana'
+};
+
+/* Saved blue/green bandana rows used to be separate styles. Fold them onto
+   the single bandana and keep the field colour they were wearing. */
+const BANDANA_COLOR_ALIASES = {
+  bandanablue: '#1565c0',
+  bandanagreen: '#2e7d32'
 };
 
 /* Raw ids are terse; the picker shows these. */
@@ -3132,7 +3141,7 @@ const STYLE_LABELS = {
   beanie: 'Beanie',
   fossil: 'Fossil knit', fossilblack: 'Fossil knit black',
   conical: 'Straw conical hat',
-  bandana: 'Red bandana', bandanablue: 'Blue bandana', bandanagreen: 'Green bandana',
+  bandana: 'Bandana',
   tophat: 'Top hat'
 };
 const styleLabel = (id) => STYLE_LABELS[id] || id;
@@ -3325,7 +3334,9 @@ function randomDNA(opts = {}) {
     mouth: { style: randi(0, 5), w: rand(13, 19), h: rand(2.4, 4), y: rand(66, 71) },
     nose: { size: rand(0.098, 0.142), y: rand(-0.14, -0.02) },
     shirt: opts.shirt || pickOne(SHIRTS),
-    hatColor: opts.hatColor || pickOne(SHIRTS),
+    hatColor: opts.hatColor
+      || (HATS[hairStyle] && HATS[hairStyle].crown)
+      || (hairStyle === 'bandana' ? '#c62828' : pickOne(SHIRTS)),
     pants: pickOne(PANTS),
     shoes: pickOne(SHOES),
     headSize: rand(0.94, 1.06),
@@ -3356,6 +3367,7 @@ function normalizeDNA(d) {
   d.hair = d.hair || {};
   if (!d.hair.color) d.hair.color = pickOne(HAIRS);
   if (!d.hair.style) d.hair.style = 'bowl';
+  if (BANDANA_COLOR_ALIASES[d.hair.style]) d.hatColor = BANDANA_COLOR_ALIASES[d.hair.style];
   if (HAIRSTYLE_ALIASES[d.hair.style]) d.hair.style = HAIRSTYLE_ALIASES[d.hair.style];
 
   // Booleans predate the named styles; carry them over rather than
@@ -4970,9 +4982,7 @@ const HATS = {
      this hat in English is a slur for Asian labourers, and it is not going in
      anyone's style picker. */
   conical:  { crown: '#c6a44f', accent: '#9c6a2e', straw: true },
-  bandana:      { crown: '#c62828', paisley: true     },
-  bandanablue:  { crown: '#1565c0', paisley: true     },
-  bandanagreen: { crown: '#2e7d32', paisley: true     }
+  bandana:      { crown: null, paisley: true }   // takes hatColor, like a cap
 };
 const HAT_STYLES = Object.keys(HATS);
 
@@ -5377,6 +5387,8 @@ function buildHair(dna, mat, extraMats) {
 
   if (HATS[st]) {
     const H = HATS[st];
+    /* Catalog crowns (club caps, cowboy, etc.) keep their colourway.
+       Caps, beanies and the bandana take dna.hatColor from the Hat picker. */
     const crownCol = H.crown || dna.hatColor || dna.shirt;
     const accCol = H.accent || shade(crownCol, -46);
     // Same reason as hair: crowns and brims are shells.
@@ -5671,7 +5683,7 @@ function buildHair(dna, mat, extraMats) {
          a plain flat knot both hides the pinch and is what is actually
          there. */
       put(G.ball(), accMat, 0, 1.34, 0, 0.19, 0.05, 0.19);
-    } else if (st === 'bandana' || st === 'bandanablue' || st === 'bandanagreen') {
+    } else if (st === 'bandana') {
       // Tied around the head, so it comes down to the brow like the cap
       // crowns do. Stopping high up read as a small skullcap instead.
       // r=1.05 with no y-scale still let the pole and hem facets clip.
@@ -7553,7 +7565,16 @@ const PICKERS = [
   { key: 'skin',  label: 'Skin',  list: SKINS,  get: (d) => d.skin,       set: (d, v) => { d.skin = v; } },
   { key: 'hair',  label: 'Hair',  list: HAIRS,  get: (d) => d.hair.color, set: (d, v) => { d.hair.color = v; d.brows.color = shade(v, -22); } },
   { key: 'eyes',  label: 'Eyes',  list: EYECOL, get: (d) => d.eyes.color, set: (d, v) => { d.eyes.color = v; } },
-  { key: 'shirt', label: 'Shirt', list: SHIRTS, get: (d) => d.shirt,      set: (d, v) => { d.shirt = v; } }
+  { key: 'shirt', label: 'Shirt', list: SHIRTS, get: (d) => d.shirt,      set: (d, v) => { d.shirt = v; } },
+  /* Caps, beanies and the bandana. Club colourways keep H.crown, so they
+     hide this chip — recolouring a Yankees cap into pink would just look
+     broken. Classic bandana red/blue/green sit at the front of the list
+     so the old style variants are still one tap. */
+  { key: 'hat', label: 'Hat',
+    list: ['#c62828', '#1565c0', '#2e7d32'].concat(SHIRTS),
+    get: (d) => d.hatColor,
+    set: (d, v) => { d.hatColor = v; },
+    when: (d) => d && HATS[d.hair.style] && HATS[d.hair.style].crown == null }
 ];
 
 /* ---------------- style tray ----------------
@@ -7580,8 +7601,12 @@ const TRAY = [
     get: (d) => (HATS[d.hair.style] ? d.hair.style : ''),
     set: (d, v) => {
       if (v) {
-        if (!HATS[d.hair.style]) d._hairUnder = d.hair.style;
+        const wasHat = Boolean(HATS[d.hair.style]);
+        if (!wasHat) d._hairUnder = d.hair.style;
         d.hair.style = v;
+        /* First time onto a bandana, land on classic red unless they already
+           picked a hat colour (e.g. cycling here from a coloured cap). */
+        if (v === 'bandana' && !wasHat) d.hatColor = '#c62828';
       } else {
         d.hair.style = d._hairUnder || 'bowl';
       }
@@ -7710,8 +7735,14 @@ function renderTray() {
 
 function renderPickers() {
   const box = $('camPickers'); if (!box) return;
+  const visible = PICKERS.filter((p) => !p.when || p.when(Cam.dna));
+  const pal = $('camPalette');
+  if (pal && pal.classList.contains('open') && pal.dataset.key
+      && !visible.some((p) => p.key === pal.dataset.key)) {
+    closePalette();
+  }
   box.innerHTML = '';
-  for (const p of PICKERS) {
+  for (const p of visible) {
     const b = document.createElement('button');
     b.className = 'pick'; b.type = 'button'; b.dataset.key = p.key;
     b.title = 'Change ' + p.label.toLowerCase();

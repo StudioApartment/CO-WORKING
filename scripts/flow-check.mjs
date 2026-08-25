@@ -359,10 +359,21 @@ try {
     check('women\'s outfits are in the list',
       ['dress','sundress','skirt','cardigan'].every((id) => extras.outfits.includes(id)),
       extras.outfits.join(', '));
-    check('bandanas come in red, blue and green',
-      extras.bandanas.includes('bandana') && extras.bandanas.includes('bandanablue')
-        && extras.bandanas.includes('bandanagreen'),
+    check('one bandana in the hat tray',
+      extras.bandanas.length === 1 && extras.bandanas[0] === 'bandana',
       JSON.stringify(extras.bandanas));
+    const bandanaAlias = await evaluate(`(() => {
+      const blue = MiiPlaza.normalizeDNA({ hair: { style: 'bandanablue', color: '#333' }, shirt: '#ffffff' });
+      const green = MiiPlaza.normalizeDNA({ hair: { style: 'bandanagreen', color: '#333' }, shirt: '#ffffff' });
+      return {
+        blue: blue.hair.style, blueCol: blue.hatColor,
+        green: green.hair.style, greenCol: green.hatColor
+      };
+    })()`);
+    check('blue/green bandanas fold onto one style and keep their colour',
+      bandanaAlias.blue === 'bandana' && bandanaAlias.blueCol === '#1565c0'
+        && bandanaAlias.green === 'bandana' && bandanaAlias.greenCol === '#2e7d32',
+      JSON.stringify(bandanaAlias));
     check('no triangular wedge frames', extras.wedge.length === 0, extras.wedge.join(','));
     check('wrap-around baseball shades are in the list', extras.wrap.length >= 3, extras.wrap.join(', '));
     check('tinted lenses are actually tinted', extras.tints.every((t) => {
