@@ -154,6 +154,16 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes('afro: (r) => geoCache') || src.includes("add(G.ball(), 0, 0.74, -0.08")) {
+    note('✗', 'mii.html — afro should wrap the head, not sit as a top ball');
+    failures++;
+  } else {
+    note('✓', 'mii.html afro wraps the whole head');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes('longHair') || !src.includes("'longmiddle'") || !src.includes("'longwavy'")) {
     note('✗', 'mii.html — long hair should offer bangs, middle part, side part, and wavy');
     failures++;
