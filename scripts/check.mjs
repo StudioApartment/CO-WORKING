@@ -211,6 +211,24 @@ for (const [page, ids] of required) {
   }
 }
 
+/* Loud fashion acetate: four pinned colourways whose shapes are the point
+   of the piece. Lose cateye/hex/jelly/rim2 and they collapse into the
+   existing thick-plastic family. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["label: 'Cat-eye'", "frame: 'cateye'", "label: 'Hex'",
+                 "frame: 'hex'", "label: 'Jelly'", 'jelly: true',
+                 "label: 'Colorblock'", 'rim2: \'#f0c400\'',
+                 "case 'cateye': {", "case 'hex': {", 'if (spec.rim2)']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — loud plastic frames need cat-eye, hex, jelly and colourblock');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers loud stylish plastic frames');
+  }
+}
+
 /* The plastic pilot's signature is the double bridge — a brow bar plus the
    vented block under it. Without both it is just a big round frame, and the
    tortoiseshell has to stay a real pattern rather than a flat brown. */

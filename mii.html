@@ -2309,6 +2309,42 @@ function drawEyewear(g, U, dna) {
         g.closePath();
         return;
       }
+      case 'cateye': {
+        /* Outer corner swept up. That wing is the whole read of a cat-eye —
+           a thick oval with the same rim weight is just another chunky pair.
+           Local +x is always temple-ward, so the lift lives on +x. */
+        g.moveTo(-w * 0.48, -h * 0.26);
+        g.quadraticCurveTo(-w * 0.08, -h * 0.48, w * 0.16, -h * 0.50);
+        g.quadraticCurveTo(w * 0.58, -h * 0.70, w * 0.54, -h * 0.14);
+        g.quadraticCurveTo(w * 0.50, h * 0.38, w * 0.10, h * 0.50);
+        g.quadraticCurveTo(-w * 0.42, h * 0.50, -w * 0.50, h * 0.10);
+        g.quadraticCurveTo(-w * 0.52, -h * 0.08, -w * 0.48, -h * 0.26);
+        g.closePath();
+        return;
+      }
+      case 'hex': {
+        /* Fashion hex: a flattened hexagon, longer on the brow than the base,
+           slightly rounded at the vertices so it does not read as a stop-sign. */
+        const verts = [
+          [-0.22, -0.50], [0.28, -0.50], [0.52, -0.06],
+          [0.32,  0.46], [-0.28,  0.50], [-0.52,  0.04]
+        ];
+        const k = 0.22;
+        for (let i = 0; i < verts.length; i++) {
+          const [px, py] = verts[(i + verts.length - 1) % verts.length];
+          const [qx, qy] = verts[i];
+          const [rx, ry] = verts[(i + 1) % verts.length];
+          const ax = (px + (qx - px) * (1 - k)) * w;
+          const ay = (py + (qy - py) * (1 - k)) * h;
+          const bx = (qx + (rx - qx) * k) * w;
+          const by = (qy + (ry - qy) * k) * h;
+          if (i === 0) g.moveTo(ax, ay);
+          else g.lineTo(ax, ay);
+          g.quadraticCurveTo(qx * w, qy * h, bx, by);
+        }
+        g.closePath();
+        return;
+      }
       default: {
         const rr = spec.frame === 'square' ? Math.min(w, h) * 0.16 : Math.min(w, h) * 0.42;
         const X = -w / 2, Y = -h / 2;
@@ -2351,6 +2387,13 @@ function drawEyewear(g, U, dna) {
       g.lineTo(lw * 0.24, -lh * 0.62); g.lineTo(-lw * 0.36, lh * 0.62);
       g.closePath(); g.fill();
       g.restore();
+    } else if (spec.jelly) {
+      /* Translucent candy acetate. A solid fill of the same colour as the rim
+         would look painted on; a faint wash of it in the lens is what makes
+         the whole piece read as one block of coloured plastic. */
+      g.globalAlpha = 0.20;
+      g.fillStyle = spec.frameColor;
+      g.fill();
     } else if (spec.tint) {
       g.fillStyle = spec.tint; g.fill();
       g.save(); g.clip();
@@ -2389,9 +2432,36 @@ function drawEyewear(g, U, dna) {
       g.restore();
     }
 
+    /* Two-tone colourblock: a second colour on the upper half of the rim.
+       Clipped rather than a separate brow stroke, so it follows whatever
+       outline this frame has — cat-eye, hex, bold — instead of a straight
+       bar that would cut across a swept corner. */
+    if (spec.rim2) {
+      g.save();
+      g.beginPath();
+      g.rect(-lw * 1.2, -lh * 1.3, lw * 2.4, lh * 1.15);
+      g.clip();
+      g.strokeStyle = spec.rim2;
+      g.lineWidth = spec.lw * U * 1.04;
+      lensPath(lw, lh);
+      g.stroke();
+      g.restore();
+    }
+
     // Clear frames need edges on both sides of the rim: a single translucent
     // stroke on skin just looks like a smudge.
-    if (spec.clear) {
+    if (spec.jelly) {
+      g.save();
+      g.strokeStyle = 'rgba(255,255,255,.55)';
+      g.lineWidth = spec.lw * U * 0.28;
+      lensPath(lw * 0.88, lh * 0.84);
+      g.stroke();
+      g.strokeStyle = 'rgba(40,8,22,.38)';
+      g.lineWidth = spec.lw * U * 0.20;
+      lensPath(lw * 1.06, lh * 1.08);
+      g.stroke();
+      g.restore();
+    } else if (spec.clear) {
       g.save();
       g.strokeStyle = 'rgba(255,255,255,.9)';
       g.lineWidth = spec.lw * U * 0.3;
@@ -2417,7 +2487,9 @@ function drawEyewear(g, U, dna) {
   // bridge
   const bridgeDrop = spec.frame === 'aviator' ? 3.2
     : spec.frame === 'square' ? 1.6
-    : spec.frame === 'bold' ? 1.3 : 0;
+    : spec.frame === 'bold' ? 1.3
+    : spec.frame === 'cateye' ? 1.1
+    : spec.frame === 'hex' ? 1.4 : 0;
   g.save();
   g.translate(50 * U, ey * U);
   g.strokeStyle = strokeStyleFor(gh * U);
@@ -3145,6 +3217,17 @@ const EYEWEAR = [
      rim rather than a flat brown. */
   { id: 15, label: 'Tortoise pilot', group: 'Plastic', frame: 'pilot', w: 28, h: 24, lw: 3.0,
     browBar: true, slats: 3, tortoise: true, barColor: '#3a3b40' },
+  /* Loud fashion acetate. Colour is pinned: these are the point of the
+     piece, and taking the wearer's glassCol would mute them back into the
+     plastic family they are meant to stand apart from. */
+  { id: 16, label: 'Cat-eye', group: 'Plastic', frame: 'cateye', w: 26, h: 18, lw: 3.0,
+    frameColor: '#c0122a' },
+  { id: 17, label: 'Hex', group: 'Plastic', frame: 'hex', w: 24, h: 20, lw: 3.2,
+    frameColor: '#1a46c8' },
+  { id: 18, label: 'Jelly', group: 'Plastic', frame: 'oval', w: 23, h: 20, lw: 3.8,
+    jelly: true, frameColor: 'rgba(232,48,118,.90)' },
+  { id: 19, label: 'Colorblock', group: 'Plastic', frame: 'bold', w: 26, h: 18, lw: 3.4,
+    frameColor: '#1c1d22', rim2: '#f0c400' },
 
   // metal
   { id: 20, label: 'Gold aviator', group: 'Metal', frame: 'aviator', w: 22, h: 18, lw: 1.5,
