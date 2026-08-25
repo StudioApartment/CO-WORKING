@@ -436,7 +436,9 @@ for (const [page, ids] of required) {
              || !src.includes('part === \'bangs\' || part === \'middle\'')
              || src.includes("long: 'Long bangs'")
              || src.includes("longside: 'Long side part'")
-             || !src.includes("part === 'side'")) {
+             || !src.includes("part === 'side'")
+             || !src.includes("longHair(1.07, 'middle', 0, 'feet'")
+             || src.includes('add(G.ball(), 0, 0.86, -0.62')) {
     note('✗', 'mii.html — long hair should be a smooth middle part with several tapers, not a spike or blunt bangs');
     failures++;
   } else {

@@ -3122,7 +3122,7 @@ const STYLE_LABELS = {
   curtains: 'Curtains', shortcurl: 'Short curls', afro: 'Afro', dreads: 'Locs',
   bob: 'Bob', shag: 'Shag', wolf: 'Wolf cut', mullet: 'Mullet', flow: 'Flow',
   long: 'Long middle layers', longmiddle: 'Long middle part', longside: 'Long center part',
-  longwavy: 'Long wavy', bun: 'Bun', pony: 'Ponytail',
+  longwavy: 'Long wavy', bun: 'Top bun', pony: 'Ponytail',
   highpony: 'High ponytail', pigtails: 'Pigtails',
   layers: 'Long layers', spacebuns: 'Space buns',
   cap: 'Cap', flatbrim: 'Flat brim', dadhat: 'Dad hat',
@@ -4450,10 +4450,9 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  longHair: (r, part = 'bangs', wave = 0) => geoCache(`longN${r}_${part}_${wave}`, () => {
-    /* One flowing shell. Bangs became a centre part with several V-tapers
-       that stop above the feet; the other long cuts keep a blunt hem at
-       the torso. Higher tessellation so the curtain is smooth, not faceted. */
+  longHair: (r, part = 'bangs', wave = 0, hem = '') => geoCache(`longO${r}_${part}_${wave}_${hem}`, () => {
+    /* One flowing shell. Bangs/middle get V-tapers; hem === 'feet' is a
+       blunt curtain that hems near the floor for the top-bun cut. */
     const tl = 2.48;
     const g = new THREE.SphereGeometry(r, 88, 72, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
@@ -4524,14 +4523,15 @@ const G = {
 
       ({ nx, ny, nz } = applySideburnsNape(nx, ny, nz, frame.sideburn, frame.nape, ux, azFront, azBack));
 
-      /* Curtain down the back and sides. Bangs and the middle/wavy cuts
-         get several V-points instead of one spike; the leftover side-id
-         cut keeps a blunt hem. Tips stop at the torso, not below the feet. */
-      const layered = part === 'bangs' || part === 'middle';
+      /* Curtain down the back and sides. Bangs and middle get several
+         V-points. hem === 'feet' is a straight line near the floor for
+         the top-bun cut. The leftover side-id cut keeps a blunt torso hem. */
+      const feet = hem === 'feet';
+      const layered = !feet && (part === 'bangs' || part === 'middle');
       const rear = Math.max(0, 1 - azFront * 1.25);
       const hang = Math.pow(Math.max(0, (u - 0.38) / 0.62), 1.12)
         * rear * (1 - Math.min(1, faceOpen * 0.88));
-      const hemY = part === 'bangs' ? -0.98 : layered ? -1.18 : -1.50;
+      const hemY = feet ? -1.72 : part === 'bangs' ? -0.98 : layered ? -1.18 : -1.50;
       const hemR = layered ? 0.84 : 0.90;
       let point = 0;
       if (layered && hang > 0.001) {
@@ -5788,8 +5788,11 @@ function buildHair(dna, mat, extraMats) {
   } else if (st === 'afro') {
     add(G.afro(1.06), 0, 0, 0, 1, 1.02, 1);
   } else if (st === 'bun') {
-    cap(1.05, 1.5, 1.04);
-    add(G.ball(), 0, 0.86, -0.62, 0.42, 0.4, 0.4);
+    /* Centre part, a bun sitting on the crown, and long hair down the
+       back that hems in a straight line near the feet — not a cap with
+       a ball stuck on the nape. */
+    add(G.longHair(1.07, 'middle', 0, 'feet'), 0, 0, 0, 1, 1.04, 1);
+    add(G.ball(), 0, 1.12, -0.08, 0.32, 0.30, 0.32);
   } else if (st === 'pony') {
     cap(1.05, 1.52, 1.06);
     add(G.ball(), 0, 0.3, -1.02, 0.34, 0.34, 0.34);
