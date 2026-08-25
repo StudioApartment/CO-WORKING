@@ -464,6 +464,15 @@ try {
   check('blocks a missing email',
     await evaluate("document.getElementById('camBanner').textContent.length > 0"));
 
+  await evaluate("document.getElementById('miiName').value = 'fuck';");
+  await evaluate("document.getElementById('miiEmail').value = 'clean@example.com';");
+  await evaluate("document.getElementById('btnAccept').click()");
+  await sleep(400);
+  check('blocks offensive names inline',
+    await evaluate("document.getElementById('camBanner').textContent.includes('not allowed')"));
+  check('offensive name did not join',
+    await evaluate(`MiiPlaza.World.miis.length === ${beforeClaim}`));
+
   console.log('\nclaiming a badge');
   await evaluate(`document.getElementById('miiName').value = 'Flow';
     document.getElementById('miiEmail').value = ${JSON.stringify(EMAIL)};`);

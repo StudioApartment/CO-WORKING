@@ -154,6 +154,29 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("from '/lib/profanity.js'") || !src.includes('isCleanName')) {
+    note('✗', 'mii.html — names should be checked for offensive language');
+    failures++;
+  } else {
+    note('✓', 'mii.html blocks offensive names before save');
+  }
+}
+
+{
+  const { isCleanName } = await import(pathToFileURL(join(ROOT, 'lib/profanity.js')).href);
+  if (!isCleanName('Alex') || isCleanName('fuck') || isCleanName('Sh1t')) {
+    note('✗', 'lib/profanity.js — name filter should allow normal names and block slurs');
+    failures++;
+  } else if (!isCleanName('Dick')) {
+    note('✗', 'lib/profanity.js — ordinary given names should still pass');
+    failures++;
+  } else {
+    note('✓', 'lib/profanity.js filters offensive names');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes('for="miiEmail">Email</label>')) {
     note('✗', 'mii.html — email field should just say Email');
     failures++;

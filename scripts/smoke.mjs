@@ -153,6 +153,9 @@ console.log('\nvalidation');
   const noDna = await call(miis, { method: 'POST', body: { email: 'a@b.co', name: 'Ok' } });
   check('rejects a missing character', noDna.statusCode === 400, `got ${noDna.statusCode}`);
 
+  const rude = await call(miis, { method: 'POST', body: { email: 'a@b.co', name: 'fuck', dna: DNA } });
+  check('rejects offensive names', rude.statusCode === 400, `got ${rude.statusCode}`);
+
   // Four bad requests in a row above: the quota must still be untouched, or a
   // typo would cost someone their hourly allowance.
   const after = await call(miis, {

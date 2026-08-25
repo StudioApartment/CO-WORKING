@@ -2,6 +2,7 @@
  * input we actually trust. */
 
 import { z } from 'zod';
+import { isCleanName, NAME_BLOCKED_MESSAGE } from '../../lib/profanity.js';
 
 export const emailSchema = z
   .string()
@@ -17,7 +18,8 @@ export const nameSchema = z
   .min(1, 'Name is required')
   .max(14, 'Names cap at 14 characters')
   // Control characters would corrupt the name texture baked onto the model.
-  .regex(/^[^\p{C}]+$/u, 'That name has characters we cannot render');
+  .regex(/^[^\p{C}]+$/u, 'That name has characters we cannot render')
+  .refine(isCleanName, NAME_BLOCKED_MESSAGE);
 
 /* mii_data is authored by the client renderer and its shape evolves with the
  * art, so it is accepted as opaque JSON with a hard size ceiling rather than
@@ -46,6 +48,15 @@ export const updateMiiSchema = z.object({
   name: nameSchema.optional(),
   dna: miiDataSchema,
   preview: previewSchema
+}).superRefine((data, ctx) => {
+  const candidate = data.name || (data.dna && data.dna.name);
+  if (!candidate || typeof candidate !== 'string') return;
+  if (isCleanName(candidate)) return;
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    message: NAME_BLOCKED_MESSAGE,
+    path: ['name']
+  });
 });
 
 export const magicLinkSchema = z.object({ email: emailSchema });

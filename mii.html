@@ -756,6 +756,7 @@ body.native-cursor #pointer{display:none}
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { isCleanName, NAME_BLOCKED_MESSAGE } from '/lib/profanity.js';
 
 /* ══════════════════════════════════════════════════════════════
    0 · TINY UTILITIES
@@ -5843,6 +5844,11 @@ const Cam = {
     if (!m || !this.dna) return;
     const dna = this.dna;
     dna.name = ($('miiName').value || '').trim().slice(0, 14) || dna.name || 'New Person';
+    if (!isCleanName(dna.name)) {
+      this.showBanner(NAME_BLOCKED_MESSAGE, 'bad');
+      $('miiName').focus();
+      return;
+    }
     const rec = { id: m.recordId, mine: true };
 
     const preview = Preview.snapshot();
@@ -5932,6 +5938,12 @@ const Cam = {
 
     const name = ($('miiName').value || '').trim().slice(0, 14) || 'New Person';
     const email = ($('miiEmail').value || '').trim();
+
+    if (!isCleanName(name)) {
+      this.showBanner(NAME_BLOCKED_MESSAGE, 'bad');
+      $('miiName').focus();
+      return;
+    }
 
     // Email is only required once there is a server to hold it; opened as a
     // bare file the plaza still works without one. Use Config, not whether
