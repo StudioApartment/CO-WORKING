@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3259,7 +3259,7 @@ const TATTOOS = [
 ];
 
 /* ---- apparel ------------------------------------------------
-   `kind` selects the torso texture painter; `hood`/`open` add
+   `kind` selects the torso texture painter; `hood`/`open`/`mock` add
    geometry on top of it. */
 /* Everyday clothes take the wearer's shirt colour. The jersey carries its
    own palette and number so it still reads as a kit rather than a dyed tee. */
@@ -3270,6 +3270,7 @@ const APPAREL = [
   { id: 'buttonup', label: 'Button-up', kind: 'buttonup' },
   { id: 'flannel',  label: 'Flannel',   kind: 'flannel', open: true },
   { id: 'hoodie',   label: 'Hoodie',    kind: 'hoodie',  hood: true },
+  { id: 'techvest', label: 'Tech vest', kind: 'techvest', mock: true },
   { id: 'suit',     label: 'Suit',      kind: 'suit'     },
   { id: 'jersey',   label: 'Jersey',    kind: 'football',
     body: '#1d5cab', trim: '#f4f6f8', num: 10 },
@@ -5258,6 +5259,72 @@ function makeApparelTexture(dna) {
       }
       break;
     }
+    case 'techvest': {
+      /* Quarter-zip mock-neck vest over a polo. The rig has no arms, so the
+         sleeveless cut is painted at the side seams and the polo is the fill
+         inside those scoops — a skin hole would read as a tank. */
+      const vest = shade(base, -8);
+      const polo = '#cfd6de';
+      g.fillStyle = vest;
+      g.fillRect(0, 0, W, H);
+      g.globalAlpha = 0.12;
+      g.fillStyle = shade(vest, -22);
+      for (let x = 0; x < W; x += 2) g.fillRect(x, 0, 1, H);   // performance grain
+      g.globalAlpha = 1;
+
+      const scoopAt = (x) => {
+        g.fillStyle = polo;
+        g.beginPath();
+        g.moveTo(x - 40, 0);
+        g.quadraticCurveTo(x, vy(0.48), x + 40, 0);
+        g.closePath();
+        g.fill();
+        g.save();
+        g.beginPath();
+        g.moveTo(x - 40, 0);
+        g.quadraticCurveTo(x, vy(0.48), x + 40, 0);
+        g.closePath();
+        g.clip();
+        g.fillStyle = '#5b6570';
+        g.globalAlpha = 0.28;
+        for (let yy = 3; yy < vy(0.52); yy += 6) {
+          for (let xx = x - 40; xx < x + 40; xx += 6) {
+            g.fillRect(xx + ((yy / 6) | 0) % 2 * 3, yy, 2, 2);
+          }
+        }
+        g.restore();
+        g.strokeStyle = shade(vest, -26);
+        g.lineWidth = 6;
+        g.lineJoin = 'round';
+        g.beginPath();
+        g.moveTo(x - 40, 0);
+        g.quadraticCurveTo(x, vy(0.48), x + 40, 0);
+        g.stroke();
+      };
+      scoopAt(0);
+      scoopAt(W);
+      scoopAt(W * 0.5);
+
+      /* Colour-matched quarter zip: tape and teeth in the vest, so it reads
+         as hardware without turning into a white placket. */
+      const zipH = vy(0.48);
+      g.fillStyle = shade(vest, -24);
+      g.fillRect(front - 4, 0, 8, zipH);
+      g.fillStyle = shade(vest, 18);
+      for (let y = 4; y < zipH - 8; y += 3.2) g.fillRect(front - 1.4, y, 2.8, 1.8);
+      g.fillStyle = shade(vest, -36);
+      g.beginPath();
+      g.moveTo(front - 5, zipH - 2);
+      g.lineTo(front + 5, zipH - 2);
+      g.lineTo(front + 3.5, zipH + 9);
+      g.lineTo(front - 3.5, zipH + 9);
+      g.closePath();
+      g.fill();
+
+      g.fillStyle = shade(vest, -14);
+      g.fillRect(0, H - 11, W, 11);                            // bound hem
+      break;
+    }
   }
 
   const t = new THREE.CanvasTexture(c);
@@ -5976,9 +6043,11 @@ function buildMii(dna) {
   const shirtMat = new THREE.MeshStandardMaterial({
     color: apparelTex ? '#ffffff' : dna.shirt,
     map: apparelTex || null,
-    // Bare skin is softer than fabric; a suit has a slight sheen.
-    roughness: apparel.bare ? 0.82 : apparel.kind === 'suit' ? 0.55 : 0.72,
-    metalness: 0
+    // Bare skin is softer than fabric; a suit has a slight sheen; the vest
+    // is a matte performance knit, not cotton.
+    roughness: apparel.bare ? 0.82 : apparel.kind === 'suit' ? 0.55
+      : apparel.kind === 'techvest' ? 0.60 : 0.72,
+    metalness: apparel.kind === 'techvest' ? 0.04 : 0
   });
   const legCol = apparel.skirt && apparel.skirtFrom !== 'pants'
     ? skirtColor(dna, apparel) : dna.pants;
@@ -6027,7 +6096,9 @@ function buildMii(dna) {
      the jersey look padded, so only football gets a tighter xz — height stays
      so the collar and pants still meet. */
   const kit = apparel.kind === 'football';
-  torso.scale.set((kit ? 0.29 : 0.33) * dna.girth, 0.28, (kit ? 0.235 : 0.27) * dna.girth);
+  const vestFit = apparel.kind === 'techvest';
+  torso.scale.set((kit ? 0.29 : vestFit ? 0.31 : 0.33) * dna.girth, 0.28,
+    (kit ? 0.235 : vestFit ? 0.255 : 0.27) * dna.girth);
   torso.position.y = 0.5;
   body.add(torso);
 
@@ -6043,15 +6114,27 @@ function buildMii(dna) {
 
   /* The collar is a white crew neck by default. Layered garments take it in
      their own colour, a suit gets a shirt collar, and bare skin gets none at
-     all — a floating white ring above an undressed chest looks like a bug. */
+     all — a floating white ring above an undressed chest looks like a bug.
+     A mock neck is the same torus stretched up the neck so a quarter-zip
+     vest does not sit under a crew ring. */
   if (!apparel.bare && !apparel.nocollar) {
-    const collarMat = apparel.open
-      ? new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -30), roughness: 0.7 })
-      : whiteMat;
-    if (apparel.open) M.mats.push(collarMat);
+    const mock = apparel.mock;
+    const collarMat = mock
+      ? new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -8), roughness: 0.6, metalness: 0.04 })
+      : apparel.open
+        ? new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -30), roughness: 0.7 })
+        : whiteMat;
+    if (mock || apparel.open) M.mats.push(collarMat);
     const collar = new THREE.Mesh(G.collar(), collarMat);
-    collar.scale.set(0.135, 0.135, 0.13); collar.rotation.x = Math.PI / 2;
-    collar.position.y = 0.7; body.add(collar);
+    if (mock) {
+      collar.scale.set(0.126, 0.126, 0.22);
+      collar.position.y = 0.735;
+    } else {
+      collar.scale.set(0.135, 0.135, 0.13);
+      collar.position.y = 0.7;
+    }
+    collar.rotation.x = Math.PI / 2;
+    body.add(collar);
   }
 
   // A hood is a shell behind the head, not headwear — it coexists with hats.
