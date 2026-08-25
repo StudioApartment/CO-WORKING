@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3091,7 +3091,7 @@ const PANTS  = ['#3f4d5c','#2f3a47','#4a5a6b','#5c4633','#37506e'];
 const SHOES  = ['#2f3a45','#e8ecef','#c0392b','#33506b','#4a4a4a'];
 /* Real haircuts people ask for, rather than novelty shapes. Ordered roughly
    short to long so the picker reads sensibly. */
-const HAIRSTYLES = ['bald','buzz','taper','crop','waves','fade','pixie','bowl','combover','sidepart',
+const HAIRSTYLES = ['bald','buzz','taper','crop','waves','pixie','bowl','combover','sidepart',
                     'quiff','pompadour','swoop','slickback','swept','spiky','curtains','shortcurl','afro',
                     'dreads','bob','shag','wolf','mullet','flow',
                     'long','longmiddle','longside','longwavy',
@@ -3109,6 +3109,7 @@ const HAIRSTYLE_ALIASES = {
   tails: 'pony',
   undercut: 'slickback',
   afrofade: 'afro',
+  fade: 'taper',
   // Every bandana knots at the back now, so the separate variant is the red one.
   bandanaback: 'bandana'
 };
@@ -3116,7 +3117,7 @@ const HAIRSTYLE_ALIASES = {
 /* Raw ids are terse; the picker shows these. */
 const STYLE_LABELS = {
   bald: 'Bald', buzz: 'Buzz cut', taper: 'Crew cut', crop: 'French crop',
-  waves: 'Waves', fade: 'Fade', pixie: 'Pixie', bowl: 'Medium length', combover: 'Comb over',
+  waves: 'Waves', pixie: 'Pixie', bowl: 'Medium length', combover: 'Comb over',
   sidepart: 'Side part', quiff: 'Quiff', pompadour: 'Pompadour', swoop: 'Swoop',
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
   curtains: 'Curtains', shortcurl: 'Short curls', afro: 'Afro', dreads: 'Locs',
@@ -3545,36 +3546,6 @@ const G = {
       const t = Math.pow((b.azFront - 0.32) / 0.68, 1.2) * Math.min(1, (0.54 - ny) / 0.24);
       ({ nx, ny, nz } = hugToward(nx, ny, nz, t * (1 - bump), skull * 1.02));
       if (ny < 0.31) ny = 0.31;
-    }
-    return { nx, ny, nz };
-  }),
-  fade: (r) => sculptHair(`fadeY${r}`, r, 2.05, 56, 44, (b, tl, rr) => {
-    /* Waved crown + skin-faded sides. Flatten the pole so waves do not
-       pile into a Hershey-kiss spike. */
-    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
-    const earFade = b.side * Math.pow(Math.max(0, (0.46 - b.uy) / 0.50), 1.25);
-    const napeFade = b.azBack * Math.pow(Math.max(0, (0.38 - b.uy) / 0.48), 1.15);
-    const fadeAmt = Math.min(1, earFade * 1.08 + napeFade * 0.92);
-    let cover = Math.pow(Math.max(0, (b.uy + 0.08) / 0.72), 0.7);
-    cover *= 1 - fadeAmt * 0.97;
-    cover *= 1 - frame.faceOpen * 0.88;
-    const sideburn = Math.pow(Math.max(0, (b.side - 0.42) / 0.58), 1.15)
-      * Math.exp(-Math.pow((b.uy - 0.06) / 0.28, 2) * 2.6)
-      * b.azFront * (1 - fadeAmt * 0.65);
-    cover = Math.max(cover, sideburn * 0.45);
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.22 + cover * 0.20), rr);
-    if (b.uy > 0.88) ny -= (b.uy - 0.88) * 0.55;
-    const cr = Math.hypot(nx, ny - 0.78, nz + 0.04);
-    const wave = cover * (0.010 * Math.sin(cr * 72) + 0.006 * Math.sin(cr * 118 + 0.7));
-    const L0 = Math.hypot(nx, ny, nz) || 1;
-    const k = (L0 + (cover * 0.09 + wave + sideburn * 0.03) * rr) / L0;
-    nx *= k; ny *= k; nz *= k;
-    if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
-    else if (b.azFront > 0.26 && ny < 0.52) {
-      const t = b.azFront * Math.pow(Math.max(0, (0.52 - ny) / 0.22), 1.2)
-        * Math.pow(Math.max(0, 1 - cover), 0.4);
-      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.018));
-      if (ny < 0.30) ny = 0.30;
     }
     return { nx, ny, nz };
   }),
@@ -5834,11 +5805,6 @@ function buildHair(dna, mat, extraMats) {
     }
 
   /* ---- barbershop cuts --------------------------------------
-     A fade is the tricky one: a character carries a single hair
-     colour, so the taper is implied by capping the sides short and
-     massing the top. It reads in silhouette, which is what this
-     style leans on anyway.
-
      Volume lives above y≈0.29 wherever possible — that is the brow
      line, and anything crossing it starts covering the eyes. */
   } else if (st === 'taper') {
@@ -5847,8 +5813,6 @@ function buildHair(dna, mat, extraMats) {
     add(G.frenchCrop(1.05), 0, 0, 0);
   } else if (st === 'waves') {
     add(G.waves360(1.04), 0, 0, 0);
-  } else if (st === 'fade') {
-    add(G.fade(1.04), 0, 0, 0);
   } else if (st === 'pixie') {
     add(G.pixieCut(1.05), 0, 0, 0);
   } else if (st === 'combover') {

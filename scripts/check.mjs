@@ -194,11 +194,13 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`fadeY${r}`") || !src.includes("'fade'")) {
-    note('✗', 'mii.html — fade cut should be a waved crown with tapered sides');
+  if (src.includes("sculptHair(`fadeY${r}`") || src.includes("st === 'fade'")
+      || src.includes("fade: 'Fade'") || src.includes("'waves','fade','pixie'")
+      || !src.includes("fade: 'taper'")) {
+    note('✗', 'mii.html — the fade helmet should be removed from the picker');
     failures++;
   } else {
-    note('✓', 'mii.html includes a shaved fade style');
+    note('✓', 'mii.html drops the fade helmet from the picker');
   }
 }
 
