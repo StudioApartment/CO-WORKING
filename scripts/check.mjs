@@ -187,7 +187,7 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`fadeW${r}`") || !src.includes("'fade'")) {
+  if (!src.includes("sculptHair(`fadeX${r}`") || !src.includes("'fade'")) {
     note('✗', 'mii.html — fade cut should be a waved crown with tapered sides');
     failures++;
   } else {
@@ -364,6 +364,32 @@ for (const [page, ids] of required) {
     failures++;
   } else {
     note('✓', 'mii.html bowl is a medium-length men\'s style');
+  }
+}
+
+/* Extra balls on a cap read as buns or earmuffs. Each barbershop cut has
+   to be one shell that matches the real silhouette (French crop fringe,
+   360 waves, crew vs buzz, etc.). */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const shells = [
+    'G.frenchCrop(1.05)', "G.pixieCut(1.05)", 'G.waves360(1.04)',
+    'G.crewCut(1.04)', "G.partedTop(1.05, 'combover')", "G.partedTop(1.05, 'side')",
+    'G.swoopCurl(1.05)', 'G.slickBack(1.05)', 'G.sweptHair(1.05)',
+    'G.spikes(1.05)', 'G.pomp(1.05)', 'sculptHair('
+  ];
+  const extras = [
+    'add(G.ball(), 0.62, 0.28, 0.42',
+    'add(G.ball(), 0, 0.56, 0.66'
+  ];
+  if (!shells.every((s) => src.includes(s))) {
+    note('✗', 'mii.html — barbershop cuts should be one photo-matched shell each');
+    failures++;
+  } else if (extras.some((s) => src.includes(s))) {
+    note('✗', 'mii.html — crop/pixie still attach extra balls that read as buns');
+    failures++;
+  } else {
+    note('✓', 'mii.html barbershop cuts are single photo-matched shells');
   }
 }
 

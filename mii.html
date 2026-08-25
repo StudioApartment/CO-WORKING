@@ -3476,6 +3476,55 @@ function applySideburnsNape(nx, ny, nz, sideburn, nape, ux, azFront, azBack) {
   return { nx, ny, nz };
 }
 
+/* Shared bits for one-shell haircuts. Extra balls on a cap read as buns. */
+function hairBasis(v) {
+  const L = v.length() || 1;
+  const ux = v.x / L, uy = v.y / L, uz = v.z / L;
+  const th = Math.acos(Math.max(-1, Math.min(1, uy)));
+  const rs0 = Math.hypot(ux, uz) || 1e-6;
+  return {
+    ux, uy, uz, th, rs0,
+    azFront: Math.max(0, uz / rs0),
+    azBack: Math.max(0, -uz / rs0),
+    phi: Math.atan2(ux, uz),
+    side: Math.abs(ux) / rs0
+  };
+}
+
+function superFromTheta(b, th2, r, n = HEAD_N) {
+  const rs = Math.sin(th2);
+  let nx = b.ux / b.rs0 * rs;
+  let ny = Math.cos(th2);
+  let nz = b.uz / b.rs0 * rs;
+  const s = Math.pow(
+    Math.pow(Math.abs(nx), n) + Math.pow(Math.abs(ny), n) + Math.pow(Math.abs(nz), n),
+    -1 / n
+  );
+  return { nx: nx * s * r, ny: ny * s * r, nz: nz * s * r, skull: s * r };
+}
+
+function hugToward(nx, ny, nz, t, skullL) {
+  if (t <= 0) return { nx, ny, nz };
+  const Lh = Math.hypot(nx, ny, nz) || 1;
+  const k = 1 - t + t * (skullL / Lh);
+  return { nx: nx * k, ny: ny * k, nz: nz * k };
+}
+
+function sculptHair(key, r, tl, w, h, fn) {
+  return geoCache(key, () => {
+    const g = new THREE.SphereGeometry(r, w, h, 0, TAU, 0, tl);
+    const p = g.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      const out = fn(hairBasis(v), tl, r);
+      p.setXYZ(i, out.nx, out.ny, out.nz);
+    }
+    p.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  });
+}
+
 const G = {
   head:  () => geoCache('head',  () => superball(1, 44, 32, HEAD_N)),
   face:  () => geoCache('face',  () => superball(1.016, 30, 26, HEAD_N, Math.PI / 2 - FACE_PHI / 2, FACE_PHI, FACE_TH0, FACE_THL)),
@@ -3489,172 +3538,297 @@ const G = {
   hairFront:(r, tl, ts = HAIR_CROWN) => geoCache(`hf${r}_${tl}_${ts}`, () => superball(r, 26, 12, HEAD_N, Math.PI / 2 - (HAIR_GAP + HAIR_OVER) / 2, HAIR_GAP + HAIR_OVER, ts, Math.max(0.12, tl - ts))),
   hairBand: (r) => geoCache(`hbd${r}`, () => superball(r, 26, 10, HEAD_N, Math.PI / 2 + HAIR_GAP / 2, TAU - HAIR_GAP, 1.15, 0.5)),
   dome: (r, tl) => geoCache(`dm${r}_${tl}`, () => superball(r, 36, 24, HEAD_N, 0, TAU, 0, tl)),
-  pomp: (r, tl) => geoCache(`pomp${r}_${tl}`, () => {
-    const g = superball(r, 36, 28, HEAD_N, 0, TAU, 0, tl);
-    const p = g.attributes.position, v = new THREE.Vector3();
-    for (let i = 0; i < p.count; i++) {
-      v.fromBufferAttribute(p, i);
-      /* Smooth mound on the forehead. Peak has to beat the dome pole (y≈r)
-         or the cut still reads as a bowl from the front. */
-      const dx = v.x * 0.92, dy = v.y - 0.72, dz = v.z - 0.58;
-      const bump = Math.exp(-(dx * dx + dy * dy + dz * dz) * 2.15);
-      v.y += bump * 0.44;
-      v.z += bump * 0.16;
-      p.setXYZ(i, v.x, v.y, v.z);
+  pomp: (r) => sculptHair(`pompF${r}`, r, 1.62, 48, 40, (b, tl, rr) => {
+    /* Swept BACK from the forehead, dense rounded volume, short sides —
+       Elvis / rockabilly, not a horn and not a quiff. */
+    const faceWin = Math.pow(Math.max(0, b.azFront - 0.08) / 0.92, 1.15);
+    const backAmt = Math.pow(b.azBack, 1.45);
+    let maxTh = 1.16
+      + (1.48 - 1.16) * faceWin * Math.pow(Math.max(0, 1 - b.side * 0.72), 1.15)
+      + (1.22 - 1.16) * backAmt;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
+    ny -= Math.max(0, ny - 0.72) * 0.18 * (1 - faceWin);
+    const dx = nx * 0.85, dy = ny - 0.78, dz = nz - 0.22;
+    const bump = Math.exp(-(dx * dx + dy * dy + dz * dz * 1.15) * 1.85)
+      * Math.max(0, Math.min(1, (ny - 0.42) / 0.22));
+    ny += bump * 0.40;
+    nz -= bump * 0.14;
+    if (b.side > 0.48 && ny < 0.58) nx *= 0.86 + 0.14 * Math.max(0, (ny - 0.32) / 0.26);
+    if (b.azFront > 0.30 && ny < 0.56) {
+      const t = Math.pow((b.azFront - 0.30) / 0.70, 1.2) * Math.min(1, (0.56 - ny) / 0.26);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
+      if (ny < 0.31) ny = 0.31;
     }
-    p.needsUpdate = true;
-    g.computeVertexNormals();
-    return g;
+    return { nx, ny, nz };
   }),
-  quiff: (r) => geoCache(`quiffE${r}`, () => {
-    /* One shell. Extra balls on a cap were a crown bun. Short sides,
-       hairline at the brow, a forehead lift that reads from head-on —
-       smaller than pomp. Head scale squashes z, so the bump lives
-       forward. */
-    const tl = 1.40;
-    const g = new THREE.SphereGeometry(r, 44, 36, 0, TAU, 0, tl);
-    const p = g.attributes.position, v = new THREE.Vector3();
-    const n = HEAD_N;
-    const faceTh = 1.34;
-    const sideTh = 1.12;
-    const backTh = 1.16;
-    for (let i = 0; i < p.count; i++) {
-      v.fromBufferAttribute(p, i);
-      const L = v.length() || 1;
-      const ux = v.x / L, uy = v.y / L, uz = v.z / L;
-      const th = Math.acos(Math.max(-1, Math.min(1, uy)));
-      const rs0 = Math.hypot(ux, uz) || 1e-6;
-      const azFront = Math.max(0, uz / rs0);
-      const azBack = Math.max(0, -uz / rs0);
-      const faceWin = Math.pow(Math.max(0, azFront - 0.10) / 0.90, 1.35);
-      const backAmt = Math.pow(azBack, 1.7);
-      const maxTh = sideTh
-        + (faceTh - sideTh) * faceWin
-        + (backTh - sideTh) * backAmt;
-      const th2 = (th / tl) * maxTh;
-      const rs = Math.sin(th2);
-      let nx = ux / rs0 * rs;
-      let ny = Math.cos(th2);
-      let nz = uz / rs0 * rs;
-      const s = Math.pow(
-        Math.pow(Math.abs(nx), n) + Math.pow(Math.abs(ny), n) + Math.pow(Math.abs(nz), n),
-        -1 / n
-      );
-      nx *= s * r; ny *= s * r; nz *= s * r;
-
-      /* Flatten the crop crown so the front lift can beat the pole. */
-      ny -= Math.max(0, ny - 0.70) * 0.14 * (1 - azFront * 0.9);
-
-      /* Forehead-wide lift, gated off the hem so the bump does not
-         drag the hairline up into a bun. Peak still has to beat the pole. */
-      const dx = nx * 1.05, dy = ny - 0.52, dz = nz - 0.80;
-      const bump = Math.exp(-(dx * dx + dy * dy + dz * dz * 0.72) * 2.30);
-      const lift = bump * Math.max(0, Math.min(1, (ny - 0.40) / 0.22));
-      ny += lift * 0.50;
-      nz += lift * 0.26;
-
-      /* Front hem hugs the skull so it is a hairline, not a visor.
-         Stay above the brow (y≈0.29). */
-      if (azFront > 0.32 && ny < 0.58) {
-        const t = Math.pow((azFront - 0.32) / 0.68, 1.2)
-          * Math.min(1, (0.58 - ny) / 0.28);
-        const Lh = Math.hypot(nx, ny, nz) || 1;
-        const k = 1 - t + t * (1.045 / Lh);
-        nx *= k; ny *= k; nz *= k;
-        if (ny < 0.31) ny = 0.31;
-      }
-      p.setXYZ(i, nx, ny, nz);
+  quiff: (r) => sculptHair(`quiffF${r}`, r, 1.48, 46, 38, (b, tl, rr) => {
+    /* Smaller than a pomp: lift UP and slightly FORWARD at the forelock,
+       short sides, rest of the top modest. */
+    const faceWin = Math.pow(Math.max(0, b.azFront - 0.10) / 0.90, 1.35);
+    let maxTh = 1.14
+      + (1.34 - 1.14) * faceWin * Math.pow(Math.max(0, 1 - b.side * 0.85), 1.4)
+      + (1.18 - 1.14) * Math.pow(b.azBack, 1.6);
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
+    ny -= Math.max(0, ny - 0.68) * 0.22 * (1 - faceWin);
+    const dx = nx * 1.15, dy = ny - 0.50, dz = nz - 0.82;
+    const bump = Math.exp(-(dx * dx + dy * dy + dz * dz * 0.70) * 2.40)
+      * Math.max(0, Math.min(1, (ny - 0.38) / 0.20));
+    ny += bump * 0.42;
+    nz += bump * 0.20;
+    if (b.side > 0.50 && ny < 0.55) nx *= 0.84;
+    if (b.azFront > 0.32 && ny < 0.56) {
+      const t = Math.pow((b.azFront - 0.32) / 0.68, 1.2) * Math.min(1, (0.56 - ny) / 0.26);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
+      if (ny < 0.31) ny = 0.31;
     }
-    p.needsUpdate = true;
-    g.computeVertexNormals();
-    return g;
+    return { nx, ny, nz };
   }),
-  fade: (r) => geoCache(`fadeW${r}`, () => {
-    /* Shaved fade with 360 waves on the crown: sides and nape taper to skin,
-       a crisp lineup at the brow, and short sideburns at the temples. */
-    const tl = 2.08;
-    const g = new THREE.SphereGeometry(r, 56, 44, 0, TAU, 0, tl);
-    const p = g.attributes.position, v = new THREE.Vector3();
-    const n = HEAD_N;
-    for (let i = 0; i < p.count; i++) {
-      v.fromBufferAttribute(p, i);
-      const L = v.length() || 1;
-      const ux = v.x / L, uy = v.y / L, uz = v.z / L;
-      const th = Math.acos(Math.max(-1, Math.min(1, uy)));
-      const u = th / tl;
-      const rs0 = Math.hypot(ux, uz) || 1e-6;
-      const azFront = Math.max(0, uz / rs0);
-      const azBack = Math.max(0, -uz / rs0);
-      const phi = Math.atan2(ux, uz);
-      const side = Math.abs(ux) / rs0;
-
-      /* Side and nape fade — hair thins toward the ears and neck. */
-      const earFade = side * Math.pow(Math.max(0, (0.42 - uy) / 0.48), 1.45);
-      const napeFade = azBack * Math.pow(Math.max(0, (0.34 - uy) / 0.46), 1.25);
-      const fade = Math.min(1, earFade * 1.05 + napeFade * 0.88);
-
-      /* Crown coverage — short waves live on the top only. */
-      let cover = Math.pow(Math.max(0, (uy - 0.18) / 0.58), 1.05);
-      cover *= 1 - fade * 0.97;
-
-      /* Crisp lineup: straight brow, square temple corners. */
-      if (azFront > 0.15) {
-        const brow = Math.pow(Math.max(0, (uy - 0.40) / 0.36), 2.4)
-          * Math.pow(Math.max(0, 1 - side * 0.94), 2.2);
-        cover *= brow;
-        const temple = side * Math.pow(Math.max(0, (0.46 - uy) / 0.40), 1.7) * azFront;
-        cover *= 1 - temple * 0.92;
-      }
-
-      /* Short sideburn — faded strip in front of the ear. */
-      const sideburn = Math.pow(Math.max(0, (side - 0.42) / 0.58), 1.15)
-        * Math.exp(-Math.pow((uy - 0.06) / 0.28, 2) * 2.6)
-        * azFront * (1 - fade * 0.65);
-      cover = Math.max(cover, sideburn * 0.55);
-
-      const maxTh = 1.12 + cover * 0.18;
-      const th2 = u * maxTh;
-      const rs = Math.sin(th2);
-      let nx = ux / rs0 * rs;
-      let ny = Math.cos(th2);
-      let nz = uz / rs0 * rs;
-      const s = Math.pow(
-        Math.pow(Math.abs(nx), n) + Math.pow(Math.abs(ny), n) + Math.pow(Math.abs(nz), n),
-        -1 / n
-      );
-      nx *= s * r; ny *= s * r; nz *= s * r;
-
-      /* 360 wave ridges across the crown. */
-      const wave = cover * (
-        0.020 * Math.sin(ux * 11.5) + 0.020 * Math.sin(uz * 11.5)
-        + 0.011 * Math.sin(ux * 19.0 + 0.6) + 0.011 * Math.sin(uz * 19.0 - 0.4)
-      );
-      const L0 = Math.hypot(nx, ny, nz) || 1;
-      const ext = cover * 0.07 + wave + sideburn * 0.035;
-      const k = (L0 + ext * r) / L0;
-      nx *= k; ny *= k; nz *= k;
-
-      /* Below the fade line, hug the skull so sides read clean-shaven. */
-      if (cover < 0.06) {
-        const skullL = s * r * 1.012;
-        const Lh = Math.hypot(nx, ny, nz) || 1;
-        const hug = skullL / Lh;
-        nx *= hug; ny *= hug; nz *= hug;
-      } else if (azFront > 0.28 && ny < 0.52) {
-        const t = azFront * Math.pow(Math.max(0, (0.52 - ny) / 0.22), 1.3)
-          * Math.pow(Math.max(0, 1 - cover), 0.5);
-        const skullL = s * r * 1.018;
-        const Lh = Math.hypot(nx, ny, nz) || 1;
-        const hug = 1 - t + t * (skullL / Lh);
-        nx *= hug; ny *= hug; nz *= hug;
-        if (ny < 0.30) ny = Math.max(ny, 0.30);
-      }
-
-      p.setXYZ(i, nx, ny, nz);
+  fade: (r) => sculptHair(`fadeX${r}`, r, 2.10, 56, 44, (b, tl, rr) => {
+    /* Waved crown + skin-faded sides. Old version hugged so hard the
+       waves collapsed into a peaked tuft. */
+    const earFade = b.side * Math.pow(Math.max(0, (0.44 - b.uy) / 0.50), 1.35);
+    const napeFade = b.azBack * Math.pow(Math.max(0, (0.36 - b.uy) / 0.48), 1.2);
+    const fadeAmt = Math.min(1, earFade * 1.05 + napeFade * 0.90);
+    let cover = Math.pow(Math.max(0, (b.uy - 0.10) / 0.62), 0.92);
+    cover *= 1 - fadeAmt * 0.96;
+    if (b.azFront > 0.12) {
+      const brow = Math.pow(Math.max(0, (b.uy - 0.34) / 0.40), 1.8)
+        * Math.pow(Math.max(0, 1 - b.side * 0.88), 1.7);
+      cover *= brow;
+      cover *= 1 - b.side * Math.pow(Math.max(0, (0.44 - b.uy) / 0.38), 1.6) * b.azFront * 0.90;
     }
-    p.needsUpdate = true;
-    g.computeVertexNormals();
-    return g;
+    const sideburn = Math.pow(Math.max(0, (b.side - 0.42) / 0.58), 1.15)
+      * Math.exp(-Math.pow((b.uy - 0.06) / 0.28, 2) * 2.6)
+      * b.azFront * (1 - fadeAmt * 0.65);
+    cover = Math.max(cover, sideburn * 0.50);
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.18 + cover * 0.32), rr);
+    const cr = Math.hypot(nx, ny - 0.78, nz + 0.06);
+    const wave = cover * (0.024 * Math.sin(cr * 24) + 0.013 * Math.sin(cr * 40 + 0.6));
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    const k = (L0 + (cover * 0.11 + wave + sideburn * 0.04) * rr) / L0;
+    nx *= k; ny *= k; nz *= k;
+    if (cover < 0.08) {
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    } else if (b.azFront > 0.26 && ny < 0.52) {
+      const t = b.azFront * Math.pow(Math.max(0, (0.52 - ny) / 0.22), 1.25)
+        * Math.pow(Math.max(0, 1 - cover), 0.45);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.018));
+      if (ny < 0.30) ny = 0.30;
+    }
+    return { nx, ny, nz };
+  }),
+  crewCut: (r) => sculptHair(`crewA${r}`, r, 1.72, 44, 34, (b, tl, rr) => {
+    /* Longer on top than a buzz, tapered sides, short pomp at the front
+       hairline so the side profile reads almost horizontal. */
+    const faceWin = Math.pow(Math.max(0, b.azFront - 0.10) / 0.90, 1.4);
+    const backAmt = Math.pow(b.azBack, 1.35);
+    let maxTh = 1.20
+      + (1.46 - 1.20) * faceWin * Math.pow(Math.max(0, 1 - b.side * 0.55), 1.1)
+      + (1.14 - 1.20) * backAmt;
+    if (b.side > 0.55 && b.uy < 0.42) maxTh -= (b.side - 0.55) * 0.22;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
+    if (ny > 0.74) ny = 0.74 + (ny - 0.74) * 0.28;
+    if (b.side > 0.50 && ny < 0.56) nx *= 0.88;
+    if (b.azFront > 0.32 && ny < 0.54) {
+      const t = Math.pow((b.azFront - 0.32) / 0.68, 1.2) * Math.min(1, (0.54 - ny) / 0.24);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
+      if (ny < 0.31) ny = 0.31;
+    }
+    return { nx, ny, nz };
+  }),
+  frenchCrop: (r) => sculptHair(`fcropA${r}`, r, 1.78, 48, 38, (b, tl, rr) => {
+    /* Short faded sides, textured top brushed FORWARD, choppy fringe at
+       mid-forehead — a Caesar with piecey texture, not a pancake bang. */
+    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
+    const backAmt = Math.pow(b.azBack, 1.5);
+    let maxTh = 1.16
+      + 0.22 * Math.pow(Math.max(0, b.uy), 1.05) * (1 - b.side * 0.42)
+      + (1.12 - 1.16) * backAmt;
+    const fringe = b.azFront * Math.pow(Math.max(0, 1 - b.side * 0.48), 1.15)
+      * Math.pow(Math.max(0, (0.70 - b.uy) / 0.38), 1.15);
+    maxTh += fringe * 0.28;
+    maxTh += (0.028 * Math.sin(b.phi * 9.0) + 0.014 * Math.sin(b.phi * 17.0 + 0.7))
+      * (1 - frame.faceOpen * 0.7);
+    maxTh -= frame.faceOpen * 0.55;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
+    ny += Math.max(0, ny - 0.62) * 0.08;
+    nz += fringe * 0.12;
+    ny -= fringe * 0.04;
+    const chop = Math.sin(b.phi * 11.0 + ny * 4.0) * 0.016 * Math.max(0, b.uy);
+    nx *= 1 + chop; nz *= 1 + chop * 0.4;
+    if (b.side > 0.48 && ny < 0.54) nx *= 0.84;
+    if (b.azFront > 0.28 && ny < 0.50) {
+      const t = Math.pow((b.azFront - 0.28) / 0.72, 1.15)
+        * Math.min(1, (0.50 - ny) / 0.22) * (1 - fringe * 0.65);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
+    }
+    if (ny < 0.32) ny = 0.32;
+    return { nx, ny, nz };
+  }),
+  waves360: (r) => sculptHair(`wavA${r}`, r, 1.92, 56, 44, (b, tl, rr) => {
+    /* 360 waves: short coily hair trained into concentric ripples from
+       the crown — not four sausage ridges on a cap. */
+    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
+    let maxTh = 1.32 - frame.faceOpen * 0.88 + frame.sideburn * 0.10;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
+    const cover = Math.max(0, 1 - frame.faceOpen);
+    const cr = Math.hypot(nx, ny - 0.82, nz + 0.04);
+    const wave = cover * (0.026 * Math.sin(cr * 26) + 0.014 * Math.sin(cr * 44 + 0.5));
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    const k = (L0 + (cover * 0.055 + wave) * rr) / L0;
+    nx *= k; ny *= k; nz *= k;
+    if (b.azFront > 0.22 && ny < 0.52) {
+      const t = frame.faceOpen * Math.pow((b.azFront - 0.22) / 0.78, 1.15)
+        * Math.min(1, (0.52 - ny) / 0.24);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.016));
+      if (ny < 0.30) ny = 0.30;
+    }
+    return { nx, ny, nz };
+  }),
+  pixieCut: (r) => sculptHair(`pixA${r}`, r, 1.88, 48, 38, (b, tl, rr) => {
+    /* Short nape, ears out, textured crown, very short bangs with a
+       slight side sweep — one crop, not a cap with an earmuff. */
+    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
+    const backAmt = Math.pow(b.azBack, 1.55);
+    const sweep = Math.max(0, b.ux);
+    let maxTh = 1.18
+      + 0.30 * Math.pow(Math.max(0, b.uy - 0.08), 0.95) * (1 - b.side * 0.38)
+      + (1.08 - 1.18) * backAmt
+      + sweep * b.azFront * 0.12;
+    maxTh += (0.030 * Math.sin(b.phi * 8.0) + 0.014 * Math.sin(b.phi * 15.0 + 0.5))
+      * Math.max(0, b.uy);
+    maxTh -= frame.faceOpen * 0.72;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
+    ny += Math.max(0, ny - 0.58) * 0.10;
+    if (b.side > 0.52 && ny < 0.50 && ny > 0.18) nx *= 0.78;
+    if (backAmt > 0.2 && ny < 0.48) {
+      ny = Math.max(ny, 0.36);
+      nz *= 0.90;
+    }
+    nz += sweep * b.azFront * 0.06;
+    nx += sweep * 0.04;
+    if (b.azFront > 0.28 && ny < 0.54) {
+      const t = Math.pow((b.azFront - 0.28) / 0.72, 1.2) * Math.min(1, (0.54 - ny) / 0.26);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t * (0.55 + frame.faceOpen * 0.45), skull * 1.02));
+    }
+    if (ny < 0.31) ny = 0.31;
+    return { nx, ny, nz };
+  }),
+  partedTop: (r, kind = 'side') => sculptHair(`partA${r}_${kind}`, r, 1.92, 50, 40, (b, tl, rr) => {
+    /* Part on the left, hair combed to the right. Comb over is taller;
+       side part is flatter and neater. */
+    const vol = kind === 'combover' ? 1 : 0;
+    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
+    const sweep = Math.max(0, b.ux);
+    const groove = Math.exp(-((b.ux + 0.16) * (b.ux + 0.16)) * 24) * Math.max(0, b.uy);
+    let maxTh = 1.28 + vol * 0.08
+      + sweep * (0.22 + vol * 0.18) * (0.45 + b.azFront * 0.40)
+      + Math.max(0, -b.ux) * b.azFront * 0.06
+      - groove * (0.20 + vol * 0.04)
+      - frame.faceOpen * 0.78
+      + (1.22 - 1.28) * Math.pow(b.azBack, 1.3) * (1 - vol * 0.4);
+    if (b.side > 0.58 && b.uy < 0.40) maxTh -= 0.14;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
+    ny += Math.max(0, ny - 0.58) * (0.06 + vol * 0.10 + sweep * 0.08);
+    nx += 0.05 + sweep * 0.05;
+    if (groove > 0.04) {
+      nx *= 1 - groove * 0.10;
+      nz *= 1 - groove * 0.08;
+      ny -= groove * 0.04;
+    }
+    if (vol < 0.5 && ny > 0.70) ny = 0.70 + (ny - 0.70) * 0.35;
+    if (b.azFront > 0.26 && ny < 0.54) {
+      const t = frame.faceOpen * Math.pow((b.azFront - 0.26) / 0.74, 1.15)
+        * Math.min(1, (0.54 - ny) / 0.26);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
+    }
+    if (ny < 0.31) ny = 0.31;
+    return { nx, ny, nz };
+  }),
+  swoopCurl: (r) => sculptHair(`swoopA${r}`, r, 1.70, 48, 38, (b, tl, rr) => {
+    /* James Dean / elephant-trunk: one wide forehead curl, sides slicked,
+       the rest combed back — not a mohawk stack of balls. */
+    let maxTh = 1.18
+      + (1.32 - 1.18) * (1 - b.side * 0.7) * Math.max(0, b.uy)
+      + (1.24 - 1.18) * Math.pow(b.azBack, 1.2);
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
+    if (b.side > 0.46 && ny < 0.56) nx *= 0.82;
+    nz -= Math.max(0, -b.uz) * 0.05;
+    const dx = (nx - 0.10) * 0.95, dy = ny - 0.58, dz = nz - 0.70;
+    const curl = Math.exp(-(dx * dx * 1.4 + dy * dy * 1.8 + dz * dz * 0.85) * 2.05)
+      * Math.max(0, Math.min(1, (ny - 0.36) / 0.22));
+    ny += curl * 0.22;
+    nz += curl * 0.22;
+    nx += curl * 0.10;
+    if (nz > 0.52 && curl > 0.15) ny -= (nz - 0.52) * 0.35 * curl;
+    if (b.azFront > 0.34 && ny < 0.50 && curl < 0.25) {
+      const t = Math.pow((b.azFront - 0.34) / 0.66, 1.2) * Math.min(1, (0.50 - ny) / 0.22);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
+    }
+    if (ny < 0.31) ny = 0.31;
+    return { nx, ny, nz };
+  }),
+  slickBack: (r) => sculptHair(`slickA${r}`, r, 1.95, 48, 38, (b, tl, rr) => {
+    /* Combed straight back and laid flat — length at the nape, no lift. */
+    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
+    let maxTh = 1.30
+      + b.azBack * 0.32
+      - frame.faceOpen * 0.92
+      - b.azFront * 0.10;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
+    if (ny > 0.62) ny = 0.62 + (ny - 0.62) * 0.22;
+    if (b.azFront > 0.12) {
+      nz -= 0.12 * b.azFront;
+      ny -= 0.03 * b.azFront;
+    }
+    if (b.azBack > 0.20 && ny < 0.52) {
+      nz -= 0.10 * b.azBack;
+      ny -= 0.08 * b.azBack * Math.max(0, 0.48 - ny);
+    }
+    if (b.side > 0.50 && ny < 0.50) nx *= 0.90;
+    if (b.azFront > 0.28 && ny < 0.54) {
+      const t = Math.pow((b.azFront - 0.28) / 0.72, 1.15) * Math.min(1, (0.54 - ny) / 0.26);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
+    }
+    if (ny < 0.31) ny = 0.31;
+    return { nx, ny, nz };
+  }),
+  sweptHair: (r) => sculptHair(`sweptA${r}`, r, 1.82, 46, 36, (b, tl, rr) => {
+    /* Casual fall to the right, no sharp part and no extra ball. */
+    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
+    const sweep = Math.max(0, b.ux);
+    let maxTh = 1.30 + sweep * 0.20 - frame.faceOpen * 0.80;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
+    ny += Math.max(0, ny - 0.58) * 0.08 * sweep;
+    nx += 0.07 * Math.max(0, b.uy);
+    nz += sweep * b.azFront * 0.06;
+    if (b.azFront > 0.28 && ny < 0.54) {
+      const t = frame.faceOpen * Math.pow((b.azFront - 0.28) / 0.72, 1.15)
+        * Math.min(1, (0.54 - ny) / 0.26);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
+    }
+    if (ny < 0.31) ny = 0.31;
+    return { nx, ny, nz };
+  }),
+  spikes: (r) => sculptHair(`spkA${r}`, r, 1.68, 48, 36, (b, tl, rr) => {
+    /* Piecey vertical texture on a short crop — matte spikes, not a
+       hedgehog of cones around the whole head. */
+    const faceWin = Math.pow(Math.max(0, b.azFront - 0.14) / 0.86, 1.5);
+    let maxTh = 1.16
+      + 0.24 * Math.pow(Math.max(0, b.uy), 1.15) * (1 - b.side * 0.55)
+      - faceWin * 0.18;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
+    const spike = Math.pow(Math.max(0, Math.cos(b.phi * 6.5)), 2.4)
+      * Math.max(0, b.uy - 0.18) * (1 - faceWin * 0.5);
+    ny += spike * 0.18;
+    nz += spike * 0.03 * b.azFront;
+    if (b.side > 0.50 && ny < 0.54) nx *= 0.84;
+    if (b.azFront > 0.32 && ny < 0.54) {
+      const t = Math.pow((b.azFront - 0.32) / 0.68, 1.2) * Math.min(1, (0.54 - ny) / 0.24);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
+      if (ny < 0.31) ny = 0.31;
+    }
+    return { nx, ny, nz };
   }),
   curtains: (r, tl) => geoCache(`curt${r}_${tl}`, () => {
     const g = superball(r, 36, 28, HEAD_N, 0, TAU, 0, tl);
@@ -3942,7 +4116,7 @@ const G = {
 
       const sweep = Math.max(0, ux);
       const partLine = Math.max(0, -ux);
-      const groove = Math.exp(-((ux + 0.18) * (ux + 0.18)) * 20) * Math.max(0, uy - 0.02);
+      const groove = Math.exp(-((ux + 0.18) * (ux + 0.18)) * 28) * Math.max(0, uy - 0.02);
 
       const faceTh = 1.10;
       const sideTh = 2.00;
@@ -3972,8 +4146,9 @@ const G = {
         -1 / n
       );
       nx *= s * r; ny *= s * r; nz *= s * r;
-      ny += Math.max(0, ny - 0.52) * (0.12 + azBack * 0.14);
+      ny += Math.max(0, ny - 0.52) * (0.08 + azBack * 0.16);
       nz -= Math.max(0, ny + 0.02) * 0.06;
+      nx += sweep * 0.06;
 
       if (groove > 0) {
         nx *= 1 - groove * 0.08;
@@ -5595,21 +5770,15 @@ function buildHair(dna, mat, extraMats) {
   } else if (st === 'bald') {
     /* Fully bald — no cap, band, or stubble shell. */
   } else if (st === 'buzz') {
-    cap(1.028, 1.62, 1.06);
+    // Even clipper length all over — a shadow on the skull, not a crew.
+    cap(1.022, 1.20, 1.16);
   } else if (st === 'bowl') {
     add(G.medium(1.07), 0, 0, 0, 1, 1.04, 1);
   } else if (st === 'swept') {
-    cap(1.055, 1.5, 1.02);
-    const t = add(G.ball(), 0.34, 0.72, 0.66, 0.3, 0.17, 0.26);
-    t.rotation.z = -0.5; t.material = mat;
+    add(G.sweptHair(1.05), 0, 0, 0);
   } else if (st === 'spiky') {
-    cap(1.04, 1.46, 0.96);
-    for (let i = 0; i < 9; i++) {
-      const a = (i / 9) * TAU + 0.3, tilt = 0.55 + (i % 3) * 0.12;
-      const r = 0.72;
-      const s = add(G.spike(), Math.sin(a) * r * 0.72, 0.86 + (i % 2) * 0.05, Math.cos(a) * r * 0.62, 0.17, 0.42, 0.17);
-      s.rotation.set(Math.cos(a) * tilt, 0, -Math.sin(a) * tilt);
-    }
+    add(G.spikes(1.05), 0, 0, 0);
+
   } else if (st === 'long') {
     add(G.longHair(1.07, 'bangs', 0), 0, 0, 0, 1, 1.04, 1);
   } else if (st === 'longmiddle') {
@@ -5647,65 +5816,27 @@ function buildHair(dna, mat, extraMats) {
      Volume lives above y≈0.29 wherever possible — that is the brow
      line, and anything crossing it starts covering the eyes. */
   } else if (st === 'taper') {
-    // crew cut: short and even, barely more than a shadow on top
-    cap(1.026, 1.24, 1.02);
+    add(G.crewCut(1.04), 0, 0, 0);
   } else if (st === 'crop') {
-    // textured French crop: short sides, blunt fringe pushed forward
-    cap(1.03, 1.26, 1.0);
-    const fringe = add(G.ball(), 0, 0.56, 0.66, 0.54, 0.16, 0.26);
-    fringe.rotation.x = 0.22;
+    add(G.frenchCrop(1.05), 0, 0, 0);
   } else if (st === 'waves') {
-    // short waves: low ridges running back across the top
-    cap(1.03, 1.24, 1.0);
-    for (let i = 0; i < 4; i++) {
-      const r = add(G.ball(), 0, 0.84 - i * 0.04, 0.5 - i * 0.36, 0.62, 0.09, 0.14);
-      r.rotation.x = 0.1;
-    }
+    add(G.waves360(1.04), 0, 0, 0);
   } else if (st === 'fade') {
     add(G.fade(1.04), 0, 0, 0);
   } else if (st === 'pixie') {
-    // cropped and wispy, with a soft side-swept fringe
-    cap(1.042, 1.32, 1.08);
-    const wisp = add(G.ball(), -0.34, 0.5, 0.66, 0.4, 0.16, 0.24);
-    wisp.rotation.z = 0.4;
-    wisp.rotation.x = 0.2;
-    add(G.ball(), 0.62, 0.28, 0.42, 0.22, 0.24, 0.2);
+    add(G.pixieCut(1.05), 0, 0, 0);
   } else if (st === 'combover') {
-    // parted low, swept across the top to the far side
-    cap(1.036, 1.34, 1.0);
-    const sweep = add(G.ball(), -0.16, 0.66, 0.28, 0.84, 0.28, 0.74);
-    sweep.rotation.z = 0.26;
-    const lift = add(G.ball(), -0.46, 0.62, 0.5, 0.36, 0.2, 0.3);
-    lift.rotation.z = 0.5;
+    add(G.partedTop(1.05, 'combover'), 0, 0, 0);
   } else if (st === 'sidepart') {
-    // neater than a comb over: flatter, with a defined parting ridge
-    cap(1.034, 1.3, 1.02);
-    const top = add(G.ball(), -0.1, 0.62, 0.16, 0.8, 0.22, 0.78);
-    top.rotation.z = 0.16;
-    add(G.ball(), 0.42, 0.66, 0.3, 0.2, 0.16, 0.44);       // raised edge of the part
+    add(G.partedTop(1.05, 'side'), 0, 0, 0);
   } else if (st === 'quiff') {
-    /* One lifted shell. Extra primitives on a cap always read as a bun. */
     add(G.quiff(1.05), 0, 0, 0);
   } else if (st === 'pompadour') {
-    // One puffed shell. Extra primitives on a cap always read as a bun.
-    add(G.pomp(1.05, 1.48), 0, 0, 0);
+    add(G.pomp(1.05), 0, 0, 0);
   } else if (st === 'swoop') {
-    // 1950s James Dean: a wide curl that lifts off the forehead and falls
-    // to one side — not a thin vertical stack that reads as a mohawk.
-    cap(1.026, 1.14, 0.76);
-    const pad = add(G.ball(), 0.08, 0.8, 0.46, 0.72, 0.36, 0.52);
-    pad.rotation.x = -0.48;
-    pad.rotation.z = -0.24;
-    const curl = add(G.ball(), 0.22, 0.9, 0.68, 0.38, 0.26, 0.3);
-    curl.rotation.x = -0.85;
-    curl.rotation.z = -0.4;
-    add(G.ball(), 0.06, 0.68, -0.08, 0.64, 0.24, 0.56);
+    add(G.swoopCurl(1.05), 0, 0, 0);
   } else if (st === 'slickback') {
-    // flat to the head, combed straight back
-    cap(1.028, 1.3, 0.96);
-    const s = add(G.ball(), 0, 0.6, -0.24, 0.74, 0.28, 0.84);
-    s.rotation.x = -0.16;
-    add(G.ball(), 0, 0.32, -0.86, 0.5, 0.28, 0.3);         // slight tail at the nape
+    add(G.slickBack(1.05), 0, 0, 0);
   } else if (st === 'curtains') {
     add(G.curtains(1.06, 1.28), 0, 0, 0, 1, 1.05, 1);
     add(G.hairBack(1.065, 1.52, 1.14), 0, 0, 0);
