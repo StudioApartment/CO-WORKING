@@ -496,6 +496,23 @@ for (const [page, ids] of required) {
   }
 }
 
+/* Tribal ink is a solid-black geometric style on jaw and hands — the
+   rig has no arms for a sleeve. Motifs are original (teeth, chevrons,
+   a punched spiral, claws), not a copied piece. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'tribal'", "label: 'Tribal'", 'function inkTribalSpiral',
+                 'function inkTribalTeeth', 'function inkTribalClaws',
+                 "kind === 'tribal'", 'destination-out']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — tribal ink needs jaw and hand painters with a punched spiral');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers tribal tattoos on the jaw and hands');
+  }
+}
+
 /* A broken vercel.json fails the production deploy while GitHub still
    merges — the last plaza fix never reached phones because of that. */
 {

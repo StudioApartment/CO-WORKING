@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -2811,16 +2811,164 @@ function inkKnuckleBars(g, s) {
   }
 }
 
+/* The rig has no arms, so every ink style has to live on the jaw patch
+   and/or the floating hand spheres. Tribal covers both. */
+function tattooHasJaw(t) {
+  return t === 'neck' || t === 'both' || t === 'tribal';
+}
+function tattooHasHand(t) {
+  return t === 'hand' || t === 'both' || t === 'tribal';
+}
+
+/* ---- tribal -----------------------------------------------
+   Original solid-black geometry: shark teeth, chevrons, a punched spiral,
+   and tapered claws. Not a copy of any sleeve, chest piece, or flash. */
+function inkTribalBar(g, w, h) {
+  g.fillStyle = INK;
+  g.fillRect(-w / 2, -h / 2, w, h);
+}
+
+function inkTribalTeeth(g, w, h, n, dir) {
+  g.fillStyle = INK;
+  const tw = w / n;
+  const y0 = dir > 0 ? h / 2 : -h / 2;
+  const y1 = -y0;
+  for (let i = 0; i < n; i++) {
+    const x0 = -w / 2 + i * tw;
+    g.beginPath();
+    g.moveTo(x0, y0);
+    g.lineTo(x0 + tw, y0);
+    g.lineTo(x0 + tw / 2, y1);
+    g.closePath();
+    g.fill();
+  }
+}
+
+function inkTribalChevron(g, w, h) {
+  g.fillStyle = INK;
+  const t = Math.max(h * 0.38, 2);
+  g.beginPath();
+  g.moveTo(-w / 2, -h / 2);
+  g.lineTo(0, h / 2);
+  g.lineTo(w / 2, -h / 2);
+  g.lineTo(w / 2 - t, -h / 2);
+  g.lineTo(0, h / 2 - t * 1.4);
+  g.lineTo(-w / 2 + t, -h / 2);
+  g.closePath();
+  g.fill();
+}
+
+function inkTribalSpiral(g, r) {
+  /* Solid disc, then a spiral channel punched out so the skin shows
+     through — the only way a swirl survives at Mii scale. */
+  g.fillStyle = INK;
+  g.beginPath();
+  g.arc(0, 0, r, 0, TAU);
+  g.fill();
+  g.save();
+  g.globalCompositeOperation = 'destination-out';
+  g.strokeStyle = '#ffffff';
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+  g.lineWidth = r * 0.24;
+  g.beginPath();
+  const turns = 2.6, steps = 36;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const a = t * TAU * turns;
+    const rad = r * (0.78 - t * 0.68);
+    const x = Math.cos(a) * rad, y = Math.sin(a) * rad;
+    if (i === 0) g.moveTo(x, y);
+    else g.lineTo(x, y);
+  }
+  g.stroke();
+  g.restore();
+}
+
+function inkTribalClaws(g, s) {
+  /* Parallel tapered blades. Heavy fills, needle points. */
+  g.fillStyle = INK;
+  for (let i = 0; i < 4; i++) {
+    g.save();
+    g.rotate((i - 1.5) * 0.28);
+    g.beginPath();
+    g.moveTo(-s * 0.04, 0);
+    g.quadraticCurveTo(s * 0.22, s * 0.38, s * 0.05, s * 1.05);
+    g.quadraticCurveTo(-s * 0.02, s * 0.48, -s * 0.16, s * 0.06);
+    g.closePath();
+    g.fill();
+    g.restore();
+  }
+}
+
+function drawTribalJaw(g, U) {
+  /* Stacked bands follow each mandible; a spiral sits on the cheek;
+     teeth hang under the chin. All of it stays below the eyes. */
+  g.fillStyle = INK;
+
+  g.save();
+  g.translate(21 * U, 70 * U);
+  g.rotate(-1.15);
+  inkTribalBar(g, 22 * U, 3.2 * U);
+  g.translate(0, 5.4 * U);
+  inkTribalTeeth(g, 22 * U, 4.6 * U, 5, 1);
+  g.translate(0, 5.2 * U);
+  inkTribalBar(g, 20 * U, 2.4 * U);
+  g.translate(0, 4.8 * U);
+  inkTribalChevron(g, 18 * U, 4.2 * U);
+  g.restore();
+
+  g.save();
+  g.translate(24 * U, 82 * U);
+  inkTribalSpiral(g, 7.2 * U);
+  g.restore();
+
+  g.save();
+  g.translate(79 * U, 70 * U);
+  g.rotate(1.15);
+  inkTribalBar(g, 22 * U, 3.2 * U);
+  g.translate(0, 5.4 * U);
+  inkTribalTeeth(g, 22 * U, 4.6 * U, 5, 1);
+  g.translate(0, 5.2 * U);
+  inkTribalBar(g, 20 * U, 2.4 * U);
+  g.translate(0, 4.8 * U);
+  inkTribalChevron(g, 18 * U, 4.2 * U);
+  g.restore();
+
+  g.save();
+  g.translate(76 * U, 82 * U);
+  inkTribalSpiral(g, 6.4 * U);
+  g.restore();
+
+  g.save();
+  g.translate(82 * U, 78 * U);
+  g.rotate(0.35);
+  inkTribalClaws(g, 9 * U);
+  g.restore();
+
+  g.save();
+  g.translate(50 * U, 91 * U);
+  inkTribalBar(g, 26 * U, 2.6 * U);
+  g.translate(0, 3.6 * U);
+  inkTribalTeeth(g, 24 * U, 4.2 * U, 6, -1);
+  g.restore();
+}
+
 /* ---- neck ink -----------------------------------------------
    Painted along the jaw rather than on the neck mesh, because the head
    hides that mesh entirely. Drawn before facial hair so a beard covers
    it the way one actually would. Stays below the eyes — never the forehead. */
 function drawNeckInk(g, U, dna) {
-  if (dna.tattoo !== 'neck' && dna.tattoo !== 'both') return;
+  if (!tattooHasJaw(dna.tattoo)) return;
 
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.lineCap = 'round';
   g.lineJoin = 'round';
+
+  if (dna.tattoo === 'tribal') {
+    drawTribalJaw(g, U);
+    return;
+  }
 
   /* Left jaw: a big traditional rose plus a nautical star. Vines at this
      scale collapsed into slashes, so the flower has to carry the read. */
@@ -3250,12 +3398,15 @@ const PIERCING_ALIASES = { brow: 'none', lip: 'none' };
 
 /* ---- tattoos ------------------------------------------------
    The Wii rig has floating hands and no arms, so forearm and
-   sleeve ink has no surface to sit on. Hands and neck do. */
+   sleeve ink has no surface to sit on. Hands and jaw do. Hands /
+   Jaw / Both keep the traditional flash; Tribal is a separate
+   solid-black style on both surfaces. */
 const TATTOOS = [
-  { id: 'none',  label: 'None' },
-  { id: 'hand',  label: 'Hands' },
-  { id: 'neck',  label: 'Jaw' },
-  { id: 'both',  label: 'Both' }
+  { id: 'none',   label: 'None' },
+  { id: 'hand',   label: 'Hands' },
+  { id: 'neck',   label: 'Jaw' },
+  { id: 'both',   label: 'Both' },
+  { id: 'tribal', label: 'Tribal' }
 ];
 
 /* ---- apparel ------------------------------------------------
@@ -3337,7 +3488,7 @@ function randomDNA(opts = {}) {
     freckles: chance(0.18),
     facialHair: male && chance(0.42) ? pickOne(['stubble','lineup','full','goatee','stache','handlebar']) : 'none',
     piercing: 'none',
-    tattoo: chance(0.16) ? pickOne(['hand','neck','both']) : 'none',
+    tattoo: chance(0.16) ? pickOne(['hand','neck','both','tribal']) : 'none',
     apparel: opts.apparel || pickOne(APPAREL).id,
     hue: Math.random()
   };
@@ -3368,6 +3519,7 @@ function normalizeDNA(d) {
   if (PIERCING_ALIASES[d.piercing]) d.piercing = PIERCING_ALIASES[d.piercing];
   delete d.ears;                       // ear jewellery was removed
   if (typeof d.tattoo !== 'string') d.tattoo = 'none';
+  if (!TATTOOS.some((t) => t.id === d.tattoo)) d.tattoo = 'none';
   if (APPAREL_ALIASES[d.apparel]) d.apparel = APPAREL_ALIASES[d.apparel];
   if (typeof d.apparel !== 'string' || !APPAREL_BY_ID.has(d.apparel)) d.apparel = 'tee';
   delete d.badge;                      // the 3D ID badge overlay was removed
@@ -5285,7 +5437,6 @@ function makeApparelTexture(dna) {
 function makeInkTexture(kind) {
   /* Jaw ink lives on the face patch (drawNeckInk). This map is the floating
      hand sphere. 512px so a rose still has petal edges after minification. */
-  void kind;
   const S = 512;
   const c = cv(S);
   const g = c.getContext('2d');
@@ -5305,37 +5456,77 @@ function makeInkTexture(kind) {
 
   // Sphere front is u=0.25: the back of the hand is what faces the camera.
   const front = S * 0.25;
-  wrapped(front, () => {
-    g.save();
-    g.translate(0, S * 0.26);
-    inkKnuckleBars(g, S * 0.34);
-    g.restore();
 
-    g.save();
-    g.translate(0, S * 0.52);
-    inkRose(g, S * 0.18);
-    g.restore();
-
-    g.save();
-    g.translate(0, S * 0.74);
-    inkStar(g, S * 0.07);
-    g.restore();
-  });
-
-  // Wrist band all the way round, with stars so it reads from any angle.
-  g.lineWidth = S * 0.038;
-  g.strokeStyle = INK;
-  g.beginPath(); g.moveTo(0, S * 0.86); g.lineTo(S, S * 0.86); g.stroke();
-  g.lineWidth = S * 0.016;
-  g.beginPath(); g.moveTo(0, S * 0.915); g.lineTo(S, S * 0.915); g.stroke();
-  for (let i = 0; i < 4; i++) {
-    const cx = (i + 0.5) * (S / 4);
-    wrapped(cx, () => {
+  if (kind === 'tribal') {
+    wrapped(front, () => {
       g.save();
-      g.translate(0, S * 0.888);
-      inkStar(g, S * 0.032);
+      g.translate(0, S * 0.24);
+      inkTribalTeeth(g, S * 0.38, S * 0.10, 4, 1);
+      g.restore();
+
+      g.save();
+      g.translate(0, S * 0.46);
+      inkTribalSpiral(g, S * 0.16);
+      g.restore();
+
+      g.save();
+      g.translate(0, S * 0.64);
+      g.rotate(Math.PI);
+      inkTribalClaws(g, S * 0.14);
       g.restore();
     });
+    wrapped(S * 0.75, () => {
+      g.save();
+      g.translate(0, S * 0.48);
+      inkTribalSpiral(g, S * 0.12);
+      g.restore();
+    });
+    g.fillStyle = INK;
+    g.fillRect(0, S * 0.80, S, S * 0.055);
+    for (let i = 0; i < 10; i++) {
+      const x = (i + 0.5) * (S / 10);
+      g.beginPath();
+      g.moveTo(x - S * 0.04, S * 0.80);
+      g.lineTo(x + S * 0.04, S * 0.80);
+      g.lineTo(x, S * 0.72);
+      g.closePath();
+      g.fill();
+    }
+    g.fillRect(0, S * 0.88, S, S * 0.028);
+    g.fillRect(0, S * 0.93, S, S * 0.022);
+  } else {
+    wrapped(front, () => {
+      g.save();
+      g.translate(0, S * 0.26);
+      inkKnuckleBars(g, S * 0.34);
+      g.restore();
+
+      g.save();
+      g.translate(0, S * 0.52);
+      inkRose(g, S * 0.18);
+      g.restore();
+
+      g.save();
+      g.translate(0, S * 0.74);
+      inkStar(g, S * 0.07);
+      g.restore();
+    });
+
+    // Wrist band all the way round, with stars so it reads from any angle.
+    g.lineWidth = S * 0.038;
+    g.strokeStyle = INK;
+    g.beginPath(); g.moveTo(0, S * 0.86); g.lineTo(S, S * 0.86); g.stroke();
+    g.lineWidth = S * 0.016;
+    g.beginPath(); g.moveTo(0, S * 0.915); g.lineTo(S, S * 0.915); g.stroke();
+    for (let i = 0; i < 4; i++) {
+      const cx = (i + 0.5) * (S / 4);
+      wrapped(cx, () => {
+        g.save();
+        g.translate(0, S * 0.888);
+        inkStar(g, S * 0.032);
+        g.restore();
+      });
+    }
   }
 
   const t = new THREE.CanvasTexture(c);
@@ -6081,10 +6272,10 @@ function buildMii(dna) {
 
   /* ---- floating hands ---- */
   M.hands = [];
-  const handInk = dna.tattoo === 'hand' || dna.tattoo === 'both';
+  const handInk = tattooHasHand(dna.tattoo);
   const handInkMat = handInk
     ? new THREE.MeshStandardMaterial({
-        map: makeInkTexture('hand'), transparent: true, roughness: 0.85, depthWrite: false
+        map: makeInkTexture(dna.tattoo), transparent: true, roughness: 0.85, depthWrite: false
       })
     : null;
   if (handInkMat) M.mats.push(handInkMat);
