@@ -457,7 +457,11 @@ for (const [page, ids] of required) {
     failures++;
   } else {
     note('✓', 'mii.html wolf is a vertical hi-top with a flat front');
+  }
+}
 
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`mohawkA${r}`") || !src.includes("mullet: 'Mohawk'")
       || !src.includes("mohawk: 'mullet'") || src.includes("geoCache(`mulletA${r}`")
       || src.includes("mohawk: 'spiky'")) {
