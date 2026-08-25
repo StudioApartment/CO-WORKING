@@ -427,6 +427,19 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("st === 'pigtails'")
+      || src.includes('sx * 0.46, 0.88, -0.22, 0.17, 0.17, 0.17')
+      || !src.includes('sx * 0.50, 0.86, -0.26, 0.23, 0.23, 0.23')
+      || !src.includes('the tails are a bit fuller')) {
+    note('✗', 'mii.html — pigtails should be slightly fuller than the old nubs');
+    failures++;
+  } else {
+    note('✓', 'mii.html pigtails are slightly fuller');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`layersB${r}`") || !src.includes('tucked behind the ears')
       || src.includes("geoCache(`layersA${r}`") || src.includes('left-of-centre part sweeps')) {
     note('✗', 'mii.html — long layers should have a centre part tucked behind the ears');

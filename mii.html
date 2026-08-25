@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -5941,13 +5941,14 @@ function buildHair(dna, mat, extraMats) {
     t.rotation.x = -0.22;
     add(G.ball(), 0, -0.58, -1.18, 0.20, 0.40, 0.22);
   } else if (st === 'pigtails') {
-    /* Two tails from small ties on the crown — the rare extra-primitive
-       case. Ties on the cheeks are earmuffs; these sit high and back. */
+    /* Two tails from ties on the crown — the rare extra-primitive
+       case. Ties on the cheeks are earmuffs; these sit high and back.
+       The old 0.17 nubs read as bumps, so the tails are a bit fuller. */
     cap(1.04, 1.32, 1.02);
     for (const sx of [-1, 1]) {
-      add(G.ball(), sx * 0.46, 0.88, -0.22, 0.17, 0.17, 0.17);
-      const t = add(G.ball(), sx * 0.72, 0.06, -0.36, 0.17, 0.82, 0.20);
-      t.rotation.z = sx * 0.32;
+      add(G.ball(), sx * 0.50, 0.86, -0.26, 0.23, 0.23, 0.23);
+      const t = add(G.ball(), sx * 0.80, 0.00, -0.40, 0.23, 1.02, 0.27);
+      t.rotation.z = sx * 0.34;
     }
   } else if (st === 'layers') {
     add(G.layers(1.09), 0, 0, 0, 1, 1.06, 1);
