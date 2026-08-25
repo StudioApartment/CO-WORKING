@@ -211,6 +211,22 @@ for (const [page, ids] of required) {
   }
 }
 
+/* Sideburns only read if they run to the outer edge of the face patch. Held
+   inboard they render as dark stripes flanking the eyes, so the back edge
+   sitting at x=0 is the load-bearing part of both shapes. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const listed = /id: 'sideburns'/.test(src) && /id: 'mutton'/.test(src);
+  const outer = /st === 'sideburns'[\s\S]{0,400}g\.moveTo\(0, 14 \* U\)/.test(src)
+    && /st === 'mutton'[\s\S]{0,500}g\.moveTo\(0, 13 \* U\)/.test(src);
+  if (!listed || !outer || !src.includes('bothSides')) {
+    note('✗', 'mii.html — sideburns and mutton chops must sit at the outer edge of the face patch');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers sideburns and mutton chops');
+  }
+}
+
 /* The club cap's script has to stay arched — set straight it reads as a label
    stuck on the panel — and its lower band has to take the bill's colour, or
    the two-tone leaves a pale ring between crown and bill. */
