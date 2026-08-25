@@ -3121,7 +3121,7 @@ const STYLE_LABELS = {
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
   curtains: 'Curtains', shortcurl: 'Short curls', afro: 'Afro', dreads: 'Locs',
   bob: 'Bob', shag: 'Shag', wolf: 'Wolf cut', mullet: 'Mullet', flow: 'Flow',
-  long: 'Long bangs', longmiddle: 'Long middle part', longside: 'Long side part',
+  long: 'Long middle layers', longmiddle: 'Long middle part', longside: 'Long side part',
   longwavy: 'Long wavy', bun: 'Bun', pony: 'Ponytail',
   highpony: 'High ponytail', pigtails: 'Pigtails',
   layers: 'Long layers', spacebuns: 'Space buns',
@@ -4431,15 +4431,15 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  longHair: (r, part = 'bangs', wave = 0) => geoCache(`longK${r}_${part}_${wave}`, () => {
-    /* One flowing shell. The back is a curtain with a blunt, straight hem
-       at the base of the body — never a south-pole spike past the feet. */
+  longHair: (r, part = 'bangs', wave = 0) => geoCache(`longL${r}_${part}_${wave}`, () => {
+    /* One flowing shell. Bangs became a centre part with several V-tapers
+       that stop above the feet; the other long cuts keep a blunt hem at
+       the torso. Higher tessellation so the curtain is smooth, not faceted. */
     const tl = 2.48;
-    const g = new THREE.SphereGeometry(r, 56, 48, 0, TAU, 0, tl);
+    const g = new THREE.SphereGeometry(r, 88, 72, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     const n = HEAD_N;
     const sideTh = 2.12;
-    const bangTh = 1.20;
     const lengthTh = wave ? 2.18 : 2.10;
     for (let i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i);
@@ -4458,15 +4458,9 @@ const G = {
       let faceOpen = frame.faceOpen;
       let groove = 0;
 
-      if (part === 'bangs') {
-        const aboveLine = Math.max(0, uy - frame.hairline + 0.05);
-        const bangAmt = azFront * Math.pow(Math.min(1, aboveLine / 0.20), 1.45)
-          * Math.pow(Math.max(0, 1 - side * 0.30), 1.05);
-        const blunt = (0.026 * Math.sin(phi * 9.0) + 0.012 * Math.sin(phi * 17.0 + 0.6))
-          * bangAmt;
-        maxTh = sideTh + (bangTh - sideTh) * bangAmt + blunt;
-        faceOpen = frame.faceOpen * Math.pow(Math.max(0, 1 - bangAmt), 1.4);
-      } else if (part === 'middle') {
+      if (part === 'bangs' || part === 'middle') {
+        /* Centre part: hair splits on the midline and falls to the sides.
+           The old blunt bangs sat as a visor across the forehead. */
         groove = Math.exp(-ux * ux * 22) * Math.max(0, uy - 0.02);
         const sideFall = (1 - Math.exp(-side * side * 5.5)) * azFront;
         faceOpen = Math.min(1, frame.faceOpen * 0.85 + groove * 0.55 + sideFall * 0.12);
@@ -4489,7 +4483,7 @@ const G = {
       const waveAmt = wave
         ? (0.13 * Math.sin(phi * 2.8 + u * 4.2) + 0.07 * Math.sin(phi * 5.5 - u * 2.6 + 0.9))
           * (1 - faceOpen * 0.55)
-        : (0.022 * Math.sin(phi * 11.0 + 0.4)) * (part === 'bangs' ? 1 : 0);
+        : 0;
       maxTh += waveAmt;
 
       const th2 = u * maxTh;
@@ -4520,19 +4514,30 @@ const G = {
 
       ({ nx, ny, nz } = applySideburnsNape(nx, ny, nz, frame.sideburn, frame.nape, ux, azFront, azBack));
 
-      /* Curtain down the back and sides. The old path used the sphere's
-         south pole, then pinched xz, which is why the hem came to a point
-         below the body. Stop at a nape ring and drop that ring to a
-         constant y — the torso base after HEAD_Y + ny * HEAD_R * 1.06. */
+      /* Curtain down the back and sides. Layered (the old bangs cut) gets
+         several V-points that stop above the feet; the rest keep a blunt
+         hem at the torso. */
+      const layered = part === 'bangs';
       const rear = Math.max(0, 1 - azFront * 1.25);
       const hang = Math.pow(Math.max(0, (u - 0.38) / 0.62), 1.12)
         * rear * (1 - Math.min(1, faceOpen * 0.88));
-      const hemY = -1.50;
-      const hemR = 0.90;
+      const hemY = layered ? -0.98 : -1.50;
+      const hemR = layered ? 0.84 : 0.90;
+      let point = 0;
+      if (layered && hang > 0.001) {
+        const lobes = Math.pow(
+          0.40 * Math.abs(Math.sin(phi * 2.5))
+          + 0.35 * Math.abs(Math.sin(phi * 4.2 + 0.65))
+          + 0.25 * Math.abs(Math.sin(phi * 6.8 + 1.35)),
+          1.55
+        );
+        point = lobes * hang;
+      }
       if (hang > 0.001) {
         const rad = Math.hypot(nx, nz) || 1e-6;
-        ny = ny * (1 - hang) + hemY * hang;
-        const wantR = rad * (1 - hang) + hemR * hang;
+        const drop = layered ? 0.30 * point : 0;
+        ny = ny * (1 - hang) + (hemY - drop) * hang;
+        const wantR = rad * (1 - hang) + hemR * (1 - point * 0.28) * hang;
         nx *= wantR / rad;
         nz *= wantR / rad;
         nz -= hang * (0.10 + azBack * 0.12);
@@ -4550,7 +4555,7 @@ const G = {
 
       const locks = Math.max(0, Math.cos(phi * 5.0))
         + Math.max(0, Math.cos(phi * 9.0 + 1.1)) * 0.5;
-      const gk = 1 - locks * 0.028 * hang * (1 - hang);
+      const gk = layered ? 1 : 1 - locks * 0.028 * hang * (1 - hang);
       nx *= gk; nz *= gk;
 
       if (Math.abs(ny) < 0.985) {
