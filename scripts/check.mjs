@@ -427,6 +427,18 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("geoCache(`hitopA${r}`") || !src.includes("wolf: 'Hi-top'")
+      || !src.includes('G.wolf(1.05)') || src.includes("geoCache(`wolfD${r}`")
+      || src.includes('add(G.wolf(1.09)')) {
+    note('✗', 'mii.html — wolf should render as a vertical hi-top with a flat hairline');
+    failures++;
+  } else {
+    note('✓', 'mii.html wolf is a vertical hi-top with a flat front');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`layersB${r}`") || !src.includes('tucked behind the ears')
       || src.includes("geoCache(`layersA${r}`") || src.includes('left-of-centre part sweeps')) {
     note('✗', 'mii.html — long layers should have a centre part tucked behind the ears');
