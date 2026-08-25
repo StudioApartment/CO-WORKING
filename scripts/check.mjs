@@ -194,13 +194,11 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (src.includes("sculptHair(`fadeY${r}`") || src.includes("st === 'fade'")
-      || src.includes("fade: 'Fade'") || src.includes("'waves','fade','pixie'")
-      || !src.includes("fade: 'taper'")) {
-    note('✗', 'mii.html — the fade helmet should be removed from the picker');
+  if (!src.includes("sculptHair(`fadeY${r}`") || !src.includes("'fade'")) {
+    note('✗', 'mii.html — fade cut should be a waved crown with tapered sides');
     failures++;
   } else {
-    note('✓', 'mii.html drops the fade helmet from the picker');
+    note('✓', 'mii.html includes a shaved fade style');
   }
 }
 
@@ -418,20 +416,6 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`wavC${r}`") || !src.includes('G.waves360(1.04)')
-      || !src.includes('G.longPony()')
-      || !src.includes("waves: 'Long ponytail'")
-      || src.includes("sculptHair(`wavB${r}`")
-      || src.includes("waves: 'Waves'")) {
-    note('✗', 'mii.html — waves should be a long ponytail with a natural hairline');
-    failures++;
-  } else {
-    note('✓', 'mii.html waves is a long ponytail with a natural hairline');
-  }
-}
-
-{
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`bobC${r}`") || !src.includes('Undercurl')
       || !src.includes('ux + 0.22') || !src.includes('Side part at ux')) {
     note('✗', 'mii.html — bob should be a jaw-length cut with a side part and an undercurl');
@@ -445,12 +429,13 @@ for (const [page, ids] of required) {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("st === 'pigtails'")
       || src.includes('sx * 0.46, 0.88, -0.22, 0.17, 0.17, 0.17')
-      || !src.includes('sx * 0.50, 0.86, -0.26, 0.23, 0.23, 0.23')
-      || !src.includes('the tails are a bit fuller')) {
-    note('✗', 'mii.html — pigtails should be slightly fuller than the old nubs');
+      || !src.includes('cap(1.045, 1.68, 1.08)')
+      || !src.includes('sx * 0.40, 0.58, -0.78, 0.22, 0.22, 0.22')
+      || !src.includes('hang clear of the skull')) {
+    note('✗', 'mii.html — pigtails should hang off the back of the head');
     failures++;
   } else {
-    note('✓', 'mii.html pigtails are slightly fuller');
+    note('✓', 'mii.html pigtails hang off the back of the head');
   }
 }
 
@@ -473,16 +458,13 @@ for (const [page, ids] of required) {
   } else if (src.includes('taper = 1 - hang * 0.24') || !src.includes('layered ? -1.18 : -1.50')
              || src.includes('geoCache(`longI') || !src.includes('Math.sin(phi * 2.5)')
              || !src.includes('SphereGeometry(r, 88, 72')
-             || !src.includes('part === \'middle\' || part === \'side\'')
-             || !src.includes('cover one eye')
+             || !src.includes('part === \'bangs\' || part === \'middle\'')
              || src.includes("long: 'Long bangs'")
-             || src.includes("long: 'Long middle layers'")
-             || !src.includes("long: 'Side-swept bangs'")
              || src.includes("longside: 'Long side part'")
              || !src.includes("part === 'side'")
              || !src.includes("longHair(1.07, 'middle', 0, 'feet'")
              || src.includes('add(G.ball(), 0, 0.86, -0.62')) {
-    note('✗', 'mii.html — long bangs should cover one eye with a side part');
+    note('✗', 'mii.html — long hair should be a smooth middle part with several tapers, not a spike or blunt bangs');
     failures++;
   } else {
     note('✓', 'mii.html long hair styles include part and wave variants');

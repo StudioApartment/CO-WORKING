@@ -6867,14 +6867,17 @@ function buildHair(dna, mat, extraMats) {
     add(G.ball(), 0, -0.58, -1.18, 0.20, 0.40, 0.22);
   }
   else if (st === 'pigtails') {
-    /* Two tails from ties on the crown — the rare extra-primitive
-       case. Ties on the cheeks are earmuffs; these sit high and back.
-       The old 0.17 nubs read as bumps, so the tails are a bit fuller. */
-    cap(1.04, 1.32, 1.02);
+    /* Two long tails off the back of the head. The old 0.17 nubs sat
+       inside the crown and vanished; these hang clear of the skull, and
+       the cap runs down the nape so the back is not bald. */
+    cap(1.045, 1.68, 1.08);
     for (const sx of [-1, 1]) {
-      add(G.ball(), sx * 0.50, 0.86, -0.26, 0.23, 0.23, 0.23);
-      const t = add(G.ball(), sx * 0.80, 0.00, -0.40, 0.23, 1.02, 0.27);
-      t.rotation.z = sx * 0.34;
+      add(G.ball(), sx * 0.40, 0.58, -0.78, 0.22, 0.22, 0.22);
+      const t = add(G.ball(), sx * 0.50, -0.22, -0.98, 0.24, 1.28, 0.28);
+      t.rotation.x = -0.28;
+      t.rotation.z = sx * 0.16;
+      const tip = add(G.ball(), sx * 0.56, -0.88, -1.12, 0.18, 0.42, 0.22);
+      tip.rotation.x = -0.18;
     }
   }
   else if (st === 'layers') {
