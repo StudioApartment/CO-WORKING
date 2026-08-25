@@ -167,6 +167,16 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("geoCache(`fadeW${r}`") || !src.includes("'fade'")) {
+    note('✗', 'mii.html — fade cut should be a waved crown with tapered sides');
+    failures++;
+  } else {
+    note('✓', 'mii.html includes a shaved fade style');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`medM${r}`") || !src.includes('G.medium(1.07)')) {
     note('✗', 'mii.html — bowl should render as a medium-length side-swept cut');
     failures++;
