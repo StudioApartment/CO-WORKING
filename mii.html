@@ -2130,6 +2130,48 @@ function drawMouth(g, U, dna, expr) {
    stroke, arm and bridge. Metal frames get a vertical gradient
    stroke, which is what sells "wire" against "plastic" at this
    resolution — an even line just reads as thin plastic. */
+/* Tortoiseshell acetate.
+
+   The frame is painted as strokes, and a stroke takes a CanvasPattern as
+   readily as it takes a colour, so the mottle can be a real repeating tile
+   instead of a gradient pretending to be one. Blobs are drawn nine times,
+   offset by a tile in each direction, so the tile has no seam.
+
+   The pattern is laid out in canvas space while each lens is stroked under
+   its own transform, which means the two rims pick up different parts of the
+   mottle — exactly what a pair cut from one sheet of acetate does. */
+function tortoisePattern(g, U) {
+  const S = Math.max(10, Math.round(3.6 * U));
+  const c = cv(S), p = c.getContext('2d');
+  p.fillStyle = '#8a4a18';
+  p.fillRect(0, 0, S, S);
+  const mottle = (spots, fill) => {
+    p.fillStyle = fill;
+    for (const [x, y, rx, ry, rot] of spots) {
+      for (const dx of [-1, 0, 1]) {
+        for (const dy of [-1, 0, 1]) {
+          p.beginPath();
+          p.ellipse((x + dx) * S, (y + dy) * S, rx * S, ry * S, rot, 0, TAU);
+          p.fill();
+        }
+      }
+    }
+  };
+  mottle([
+    [0.18, 0.22, 0.26, 0.17, 0.5],
+    [0.72, 0.14, 0.20, 0.14, -0.4],
+    [0.42, 0.62, 0.28, 0.18, 0.3],
+    [0.88, 0.72, 0.18, 0.13, 0.8],
+    [0.04, 0.80, 0.16, 0.12, -0.2]
+  ], 'rgba(52,22,8,.88)');
+  mottle([
+    [0.52, 0.30, 0.13, 0.08, -0.5],
+    [0.24, 0.52, 0.10, 0.07, 0.4],
+    [0.80, 0.44, 0.11, 0.07, 0.1]
+  ], 'rgba(208,144,68,.85)');
+  return g.createPattern(c, 'repeat');
+}
+
 function drawEyewear(g, U, dna) {
   const spec = EYEWEAR_BY_ID.get(dna.glasses);
   if (!spec || !spec.id) return;
@@ -2229,6 +2271,25 @@ function drawEyewear(g, U, dna) {
         g.closePath();
         return;
       }
+      case 'pilot': {
+        /* The aviator outline cut in acetate rather than bent in wire: bigger,
+           square at the outer brow, with a deep base tapering to a soft point
+           just inside centre. Local +x is always outward, so that point is on
+           the -x side, next to the nose.
+
+           A rim this thick eats a subtle outline — a first pass with softer
+           corners came out as a plain rounded rectangle, so the outer top
+           corner is deliberately hard and the base deliberately deep. */
+        g.moveTo(-w * 0.44, -h * 0.50);
+        g.lineTo(w * 0.42, -h * 0.50);                                  // flat brow
+        g.quadraticCurveTo(w * 0.52, -h * 0.46, w * 0.52, -h * 0.28);   // square corner
+        g.lineTo(w * 0.50, h * 0.04);                                   // straight outer
+        g.quadraticCurveTo(w * 0.46, h * 0.40, w * 0.12, h * 0.50);     // base
+        g.quadraticCurveTo(-w * 0.24, h * 0.60, -w * 0.42, h * 0.24);   // taper in
+        g.quadraticCurveTo(-w * 0.52, -h * 0.10, -w * 0.44, -h * 0.50);
+        g.closePath();
+        return;
+      }
       case 'bold': {
         /* Big acetate rectangle. The outer top corner rides higher than the
            inner one; a dead-level top rim reads as a pair of TV screens
@@ -2261,7 +2322,10 @@ function drawEyewear(g, U, dna) {
     }
   };
 
+  const tortoise = spec.tortoise ? tortoisePattern(g, U) : null;
+
   const strokeStyleFor = (lh) => {
+    if (tortoise) return tortoise;
     if (!isMetal) return frame;
     const grd = g.createLinearGradient(0, -lh / 2, 0, lh / 2);
     grd.addColorStop(0, shade(spec.metal, 46));
@@ -2367,6 +2431,34 @@ function drawEyewear(g, U, dna) {
     g.lineTo((sp - gw / 2) * U, 0);
   }
   g.stroke();
+  /* Double bridge. A straight bar across the brow plus a little vented block
+     under it — that pair is the whole signature of a plastic pilot frame.
+     With a single bridge the same outline just reads as big and round.
+
+     The slats are only a few units wide and will not resolve on a Mii in the
+     plaza, but the badge and the editor show the head several times larger,
+     which is where they pay off. */
+  if (spec.browBar) {
+    const inner = Math.max(1.8, sp - gw / 2);      // half the gap between rims
+    g.lineCap = 'butt';
+    g.strokeStyle = spec.barColor || '#33343a';
+    g.lineWidth = spec.lw * U * 0.60;
+    g.beginPath();
+    g.moveTo((-inner - gw * 0.30) * U, -gh * 0.50 * U);
+    g.lineTo((inner + gw * 0.30) * U, -gh * 0.50 * U);
+    g.stroke();
+
+    g.lineWidth = spec.lw * U * 0.26;
+    for (let i = 0; i < (spec.slats || 0); i++) {
+      const y = (-0.40 + i * 0.10) * gh;
+      g.beginPath();
+      g.moveTo(-inner * U, y * U);
+      g.lineTo(inner * U, y * U);
+      g.stroke();
+    }
+    g.lineCap = 'round';
+  }
+
   // aviators carry a second brow bar across the top
   if (spec.frame === 'aviator') {
     g.beginPath();
@@ -3048,6 +3140,11 @@ const EYEWEAR = [
      browline about twice the weight of the rest of the rim. */
   { id: 14, label: 'Big frames', group: 'Plastic', frame: 'bold', w: 28, h: 22, lw: 3.2,
     brow: 2.0 },
+  /* Seventies plastic pilot: acetate aviator outline, double bridge with a
+     vented block between the rims, and a real tortoiseshell mottle on the
+     rim rather than a flat brown. */
+  { id: 15, label: 'Tortoise pilot', group: 'Plastic', frame: 'pilot', w: 28, h: 24, lw: 3.0,
+    browBar: true, slats: 3, tortoise: true, barColor: '#3a3b40' },
 
   // metal
   { id: 20, label: 'Gold aviator', group: 'Metal', frame: 'aviator', w: 22, h: 18, lw: 1.5,

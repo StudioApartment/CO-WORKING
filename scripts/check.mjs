@@ -211,6 +211,23 @@ for (const [page, ids] of required) {
   }
 }
 
+/* The plastic pilot's signature is the double bridge — a brow bar plus the
+   vented block under it. Without both it is just a big round frame, and the
+   tortoiseshell has to stay a real pattern rather than a flat brown. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["label: 'Tortoise pilot'", "frame: 'pilot'", 'browBar: true',
+                 'slats: 3', 'tortoise: true', 'tortoisePattern', 'createPattern',
+                 "case 'pilot': {", 'if (spec.browBar) {']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — tortoise pilot needs a double bridge and a patterned rim');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a tortoiseshell plastic pilot frame');
+  }
+}
+
 /* The bold frame's browline is heavier than the rest of its rim, which is what
    separates it from the thick square already in the list. Lose spec.brow and
    the two become near-duplicates. */
