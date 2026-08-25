@@ -7,7 +7,9 @@
  * Run with: npm run check
  */
 
-import { readdirSync, statSync, readFileSync } from 'node:fs';
+import { readdirSync, statSync, readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -80,6 +82,39 @@ for (const [page, ids] of required) {
     if (!src.includes(`id="${id}"`)) {
       note('✗', `${page} — missing #${id}`);
       failures++;
+    }
+  }
+}
+
+/* A doubled comma in an object literal (`),` then another `,`) is a
+ * SyntaxError in the browser. The plaza then boots with Coworkers 0 and a
+ * blank canvas. `node --check` on the extracted module also catches an
+ * unclosed brace from a bad merge — HTML script-tag balance does not. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (/\)\s*,\s*,/.test(src)) {
+    note('✗', 'mii.html — stray comma in an object literal will crash the plaza');
+    failures++;
+  } else {
+    note('✓', 'mii.html object literals do not have a doubled comma');
+  }
+  const open = src.indexOf('<script type="module">');
+  const close = src.lastIndexOf('</script>');
+  if (open < 0 || close < open) {
+    note('✗', 'mii.html — could not extract the plaza module');
+    failures++;
+  } else {
+    const dir = mkdtempSync(join(tmpdir(), 'plaza-mod-'));
+    const file = join(dir, 'plaza-module.mjs');
+    writeFileSync(file, src.slice(open + '<script type="module">'.length, close));
+    const out = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
+    rmSync(dir, { recursive: true, force: true });
+    if (out.status !== 0) {
+      const err = (out.stderr || out.stdout || '').trim().split('\n')[0];
+      note('✗', `mii.html module does not parse — ${err || 'node --check failed'}`);
+      failures++;
+    } else {
+      note('✓', 'mii.html plaza module parses');
     }
   }
 }
@@ -628,7 +663,8 @@ for (const [page, ids] of required) {
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("sculptHair(`bedA${r}`") || !src.includes('G.bedHead(1.06)')
-      || !src.includes('applyFrostedTips')
+      || !src.includes('function applyFrostedTips')
+      || !src.includes('function frostTipHex')
       || !src.includes('Short shaggy bed head')
       || src.includes("G.partedTop(1.05, 'side')")
       || src.includes("sidepart: 'Side part'")
@@ -637,6 +673,17 @@ for (const [page, ids] of required) {
     failures++;
   } else {
     note('✓', 'mii.html side part is a short shaggy bed head with frosted tips');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const fn = src.match(/function buildHair\([\s\S]*?\nfunction buildMii\(/);
+  if (!fn || !/\n  return out;\n}\n\nfunction buildMii\(/.test(fn[0])) {
+    note('✗', 'mii.html — buildHair must return the hair meshes or the plaza stays bald');
+    failures++;
+  } else {
+    note('✓', 'mii.html buildHair returns its meshes');
   }
 }
 
