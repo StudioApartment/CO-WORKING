@@ -3470,6 +3470,48 @@ const G = {
   frus: (rt) => geoCache(`fr${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 256)),
   tube: () => geoCache('htube', () => new THREE.CylinderGeometry(1, 1, 1, 256, 1, true)),
   frusTube: (rt) => geoCache(`frt${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 256, 1, true)),
+  /* Boonie / bucket brim: open frustum with a wavy hem and front/back droop
+     so it reads floppy instead of a stiff cone. */
+  bucketBrim: () => geoCache('bktbrim', () => {
+    const g = new THREE.CylinderGeometry(0.76, 1, 1, 256, 8, true);
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+      const ang = Math.atan2(x, z);
+      const rad = Math.hypot(x, z) || 1e-6;
+      const u = y + 0.5; // 0 = lower edge, 1 = crown seam
+
+      /* Soft sag — brim hangs lower at front and back. */
+      if (u < 0.55) {
+        const sagAmt = (0.55 - u) * 0.11;
+        const front = Math.max(0, Math.cos(ang));
+        const back = Math.max(0, -Math.cos(ang));
+        y -= sagAmt * (0.35 + front * 0.45 + back * 0.38);
+      }
+
+      /* Wavy hem with multiple stitch rows near the edge. */
+      if (u < 0.22) {
+        const edgeT = 1 - u / 0.22;
+        const wave = 0.07 * Math.sin(ang * 5 + 0.35)
+          + 0.04 * Math.sin(ang * 9 - 0.9)
+          + 0.028 * Math.sin(ang * 3 + 1.8);
+        const rs = rad * (1 + wave * edgeT);
+        x = (x / rad) * rs;
+        z = (z / rad) * rs;
+      }
+      if (u < 0.42) {
+        const stitch = 0.014 * Math.sin(u * 32 + ang * 0.4);
+        const rs = rad + stitch * (1 - u / 0.42);
+        x = (x / rad) * rs;
+        z = (z / rad) * rs;
+      }
+
+      p.setXYZ(i, x, y, z);
+    }
+    p.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  }),
   disc: () => geoCache('hdisc', () => {
     const g = new THREE.CircleGeometry(1, 256);
     g.rotateX(-Math.PI / 2);
@@ -3958,8 +4000,46 @@ function buildHair(dna, mat, extraMats) {
       put(G.tube(), accMat, 0, 0.51, 0, 1.16, 0.13, 1.16);        // band
     } else if (st === 'bucket') {
       put(G.hatDome(1.11, 1.22), hatMat, 0, 0.02, 0, 1, 1.06, 1);
-      put(G.frusTube(0.78), hatMat, 0, 0.34, 0, 1.52, 0.36, 1.52); // floppy flare
+      put(G.bucketBrim(), hatMat, 0, 0.34, 0, 1.54, 0.34, 1.54);
       put(G.tube(), accMat, 0, 0.50, 0, 1.20, 0.10, 1.20);
+
+      const darkMat = new THREE.MeshStandardMaterial({
+        color: '#1c1c1c', roughness: 0.82, metalness: 0.06, side: THREE.DoubleSide
+      });
+      const patchMat = new THREE.MeshStandardMaterial({
+        color: shade(crownCol, -20), roughness: 0.70, metalness: 0.02, side: THREE.DoubleSide
+      });
+      const cordMat = new THREE.MeshStandardMaterial({
+        color: shade(crownCol, -10), roughness: 0.76, metalness: 0.01, side: THREE.DoubleSide
+      });
+      if (extraMats) extraMats.push(darkMat, patchMat, cordMat);
+
+      /* Side mesh vent — black strip like a boonie panel. */
+      const vent = put(G.tube(), darkMat, 0.74, 0.38, 0.52, 0.30, 0.07, 0.05);
+      vent.rotation.y = -0.62;
+
+      /* Zipper pocket on the front-right crown. */
+      const zip = put(G.tube(), darkMat, 0.60, 0.43, 0.80, 0.022, 0.15, 0.022);
+      zip.rotation.x = 0.10;
+      put(G.ball(), darkMat, 0.60, 0.35, 0.86, 0.034, 0.048, 0.022);
+
+      /* Small fabric tag patch on the opposite side. */
+      const tag = put(G.frus(2.4), patchMat, -0.68, 0.40, 0.62, 0.12, 0.10, 0.04);
+      tag.rotation.y = 0.55;
+      tag.rotation.x = 0.12;
+
+      /* Rectangular back flap — hangs off the rear crown. */
+      const flap = put(G.frus(2.0), patchMat, 0, 0.35, -0.94, 0.24, 0.18, 0.07);
+      flap.rotation.x = 0.38;
+
+      /* Chin drawstring: clips under the brim, cord and toggle below. */
+      for (const sx of [-1, 1]) {
+        put(G.ball(), darkMat, sx * 0.98, 0.20, 0.14, 0.038, 0.028, 0.038);
+        const leg = put(G.tube(), cordMat, sx * 0.94, -0.02, 0.11, 0.016, 0.34, 0.016);
+        leg.rotation.z = sx * 0.14;
+      }
+      put(G.tube(), cordMat, 0, -0.06, 0.10, 0.82, 0.014, 0.014);
+      put(G.ball(), darkMat, 0, -0.16, 0.10, 0.058, 0.085, 0.058);
     } else if (st === 'cowboy') {
       /* Brim at the brow, crown standing directly on it. An earlier version
          added curled side pieces to suggest a western roll; at this scale
