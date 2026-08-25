@@ -253,6 +253,21 @@ for (const [page, ids] of required) {
   }
 }
 
+/* Wrap shades have to be a Pit Viper / Oakley shield: tall, chunky, with a
+   deep nose cutout. A short rounded visor reads as a tinted eye-band. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const specs = ["label: 'Amber wrap'", 'w: 70, h: 38, lw: 5.2'];
+  const shape = ['W * 0.07, H * 0.10', 'W * 0.60, H * 0.20',
+                 'spec.lw * U * 1.85', 'lineJoin = \'miter\''];
+  if (!specs.every((s) => src.includes(s)) || !shape.every((s) => src.includes(s))) {
+    note('✗', 'mii.html — wrap shades should be a big chunky shield with a nose cutout');
+    failures++;
+  } else {
+    note('✓', 'mii.html wrap shades are a big chunky Pit Viper-style shield');
+  }
+}
+
 /* The bold frame's browline is heavier than the rest of its rim, which is what
    separates it from the thick square already in the list. Lose spec.brow and
    the two become near-duplicates. */
