@@ -427,6 +427,19 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes('G.highPonyScalp(1.05)') || !src.includes('G.smoothPony()')
+      || !src.includes('U-shaped nape')
+      || src.includes('add(G.ball(), 0, 0.94, -0.42, 0.26, 0.26, 0.26)')
+      || src.includes('add(G.ball(), 0, -0.58, -1.18, 0.20, 0.40, 0.22)')) {
+    note('✗', 'mii.html — high ponytail should be one smooth tail with a curved nape');
+    failures++;
+  } else {
+    note('✓', 'mii.html high ponytail is one smooth tail with a curved nape');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`layersB${r}`") || !src.includes('tucked behind the ears')
       || src.includes("geoCache(`layersA${r}`") || src.includes('left-of-centre part sweeps')) {
     note('✗', 'mii.html — long layers should have a centre part tucked behind the ears');
