@@ -211,6 +211,21 @@ for (const [page, ids] of required) {
   }
 }
 
+/* The fossil beanies only read as knitwear because the motif is rasterised to
+   a stitch grid before it is drawn. Lose knitMask and it becomes a decal. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ['makeKnitTexture', 'makeRibTexture', 'knitMask(', 'KNIT_COLS',
+                 'drawFossilSkeleton', "'fossil'", "'fossilblack'", 'knit: true']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — fossil beanies need a stitch-quantised jacquard and a ribbed cuff');
+    failures++;
+  } else {
+    note('✓', 'mii.html includes jacquard knit fossil beanies');
+  }
+}
+
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`medM${r}`") || !src.includes('G.medium(1.07)')) {

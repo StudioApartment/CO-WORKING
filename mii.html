@@ -1159,6 +1159,303 @@ function makeCapLogo(text, color) {
   return t;
 }
 
+/* ── Jacquard knit, for the alpine fossil beanies ──────────────────────
+   A knitted hat is not a printed one, and the difference is what sells it.
+   Two things have to be true. Every stitch is a discrete V of yarn with a
+   shadowed gap around it, and a two-colour jacquard motif cannot curve — it
+   is worked stitch by stitch, so its edges step along the stitch grid. Drawn
+   as smooth vector paths on a flat field the same design reads as a decal.
+
+   So the motif is rasterised to a stitch grid first and then every cell is
+   drawn as a piece of yarn in one of the two colours.
+
+   Beanies also decrease toward the crown, and spherical UVs happen to narrow
+   the texture the same way, so the pattern tightens up over the dome on its
+   own — which is what the real thing does.
+   ────────────────────────────────────────────────────────────────────── */
+const KNIT_COLS = 68, KNIT_ROWS = 46;
+
+/* The motif is colour-independent, and rasterising it means a getImageData
+   plus a quarter-million samples. Both colourways and every Mii wearing one
+   share the result. */
+const KNIT_MASKS = new Map();
+
+function knitMask(key, draw) {
+  let m = KNIT_MASKS.get(key);
+  if (m) return m;
+  const S = 8, W = KNIT_COLS * S, H = KNIT_ROWS * S;
+  const c = cv(W, H), g = c.getContext('2d');
+  g.strokeStyle = '#fff';
+  g.fillStyle = '#fff';
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+
+  /* Sphere UVs run v=1 at thetaStart and 0 at the hem, and flipY puts v=1 on
+     the top row of the canvas, so the canvas reads the same way up as the
+     hat: row 0 is the crown, the last row is the brow. */
+  draw(g, W, H, S);
+
+  /* Coverage per cell, not a point sample: a one-stitch bone sampled at cell
+     centres broke into dashes wherever it drifted off centre. */
+  const px = g.getImageData(0, 0, W, H).data;
+  m = new Uint8Array(KNIT_COLS * KNIT_ROWS);
+  for (let r = 0; r < KNIT_ROWS; r++) {
+    for (let c2 = 0; c2 < KNIT_COLS; c2++) {
+      let sum = 0;
+      for (let dy = 0; dy < S; dy++) {
+        const row = (r * S + dy) * W;
+        for (let dx = 0; dx < S; dx++) sum += px[(row + c2 * S + dx) * 4 + 3];
+      }
+      m[r * KNIT_COLS + c2] = sum / (S * S) > 120 ? 1 : 0;
+    }
+  }
+  KNIT_MASKS.set(key, m);
+  return m;
+}
+
+/* A fossil skeleton, worked as one long sweep around the hat: elongated
+   skull, segmented spine, rib cage, two paddle limbs and a tail.
+
+   This is a marine-reptile fossil of my own drawing. The alpine brand whose
+   knitwear this evokes uses a specific archaeopteryx device as its logo, and
+   that bird — like its wordmark — is a registered mark, not a motif to copy.
+   The natural-history fossil print is the genre; the animal here is not
+   theirs.
+
+   Laid out in stitch coordinates, the way a real jacquard chart is, because
+   two constraints only make sense in those units.
+
+   Every element needs a clear stitch of ground on each side or the rasteriser
+   welds it to its neighbour: a first pass hung 21 ribs off the spine at about
+   1.5 stitches apart and the cage came out as one solid pale slab.
+
+   And the hat is far wider than it is tall — the dome carries roughly 68
+   stitches around but only 46 rows from crown to brow — so an all-over motif
+   is necessarily long and low. Drawn at natural proportions the animal looked
+   like a flat fence rail. Vertical extents here are deliberately exaggerated
+   against horizontal ones, which is also how the real print reads: a long
+   spine running right around the hat.
+
+   Row 0 is the crown and row 46 the brow (knitMask flips the canvas to make
+   that true). Only rows 16 to 39 are usable: above 16 the dome's UVs magnify
+   a handful of stitches across the whole pole and anything there smears into
+   a cap of colour, and below 39 the ribbed turn-up covers it. Every extent
+   below is bounded by those two numbers. */
+function drawFossilSkeleton(g, W, H, S) {
+  const COLS = Math.round(W / S);
+  /* Whole-chart drop. The animal is easier to lay out around row 30 and then
+     shifted as one piece than it is to re-tune every element's row. */
+  const DY = 1.5;
+  const X = (col) => col * S;
+  const Y = (row) => (row + DY) * S;
+
+  /* Spine control points, smoothstepped between so ribs can be hung off it
+     at any column without a kink at the joins. */
+  /* Stops at 64 of 68 columns. The texture wraps, so a spine run out to the
+     edge put the tail tip hard against the snout at the seam, which read as
+     a mistake rather than as a continuous print. */
+  const SPINE = [[14, 31], [26, 25], [40, 26], [52, 32], [64, 30]];
+  const spineRow = (col) => {
+    if (col <= SPINE[0][0]) return SPINE[0][1];
+    for (let i = 0; i < SPINE.length - 1; i++) {
+      const [x0, y0] = SPINE[i], [x1, y1] = SPINE[i + 1];
+      if (col >= x0 && col <= x1) {
+        const t = (col - x0) / (x1 - x0);
+        return y0 + (y1 - y0) * t * t * (3 - 2 * t);
+      }
+    }
+    return SPINE[SPINE.length - 1][1];
+  };
+  /* Unit tangent and normal in stitch space, from a numeric derivative. */
+  const frame = (col) => {
+    const d = (spineRow(col + 0.4) - spineRow(col - 0.4)) / 0.8;
+    const L = Math.hypot(1, d);
+    return { tx: 1 / L, ty: d / L, nx: -d / L, ny: 1 / L };
+  };
+  const line = (c1, r1, c2, r2, w) => {
+    g.lineWidth = w * S;
+    g.beginPath(); g.moveTo(X(c1), Y(r1)); g.lineTo(X(c2), Y(r2)); g.stroke();
+  };
+  const curve = (c1, r1, cc, cr, c2, r2, w) => {
+    g.lineWidth = w * S;
+    g.beginPath(); g.moveTo(X(c1), Y(r1));
+    g.quadraticCurveTo(X(cc), Y(cr), X(c2), Y(r2));
+    g.stroke();
+  };
+  const ring = (col, row, rad, w) => {
+    g.lineWidth = w * S;
+    g.beginPath(); g.arc(X(col), Y(row), rad * S, 0, TAU); g.stroke();
+  };
+
+  /* Spine, sampled finely enough to stay smooth. Two stitches thick so it
+     still reads after rasterising. */
+  g.lineWidth = 1.9 * S;
+  g.beginPath();
+  g.moveTo(X(14), Y(spineRow(14)));
+  for (let col = 14; col <= 64; col += 0.5) g.lineTo(X(col), Y(spineRow(col)));
+  g.stroke();
+
+  /* Skull: long snout, jaw under it, orbit behind. Big enough to read as a
+     head — at six rows tall it was just a blunt end to the spine. */
+  curve(1, 33, 7, 26.5, 14, 28.5, 1.3);           // cranium
+  curve(1, 33, 7, 35.5, 14, 33.5, 1.3);           // jaw
+  line(11.5, 28.8, 11.5, 33.2, 1.0);              // quadrate
+  ring(9.6, 30.8, 1.7, 1.0);                      // orbit
+
+  /* Rib cage: six ribs, four stitches apart, longest over the chest. Swept
+     back and curled so the cage has a barrel rather than reading as a comb of
+     parallel spikes. Lengths are capped so the deepest rib tip lands around
+     row 38, clear of the turn-up. */
+  for (let i = 0; i < 6; i++) {
+    const col = 22 + i * 4;
+    const r0 = spineRow(col);
+    const f = frame(col);
+    const bell = Math.sin(((i + 0.6) / 6.2) * Math.PI);
+    const len = 5.5 + 6.5 * bell;
+    curve(col, r0,
+      col + f.nx * len * 0.55 + f.tx * len * 0.10,
+      r0 + f.ny * len * 0.55 + f.ty * len * 0.10,
+      col + f.nx * len + f.tx * len * 0.50,
+      r0 + f.ny * len + f.ty * len * 0.50, 1.05);
+
+    // Neural spines above, on alternate vertebrae.
+    if (i % 2 === 0) {
+      const sp = 2.2 + 1.6 * bell;
+      line(col, r0, col - f.nx * sp, r0 - f.ny * sp, 0.95);
+    }
+  }
+
+  /* Fore and hind paddles, placed clear of the rib tips — forward of the
+     cage and behind it — so they do not merge into the ribs. Three digits,
+     not five: at this gauge five welded into a solid blade. */
+  for (const [col, drop, dig, spread] of [[19, 3.6, 3.6, 0.52], [46, 3.2, 3.2, 0.46]]) {
+    const r0 = spineRow(col) + 1.6;
+    const wr = r0 + drop;
+    line(col, r0, col + 1.2, wr, 1.2);            // humerus
+    for (const d of [-1, 0, 1]) {
+      const a = d * spread;
+      const dl = dig - Math.abs(d) * 0.7;
+      line(col + 1.2, wr,
+        col + 1.2 + Math.sin(a) * dl * 1.1, wr + Math.cos(a) * dl, 0.95);
+    }
+  }
+
+  /* Tail: chevrons off the last stretch, shortening to the tip. */
+  for (let i = 0; i < 5; i++) {
+    const col = 52 + i * 2.7;
+    const r0 = spineRow(col);
+    const f = frame(col);
+    const ch = 5.0 - i * 0.85;
+    line(col, r0, col + f.nx * ch - f.tx * ch * 0.45,
+      r0 + f.ny * ch - f.ty * ch * 0.45, 0.95);
+    line(col, r0, col - f.nx * ch * 0.62 - f.tx * ch * 0.45,
+      r0 - f.ny * ch * 0.62 - f.ty * ch * 0.45, 0.95);
+  }
+
+  /* Two loose bones above the animal, the way a fossil plate is never tidy.
+     They also keep the upper crown from reading as a plain cap. Fixed
+     positions — nothing here shifts between renders. */
+  for (const [col, row, len, ang] of [[33, 14, 3.4, 0.30], [58, 13, 2.8, -0.38]]) {
+    const dc = Math.cos(ang) * len, dr = Math.sin(ang) * len * 1.6;
+    line(col - dc, row - dr, col + dc, row + dr, 1.0);
+    for (const s of [-1, 1]) ring(col + dc * s, row + dr * s, 1.15, 0.85);
+  }
+
+  /* Nothing should touch the vertical seam, which the wrap would split. */
+  void COLS;
+}
+
+function makeKnitTexture(base, ink) {
+  const mask = knitMask('fossil', drawFossilSkeleton);
+  const CW = 11, CH = 10;
+  const W = KNIT_COLS * CW, H = KNIT_ROWS * CH;
+  const c = cv(W, H), g = c.getContext('2d');
+
+  /* Gap colour behind everything, so the yarn reads as sitting proud of a
+     shadowed ground rather than as a flat fill. */
+  g.fillStyle = shade(base, -30);
+  g.fillRect(0, 0, W, H);
+  g.lineCap = 'round';
+
+  for (let r = 0; r < KNIT_ROWS; r++) {
+    /* Alternating rows shift a shade, which is enough to read as courses of
+       yarn without drawing every loop's shadow. */
+    const rowLift = r % 2 ? 5 : -5;
+    for (let cc = 0; cc < KNIT_COLS; cc++) {
+      const lit = mask[r * KNIT_COLS + cc];
+      const yarn = lit ? ink : base;
+      const x = cc * CW, y = r * CH;
+
+      g.fillStyle = shade(yarn, -30);
+      g.fillRect(x, y, CW, CH);
+
+      /* The V of a stockinette stitch. Two legs meeting low in the cell. */
+      g.strokeStyle = shade(yarn, rowLift);
+      g.lineWidth = CW * 0.44;
+      g.beginPath();
+      g.moveTo(x + CW * 0.09, y + CH * 0.05);
+      g.lineTo(x + CW * 0.50, y + CH * 0.80);
+      g.lineTo(x + CW * 0.91, y + CH * 0.05);
+      g.stroke();
+
+      /* Highlight down the near leg. Without it the field is flat at
+         distance and the knit disappears. */
+      g.strokeStyle = shade(yarn, rowLift + 22);
+      g.lineWidth = CW * 0.13;
+      g.beginPath();
+      g.moveTo(x + CW * 0.16, y + CH * 0.14);
+      g.lineTo(x + CW * 0.47, y + CH * 0.70);
+      g.stroke();
+    }
+  }
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 4;
+  t.userData.own = true;
+  return t;
+}
+
+/* Ribbed turn-up. 2×2 rib is columns of knit standing in front of columns of
+   purl, so it reads as vertical cords with deep shadow between them — no
+   motif, and a much coarser gauge than the crown. */
+function makeRibTexture(base) {
+  const RIBS = 34, CW = 22, W = RIBS * CW, H = 96;
+  const c = cv(W, H), g = c.getContext('2d');
+  g.fillStyle = shade(base, -40);
+  g.fillRect(0, 0, W, H);
+
+  for (let i = 0; i < RIBS; i++) {
+    const x = i * CW;
+    const cord = g.createLinearGradient(x, 0, x + CW * 0.62, 0);
+    cord.addColorStop(0, shade(base, -26));
+    cord.addColorStop(0.45, shade(base, 20));
+    cord.addColorStop(1, shade(base, -34));
+    g.fillStyle = cord;
+    g.fillRect(x, 0, CW * 0.62, H);
+
+    /* Loops across each cord, so the rib has courses and does not read as a
+       painted stripe. Kept low contrast — at full strength the cords beaded
+       up and looked like a string of scales rather than ribbing. */
+    g.strokeStyle = shade(base, -18);
+    g.lineWidth = 1.5;
+    for (let y = 0; y < H; y += 14) {
+      g.beginPath();
+      g.moveTo(x, y + 7);
+      g.quadraticCurveTo(x + CW * 0.31, y + 13, x + CW * 0.62, y + 7);
+      g.stroke();
+    }
+  }
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 4;
+  t.userData.own = true;
+  return t;
+}
+
 /* Angora fur pile for the furry bucket hat. Real fur reads as thousands of
    overlapping strands, each catching light differently along its length, so
    flat colour plus a bumped silhouette is not enough — the crown still looks
@@ -2305,7 +2602,7 @@ const HAIRSTYLES = ['bald','buzz','taper','crop','waves','fade','pixie','bowl','
                     'bun','pony',
                     'highpony','pigtails','layers','spacebuns',
                     'cap','flatbrim','dadhat','knicks','yankees','bucket','furry','furrysage','cowboy','beanie',
-                    'bandana','bandanablue','bandanagreen','tophat'];
+                    'fossil','fossilblack','bandana','bandanablue','bandanagreen','tophat'];
 
 /* Styles that existed before this list was rewritten. Stored characters keep
    working by landing on the nearest real cut instead of rendering bald. */
@@ -2335,6 +2632,7 @@ const STYLE_LABELS = {
   cap: 'Cap', flatbrim: 'Flat brim', dadhat: 'Dad hat', knicks: 'Orange & blue',
   yankees: 'Navy & white', bucket: 'Bucket', furry: 'Furry bucket',
   furrysage: 'Furry sage', cowboy: 'Cowboy', beanie: 'Beanie',
+  fossil: 'Fossil knit', fossilblack: 'Fossil knit black',
   bandana: 'Red bandana', bandanablue: 'Blue bandana', bandanagreen: 'Green bandana',
   tophat: 'Top hat'
 };
@@ -3742,6 +4040,11 @@ const HATS = {
   furrysage: { crown: '#a3a983', accent: '#7f855f', fur: true, mark: 'CO' },
   cowboy:   { crown: '#8a6236', accent: '#5d4023' },
   beanie:       { crown: null,      accent: null      },
+  /* Jacquard fossil beanies. The motif is knitted, not printed — see
+     makeKnitTexture — and it is my own fossil rather than the alpine brand's
+     archaeopteryx device, which is a registered mark. */
+  fossil:      { crown: '#1c4f68', accent: '#16404f', knit: true, ink: '#a6c8e4' },
+  fossilblack: { crown: '#191a1d', accent: '#121316', knit: true, ink: '#9ba3ab' },
   bandana:      { crown: '#c62828', paisley: true     },
   bandanablue:  { crown: '#1565c0', paisley: true     },
   bandanagreen: { crown: '#2e7d32', paisley: true     }
@@ -4173,6 +4476,12 @@ function buildHair(dna, mat, extraMats) {
       hatMat.roughness = 0.98;
       hatMat.metalness = 0;
     }
+    if (H.knit) {
+      hatMat.map = makeKnitTexture(crownCol, H.ink);
+      hatMat.color.set('#ffffff');
+      hatMat.roughness = 0.94;
+      hatMat.metalness = 0;
+    }
 
     /* Hair still shows under a hat, but only down to the brow. Taken any
        lower it reaches eye level and reads as a coloured patch stuck to the
@@ -4303,6 +4612,28 @@ function buildHair(dna, mat, extraMats) {
       put(G.hatDome(1.11, 1.3), hatMat, 0, 0.02, 0, 1, 1.06, 1);
       put(G.tube(), accMat, 0, 0.33, 0, 1.18, 0.16, 1.16);        // folded cuff
       put(G.ball(), accMat, 0, 1.16, 0, 0.2, 0.2, 0.2);           // bobble
+    } else if (H.knit) {
+      /* Knit beanie: hem at the brow, ribbed turn-up at the bottom, and no
+         bobble — this is the flat-crowned alpine cut, not a pom hat.
+
+         The crown stands well above the skull rather than shrink-wrapping it.
+         That is what a beanie does, and it also buys the motif vertical room:
+         on a dome barely proud of the head there was so little surface
+         between crown and brow that the skeleton had nowhere to go. */
+      put(G.hatDome(1.09, 1.40), hatMat, 0, 0.02, 0, 1, 1.22, 1);
+
+      const ribMat = new THREE.MeshStandardMaterial({
+        color: '#ffffff', map: makeRibTexture(crownCol),
+        roughness: 0.94, metalness: 0, side: THREE.DoubleSide
+      });
+      if (extraMats) extraMats.push(ribMat);
+      put(G.tube(), ribMat, 0, 0.36, 0, 1.15, 0.24, 1.14);
+
+      /* Spherical UVs converge at the pole, so the stitch grid pinches to a
+         point there. A knitted crown really does close on a small spiral, so
+         a plain flat knot both hides the pinch and is what is actually
+         there. */
+      put(G.ball(), accMat, 0, 1.34, 0, 0.19, 0.05, 0.19);
     } else if (st === 'bandana' || st === 'bandanablue' || st === 'bandanagreen') {
       // Tied around the head, so it comes down to the brow like the cap
       // crowns do. Stopping high up read as a small skullcap instead.
