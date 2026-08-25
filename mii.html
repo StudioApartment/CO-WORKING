@@ -3980,7 +3980,7 @@ function buildHair(dna, mat, extraMats) {
       }
     }
   } else if (st === 'bald') {
-    add(G.hairBand(1.035), 0, 0, 0);
+    /* Fully bald — no cap, band, or stubble shell. */
   } else if (st === 'buzz') {
     cap(1.028, 1.62, 1.06);
   } else if (st === 'bowl') {

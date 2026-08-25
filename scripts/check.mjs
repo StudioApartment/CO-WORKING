@@ -167,6 +167,16 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("st === 'bald'") || src.includes("st === 'bald'") && /st === 'bald'[\s\S]{0,80}hairBand/.test(src)) {
+    note('✗', 'mii.html — bald should render with no hair geometry');
+    failures++;
+  } else {
+    note('✓', 'mii.html bald is fully hairless');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`fadeW${r}`") || !src.includes("'fade'")) {
     note('✗', 'mii.html — fade cut should be a waved crown with tapered sides');
     failures++;
