@@ -427,12 +427,12 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`flowD${r}`") || !src.includes('stubble-short sides')
-      || src.includes("geoCache(`flowC${r}`") || src.includes('add(G.flow(1.09)')) {
-    note('✗', 'mii.html — flow should have a natural hairline and stubble-short sides');
+  if (!src.includes("sculptHair(`spkC${r}`") || !src.includes('Spiky front')
+      || src.includes("sculptHair(`spkB${r}`")) {
+    note('✗', 'mii.html — spiky should have a natural hairline, side hair, and a spiked front');
     failures++;
   } else {
-    note('✓', 'mii.html flow has a natural hairline and stubble-short sides');
+    note('✓', 'mii.html spiky has a natural hairline, side hair, and a spiked front');
   }
 }
 
