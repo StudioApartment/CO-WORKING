@@ -3121,7 +3121,7 @@ const STYLE_LABELS = {
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
   curtains: 'Curtains', shortcurl: 'Short curls', afro: 'Afro', dreads: 'Locs',
   bob: 'Bob', shag: 'Shag', wolf: 'Wolf cut', mullet: 'Mullet', flow: 'Flow',
-  long: 'Long middle layers', longmiddle: 'Long middle part', longside: 'Long side part',
+  long: 'Long middle layers', longmiddle: 'Long middle part', longside: 'Long center part',
   longwavy: 'Long wavy', bun: 'Bun', pony: 'Ponytail',
   highpony: 'High ponytail', pigtails: 'Pigtails',
   layers: 'Long layers', spacebuns: 'Space buns',
@@ -4477,24 +4477,15 @@ const G = {
       let faceOpen = frame.faceOpen;
       let groove = 0;
 
-      if (part === 'bangs' || part === 'middle') {
+      if (part === 'bangs' || part === 'middle' || part === 'side') {
         /* Centre part: hair splits on the midline and falls to the sides.
-           The old blunt bangs sat as a visor across the forehead. */
+           Side used to be a left-of-centre sweep; it now matches the
+           middle part so this cut frames the face evenly. */
         groove = Math.exp(-ux * ux * 22) * Math.max(0, uy - 0.02);
         const sideFall = (1 - Math.exp(-side * side * 5.5)) * azFront;
         faceOpen = Math.min(1, frame.faceOpen * 0.85 + groove * 0.55 + sideFall * 0.12);
         maxTh = sideTh + (lengthTh - sideTh) * (1 - faceOpen * 0.40);
         maxTh -= groove * 0.20;
-      } else if (part === 'side') {
-        const sweep = Math.max(0, ux);
-        const partLine = Math.max(0, -ux);
-        groove = Math.exp(-((ux + 0.20) * (ux + 0.20)) * 18) * Math.max(0, uy - 0.04);
-        faceOpen = Math.min(1,
-          frame.faceOpen * 0.80
-          + Math.pow(Math.max(0, azFront - 0.12 - sweep * 0.10) / 0.88, 2) * 0.35
-          + partLine * azFront * 0.20);
-        maxTh = sideTh + (lengthTh - sideTh) * (1 - faceOpen * 0.36) - groove * 0.12;
-        maxTh += partLine * azFront * 0.08;
       }
 
       maxTh += frame.sideburn * 0.14 + frame.nape * 0.10;
