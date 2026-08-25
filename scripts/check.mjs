@@ -154,6 +154,16 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes('longHair') || !src.includes("'longmiddle'") || !src.includes("'longwavy'")) {
+    note('✗', 'mii.html — long hair should offer bangs, middle part, side part, and wavy');
+    failures++;
+  } else {
+    note('✓', 'mii.html long hair styles include part and wave variants');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("from '/lib/profanity.js'") || !src.includes('isCleanName')) {
     note('✗', 'mii.html — names should be checked for offensive language');
     failures++;

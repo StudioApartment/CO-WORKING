@@ -346,6 +346,10 @@ try {
       await evaluate(`Array.from({length: 16}, () => MiiPlaza.randomDNA().piercing)
         .every(p => p === 'none')`));
     check('flowy mens cuts are in the list', extras.hasFlow && extras.hasMullet && extras.hasWolf);
+    check('long hair parts are in the list', await evaluate(`(() => {
+      const cuts = MiiPlaza.catalog.HAIRSTYLES;
+      return ['long','longmiddle','longside','longwavy'].every(s => cuts.includes(s));
+    })()`));
     check('women\'s cuts are in the list',
       extras.hasHighpony && extras.hasPigtails && extras.hasLayers && extras.hasSpacebuns,
       JSON.stringify({
