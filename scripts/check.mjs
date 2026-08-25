@@ -141,11 +141,18 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const css = src.slice(src.indexOf('.tray-cell{'), src.indexOf('.cyc-clear:hover'));
+  const clearCss = src.slice(src.indexOf('.cyc-clear{'), src.indexOf('.tray-cell.on .cyc-clear'));
+  const ownBox = /0 0 0 3px/.test(clearCss) || /linear-gradient/.test(clearCss);
+  const sharedBox = /0 0 0 3px/.test(css);
   if (!src.includes('function trayIsOff') || !src.includes('cyc-clear')) {
     note('✗', 'mii.html — style tray should step linearly and offer a clear control');
     failures++;
   } else if (!src.includes('(i + 1) % options.length')) {
     note('✗', 'mii.html — style tray should cycle options in order');
+    failures++;
+  } else if (ownBox || !sharedBox) {
+    note('✗', 'mii.html — the × should sit in the category pill, not in its own box');
     failures++;
   } else {
     note('✓', 'mii.html style tray steps in order with a clear button');
