@@ -161,14 +161,12 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes('afro: (r) => geoCache') || src.includes("add(G.ball(), 0, 0.74, -0.08")) {
-    note('✗', 'mii.html — afro should wrap the head, not sit as a top ball');
-    failures++;
-  } else if (!src.includes('function hairFrame') || !src.includes('applySideburnsNape')) {
-    note('✗', 'mii.html — volumetric hair should shape sideburns and the nape');
+  if (!src.includes("geoCache(`afroI${r}`") || src.includes("add(G.ball(), 0, 0.74, -0.08")
+      || !src.includes('cloud-like puff') || src.includes('const tl = 2.88')) {
+    note('✗', 'mii.html — afro should be a round cloud-like puff, not an inverted teardrop');
     failures++;
   } else {
-    note('✓', 'mii.html afro wraps the whole head with sideburns and nape');
+    note('✓', 'mii.html afro is a round cloud-like puff');
   }
 }
 
