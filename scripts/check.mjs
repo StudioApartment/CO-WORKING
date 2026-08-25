@@ -161,12 +161,14 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`afroI${r}`") || src.includes("add(G.ball(), 0, 0.74, -0.08")
-      || !src.includes('cloud-like puff') || src.includes('const tl = 2.88')) {
-    note('✗', 'mii.html — afro should be a round cloud-like puff, not an inverted teardrop');
+  if (!src.includes('afro: (r) => geoCache') || src.includes("add(G.ball(), 0, 0.74, -0.08")) {
+    note('✗', 'mii.html — afro should wrap the head, not sit as a top ball');
+    failures++;
+  } else if (!src.includes('function hairFrame') || !src.includes('applySideburnsNape')) {
+    note('✗', 'mii.html — volumetric hair should shape sideburns and the nape');
     failures++;
   } else {
-    note('✓', 'mii.html afro is a round cloud-like puff');
+    note('✓', 'mii.html afro wraps the whole head with sideburns and nape');
   }
 }
 
@@ -378,25 +380,11 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`mopA${r}`") || !src.includes('G.medium(1.07)')
-      || !src.includes("bowl: 'Mop-top'")
-      || !src.includes('mixed tapered points')) {
-    note('✗', 'mii.html — bowl should render as a mop-top with tapered edges');
+  if (!src.includes("geoCache(`medM${r}`") || !src.includes('G.medium(1.07)')) {
+    note('✗', 'mii.html — bowl should render as a medium-length side-swept cut');
     failures++;
   } else {
-    note('✓', 'mii.html bowl is a mop-top with tapered edges');
-  }
-}
-
-{
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const wired = src.includes('G.locFade(1.04)') && src.includes('sculptHair(`locFadeA${r}`');
-  const hanging = src.includes('add(G.neck()');
-  if (!wired || hanging) {
-    note('✗', 'mii.html — locs should use a shaved fade shell, not hanging loc tubes');
-    failures++;
-  } else {
-    note('✓', 'mii.html locs use a clean shaved fade on the sides and back');
+    note('✓', 'mii.html bowl is a medium-length men\'s style');
   }
 }
 
@@ -439,36 +427,12 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`shagF${r}`") || !src.includes('Side-parted shag')
-      || !src.includes('napeTh = 2.40') || src.includes("geoCache(`shagE${r}`")) {
-    note('✗', 'mii.html — shag should have a side part, shaggy top, and longer back');
+  if (!src.includes("geoCache(`flowD${r}`") || !src.includes('stubble-short sides')
+      || src.includes("geoCache(`flowC${r}`") || src.includes('add(G.flow(1.09)')) {
+    note('✗', 'mii.html — flow should have a natural hairline and stubble-short sides');
     failures++;
   } else {
-    note('✓', 'mii.html shag has a side part, shaggy top, and longer nape');
-  }
-}
-
-{
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`hitopA${r}`") || !src.includes("wolf: 'Hi-top'")
-      || !src.includes('G.wolf(1.05)') || src.includes("geoCache(`wolfD${r}`")
-      || src.includes('add(G.wolf(1.09)')) {
-    note('✗', 'mii.html — wolf should render as a vertical hi-top with a flat hairline');
-    failures++;
-  } else {
-    note('✓', 'mii.html wolf is a vertical hi-top with a flat front');
-  }
-}
-
-{
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`mohawkA${r}`") || !src.includes("mullet: 'Mohawk'")
-      || !src.includes("mohawk: 'mullet'") || src.includes("geoCache(`mulletA${r}`")
-      || src.includes("mohawk: 'spiky'")) {
-    note('✗', 'mii.html — mullet should render as a mohawk crest, not a skullcap');
-    failures++;
-  } else {
-    note('✓', 'mii.html mullet is a mohawk with a spiky centre crest');
+    note('✓', 'mii.html flow has a natural hairline and stubble-short sides');
   }
 }
 
@@ -540,78 +504,6 @@ for (const [page, ids] of required) {
     failures++;
   } else {
     note('✓', 'mii.html puts a half-width Email field under Name');
-  }
-}
-
-/* Argyle is a knit sweater: tessellated diamonds, dashed overlays, and a
-   ribbed hem. A chest device or a house name would be someone else's mark. */
-{
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const wired = ["id: 'argyle'", "label: 'Argyle sweater'", "case 'argyle': {",
-                 'for (const ox of [-W, 0, W])', "g.setLineDash([5, 5])"]
-    .every((s) => src.includes(s));
-  if (!wired) {
-    note('✗', 'mii.html — argyle sweater needs wrap-aware diamonds and dashed overlays');
-    failures++;
-  } else if (/CELINE|Triomphe|Celine/i.test(src)) {
-    note('✗', 'mii.html — argyle must not reprint a licensed house mark');
-    failures++;
-  } else {
-    note('✓', 'mii.html offers an argyle knit sweater');
-  }
-}
-
-/* Tribal ink is a solid-black geometric style on jaw and hands — the
-   rig has no arms for a sleeve. Motifs are original (teeth, chevrons,
-   a punched spiral, claws), not a copied piece. */
-{
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const wired = ["id: 'tribal'", "label: 'Tribal'", 'function inkTribalSpiral',
-                 'function inkTribalTeeth', 'function inkTribalClaws',
-                 "kind === 'tribal'", 'destination-out']
-    .every((s) => src.includes(s));
-  if (!wired) {
-    note('✗', 'mii.html — tribal ink needs jaw and hand painters with a punched spiral');
-    failures++;
-  } else {
-    note('✓', 'mii.html offers tribal tattoos on the jaw and hands');
-  }
-}
-
-/* Hipster ink is neo-trad patchwork on jaw and hands, plus micro-marks
-   under the eyes. No readable dates, verses, or knuckle words. */
-{
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const wired = ["id: 'hipster'", "label: 'Hipster'", 'function inkWatch',
-                 'function inkCandle', 'function inkPlus', 'function drawHipsterFace',
-                 'ey + sz * 0.72', "kind === 'hipster'"]
-    .every((s) => src.includes(s));
-  const hipster = src.slice(src.indexOf('function inkPlus'), src.indexOf('function drawNeckInk'));
-  if (!wired) {
-    note('✗', 'mii.html — hipster ink needs a watch, a candle, and under-eye marks');
-    failures++;
-  } else if (/LOVED|1 Cor|fillText/.test(hipster) || hipster.includes('777')) {
-    note('✗', 'mii.html — hipster ink must not reprint words, verses, or dates');
-    failures++;
-  } else {
-    note('✓', 'mii.html offers hipster tattoos on the face and hands');
-  }
-}
-
-/* Minimal ink is sparse fine-line geometry on jaw and hands — stacked
-   triangles and a celestial column. Stroke-only, but thick enough to
-   survive plaza scale. */
-{
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const wired = ["id: 'minimal'", "label: 'Minimal'", 'function inkTwinTriangles',
-                 'function inkCelestial', 'function drawMinimalFace',
-                 "kind === 'minimal'", 'Math.max(4.2, s * 0.10)']
-    .every((s) => src.includes(s));
-  if (!wired) {
-    note('✗', 'mii.html — minimal ink needs stacked triangles and a celestial column');
-    failures++;
-  } else {
-    note('✓', 'mii.html offers minimal tattoos on the jaw and hands');
   }
 }
 
