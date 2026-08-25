@@ -3727,7 +3727,8 @@ const APPAREL = [
   { id: 'bubble',   label: 'Bubble jacket', kind: 'bubble',
     hood: 'fur', sleeves: 'puffer', nocollar: true },
   { id: 'tank',     label: 'Tank top',  kind: 'tank', nocollar: true },
-  { id: 'protector', label: 'Pocket protector', kind: 'protector' }
+  { id: 'protector', label: 'Pocket protector', kind: 'protector' },
+  { id: 'boxhoodie', label: 'Box hoodie', kind: 'boxhoodie', hood: true }
 ];
 const APPAREL_BY_ID = new Map(APPAREL.map((a) => [a.id, a]));
 
@@ -6381,6 +6382,38 @@ function makeApparelTexture(dna) {
       g.fillRect(px, py - 5, pw, 8);
       break;
     }
+    case 'boxhoodie': {
+      /* Pullover with a chest box. The word and the red field are ours —
+         same house name as the club cap — not a licensed box logo. */
+      g.fillStyle = shade(base, -20);
+      g.fillRect(0, vy(0.86), W, H);
+      g.fillStyle = shade(base, -9);
+      g.fillRect(front - 46, vy(0.42), 92, vy(0.86) - vy(0.42));
+      g.strokeStyle = shade(base, -40); g.lineWidth = 5;
+      g.strokeRect(front - 46, vy(0.42), 92, vy(0.86) - vy(0.42));
+      g.strokeStyle = shade(base, 22); g.lineWidth = 2; g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(front - 17, vy(0.0)); g.lineTo(front - 13, vy(0.22));
+      g.moveTo(front + 17, vy(0.0)); g.lineTo(front + 13, vy(0.22));
+      g.stroke();
+
+      const bw = 96, bh = 30;
+      const bx = front - bw / 2, by = vy(0.16);
+      g.fillStyle = '#e11b22';
+      g.fillRect(bx, by, bw, bh);
+      g.fillStyle = '#f5f5f0';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      const boxWord = 'Co-Working';
+      let size = 15;
+      g.font = `italic 900 ${size}px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif`;
+      while (size > 8 && g.measureText(boxWord).width > bw - 10) {
+        size--;
+        g.font = `italic 900 ${size}px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif`;
+      }
+      g.fillText(boxWord, front, by + bh / 2 + 1);
+      break;
+    }
   }
 
   const t = new THREE.CanvasTexture(c);
@@ -7303,7 +7336,10 @@ function buildMii(dna) {
      the jersey look padded, so only football gets a tighter xz — height stays
      so the collar and pants still meet. */
   const kit = apparel.kind === 'football';
-  torso.scale.set((kit ? 0.29 : 0.33) * dna.girth, 0.28, (kit ? 0.235 : 0.27) * dna.girth);
+  const boxy = apparel.kind === 'boxhoodie';
+  torso.scale.set((kit ? 0.29 : boxy ? 0.36 : 0.33) * dna.girth,
+    boxy ? 0.29 : 0.28,
+    (kit ? 0.235 : boxy ? 0.29 : 0.27) * dna.girth);
   torso.position.y = 0.5;
   body.add(torso);
 

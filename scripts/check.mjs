@@ -487,20 +487,22 @@ for (const [page, ids] of required) {
   }
 }
 
-/* A pocket-protector shirt without pens sticking out of the plastic is
-   just a plaid button-up. The regular button-up's pocket is empty on
-   purpose; this one has to show the stationery. */
+/* A chest box with someone else's word is a trademark. The pullover cut
+   is the look; Co-Working on a red field is ours, like the club cap. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const wired = ["id: 'protector'", "label: 'Pocket protector'", "kind: 'protector'",
-                 "case 'protector':", 'const pens = [', 'py - p.h * 0.52',
-                 'rgba(186, 220, 228, 0.72)']
+  const wired = ["id: 'boxhoodie'", "label: 'Box hoodie'", "kind: 'boxhoodie'",
+                 "case 'boxhoodie':", "const boxWord = 'Co-Working'",
+                 "g.fillStyle = '#e11b22'", 'italic 900']
     .every((s) => src.includes(s));
   if (!wired) {
-    note('✗', 'mii.html — pocket protector shirt needs pens sticking out of the plastic');
+    note('✗', 'mii.html — box hoodie needs a red chest box with our own word');
+    failures++;
+  } else if (/Supreme/i.test(src)) {
+    note('✗', 'mii.html — box hoodie must not reprint a licensed box logo');
     failures++;
   } else {
-    note('✓', 'mii.html offers a button-up with a pocket protector');
+    note('✓', 'mii.html offers a box hoodie with a Co-Working chest mark');
   }
 }
 
