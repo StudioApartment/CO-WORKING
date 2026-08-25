@@ -448,7 +448,7 @@ for (const [page, ids] of required) {
              || src.includes("long: 'Long bangs'")
              || src.includes("longside: 'Long center part'")
              || !src.includes("longside: 'Long side part'")
-             || !src.includes('Left-of-centre side part')
+             || !src.includes('Natural mid-forehead side part')
              || !src.includes("part === 'side'")
              || !src.includes("longHair(1.07, 'middle', 0, 'feet'")
              || src.includes('add(G.ball(), 0, 0.86, -0.62')) {
