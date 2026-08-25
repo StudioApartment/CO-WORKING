@@ -3725,7 +3725,8 @@ const APPAREL = [
   { id: 'techvest', label: 'Tech vest', kind: 'techvest', mock: true },
   { id: 'vintage',  label: 'Vintage tee', kind: 'vintage', open: true, sleeves: 'raglan' },
   { id: 'bubble',   label: 'Bubble jacket', kind: 'bubble',
-    hood: 'fur', sleeves: 'puffer', nocollar: true }
+    hood: 'fur', sleeves: 'puffer', nocollar: true },
+  { id: 'tank',     label: 'Tank top',  kind: 'tank', nocollar: true }
 ];
 const APPAREL_BY_ID = new Map(APPAREL.map((a) => [a.id, a]));
 
@@ -6259,6 +6260,61 @@ function makeApparelTexture(dna) {
         g.fillStyle = '#c8ced4';
         g.fillRect(x - 1.4, vy(0.50), 2.8, vy(0.78) - vy(0.50));
       }
+      break;
+    }
+    case 'tank': {
+      /* Bodycon tank: a V in the visible chest and medium straps. Armholes
+         stay narrow at the shoulder so this is not a racerback or a vest,
+         and there is no frayed hem — that look is the cutoff. */
+      g.fillStyle = base;
+      g.fillRect(0, 0, W, H);
+      g.globalAlpha = 0.14;
+      g.fillStyle = shade(base, -24);
+      for (let y = 0; y < H; y += 4) g.fillRect(0, y, W, 1);   // jersey rib
+      g.globalAlpha = 1;
+
+      g.fillStyle = dna.skin;
+      g.beginPath();
+      g.moveTo(front - 30, 0);
+      g.lineTo(front + 30, 0);
+      g.lineTo(front, vy(0.38));
+      g.closePath();
+      g.fill();
+      g.beginPath();
+      g.moveTo(back - 18, 0);
+      g.lineTo(back + 18, 0);
+      g.lineTo(back, vy(0.14));
+      g.closePath();
+      g.fill();
+
+      const arm = (x) => {
+        g.beginPath();
+        g.moveTo(x - 18, 0);
+        g.lineTo(x + 18, 0);
+        g.lineTo(x + 18, vy(0.16));
+        g.quadraticCurveTo(x + 30, vy(0.38), x, vy(0.46));
+        g.quadraticCurveTo(x - 30, vy(0.38), x - 18, vy(0.16));
+        g.closePath();
+        g.fill();
+      };
+      arm(0);
+      arm(W);
+      arm(W * 0.5);
+
+      /* Straps painted last so a scoop cannot nibble them down to spaghetti. */
+      const strapW = 12;
+      g.fillStyle = base;
+      g.fillRect(front - 38, 0, strapW, vy(0.16));
+      g.fillRect(front + 26, 0, strapW, vy(0.16));
+
+      g.strokeStyle = shade(base, -22);
+      g.lineWidth = 3;
+      g.lineJoin = 'round';
+      g.beginPath();
+      g.moveTo(front - 30, 0);
+      g.lineTo(front, vy(0.38));
+      g.lineTo(front + 30, 0);
+      g.stroke();
       break;
     }
   }
