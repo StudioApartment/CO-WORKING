@@ -2829,7 +2829,7 @@ function inkFine(g, s) {
   g.fillStyle = INK;
   g.lineCap = 'round';
   g.lineJoin = 'round';
-  g.lineWidth = Math.max(3.2, s * 0.07);
+  g.lineWidth = Math.max(4.2, s * 0.10);
 }
 
 function inkTwinTriangles(g, s) {
@@ -2848,44 +2848,29 @@ function inkTwinTriangles(g, s) {
 }
 
 function inkCelestial(g, s) {
-  /* Vertical stack of tiny glyphs. Original order, not a copied chart. */
+  /* Four glyphs, not a dozen — extra marks minified into a dotted smear. */
   inkFine(g, s);
-  const step = s * 0.30;
+  const step = s * 0.42;
   const glyphs = [
-    (y) => { g.beginPath(); g.arc(0, y, s * 0.05, 0, TAU); g.fill(); },
+    (y) => { g.beginPath(); g.arc(0, y, s * 0.07, 0, TAU); g.fill(); },
     (y) => {
       g.beginPath();
-      g.moveTo(0, y - s * 0.12); g.lineTo(0, y + s * 0.12);
-      g.moveTo(-s * 0.12, y); g.lineTo(s * 0.12, y);
+      g.moveTo(0, y - s * 0.16); g.lineTo(0, y + s * 0.16);
+      g.moveTo(-s * 0.16, y); g.lineTo(s * 0.16, y);
       g.stroke();
     },
     (y) => {
+      g.beginPath(); g.arc(0, y, s * 0.12, 0, TAU); g.stroke();
+      g.beginPath(); g.ellipse(0, y, s * 0.22, s * 0.06, -0.28, 0, TAU); g.stroke();
+    },
+    (y) => {
       g.beginPath();
-      g.arc(s * 0.03, y, s * 0.10, 0.55, -0.55);
+      g.moveTo(s * 0.07, y - s * 0.16);
+      g.lineTo(-s * 0.06, y);
+      g.lineTo(s * 0.07, y);
+      g.lineTo(-s * 0.07, y + s * 0.16);
       g.stroke();
-    },
-    (y) => {
-      g.beginPath(); g.arc(0, y, s * 0.09, 0, TAU); g.stroke();
-      g.beginPath(); g.ellipse(0, y, s * 0.16, s * 0.045, -0.28, 0, TAU); g.stroke();
-    },
-    (y) => {
-      g.beginPath();
-      g.moveTo(s * 0.05, y - s * 0.12);
-      g.lineTo(-s * 0.04, y - s * 0.01);
-      g.lineTo(s * 0.05, y - s * 0.01);
-      g.lineTo(-s * 0.05, y + s * 0.12);
-      g.stroke();
-    },
-    (y) => {
-      g.beginPath();
-      g.moveTo(0, y - s * 0.08);
-      g.lineTo(s * 0.05, y);
-      g.lineTo(0, y + s * 0.08);
-      g.lineTo(-s * 0.05, y);
-      g.closePath();
-      g.fill();
-    },
-    (y) => { g.beginPath(); g.arc(0, y, s * 0.05, 0, TAU); g.fill(); }
+    }
   ];
   const y0 = -((glyphs.length - 1) * step) / 2;
   for (let i = 0; i < glyphs.length; i++) glyphs[i](y0 + i * step);
@@ -2896,20 +2881,20 @@ function drawMinimalFace(g, U) {
      a four-point on the chin. Nothing on the forehead or under the eyes. */
   g.save();
   g.translate(22 * U, 76 * U);
-  inkTwinTriangles(g, 11 * U);
+  inkTwinTriangles(g, 16 * U);
   g.restore();
 
   g.save();
-  g.translate(78 * U, 76 * U);
-  inkCelestial(g, 9.5 * U);
+  g.translate(78 * U, 74 * U);
+  inkCelestial(g, 13 * U);
   g.restore();
 
   g.save();
   g.translate(50 * U, 90 * U);
-  inkFine(g, 5 * U);
+  inkFine(g, 6.5 * U);
   g.beginPath();
-  g.moveTo(0, -3.2 * U); g.lineTo(0, 3.2 * U);
-  g.moveTo(-3.2 * U, 0); g.lineTo(3.2 * U, 0);
+  g.moveTo(0, -4.2 * U); g.lineTo(0, 4.2 * U);
+  g.moveTo(-4.2 * U, 0); g.lineTo(4.2 * U, 0);
   g.stroke();
   g.restore();
 }
@@ -5420,33 +5405,29 @@ function makeInkTexture(kind) {
   if (kind === 'minimal') {
     wrapped(front, () => {
       g.save();
-      g.translate(0, S * 0.24);
-      g.fillStyle = INK;
-      for (let i = -1; i <= 1; i++) {
-        g.beginPath();
-        g.arc(i * S * 0.08, 0, S * 0.016, 0, TAU);
-        g.fill();
-      }
-      g.restore();
-
-      g.save();
-      g.translate(0, S * 0.46);
-      inkTwinTriangles(g, S * 0.14);
+      g.translate(0, S * 0.40);
+      inkTwinTriangles(g, S * 0.20);
       g.restore();
 
       g.save();
       g.translate(0, S * 0.68);
-      inkCelestial(g, S * 0.11);
+      inkCelestial(g, S * 0.14);
       g.restore();
     });
     wrapped(S * 0.75, () => {
       g.save();
       g.translate(0, S * 0.50);
-      inkTwinTriangles(g, S * 0.11);
+      inkFine(g, S * 0.14);
+      g.beginPath();
+      g.arc(0, 0, S * 0.09, 0, TAU);
+      g.stroke();
+      g.beginPath();
+      g.ellipse(0, 0, S * 0.16, S * 0.045, -0.28, 0, TAU);
+      g.stroke();
       g.restore();
     });
     g.strokeStyle = INK;
-    g.lineWidth = S * 0.018;
+    g.lineWidth = S * 0.022;
     g.beginPath(); g.moveTo(0, S * 0.88); g.lineTo(S, S * 0.88); g.stroke();
   } else {
     wrapped(front, () => {

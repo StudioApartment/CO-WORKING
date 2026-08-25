@@ -503,7 +503,7 @@ for (const [page, ids] of required) {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = ["id: 'minimal'", "label: 'Minimal'", 'function inkTwinTriangles',
                  'function inkCelestial', 'function drawMinimalFace',
-                 "kind === 'minimal'", 'Math.max(3.2, s * 0.07)']
+                 "kind === 'minimal'", 'Math.max(4.2, s * 0.10)']
     .every((s) => src.includes(s));
   if (!wired) {
     note('✗', 'mii.html — minimal ink needs stacked triangles and a celestial column');
