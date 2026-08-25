@@ -3722,7 +3722,8 @@ const APPAREL = [
     skirtFrom: 'pants' },
   { id: 'cardigan', label: 'Cardigan',  kind: 'cardigan', open: true },
   { id: 'argyle',   label: 'Argyle sweater', kind: 'argyle', open: true },
-  { id: 'techvest', label: 'Tech vest', kind: 'techvest', mock: true }
+  { id: 'techvest', label: 'Tech vest', kind: 'techvest', mock: true },
+  { id: 'vintage',  label: 'Vintage tee', kind: 'vintage', open: true, sleeves: 'raglan' }
 ];
 const APPAREL_BY_ID = new Map(APPAREL.map((a) => [a.id, a]));
 
@@ -6160,6 +6161,59 @@ function makeApparelTexture(dna) {
       g.fillRect(0, H - 11, W, 11);                            // bound hem
       break;
     }
+    case 'vintage': {
+      /* Raglan baseball tee: cream body, shirt-coloured sleeves, faded
+         circular plaza poster. Not a licensed tour shirt. */
+      const cream = '#ebe0cc';
+      const sleeve = base;
+      g.fillStyle = cream;
+      g.fillRect(0, 0, W, H);
+      g.fillStyle = '#c9b89a';
+      g.globalAlpha = 0.10;
+      for (let i = 0; i < 90; i++) g.fillRect((i * 47) % W, (i * 31) % H, 3, 2);
+      g.globalAlpha = 1;
+
+      /* Sleeve wedges from the collar down to the armpits. Drawn at both
+         side seams, and again at u=1, so the wrap does not leave a cream
+         stripe under the arm. */
+      const pit = vy(0.48);
+      g.fillStyle = sleeve;
+      g.beginPath();
+      g.moveTo(front - 18, 0);
+      g.lineTo(0, 0);
+      g.lineTo(0, pit);
+      g.closePath();
+      g.fill();
+      g.beginPath();
+      g.moveTo(back + 18, 0);
+      g.lineTo(W, 0);
+      g.lineTo(W, pit);
+      g.closePath();
+      g.fill();
+      g.beginPath();
+      g.moveTo(front + 18, 0);
+      g.lineTo(W * 0.5, 0);
+      g.lineTo(W * 0.5, pit);
+      g.closePath();
+      g.fill();
+      g.beginPath();
+      g.moveTo(back - 18, 0);
+      g.lineTo(W * 0.5, 0);
+      g.lineTo(W * 0.5, pit);
+      g.closePath();
+      g.fill();
+
+      g.strokeStyle = shade(sleeve, -28);
+      g.lineWidth = 3;
+      g.lineCap = 'round';
+      g.beginPath(); g.moveTo(front - 18, 0); g.lineTo(0, pit); g.stroke();
+      g.beginPath(); g.moveTo(front + 18, 0); g.lineTo(W * 0.5, pit); g.stroke();
+      g.beginPath(); g.moveTo(back - 18, 0); g.lineTo(W * 0.5, pit); g.stroke();
+      g.beginPath(); g.moveTo(back + 18, 0); g.lineTo(W, pit); g.stroke();
+
+      paintPlazaTourPrint(g, front, vy(0.34), 40, cream);
+      break;
+    }
   }
 
   const t = new THREE.CanvasTexture(c);
@@ -7118,6 +7172,23 @@ function buildMii(dna) {
     hood.position.set(0, 0.78, -0.16);
     hood.rotation.x = -0.3;
     body.add(hood);
+  }
+
+  /* Three-quarter raglan tubes. The rig has no arms, so without these the
+     baseball tee is only a yoke painted on the chest. They stop short of
+     the hands so they read as sleeves, not a second pair of fists. */
+  if (apparel.sleeves === 'raglan') {
+    const slMat = new THREE.MeshStandardMaterial({
+      color: shade(dna.shirt, -6), roughness: 0.78
+    });
+    M.mats.push(slMat);
+    for (const sx of [-1, 1]) {
+      const sl = new THREE.Mesh(G.neck(), slMat);
+      sl.scale.set(0.088, 0.155, 0.088);
+      sl.position.set(sx * 0.34 * dna.girth, 0.545, 0.02);
+      sl.rotation.z = sx * 0.92;
+      body.add(sl);
+    }
   }
 
   if (apparel.skirt) {

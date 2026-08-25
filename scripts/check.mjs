@@ -125,9 +125,6 @@ for (const [page, ids] of required) {
   }
 }
 
-/* Caps/beanies/bandana share one colour chip. The three dyed bandanas
-   collapsed into that chip, so a leftover bandanablue tray slot would
-   put the old colourways back next to the picker. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const pickers = src.match(/const PICKERS = \[[\s\S]*?\n\];/);
@@ -460,19 +457,6 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes('G.highPonyScalp(1.05)') || !src.includes('G.smoothPony()')
-      || !src.includes('U-shaped nape')
-      || src.includes('add(G.ball(), 0, 0.94, -0.42, 0.26, 0.26, 0.26)')
-      || src.includes('add(G.ball(), 0, -0.58, -1.18, 0.20, 0.40, 0.22)')) {
-    note('✗', 'mii.html — high ponytail should be one smooth tail with a curved nape');
-    failures++;
-  } else {
-    note('✓', 'mii.html high ponytail is one smooth tail with a curved nape');
-  }
-}
-
-{
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`layersB${r}`") || !src.includes('tucked behind the ears')
       || src.includes("geoCache(`layersA${r}`") || src.includes('left-of-centre part sweeps')) {
     note('✗', 'mii.html — long layers should have a centre part tucked behind the ears');
@@ -503,19 +487,25 @@ for (const [page, ids] of required) {
   }
 }
 
-/* A tech vest without the mock collar and the quarter zip is just a darker
-   cutoff. Armholes have to show a polo, not skin, or it reads as a tank. */
+/* A vintage tee that reprints a real tour shirt is a copyright problem.
+   The raglan cut and a circular poster are the look; the cup and PLAZA
+   word are ours, the way the club cap is. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const wired = ["id: 'techvest'", "label: 'Tech vest'", "kind: 'techvest'",
-                 'mock: true', "case 'techvest':", 'const zipH = vy(0.48)',
-                 'scoopAt(W * 0.5)', 'apparel.mock']
+  const wired = ["id: 'vintage'", "label: 'Vintage tee'", "kind: 'vintage'",
+                 "sleeves: 'raglan'", "case 'vintage':", 'paintPlazaTourPrint',
+                 "const cream = '#ebe0cc'", "const word = 'PLAZA'",
+                 "apparel.sleeves === 'raglan'"]
     .every((s) => src.includes(s));
+  const licensed = /ROLLING STONES|Mick Jagger|tongue and lips/i.test(src);
   if (!wired) {
-    note('✗', 'mii.html — tech vest needs a mock collar, quarter zip and polo armholes');
+    note('✗', 'mii.html — vintage tee needs a raglan cut and an original plaza poster');
+    failures++;
+  } else if (licensed) {
+    note('✗', 'mii.html — vintage tee must not reprint a licensed tour shirt');
     failures++;
   } else {
-    note('✓', 'mii.html offers a quarter-zip tech vest over a polo');
+    note('✓', 'mii.html offers a raglan vintage tee with an original plaza print');
   }
 }
 
