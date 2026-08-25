@@ -211,6 +211,22 @@ for (const [page, ids] of required) {
   }
 }
 
+/* The club cap's script has to stay arched — set straight it reads as a label
+   stuck on the panel — and its lower band has to take the bill's colour, or
+   the two-tone leaves a pale ring between crown and bill. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ['makeScriptPatch', 'twoTone: true', "script: 'Co-Working'",
+                 'H.twoTone ? accMat : hatMat', 'Math.sin(ang) * arcR']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — club cap needs an arched script and a two-tone lower band');
+    failures++;
+  } else {
+    note('✓', 'mii.html includes a two-tone club cap with an arched script');
+  }
+}
+
 /* The dad cap's patch has to carry its own pale border: that cap takes the
    wearer's shirt colour, so without one the globe disappears on a blue hat. */
 {

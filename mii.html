@@ -1456,6 +1456,107 @@ function makeRibTexture(base) {
   return t;
 }
 
+/* Front of a two-tone club cap: an arched script wordmark over a small
+   device, both chain-stitched.
+
+   The arch is doing most of the work. Vintage club caps run their wordmark
+   along a curve, and at the size a Mii's cap front actually occupies the
+   curve is what says "script logo" — set straight, the same letters read as
+   a printed label stuck on the panel. */
+function makeScriptPatch(text, ink) {
+  const W = 384, H = 264, c = cv(W, H), g = c.getContext('2d');
+  const cx = W / 2;
+
+  /* Chain stitch has a soft, slightly swollen edge rather than a crisp one,
+     so every stroke is laid down twice: a wider dark pass for the thread's
+     shadow, then the thread itself over it. */
+  const stitched = (draw) => {
+    g.strokeStyle = 'rgba(255,255,255,.34)';
+    g.lineWidth = 9;
+    draw('stroke');
+    g.strokeStyle = ink;
+    g.lineWidth = 5.5;
+    g.fillStyle = ink;
+    draw('both');
+  };
+
+  g.font = 'italic 900 62px "Brush Script MT","Segoe Script","Palatino Linotype",Georgia,serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'alphabetic';
+  g.lineJoin = 'round';
+  g.lineCap = 'round';
+
+  const chars = [...text];
+  const widths = chars.map((ch) => g.measureText(ch).width);
+  const total = widths.reduce((a, b) => a + b, 0);
+  const arcR = W * 0.74;
+  const arcCy = H * 0.34 + arcR;      // arc centre sits well below the text
+
+  stitched((mode) => {
+    let acc = -total / 2;
+    for (let i = 0; i < chars.length; i++) {
+      const ang = (acc + widths[i] / 2) / arcR;
+      g.save();
+      g.translate(cx + Math.sin(ang) * arcR, arcCy - Math.cos(ang) * arcR);
+      g.rotate(ang);
+      if (mode === 'stroke') g.strokeText(chars[i], 0, 0);
+      else { g.strokeText(chars[i], 0, 0); g.fillText(chars[i], 0, 0); }
+      g.restore();
+      acc += widths[i];
+    }
+  });
+
+  /* Swash under the wordmark, which is what ties a script together. Kept
+     short and tucked close: run out to the full width it stopped reading as
+     part of the lettering and became a stray rule across the panel. */
+  const swash = () => {
+    g.beginPath();
+    g.moveTo(cx - W * 0.22, H * 0.395);
+    g.quadraticCurveTo(cx, H * 0.465, cx + W * 0.23, H * 0.355);
+    g.stroke();
+  };
+  g.strokeStyle = 'rgba(255,255,255,.34)';
+  g.lineWidth = 8;
+  swash();
+  g.strokeStyle = ink;
+  g.lineWidth = 4;
+  swash();
+
+  /* Device below the wordmark. A cup reads where a finer subject would not:
+     one compact silhouette with a hole punched through it, which survives
+     being drawn at forty pixels across. */
+  const ex = cx, ey = H * 0.73, s = H * 0.21;
+  g.fillStyle = ink;
+  g.strokeStyle = ink;
+  g.beginPath();
+  g.ellipse(ex, ey + s * 0.95, s * 1.10, s * 0.18, 0, 0, TAU);
+  g.fill();
+  g.beginPath();
+  g.moveTo(ex - s * 0.64, ey - s * 0.42);
+  g.lineTo(ex + s * 0.64, ey - s * 0.42);
+  g.quadraticCurveTo(ex + s * 0.54, ey + s * 0.70, ex, ey + s * 0.78);
+  g.quadraticCurveTo(ex - s * 0.54, ey + s * 0.70, ex - s * 0.64, ey - s * 0.42);
+  g.closePath();
+  g.fill();
+  g.lineWidth = s * 0.20;
+  g.beginPath();
+  g.arc(ex + s * 0.82, ey + s * 0.04, s * 0.34, -1.15, 1.15);
+  g.stroke();
+  g.lineWidth = s * 0.14;
+  for (const dx of [-s * 0.32, s * 0.02, s * 0.36]) {
+    g.beginPath();
+    g.moveTo(ex + dx, ey - s * 0.60);
+    g.quadraticCurveTo(ex + dx + s * 0.22, ey - s * 0.95, ex + dx, ey - s * 1.30);
+    g.stroke();
+  }
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  t.userData.own = true;
+  return t;
+}
+
 /* Embroidered globe patch for the front of the dad cap.
 
    Flat colour makes a decal. Embroidery is dense parallel thread laid in one
@@ -2776,7 +2877,7 @@ const HAIRSTYLES = ['bald','buzz','taper','crop','waves','fade','pixie','bowl','
                     'long','longmiddle','longside','longwavy',
                     'bun','pony',
                     'highpony','pigtails','layers','spacebuns',
-                    'cap','flatbrim','dadhat','knicks','yankees','bucket','furry','furrysage','cowboy','cowboystraw','beanie',
+                    'cap','flatbrim','dadhat','creamgreen','knicks','yankees','bucket','furry','furrysage','cowboy','cowboystraw','beanie',
                     'fossil','fossilblack','conical','bandana','bandanablue','bandanagreen','tophat'];
 
 /* Styles that existed before this list was rewritten. Stored characters keep
@@ -2804,7 +2905,8 @@ const STYLE_LABELS = {
   longwavy: 'Long wavy', bun: 'Bun', pony: 'Ponytail',
   highpony: 'High ponytail', pigtails: 'Pigtails',
   layers: 'Long layers', spacebuns: 'Space buns',
-  cap: 'Cap', flatbrim: 'Flat brim', dadhat: 'Dad hat', knicks: 'Orange & blue',
+  cap: 'Cap', flatbrim: 'Flat brim', dadhat: 'Dad hat',
+  creamgreen: 'Cream & green', knicks: 'Orange & blue',
   yankees: 'Navy & white', bucket: 'Bucket', furry: 'Furry bucket',
   furrysage: 'Furry sage', cowboy: 'Cowboy', cowboystraw: 'Cowboy straw',
   beanie: 'Beanie',
@@ -4357,6 +4459,12 @@ const HATS = {
   cap:      { crown: null,      accent: null      },   // takes the shirt colour
   flatbrim: { crown: null,      accent: null,     flat: true },
   dadhat:   { crown: null,      accent: null,     soft: true, emblem: true },
+  /* Two-tone club cap: cream crown, contrasting bill and button, arched
+     script over a small device. The cap this is modelled on carries a
+     stable's name and its harness-racing horse; both are that brand's, so
+     the wordmark here is ours and the device is a coffee cup. */
+  creamgreen: { crown: '#f2ece0', accent: '#1d4936', twoTone: true,
+                script: 'Co-Working', ink: '#16241d' },
   knicks:   { crown: '#0d5eab', accent: '#f4842a', flat: true, mark: 'NY' },
   yankees:  { crown: '#132448', accent: '#e8e8ee', mark: 'NY' },
   bucket:   { crown: '#8d8f68', accent: '#6d6f4e' },
@@ -5132,8 +5240,12 @@ function buildHair(dna, mat, extraMats) {
 
       /* A dome ends in an open edge, and with DoubleSide you see its inside —
          which read as a gap between crown and brim. A tube sweatband closes
-         the edge without a disc through the skull. */
-      put(G.tube(), hatMat, 0, 0.30, 0, 1.16, 0.12, 1.16);
+         the edge without a disc through the skull.
+
+         On a two-tone cap it takes the bill's colour, so the whole lower edge
+         reads as one contrasting band rather than leaving a pale ring between
+         the crown and a dark bill. */
+      put(G.tube(), H.twoTone ? accMat : hatMat, 0, 0.30, 0, 1.16, 0.12, 1.16);
 
       const visorMat = st === 'yankees' ? hatMat : accMat;
       if (H.flat) {
@@ -5142,6 +5254,25 @@ function buildHair(dna, mat, extraMats) {
         const brim = put(G.hatVisor(), visorMat, 0, soft ? 0.26 : 0.28, 1.26,
           0.68, 0.055, soft ? 0.36 : 0.32);
         brim.rotation.x = soft ? -0.28 : -0.16;
+      }
+
+      /* Arched script wordmark over its device, filling the front panel the
+         way a club cap's does. */
+      if (H.script) {
+        const scMat = new THREE.MeshBasicMaterial({
+          map: makeScriptPatch(H.script, H.ink || '#16241d'),
+          transparent: true, depthWrite: false
+        });
+        if (extraMats) extraMats.push(scMat);
+        const sc = new THREE.Mesh(geoCache('quad', () => new THREE.PlaneGeometry(1, 1)), scMat);
+        /* The skull is boxy enough that its front barely recedes across this
+           width — about two hundredths from the centre line to the edge of
+           the panel — so a flat quad sits on it without floating. */
+        sc.position.set(0, 0.56, 1.10);
+        sc.rotation.x = -0.24;
+        sc.scale.set(0.88, 0.605, 1);
+        sc.renderOrder = 3;
+        out.push(sc);
       }
 
       /* Small embroidered patch, front and centre, sitting high on the panel
