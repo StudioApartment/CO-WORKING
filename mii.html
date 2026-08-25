@@ -1974,33 +1974,18 @@ function drawNeckInk(g, U, dna) {
 
 /* ---- facial hair --------------------------------------------
    The face patch wraps around the sides of the skull, so a wide U along
-   the jaw reads as a chinstrap and a blonde fill on tan skin disappears.
-   These sit in the middle of the patch, get a dark rim, and light hair is
-   dropped toward brown so it still reads. */
-function beardColor(hairHex) {
-  const c = hex2rgb(hairHex);
-  const lum = (c.r * 0.299 + c.g * 0.587 + c.b * 0.114) / 255;
-  if (lum > 0.55) return shade(hairHex, -118);
-  if (lum > 0.38) return shade(hairHex, -56);
-  return hairHex;
-}
-
+   the jaw reads as a chinstrap. These sit in the middle of the patch and
+   use the same colour as the hair — no outline rim. */
 function drawFacialHair(g, U, dna) {
   const st = dna.facialHair;
   if (!st || st === 'none') return;
 
-  const col = beardColor(dna.hair.color);
-  const rim = shade(col, -52);
+  const col = dna.hair.color;
   const my = (dna.mouth && dna.mouth.y) || 68;
 
   const paint = () => {
     g.fillStyle = col;
     g.fill();
-    g.strokeStyle = rim;
-    g.lineWidth = 1.35 * U;
-    g.lineJoin = 'round';
-    g.lineCap = 'round';
-    g.stroke();
   };
 
   /* Sits on the upper lip, not on the mouth. Two lobes meeting in the
