@@ -427,6 +427,17 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("geoCache(`layersB${r}`") || !src.includes('tucked behind the ears')
+      || src.includes("geoCache(`layersA${r}`") || src.includes('left-of-centre part sweeps')) {
+    note('✗', 'mii.html — long layers should have a centre part tucked behind the ears');
+    failures++;
+  } else {
+    note('✓', 'mii.html long layers are a centre part tucked behind the ears');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes('longHair') || !src.includes("'longmiddle'") || !src.includes("'longwavy'")) {
     note('✗', 'mii.html — long hair should offer bangs, middle part, side part, and wavy');
     failures++;
