@@ -2495,6 +2495,33 @@ const HAIR_GAP = 2.32, HAIR_OVER = 0.2;
    cap() now uses one full-azimuth dome for the top; skirts start below it. */
 const HAIR_CROWN = 0.72;
 
+/* Curved hairline, sideburn strips, and nape length — shared by volumetric
+   styles so the front is not a straight bowl cut and the back reaches the neck. */
+function hairFrame(ux, uy, azFront, azBack, side) {
+  const hairline = 0.28 + side * side * 0.22 + Math.max(0, azFront - 0.50) * 0.06;
+  const faceOpen = Math.pow(Math.max(0, (hairline - uy) / 0.34), 1.2)
+    * Math.pow(Math.max(0, azFront - 0.05) / 0.95, 1.55);
+  const sideburn = Math.pow(Math.max(0, (side - 0.38) / 0.62), 1.1)
+    * Math.exp(-Math.pow((uy - 0.04) / 0.36, 2) * 2.4)
+    * (azFront * 0.88 + azBack * 0.10);
+  const nape = azBack * Math.pow(Math.max(0, (-uy - 0.02) / 0.52), 1.15);
+  return { hairline, faceOpen, sideburn, nape };
+}
+
+function applySideburnsNape(nx, ny, nz, sideburn, nape, ux, azFront, azBack) {
+  if (sideburn > 0.02) {
+    ny -= sideburn * 0.26;
+    nx *= 1 + sideburn * 0.08 * Math.sign(ux || 1);
+    nz += sideburn * 0.06 * azFront;
+  }
+  if (nape > 0.02) {
+    ny -= nape * 0.38;
+    nz -= nape * 0.10;
+    nx *= 1 - nape * 0.05;
+  }
+  return { nx, ny, nz };
+}
+
 const G = {
   head:  () => geoCache('head',  () => superball(1, 44, 32, HEAD_N)),
   face:  () => geoCache('face',  () => superball(1.016, 30, 26, HEAD_N, Math.PI / 2 - FACE_PHI / 2, FACE_PHI, FACE_TH0, FACE_THL)),
@@ -2933,11 +2960,12 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  afro: (r) => geoCache(`afroG${r}`, () => {
+  afro: (r) => geoCache(`afroH${r}`, () => {
     /* One shell wrapped around the whole head — not a ball on the crown.
        Volume sits on the sides and back, the face stays open under an arched
-       hairline, and a scalloped outer edge reads as tight curls. */
-    const tl = 2.62;
+       hairline, sideburns hang in front of the ears, and the nape reaches
+       the back of the neck. */
+    const tl = 2.88;
     const g = new THREE.SphereGeometry(r, 64, 48, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     const n = HEAD_N;
@@ -2951,15 +2979,14 @@ const G = {
       const azBack = Math.max(0, -uz / rs0);
       const phi = Math.atan2(ux, uz);
       const side = Math.abs(ux) / rs0;
-
-      /* Face opening: arch across the forehead, open below the brow. */
-      const faceOpen = Math.pow(Math.max(0, azFront - 0.10) / 0.90, 1.75)
-        * Math.pow(Math.max(0, (0.52 - uy) / 0.52), 1.15);
+      const frame = hairFrame(ux, uy, azFront, azBack, side);
 
       /* Afro puff — strongest on the sides and back, widest around the ears. */
       const midBand = Math.exp(-Math.pow((uy - 0.08) / 0.42, 2) * 2.8);
-      let ext = 0.26 + midBand * 0.14 + side * 0.16 + azBack * 0.12;
-      ext *= 1 - faceOpen * 0.98;
+      let ext = 0.26 + midBand * 0.14 + side * 0.16 + azBack * 0.14;
+      ext *= 1 - frame.faceOpen * 0.96;
+      ext += frame.sideburn * 0.10;
+      ext += frame.nape * 0.08;
 
       /* Curly scallop on the outer silhouette. */
       const scallop = 1
@@ -2968,13 +2995,7 @@ const G = {
         + 0.028 * Math.sin(th * 16.0 + phi * 4.0);
       ext *= scallop;
 
-      /* Nape tucks inward toward the neck like the sketch hem. */
-      if (uy < -0.02) {
-        const tuck = Math.min(1, Math.pow((-0.02 - uy) / 0.38, 1.4));
-        ext *= 1 - tuck * 0.55;
-      }
-
-      const thCap = tl * (0.94 + midBand * 0.10 + side * 0.06 + azBack * 0.04);
+      const thCap = tl * (0.96 + midBand * 0.10 + side * 0.08 + azBack * 0.10 + frame.nape * 0.12);
       const th2 = Math.min(th, thCap);
       const rs = Math.sin(th2);
       let nx = ux / rs0 * rs;
@@ -2986,26 +3007,22 @@ const G = {
       );
       nx *= s * r; ny *= s * r; nz *= s * r;
 
-      /* Push the shell outward from the skull — the whole head, not just the top. */
       const L0 = Math.hypot(nx, ny, nz) || 1;
       const L1 = L0 + ext * r;
       const k = L1 / L0;
       nx *= k; ny *= k; nz *= k;
 
-      /* Hairline hugs the forehead; below the arch it stays on the skull. */
-      if (faceOpen > 0 && azFront > 0.18) {
+      if (frame.faceOpen > 0 && azFront > 0.15) {
         const skullL = s * r * 1.025;
         const Lh = Math.hypot(nx, ny, nz) || 1;
-        const hug = 1 - faceOpen + faceOpen * (skullL / Lh);
+        const hug = 1 - frame.faceOpen + frame.faceOpen * (skullL / Lh);
         nx *= hug; ny *= hug; nz *= hug;
-        if (faceOpen > 0.65 && ny < 0.30) ny = Math.max(ny, 0.30);
+        if (frame.faceOpen > 0.55 && ny < frame.hairline - 0.04) {
+          ny = Math.max(ny, frame.hairline - 0.04);
+        }
       }
 
-      if (uy < -0.08) {
-        const tuck = Math.min(0.22, (-0.08 - uy) * 0.28);
-        nx *= 1 - tuck;
-        nz *= 1 - tuck * 0.35;
-      }
+      ({ nx, ny, nz } = applySideburnsNape(nx, ny, nz, frame.sideburn, frame.nape, ux, azFront, azBack));
 
       p.setXYZ(i, nx, ny, nz);
     }
@@ -3013,18 +3030,16 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  longHair: (r, part = 'bangs', wave = 0) => geoCache(`longH${r}_${part}_${wave}`, () => {
-    /* One flowing shell — part and wave are baked in so each long style reads
-       as a real cut, not a curtain glued over the eyes. Bangs sit on the brow;
-       middle and side parts open the forehead and frame the face; wavy adds
-       soft S-curves through the lengths. */
-    const tl = 2.78;
+  longHair: (r, part = 'bangs', wave = 0) => geoCache(`longI${r}_${part}_${wave}`, () => {
+    /* One flowing shell — arched hairline, sideburns, and nape length so the
+       front is not a straight bowl and the back reaches the neck. */
+    const tl = 2.95;
     const g = new THREE.SphereGeometry(r, 56, 48, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     const n = HEAD_N;
-    const sideTh = 2.06;
-    const bangTh = 1.22;     // blunt fringe — brow height, not eye cover
-    const lengthTh = wave ? 2.12 : 2.04;
+    const sideTh = 2.12;
+    const bangTh = 1.20;
+    const lengthTh = wave ? 2.18 : 2.10;
     for (let i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i);
       const L = v.length() || 1;
@@ -3036,41 +3051,39 @@ const G = {
       const azBack = Math.max(0, -uz / rs0);
       const phi = Math.atan2(ux, uz);
       const side = Math.abs(ux) / rs0;
+      const frame = hairFrame(ux, uy, azFront, azBack, side);
 
       let maxTh = sideTh;
-      let faceOpen = 0;
+      let faceOpen = frame.faceOpen;
       let groove = 0;
 
       if (part === 'bangs') {
-        /* Straight-across fringe: a narrow brow band, feathered at the
-           temples so the front is not one heavy inverted V. */
-        const browBand = azFront * Math.pow(Math.max(0, (uy - 0.08) / 0.38), 1.6)
-          * Math.pow(Math.max(0, 1 - side * 0.72), 1.4);
-        const templeFeather = azFront * side * 0.28;
-        const bangAmt = Math.min(1, browBand + templeFeather);
-        const blunt = (0.028 * Math.sin(phi * 9.0) + 0.014 * Math.sin(phi * 17.0 + 0.6))
+        const aboveLine = Math.max(0, uy - frame.hairline + 0.05);
+        const bangAmt = azFront * Math.pow(Math.min(1, aboveLine / 0.20), 1.45)
+          * Math.pow(Math.max(0, 1 - side * 0.30), 1.05);
+        const blunt = (0.026 * Math.sin(phi * 9.0) + 0.012 * Math.sin(phi * 17.0 + 0.6))
           * bangAmt;
         maxTh = sideTh + (bangTh - sideTh) * bangAmt + blunt;
-        faceOpen = 0;
+        faceOpen = frame.faceOpen * Math.pow(Math.max(0, 1 - bangAmt), 1.4);
       } else if (part === 'middle') {
-        /* Center part: crown groove, hair falls to both sides — face stays
-           open from the hairline up. */
         groove = Math.exp(-ux * ux * 22) * Math.max(0, uy - 0.02);
         const sideFall = (1 - Math.exp(-side * side * 5.5)) * azFront;
-        faceOpen = Math.min(1, groove * 1.15 + sideFall * 0.18);
-        maxTh = sideTh + (lengthTh - sideTh) * (1 - faceOpen * 0.42);
-        maxTh -= groove * 0.22;
+        faceOpen = Math.min(1, frame.faceOpen * 0.85 + groove * 0.55 + sideFall * 0.12);
+        maxTh = sideTh + (lengthTh - sideTh) * (1 - faceOpen * 0.40);
+        maxTh -= groove * 0.20;
       } else if (part === 'side') {
-        /* Side part: fringe swept to the right, left side carries volume. */
         const sweep = Math.max(0, ux);
         const partLine = Math.max(0, -ux);
         groove = Math.exp(-((ux + 0.20) * (ux + 0.20)) * 18) * Math.max(0, uy - 0.04);
         faceOpen = Math.min(1,
-          Math.pow(Math.max(0, azFront - 0.14 - sweep * 0.12) / 0.86, 2)
-          + partLine * azFront * 0.24);
-        maxTh = sideTh + (lengthTh - sideTh) * (1 - faceOpen * 0.38) - groove * 0.14;
+          frame.faceOpen * 0.80
+          + Math.pow(Math.max(0, azFront - 0.12 - sweep * 0.10) / 0.88, 2) * 0.35
+          + partLine * azFront * 0.20);
+        maxTh = sideTh + (lengthTh - sideTh) * (1 - faceOpen * 0.36) - groove * 0.12;
         maxTh += partLine * azFront * 0.08;
       }
+
+      maxTh += frame.sideburn * 0.14 + frame.nape * 0.10;
 
       const waveAmt = wave
         ? (0.13 * Math.sin(phi * 2.8 + u * 4.2) + 0.07 * Math.sin(phi * 5.5 - u * 2.6 + 0.9))
@@ -3090,35 +3103,28 @@ const G = {
       nx *= s * r; ny *= s * r; nz *= s * r;
       ny += Math.max(0, ny - 0.50) * 0.24;
 
-      /* Part groove — shallow dip at the scalp so the top reads parted. */
       if (groove > 0) {
         nx *= 1 - groove * 0.07;
         nz *= 1 - groove * 0.07;
       }
 
-      /* Forehead hug: only the bang band, not the whole face shell. */
-      if (part === 'bangs' && azFront > 0.38 && ny < 0.58) {
-        const brow = azFront * Math.pow(Math.max(0, (0.58 - ny) / 0.24), 1.2)
-          * Math.pow(Math.max(0, 1 - side * 0.85), 1.3);
+      if (faceOpen > 0 && azFront > 0.30 && ny < frame.hairline + 0.08) {
+        const t = faceOpen * Math.pow((azFront - 0.30) / 0.70, 1.15)
+          * Math.min(1, (frame.hairline + 0.08 - ny) / 0.28);
         const Lh = Math.hypot(nx, ny, nz) || 1;
-        const k = 1 - brow + brow * (1.03 / Lh);
+        const k = 1 - t + t * (1.04 / Lh);
         nx *= k; ny *= k; nz *= k;
-      } else if (faceOpen > 0 && azFront > 0.36 && ny < 0.62) {
-        const t = faceOpen * Math.pow((azFront - 0.36) / 0.64, 1.2)
-          * Math.min(1, (0.62 - ny) / 0.30);
-        const Lh = Math.hypot(nx, ny, nz) || 1;
-        const k = 1 - t + t * (1.05 / Lh);
-        nx *= k; ny *= k; nz *= k;
+        if (t > 0.5 && ny < frame.hairline - 0.02) ny = Math.max(ny, frame.hairline - 0.02);
       }
 
-      /* Length fall — column hang with a waved hem. */
-      const hang = Math.pow(Math.max(0, (u - 0.50) / 0.50), 1.45)
-        * (1 - Math.min(1, faceOpen * 0.75));
+      const hang = Math.pow(Math.max(0, (u - 0.46) / 0.54), 1.4)
+        * (1 - Math.min(1, faceOpen * 0.70));
+      const backBoost = 0.52 + azBack * 0.58 + frame.nape * 0.35;
       const hemWave = wave
         ? 0.10 * Math.sin(phi * 2.5 + 0.6) + 0.05 * Math.sin(phi * 4.8 - 1.1)
         : 0.05 * Math.sin(phi * 3.0 + 0.5) + 0.025 * Math.sin(phi * 5.5 - 0.8);
-      ny -= hang * (0.48 + hemWave);
-      const taper = 1 - hang * 0.28;
+      ny -= hang * backBoost * (0.46 + hemWave);
+      const taper = 1 - hang * 0.24;
       nx *= taper; nz *= taper;
 
       const sway = Math.sin(Math.min(hang, 1) * (wave ? 3.2 : 2.7));
@@ -3135,6 +3141,8 @@ const G = {
         + Math.max(0, Math.cos(phi * 9.0 + 1.1)) * 0.5;
       const gk = 1 - locks * 0.042 * Math.min(1, hang * 2.2);
       nx *= gk; nz *= gk;
+
+      ({ nx, ny, nz } = applySideburnsNape(nx, ny, nz, frame.sideburn, frame.nape, ux, azFront, azBack));
 
       if (Math.abs(ny) < 0.985) {
         const rad = Math.hypot(nx, nz);

@@ -157,8 +157,11 @@ for (const [page, ids] of required) {
   if (!src.includes('afro: (r) => geoCache') || src.includes("add(G.ball(), 0, 0.74, -0.08")) {
     note('✗', 'mii.html — afro should wrap the head, not sit as a top ball');
     failures++;
+  } else if (!src.includes('function hairFrame') || !src.includes('applySideburnsNape')) {
+    note('✗', 'mii.html — volumetric hair should shape sideburns and the nape');
+    failures++;
   } else {
-    note('✓', 'mii.html afro wraps the whole head');
+    note('✓', 'mii.html afro wraps the whole head with sideburns and nape');
   }
 }
 
