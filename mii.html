@@ -2576,6 +2576,7 @@ const INK = '#141c26';
 const INK_RED  = '#c41e2a';
 const INK_LEAF = '#2f6a3c';
 const INK_NAVY = '#1a2838';
+const INK_OCHRE = '#c48a2a';
 
 function inkOutline(g, w) {
   g.strokeStyle = INK;
@@ -2812,12 +2813,12 @@ function inkKnuckleBars(g, s) {
 }
 
 /* The rig has no arms, so every ink style has to live on the jaw patch
-   and/or the floating hand spheres. Tribal covers both. */
+   and/or the floating hand spheres. Style options cover both. */
 function tattooHasJaw(t) {
-  return t === 'neck' || t === 'both' || t === 'tribal';
+  return t === 'neck' || t === 'both' || t === 'tribal' || t === 'hipster';
 }
 function tattooHasHand(t) {
-  return t === 'hand' || t === 'both' || t === 'tribal';
+  return t === 'hand' || t === 'both' || t === 'tribal' || t === 'hipster';
 }
 
 /* ---- tribal -----------------------------------------------
@@ -2954,10 +2955,202 @@ function drawTribalJaw(g, U) {
   g.restore();
 }
 
+/* ---- hipster ----------------------------------------------
+   Original neo-trad / patchwork stickers: a pocket watch, a candle, a
+   moth, a heart, a plaster. Under-eye plus and dots. No portraits, no
+   readable dates, no verses, no knuckle words. Heavy fills so a 20px
+   hand still reads as a clock rather than a smudge. */
+function inkPlus(g, s) {
+  g.fillStyle = INK;
+  const t = Math.max(1.6, s * 0.34);
+  g.fillRect(-t / 2, -s / 2, t, s);
+  g.fillRect(-s / 2, -t / 2, s, t);
+}
+
+function inkWatch(g, r) {
+  const lw = Math.max(2.2, r * 0.12);
+  g.fillStyle = '#efe3c4';
+  g.beginPath(); g.arc(0, 0, r, 0, TAU); g.fill();
+  inkOutline(g, lw);
+  g.stroke();
+  g.fillStyle = INK;
+  for (let i = 0; i < 4; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 2;
+    g.beginPath();
+    g.arc(Math.cos(a) * r * 0.70, Math.sin(a) * r * 0.70, r * 0.09, 0, TAU);
+    g.fill();
+  }
+  g.strokeStyle = INK;
+  g.lineCap = 'round';
+  g.lineWidth = Math.max(2.2, r * 0.13);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -r * 0.52); g.stroke();
+  g.lineWidth = Math.max(1.8, r * 0.09);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(r * 0.38, r * 0.10); g.stroke();
+  g.fillStyle = INK_RED;
+  g.beginPath(); g.arc(0, 0, r * 0.11, 0, TAU); g.fill();
+}
+
+function inkCandle(g, s) {
+  g.fillStyle = INK;
+  g.fillRect(-s * 0.24, s * 0.16, s * 0.48, s * 0.14);
+  g.fillStyle = '#efe6cd';
+  g.strokeStyle = INK;
+  g.lineWidth = Math.max(2, s * 0.08);
+  g.fillRect(-s * 0.14, -s * 0.34, s * 0.28, s * 0.52);
+  g.strokeRect(-s * 0.14, -s * 0.34, s * 0.28, s * 0.52);
+  g.fillStyle = INK_RED;
+  g.beginPath();
+  g.moveTo(0, -s * 0.36);
+  g.quadraticCurveTo(s * 0.16, -s * 0.54, 0, -s * 0.78);
+  g.quadraticCurveTo(-s * 0.16, -s * 0.54, 0, -s * 0.36);
+  g.closePath();
+  g.fill();
+  g.fillStyle = INK_OCHRE;
+  g.beginPath();
+  g.moveTo(0, -s * 0.42);
+  g.quadraticCurveTo(s * 0.07, -s * 0.54, 0, -s * 0.64);
+  g.quadraticCurveTo(-s * 0.07, -s * 0.54, 0, -s * 0.42);
+  g.closePath();
+  g.fill();
+}
+
+function inkMoth(g, s) {
+  g.fillStyle = INK;
+  g.beginPath();
+  g.ellipse(-s * 0.38, -s * 0.04, s * 0.34, s * 0.22, -0.4, 0, TAU);
+  g.fill();
+  g.beginPath();
+  g.ellipse(s * 0.38, -s * 0.04, s * 0.34, s * 0.22, 0.4, 0, TAU);
+  g.fill();
+  g.fillStyle = INK_OCHRE;
+  g.beginPath();
+  g.ellipse(-s * 0.34, -s * 0.04, s * 0.13, s * 0.10, -0.4, 0, TAU);
+  g.fill();
+  g.beginPath();
+  g.ellipse(s * 0.34, -s * 0.04, s * 0.13, s * 0.10, 0.4, 0, TAU);
+  g.fill();
+  g.fillStyle = INK;
+  g.beginPath();
+  g.ellipse(0, 0, s * 0.11, s * 0.36, 0, 0, TAU);
+  g.fill();
+}
+
+function inkHeart(g, s) {
+  g.fillStyle = INK_RED;
+  g.beginPath();
+  g.moveTo(0, s * 0.46);
+  g.bezierCurveTo(-s * 0.92, s * 0.04, -s * 0.52, -s * 0.58, 0, -s * 0.16);
+  g.bezierCurveTo(s * 0.52, -s * 0.58, s * 0.92, s * 0.04, 0, s * 0.46);
+  g.closePath();
+  g.fill();
+  inkOutline(g, Math.max(1.6, s * 0.10));
+  g.stroke();
+}
+
+function inkPlaster(g, s) {
+  const w = s, h = s * 0.42, r = h * 0.46;
+  g.fillStyle = '#e8d2a8';
+  g.strokeStyle = INK;
+  g.lineWidth = Math.max(1.8, s * 0.08);
+  g.beginPath();
+  g.moveTo(-w / 2 + r, -h / 2);
+  g.lineTo(w / 2 - r, -h / 2);
+  g.arcTo(w / 2, -h / 2, w / 2, h / 2, r);
+  g.arcTo(w / 2, h / 2, -w / 2, h / 2, r);
+  g.lineTo(-w / 2 + r, h / 2);
+  g.arcTo(-w / 2, h / 2, -w / 2, -h / 2, r);
+  g.arcTo(-w / 2, -h / 2, w / 2, -h / 2, r);
+  g.closePath();
+  g.fill(); g.stroke();
+  g.fillStyle = INK_RED;
+  g.beginPath();
+  g.moveTo(0, h * 0.22);
+  g.bezierCurveTo(-h * 0.7, 0, -h * 0.28, -h * 0.55, 0, -h * 0.12);
+  g.bezierCurveTo(h * 0.28, -h * 0.55, h * 0.7, 0, 0, h * 0.22);
+  g.closePath();
+  g.fill();
+}
+
+function inkTrio(g, s) {
+  g.fillStyle = INK;
+  g.beginPath();
+  g.moveTo(-s * 0.85, s * 0.22);
+  g.lineTo(-s * 0.55, -s * 0.28);
+  g.lineTo(-s * 0.25, s * 0.22);
+  g.closePath();
+  g.fill();
+  g.beginPath();
+  g.moveTo(0, -s * 0.30);
+  g.lineTo(s * 0.22, 0);
+  g.lineTo(0, s * 0.30);
+  g.lineTo(-s * 0.22, 0);
+  g.closePath();
+  g.fill();
+  g.beginPath();
+  g.moveTo(s * 0.25, -s * 0.22);
+  g.lineTo(s * 0.85, -s * 0.22);
+  g.lineTo(s * 0.55, s * 0.28);
+  g.closePath();
+  g.fill();
+}
+
+function inkKnuckleMarks(g, s) {
+  /* Four different ticks — not a year, not a word. */
+  const gap = s * 0.26;
+  const x0 = -s * 0.40;
+  g.fillStyle = INK;
+  g.beginPath(); g.arc(x0, 0, s * 0.07, 0, TAU); g.fill();
+  g.save(); g.translate(x0 + gap, 0); inkPlus(g, s * 0.16); g.restore();
+  g.fillRect(x0 + gap * 2 - s * 0.035, -s * 0.16, s * 0.07, s * 0.32);
+  g.beginPath();
+  g.moveTo(x0 + gap * 3, -s * 0.14);
+  g.lineTo(x0 + gap * 3 + s * 0.12, s * 0.14);
+  g.lineTo(x0 + gap * 3 - s * 0.12, s * 0.14);
+  g.closePath();
+  g.fill();
+}
+
+function drawHipsterFace(g, U, dna) {
+  /* Micro-ink sits just under the eyes — the hipster tell — and sticker
+     pieces fill the jaw. Nothing on the forehead. */
+  const ey = dna.eyes.y, sp = dna.eyes.spacing, sz = dna.eyes.size;
+  const under = ey + sz * 0.72;
+
+  g.save();
+  g.translate((50 - sp) * U, under * U);
+  inkPlus(g, 3.6 * U);
+  g.restore();
+
+  g.save();
+  g.translate((50 + sp) * U, under * U);
+  g.fillStyle = INK;
+  for (let i = 0; i < 3; i++) {
+    g.beginPath();
+    g.arc((i - 1) * 2.2 * U, (i === 1 ? 1.3 : 0) * U, 1.2 * U, 0, TAU);
+    g.fill();
+  }
+  g.restore();
+
+  g.save();
+  g.translate(23 * U, 78 * U);
+  inkCandle(g, 13 * U);
+  g.restore();
+
+  g.save();
+  g.translate(77 * U, 76 * U);
+  inkMoth(g, 11 * U);
+  g.restore();
+
+  g.save();
+  g.translate(50 * U, 90 * U);
+  inkHeart(g, 6.5 * U);
+  g.restore();
+
 /* ---- neck ink -----------------------------------------------
    Painted along the jaw rather than on the neck mesh, because the head
    hides that mesh entirely. Drawn before facial hair so a beard covers
-   it the way one actually would. Stays below the eyes — never the forehead. */
+   it the way one actually would. Stays below the eyes — never the forehead —
+   except hipster micro-marks, which sit just under the eyes on purpose. */
 function drawNeckInk(g, U, dna) {
   if (!tattooHasJaw(dna.tattoo)) return;
 
@@ -2967,6 +3160,10 @@ function drawNeckInk(g, U, dna) {
 
   if (dna.tattoo === 'tribal') {
     drawTribalJaw(g, U);
+    return;
+  }
+  if (dna.tattoo === 'hipster') {
+    drawHipsterFace(g, U, dna);
     return;
   }
 
@@ -3399,14 +3596,15 @@ const PIERCING_ALIASES = { brow: 'none', lip: 'none' };
 /* ---- tattoos ------------------------------------------------
    The Wii rig has floating hands and no arms, so forearm and
    sleeve ink has no surface to sit on. Hands and jaw do. Hands /
-   Jaw / Both keep the traditional flash; Tribal is a separate
-   solid-black style on both surfaces. */
+   Jaw / Both keep the traditional flash; Tribal and Hipster are
+   separate styles on both surfaces. */
 const TATTOOS = [
-  { id: 'none',   label: 'None' },
-  { id: 'hand',   label: 'Hands' },
-  { id: 'neck',   label: 'Jaw' },
-  { id: 'both',   label: 'Both' },
-  { id: 'tribal', label: 'Tribal' }
+  { id: 'none',    label: 'None' },
+  { id: 'hand',    label: 'Hands' },
+  { id: 'neck',    label: 'Jaw' },
+  { id: 'both',    label: 'Both' },
+  { id: 'tribal',  label: 'Tribal' },
+  { id: 'hipster', label: 'Hipster' }
 ];
 
 /* ---- apparel ------------------------------------------------
@@ -3489,7 +3687,7 @@ function randomDNA(opts = {}) {
     freckles: chance(0.18),
     facialHair: male && chance(0.42) ? pickOne(['stubble','lineup','full','goatee','stache','handlebar']) : 'none',
     piercing: 'none',
-    tattoo: chance(0.16) ? pickOne(['hand','neck','both','tribal']) : 'none',
+    tattoo: chance(0.16) ? pickOne(['hand','neck','both','tribal','hipster']) : 'none',
     apparel: opts.apparel || pickOne(APPAREL).id,
     hue: Math.random()
   };
@@ -5552,6 +5750,45 @@ function makeInkTexture(kind) {
     }
     g.fillRect(0, S * 0.88, S, S * 0.028);
     g.fillRect(0, S * 0.93, S, S * 0.022);
+  } else if (kind === 'hipster') {
+    wrapped(front, () => {
+      g.save();
+      g.translate(0, S * 0.24);
+      inkKnuckleMarks(g, S * 0.36);
+      g.restore();
+
+      g.save();
+      g.translate(0, S * 0.48);
+      inkWatch(g, S * 0.15);
+      g.restore();
+
+      g.save();
+      g.translate(0, S * 0.70);
+      inkCandle(g, S * 0.12);
+      g.restore();
+    });
+    wrapped(S * 0.75, () => {
+      g.save();
+      g.translate(0, S * 0.48);
+      inkMoth(g, S * 0.12);
+      g.restore();
+    });
+    g.lineWidth = S * 0.022;
+    g.strokeStyle = INK;
+    g.beginPath(); g.moveTo(0, S * 0.84); g.lineTo(S, S * 0.84); g.stroke();
+    g.beginPath(); g.moveTo(0, S * 0.90); g.lineTo(S, S * 0.90); g.stroke();
+    wrapped(front, () => {
+      g.save();
+      g.translate(0, S * 0.87);
+      inkPlaster(g, S * 0.16);
+      g.restore();
+    });
+    wrapped(S * 0.62, () => {
+      g.save();
+      g.translate(0, S * 0.94);
+      inkTrio(g, S * 0.08);
+      g.restore();
+    });
   } else {
     wrapped(front, () => {
       g.save();

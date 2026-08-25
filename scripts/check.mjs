@@ -531,6 +531,26 @@ for (const [page, ids] of required) {
   }
 }
 
+/* Hipster ink is neo-trad patchwork on jaw and hands, plus micro-marks
+   under the eyes. No readable dates, verses, or knuckle words. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'hipster'", "label: 'Hipster'", 'function inkWatch',
+                 'function inkCandle', 'function inkPlus', 'function drawHipsterFace',
+                 'ey + sz * 0.72', "kind === 'hipster'"]
+    .every((s) => src.includes(s));
+  const hipster = src.slice(src.indexOf('function inkPlus'), src.indexOf('function drawNeckInk'));
+  if (!wired) {
+    note('✗', 'mii.html — hipster ink needs a watch, a candle, and under-eye marks');
+    failures++;
+  } else if (/LOVED|1 Cor|fillText/.test(hipster) || hipster.includes('777')) {
+    note('✗', 'mii.html — hipster ink must not reprint words, verses, or dates');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers hipster tattoos on the face and hands');
+  }
+}
+
 /* A broken vercel.json fails the production deploy while GitHub still
    merges — the last plaza fix never reached phones because of that. */
 {
