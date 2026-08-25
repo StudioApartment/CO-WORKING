@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3278,7 +3278,8 @@ const APPAREL = [
     skirtFrom: 'light', nocollar: true },
   { id: 'skirt',    label: 'Skirt',     kind: 'skirt',    skirt: 'mini',
     skirtFrom: 'pants' },
-  { id: 'cardigan', label: 'Cardigan',  kind: 'cardigan', open: true }
+  { id: 'cardigan', label: 'Cardigan',  kind: 'cardigan', open: true },
+  { id: 'argyle',   label: 'Argyle sweater', kind: 'argyle', open: true }
 ];
 const APPAREL_BY_ID = new Map(APPAREL.map((a) => [a.id, a]));
 
@@ -5258,6 +5259,63 @@ function makeApparelTexture(dna) {
       }
       break;
     }
+    case 'argyle': {
+      /* Classic three-colour argyle: a shirt-coloured field with two
+         overlay diamonds (a cool blue and a warm brown, mixed from the
+         shirt so a camel pick reads like the photo and any other colour
+         still knits). Cream and pale-yellow dashes cross the lattice.
+         No chest device — that would be someone else's mark. */
+      const field = shade(base, 8);
+      const diaA = mixHex(base, '#2a5db0', 0.58);
+      const diaB = mixHex(base, '#6b4630', 0.52);
+      g.fillStyle = field;
+      g.fillRect(0, 0, W, H);
+      g.globalAlpha = 0.16;
+      g.fillStyle = shade(field, -24);
+      for (let y = 0; y < H; y += 5) g.fillRect(0, y, W, 2);
+      g.globalAlpha = 1;
+
+      const rw = 22, rh = 28;
+      const diamond = (cx, cy, col) => {
+        for (const ox of [-W, 0, W]) {
+          g.fillStyle = col;
+          g.beginPath();
+          g.moveTo(cx + ox, cy - rh);
+          g.lineTo(cx + ox + rw, cy);
+          g.lineTo(cx + ox, cy + rh);
+          g.lineTo(cx + ox - rw, cy);
+          g.closePath();
+          g.fill();
+        }
+      };
+      for (let row = -1; row < 12; row++) {
+        for (let col = -1; col < 10; col++) {
+          if ((col + row) % 2 === 0) continue;
+          const cx = col * rw * 2 + (row % 2 ? rw : 0);
+          const cy = row * rh;
+          diamond(cx, cy, ((col + row) / 2 | 0) % 2 ? diaA : diaB);
+        }
+      }
+
+      g.lineWidth = 1.8;
+      g.setLineDash([5, 5]);
+      g.lineCap = 'butt';
+      g.strokeStyle = '#f7f1e4';
+      for (let i = -H; i < W + H; i += 26) {
+        g.beginPath(); g.moveTo(i, 0); g.lineTo(i + H, H); g.stroke();
+      }
+      g.strokeStyle = '#ead889';
+      for (let i = -H; i < W + H; i += 26) {
+        g.beginPath(); g.moveTo(i, 0); g.lineTo(i - H, H); g.stroke();
+      }
+      g.setLineDash([]);
+
+      g.fillStyle = shade(field, -16);
+      g.fillRect(0, vy(0.86), W, H);
+      g.fillStyle = shade(field, -4);
+      for (let x = 0; x < W; x += 4) g.fillRect(x, vy(0.86), 2, H);
+      break;
+    }
   }
 
   const t = new THREE.CanvasTexture(c);
@@ -5976,8 +6034,10 @@ function buildMii(dna) {
   const shirtMat = new THREE.MeshStandardMaterial({
     color: apparelTex ? '#ffffff' : dna.shirt,
     map: apparelTex || null,
-    // Bare skin is softer than fabric; a suit has a slight sheen.
-    roughness: apparel.bare ? 0.82 : apparel.kind === 'suit' ? 0.55 : 0.72,
+    // Bare skin is softer than fabric; a suit has a slight sheen; argyle
+    // is a wool knit.
+    roughness: apparel.bare ? 0.82 : apparel.kind === 'suit' ? 0.55
+      : apparel.kind === 'argyle' ? 0.84 : 0.72,
     metalness: 0
   });
   const legCol = apparel.skirt && apparel.skirtFrom !== 'pants'

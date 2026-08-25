@@ -496,6 +496,24 @@ for (const [page, ids] of required) {
   }
 }
 
+/* Argyle is a knit sweater: tessellated diamonds, dashed overlays, and a
+   ribbed hem. A chest device or a house name would be someone else's mark. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'argyle'", "label: 'Argyle sweater'", "case 'argyle': {",
+                 'for (const ox of [-W, 0, W])', "g.setLineDash([5, 5])"]
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — argyle sweater needs wrap-aware diamonds and dashed overlays');
+    failures++;
+  } else if (/CELINE|Triomphe|Celine/i.test(src)) {
+    note('✗', 'mii.html — argyle must not reprint a licensed house mark');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers an argyle knit sweater');
+  }
+}
+
 /* A broken vercel.json fails the production deploy while GitHub still
    merges — the last plaza fix never reached phones because of that. */
 {
