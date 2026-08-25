@@ -444,13 +444,16 @@ for (const [page, ids] of required) {
   } else if (src.includes('taper = 1 - hang * 0.24') || !src.includes('layered ? -1.18 : -1.50')
              || src.includes('geoCache(`longI') || !src.includes('Math.sin(phi * 2.5)')
              || !src.includes('SphereGeometry(r, 88, 72')
-             || !src.includes('part === \'bangs\' || part === \'middle\'')
+             || !src.includes('part === \'middle\' || part === \'side\'')
+             || !src.includes('cover one eye')
              || src.includes("long: 'Long bangs'")
+             || src.includes("long: 'Long middle layers'")
+             || !src.includes("long: 'Side-swept bangs'")
              || src.includes("longside: 'Long side part'")
              || !src.includes("part === 'side'")
              || !src.includes("longHair(1.07, 'middle', 0, 'feet'")
              || src.includes('add(G.ball(), 0, 0.86, -0.62')) {
-    note('✗', 'mii.html — long hair should be a smooth middle part with several tapers, not a spike or blunt bangs');
+    note('✗', 'mii.html — long bangs should cover one eye with a side part');
     failures++;
   } else {
     note('✓', 'mii.html long hair styles include part and wave variants');

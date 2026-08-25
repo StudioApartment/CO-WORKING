@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3121,7 +3121,7 @@ const STYLE_LABELS = {
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
   curtains: 'Curtains', shortcurl: 'Short curls', afro: 'Afro', dreads: 'Locs',
   bob: 'Bob', shag: 'Shag', wolf: 'Wolf cut', mullet: 'Mullet', flow: 'Flow',
-  long: 'Long middle layers', longmiddle: 'Long middle part', longside: 'Long center part',
+  long: 'Side-swept bangs', longmiddle: 'Long middle part', longside: 'Long center part',
   longwavy: 'Long wavy', bun: 'Top bun', pony: 'Ponytail',
   highpony: 'High ponytail', pigtails: 'Pigtails',
   layers: 'Long layers', spacebuns: 'Space buns',
@@ -4503,7 +4503,21 @@ const G = {
       let faceOpen = frame.faceOpen;
       let groove = 0;
 
-      if (part === 'bangs' || part === 'middle' || part === 'side') {
+      if (part === 'bangs') {
+        /* Left-of-centre part; the +x fringe covers one eye and sits
+           in front of the face instead of hugging the skull. */
+        const sweep = Math.max(0, ux);
+        const partLine = Math.max(0, -ux);
+        groove = Math.exp(-((ux + 0.22) * (ux + 0.22)) * 16) * Math.max(0, uy - 0.02);
+        faceOpen = Math.min(1,
+          frame.faceOpen * 0.20 * (1 - sweep * 0.88)
+          + partLine * azFront * 0.58
+          + groove * 0.34
+        );
+        maxTh = sideTh + (lengthTh - sideTh) * (1 - faceOpen * 0.22);
+        maxTh -= groove * 0.18;
+        maxTh += sweep * azFront * 0.24;
+      } else if (part === 'middle' || part === 'side') {
         /* Centre part: hair splits on the midline and falls to the sides.
            Side used to be a left-of-centre sweep; it now matches the
            middle part so this cut frames the face evenly. */
@@ -4539,8 +4553,19 @@ const G = {
         nz *= 1 - groove * 0.07;
       }
 
+      if (part === 'bangs') {
+        /* Cover one eye: drop the sweep-side fringe over the eye and
+           push it forward so it draws on top of the face texture. */
+        const eyeCover = Math.max(0, ux) * azFront
+          * Math.exp(-Math.pow((uy - 0.10) / 0.36, 2) * 1.5);
+        nz += eyeCover * 0.28;
+        ny -= eyeCover * 0.24;
+        nx += eyeCover * 0.06;
+      }
+
       if (faceOpen > 0 && azFront > 0.30 && ny < frame.hairline + 0.08) {
-        const t = faceOpen * Math.pow((azFront - 0.30) / 0.70, 1.15)
+        const skipEye = part === 'bangs' ? Math.max(0, ux) * azFront : 0;
+        const t = faceOpen * (1 - skipEye * 0.92) * Math.pow((azFront - 0.30) / 0.70, 1.15)
           * Math.min(1, (frame.hairline + 0.08 - ny) / 0.28);
         const Lh = Math.hypot(nx, ny, nz) || 1;
         const k = 1 - t + t * (1.04 / Lh);
@@ -5803,7 +5828,16 @@ function buildHair(dna, mat, extraMats) {
     add(G.spikes(1.05), 0, 0, 0);
 
   } else if (st === 'long') {
-    add(G.longHair(1.07, 'bangs', 0), 0, 0, 0, 1, 1.04, 1);
+    /* Side-swept bangs that cover one eye. The face texture uses
+       polygonOffset to sit on the head; this hair uses a stronger
+       offset plus renderOrder so the fringe draws on top of the eyes. */
+    const bangMat = mat.clone();
+    bangMat.polygonOffset = true;
+    bangMat.polygonOffsetFactor = -8;
+    bangMat.polygonOffsetUnits = -8;
+    if (extraMats) extraMats.push(bangMat);
+    const m = put(G.longHair(1.07, 'bangs', 0), bangMat, 0, 0, 0, 1, 1.04, 1);
+    m.renderOrder = 3;
   } else if (st === 'longmiddle') {
     add(G.longHair(1.07, 'middle', 0), 0, 0, 0, 1, 1.04, 1);
   } else if (st === 'longside') {
