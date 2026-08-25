@@ -2229,6 +2229,25 @@ function drawEyewear(g, U, dna) {
         g.closePath();
         return;
       }
+      case 'bold': {
+        /* Big acetate rectangle. The outer top corner rides higher than the
+           inner one; a dead-level top rim reads as a pair of TV screens
+           bolted to the face. */
+        const rr = Math.min(w, h) * 0.20;
+        const tIn = -h * 0.46, tOut = -h * 0.54;
+        const bIn = h * 0.46, bOut = h * 0.50;
+        g.moveTo(-w / 2 + rr, tIn);
+        g.lineTo(w / 2 - rr, tOut);
+        g.quadraticCurveTo(w / 2, tOut, w / 2, tOut + rr);
+        g.lineTo(w / 2, bOut - rr);
+        g.quadraticCurveTo(w / 2, bOut, w / 2 - rr, bOut);
+        g.lineTo(-w / 2 + rr, bIn);
+        g.quadraticCurveTo(-w / 2, bIn, -w / 2, bIn - rr);
+        g.lineTo(-w / 2, tIn + rr);
+        g.quadraticCurveTo(-w / 2, tIn, -w / 2 + rr, tIn);
+        g.closePath();
+        return;
+      }
       default: {
         const rr = spec.frame === 'square' ? Math.min(w, h) * 0.16 : Math.min(w, h) * 0.42;
         const X = -w / 2, Y = -h / 2;
@@ -2291,6 +2310,21 @@ function drawEyewear(g, U, dna) {
     lensPath(lw, lh);
     g.stroke();
 
+    /* A bold acetate frame is not an even rim. The browline is a good deal
+       heavier than the sides and base, and that difference is most of what
+       separates it from a merely thick square — matching the whole rim to the
+       brow just made the lenses small. */
+    if (spec.brow) {
+      g.save();
+      g.lineCap = 'round';
+      g.lineWidth = spec.lw * U * spec.brow;
+      g.beginPath();
+      g.moveTo(-lw * 0.46, -lh * 0.46);
+      g.lineTo(lw * 0.46, -lh * 0.54);
+      g.stroke();
+      g.restore();
+    }
+
     // Clear frames need edges on both sides of the rim: a single translucent
     // stroke on skin just looks like a smudge.
     if (spec.clear) {
@@ -2317,7 +2351,9 @@ function drawEyewear(g, U, dna) {
   }
 
   // bridge
-  const bridgeDrop = spec.frame === 'aviator' ? 3.2 : spec.frame === 'square' ? 1.6 : 0;
+  const bridgeDrop = spec.frame === 'aviator' ? 3.2
+    : spec.frame === 'square' ? 1.6
+    : spec.frame === 'bold' ? 1.3 : 0;
   g.save();
   g.translate(50 * U, ey * U);
   g.strokeStyle = strokeStyleFor(gh * U);
@@ -3008,6 +3044,10 @@ const EYEWEAR = [
   { id: 11, label: 'Big square', group: 'Plastic', frame: 'square', w: 25, h: 20, lw: 3.6 },
   { id: 12, label: 'Chunky',     group: 'Plastic', frame: 'oval',   w: 22, h: 20, lw: 3.8 },
   { id: 13, label: 'Small rect', group: 'Plastic', frame: 'square', w: 17, h: 11, lw: 2.0 },
+  /* Heavy acetate: bigger lenses than 'Big square' and, more to the point, a
+     browline about twice the weight of the rest of the rim. */
+  { id: 14, label: 'Big frames', group: 'Plastic', frame: 'bold', w: 28, h: 22, lw: 3.2,
+    brow: 2.0 },
 
   // metal
   { id: 20, label: 'Gold aviator', group: 'Metal', frame: 'aviator', w: 22, h: 18, lw: 1.5,

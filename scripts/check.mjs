@@ -211,6 +211,22 @@ for (const [page, ids] of required) {
   }
 }
 
+/* The bold frame's browline is heavier than the rest of its rim, which is what
+   separates it from the thick square already in the list. Lose spec.brow and
+   the two become near-duplicates. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["label: 'Big frames'", "frame: 'bold'", 'brow: 2.0',
+                 'if (spec.brow) {', "case 'bold': {"]
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — big frames need a bold lens shape and a heavier browline');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers big bold-framed glasses');
+  }
+}
+
 /* Sideburns only read if they run to the outer edge of the face patch. Held
    inboard they render as dark stripes flanking the eyes, so the back edge
    sitting at x=0 is the load-bearing part of both shapes. */
