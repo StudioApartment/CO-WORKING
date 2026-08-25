@@ -1456,6 +1456,83 @@ function makeRibTexture(base) {
   return t;
 }
 
+/* Embroidered globe patch for the front of the dad cap.
+
+   Flat colour makes a decal. Embroidery is dense parallel thread laid in one
+   direction per region, so every region here gets a base tone with threads
+   combed across it, and the thread angle changes between land and sea — at
+   this size the change of direction separates them about as much as the
+   change of colour does.
+
+   The patch carries its own pale satin border because a dad cap takes the
+   wearer's shirt colour, and a blue globe on a blue crown is invisible. */
+function makeCapEmblem() {
+  const S = 192, c = cv(S), g = c.getContext('2d');
+  const cx = S / 2, cy = S / 2, R = S * 0.33;
+
+  const satin = (path, col, ang) => {
+    g.save();
+    g.beginPath();
+    path();
+    g.clip();
+    g.fillStyle = shade(col, -18);
+    g.fillRect(0, 0, S, S);
+    g.strokeStyle = shade(col, 20);
+    g.lineWidth = 3.2;
+    g.lineCap = 'round';
+    const dx = Math.cos(ang), dy = Math.sin(ang);
+    const px = -dy, py = dx;
+    for (let k = -50; k <= 50; k++) {
+      const ox = cx + px * k * 5.2, oy = cy + py * k * 5.2;
+      g.beginPath();
+      g.moveTo(ox - dx * S, oy - dy * S);
+      g.lineTo(ox + dx * S, oy + dy * S);
+      g.stroke();
+    }
+    g.restore();
+  };
+  const disc = (r) => () => g.arc(cx, cy, r, 0, TAU);
+
+  // Pale border, stitched round the edge the way a patch is finished.
+  satin(disc(R * 1.17), '#f4efe3', 1.35);
+  satin(disc(R), '#2f86cf', 1.30);
+
+  /* Continents, clipped to the sea so they cannot spill over the border.
+     Each blob is stitched separately, but the thread lattice is anchored to
+     the canvas centre rather than to the blob, so overlapping blobs share
+     one continuous run of thread instead of showing a seam. */
+  g.save();
+  g.beginPath();
+  disc(R)();
+  g.clip();
+  /* Few and large. Four small blobs averaged out into a green haze at Mii
+     scale; two continents with a clear channel of sea between them still
+     read as a planet when the whole patch is thirty pixels across. */
+  for (const [ox, oy, rx, ry, rot] of [
+    [-0.30, -0.26, 0.52, 0.36, -0.30],
+    [0.30, 0.26, 0.46, 0.34, -0.22],
+    [0.26, -0.34, 0.24, 0.17, 0.50]
+  ]) {
+    satin(() => g.ellipse(cx + ox * R, cy + oy * R, rx * R, ry * R, rot, 0, TAU),
+      '#4aa85a', 0.38);
+  }
+  g.restore();
+
+  // Rim thread and a small highlight, so the patch sits proud of the cotton.
+  g.lineWidth = 3.0;
+  g.strokeStyle = 'rgba(20,45,80,.55)';
+  g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.stroke();
+  g.lineWidth = 2.2;
+  g.strokeStyle = 'rgba(255,255,255,.42)';
+  g.beginPath(); g.arc(cx, cy, R * 1.17, Math.PI * 1.05, Math.PI * 1.72); g.stroke();
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  t.userData.own = true;
+  return t;
+}
+
 /* Plaited straw, for the conical hat.
 
    Basketwork is an interlace, and the interlace is the whole read: two
@@ -4279,7 +4356,7 @@ const HATS = {
   tophat:   { crown: '#1b1b22', accent: '#7d1f2b' },
   cap:      { crown: null,      accent: null      },   // takes the shirt colour
   flatbrim: { crown: null,      accent: null,     flat: true },
-  dadhat:   { crown: null,      accent: null,     soft: true },
+  dadhat:   { crown: null,      accent: null,     soft: true, emblem: true },
   knicks:   { crown: '#0d5eab', accent: '#f4842a', flat: true, mark: 'NY' },
   yankees:  { crown: '#132448', accent: '#e8e8ee', mark: 'NY' },
   bucket:   { crown: '#8d8f68', accent: '#6d6f4e' },
@@ -5065,6 +5142,25 @@ function buildHair(dna, mat, extraMats) {
         const brim = put(G.hatVisor(), visorMat, 0, soft ? 0.26 : 0.28, 1.26,
           0.68, 0.055, soft ? 0.36 : 0.32);
         brim.rotation.x = soft ? -0.28 : -0.16;
+      }
+
+      /* Small embroidered patch, front and centre, sitting high on the panel
+         where one is actually stitched. */
+      if (H.emblem) {
+        const emMat = new THREE.MeshBasicMaterial({
+          map: makeCapEmblem(), transparent: true, depthWrite: false
+        });
+        if (extraMats) extraMats.push(emMat);
+        const em = new THREE.Mesh(geoCache('quad', () => new THREE.PlaneGeometry(1, 1)), emMat);
+        /* Sized to read, not to scale. A patch this size is small on a real
+           cap, but a Mii's head is a hundred pixels across in the plaza and
+           at true proportion the globe was a single blue dot. The tilt keeps
+           the quad roughly parallel to the crown it sits on. */
+        em.position.set(0, 0.60, 1.06);
+        em.rotation.x = -0.40;
+        em.scale.set(0.44, 0.44, 1);
+        em.renderOrder = 3;
+        out.push(em);
       }
 
       // Abstract monogram, not a team wordmark.

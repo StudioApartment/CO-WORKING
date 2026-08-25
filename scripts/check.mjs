@@ -211,6 +211,19 @@ for (const [page, ids] of required) {
   }
 }
 
+/* The dad cap's patch has to carry its own pale border: that cap takes the
+   wearer's shirt colour, so without one the globe disappears on a blue hat. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes('makeCapEmblem') || !src.includes('emblem: true')
+      || !/satin\(disc\(R \* 1\.17\)/.test(src)) {
+    note('✗', 'mii.html — dad hat needs an embroidered emblem with a pale satin border');
+    failures++;
+  } else {
+    note('✓', 'mii.html puts an embroidered globe patch on the dad hat');
+  }
+}
+
 /* The western hat's whole read is the cattleman crease on the crown and the
    upswept sides of the brim. Both are geometry, and losing either drops it
    back to the bowler-with-a-tray it used to be. */
