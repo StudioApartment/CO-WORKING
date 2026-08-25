@@ -457,6 +457,24 @@ for (const [page, ids] of required) {
   }
 }
 
+/* A bubble jacket without baffles and a fur-trimmed hood is just a fat
+   hoodie. The channels have to wrap, and the pile sits on the opening
+   rather than covering the whole dome like another hat. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'bubble'", "label: 'Bubble jacket'", "kind: 'bubble'",
+                 "hood: 'fur'", "sleeves: 'puffer'", "case 'bubble':",
+                 'const baffles = 6', "apparel.hood === 'fur'",
+                 "apparel.sleeves === 'puffer'", 'makeFurTexture(dna.shirt)']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — bubble jacket needs quilted baffles, a fur hood and puffy sleeves');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a quilted bubble jacket with a fur-trimmed hood');
+  }
+}
+
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("from '/lib/profanity.js'") || !src.includes('isCleanName')) {

@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3259,7 +3259,7 @@ const TATTOOS = [
 ];
 
 /* ---- apparel ------------------------------------------------
-   `kind` selects the torso texture painter; `hood`/`open` add
+   `kind` selects the torso texture painter; `hood`/`open`/`sleeves` add
    geometry on top of it. */
 /* Everyday clothes take the wearer's shirt colour. The jersey carries its
    own palette and number so it still reads as a kit rather than a dyed tee. */
@@ -3278,7 +3278,9 @@ const APPAREL = [
     skirtFrom: 'light', nocollar: true },
   { id: 'skirt',    label: 'Skirt',     kind: 'skirt',    skirt: 'mini',
     skirtFrom: 'pants' },
-  { id: 'cardigan', label: 'Cardigan',  kind: 'cardigan', open: true }
+  { id: 'cardigan', label: 'Cardigan',  kind: 'cardigan', open: true },
+  { id: 'bubble',   label: 'Bubble jacket', kind: 'bubble',
+    hood: 'fur', sleeves: 'puffer', nocollar: true }
 ];
 const APPAREL_BY_ID = new Map(APPAREL.map((a) => [a.id, a]));
 
@@ -5258,6 +5260,51 @@ function makeApparelTexture(dna) {
       }
       break;
     }
+    case 'bubble': {
+      /* Horizontal baffles all the way around, so they wrap as quilted
+         rings rather than a chest stripe. A nylon sheen lives on the
+         material; the paint just has to say "puffer". */
+      const baffles = 6;
+      const y0 = 0, y1 = vy(0.86);
+      const bh = (y1 - y0) / baffles;
+      for (let i = 0; i < baffles; i++) {
+        const y = y0 + i * bh;
+        g.fillStyle = i % 2 ? shade(base, 12) : shade(base, -10);
+        g.fillRect(0, y, W, bh + 1);
+        g.fillStyle = shade(base, 28);
+        g.globalAlpha = 0.22;
+        for (const x of [front, back]) {
+          g.beginPath();
+          g.ellipse(x, y + bh * 0.48, 36, bh * 0.32, 0, 0, TAU);
+          g.fill();
+        }
+        g.globalAlpha = 1;
+        g.strokeStyle = shade(base, -38);
+        g.lineWidth = 3;
+        g.beginPath();
+        g.moveTo(0, y);
+        g.lineTo(W, y);
+        g.stroke();
+      }
+      g.fillStyle = shade(base, -18);
+      g.fillRect(0, y1, W, H);                                 // knit waist
+      g.fillStyle = shade(base, -6);
+      for (let x = 0; x < W; x += 4) g.fillRect(x, y1, 2, H);
+
+      g.fillStyle = '#c8ced4';                                 // zipper
+      g.fillRect(front - 3.5, 0, 7, y1);
+      g.fillStyle = '#9aa3ab';
+      for (let y = 6; y < y1 - 8; y += 4) g.fillRect(front - 1.6, y, 3.2, 2);
+
+      for (const sx of [-1, 1]) {                              // vertical pockets
+        const x = front + sx * 32;
+        g.fillStyle = shade(base, -20);
+        g.fillRect(x - 7, vy(0.50), 14, vy(0.78) - vy(0.50));
+        g.fillStyle = '#c8ced4';
+        g.fillRect(x - 1.4, vy(0.50), 2.8, vy(0.78) - vy(0.50));
+      }
+      break;
+    }
   }
 
   const t = new THREE.CanvasTexture(c);
@@ -5976,9 +6023,11 @@ function buildMii(dna) {
   const shirtMat = new THREE.MeshStandardMaterial({
     color: apparelTex ? '#ffffff' : dna.shirt,
     map: apparelTex || null,
-    // Bare skin is softer than fabric; a suit has a slight sheen.
-    roughness: apparel.bare ? 0.82 : apparel.kind === 'suit' ? 0.55 : 0.72,
-    metalness: 0
+    // Bare skin is softer than fabric; a suit has a slight sheen; the
+    // bubble jacket is nylon, so it picks up a little more.
+    roughness: apparel.bare ? 0.82 : apparel.kind === 'suit' ? 0.55
+      : apparel.kind === 'bubble' ? 0.46 : 0.72,
+    metalness: apparel.kind === 'bubble' ? 0.08 : 0
   });
   const legCol = apparel.skirt && apparel.skirtFrom !== 'pants'
     ? skirtColor(dna, apparel) : dna.pants;
@@ -6027,7 +6076,10 @@ function buildMii(dna) {
      the jersey look padded, so only football gets a tighter xz — height stays
      so the collar and pants still meet. */
   const kit = apparel.kind === 'football';
-  torso.scale.set((kit ? 0.29 : 0.33) * dna.girth, 0.28, (kit ? 0.235 : 0.27) * dna.girth);
+  const puffer = apparel.kind === 'bubble';
+  torso.scale.set((kit ? 0.29 : puffer ? 0.38 : 0.33) * dna.girth,
+    puffer ? 0.30 : 0.28,
+    (kit ? 0.235 : puffer ? 0.33 : 0.27) * dna.girth);
   torso.position.y = 0.5;
   body.add(torso);
 
@@ -6055,7 +6107,30 @@ function buildMii(dna) {
   }
 
   // A hood is a shell behind the head, not headwear — it coexists with hats.
-  if (apparel.hood) {
+  if (apparel.hood === 'fur') {
+    /* Nylon shell plus a fur ruff at the opening. Fur on the whole dome
+       read as a second hat; the pile belongs on the trim. */
+    const furMap = makeFurTexture(dna.shirt);
+    const furMat = new THREE.MeshStandardMaterial({
+      map: furMap, color: '#ffffff', roughness: 0.98, metalness: 0,
+      side: THREE.DoubleSide
+    });
+    const shellMat = new THREE.MeshStandardMaterial({
+      color: shade(dna.shirt, -6), roughness: 0.5, metalness: 0.06,
+      side: THREE.DoubleSide
+    });
+    M.mats.push(furMat, shellMat);
+    const hood = new THREE.Mesh(G.dome(1, 1.5), shellMat);
+    hood.scale.set(0.50, 0.38, 0.44);
+    hood.position.set(0, 0.82, -0.14);
+    hood.rotation.x = -0.22;
+    body.add(hood);
+    const trim = new THREE.Mesh(G.collar(), furMat);
+    trim.scale.set(0.28, 0.28, 0.22);
+    trim.rotation.x = Math.PI / 2 - 0.35;
+    trim.position.set(0, 0.90, 0.10);
+    body.add(trim);
+  } else if (apparel.hood) {
     const hoodMat = new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -10), roughness: 0.76 });
     M.mats.push(hoodMat);
     const hood = new THREE.Mesh(G.dome(1, 1.5), hoodMat);
@@ -6063,6 +6138,20 @@ function buildMii(dna) {
     hood.position.set(0, 0.78, -0.16);
     hood.rotation.x = -0.3;
     body.add(hood);
+  }
+
+  if (apparel.sleeves === 'puffer') {
+    const slMat = new THREE.MeshStandardMaterial({
+      color: shade(dna.shirt, -4), roughness: 0.5, metalness: 0.06
+    });
+    M.mats.push(slMat);
+    for (const sx of [-1, 1]) {
+      const sl = new THREE.Mesh(G.neck(), slMat);
+      sl.scale.set(0.125, 0.18, 0.125);
+      sl.position.set(sx * 0.40 * dna.girth, 0.54, 0.02);
+      sl.rotation.z = sx * 0.88;
+      body.add(sl);
+    }
   }
 
   if (apparel.skirt) {
