@@ -3821,11 +3821,11 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  bob: (r) => geoCache(`bobB${r}`, () => {
-    /* Jaw-length bob: blunt arched bangs, cheek volume, an undercurl at the
-       hem, and a slightly shorter back — not a centre-part curtain or bowl. */
+  bob: (r) => geoCache(`bobC${r}`, () => {
+    /* Jaw-length bob with a side part: fringe sweeps across the brow from
+       a left-of-centre groove, cheek volume, undercurl, slightly shorter back. */
     const tl = 2.18;
-    const g = new THREE.SphereGeometry(r, 52, 40, 0, TAU, 0, tl);
+    const g = new THREE.SphereGeometry(r, 64, 48, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     const n = HEAD_N;
     for (let i = 0; i < p.count; i++) {
@@ -3841,19 +3841,30 @@ const G = {
       const side = Math.abs(ux) / rs0;
       const frame = hairFrame(ux, uy, azFront, azBack, side);
 
-      /* Blunt bangs sit on the arched hairline, not a flat visor. */
-      const aboveLine = Math.max(0, uy - frame.hairline + 0.04);
-      const bangAmt = azFront * Math.pow(Math.min(1, aboveLine / 0.16), 1.55)
-        * Math.pow(Math.max(0, 1 - side * 0.32), 1.05);
+      /* Side part at ux ≈ -0.22. +x is the sweep side, where the fringe
+         falls across the forehead; -x stays more open. */
+      const sweep = Math.max(0, ux);
+      const partLine = Math.max(0, -ux);
+      const groove = Math.exp(-((ux + 0.22) * (ux + 0.22)) * 18)
+        * Math.max(0, uy - 0.02);
+      const fringe = sweep * azFront
+        * Math.exp(-Math.pow((uy - 0.36) / 0.30, 2) * 2.0);
+
+      const faceOpen = Math.min(1,
+        frame.faceOpen * 0.50
+        + partLine * azFront * 0.42
+        + Math.pow(Math.max(0, azFront - 0.18 - sweep * 0.22) / 0.82, 2) * 0.28
+      );
 
       /* Classic bob: chin on the sides, a touch shorter in back. */
       const sideLen = 2.04;
-      const frontLen = 1.90 + bangAmt * 0.16;
+      const frontLen = 1.88 + fringe * 0.18;
       const backLen = 1.84;
       let maxTh = sideLen;
-      maxTh += (frontLen - sideLen) * azFront * (1 - frame.faceOpen * 0.45);
+      maxTh += (frontLen - sideLen) * azFront * (1 - faceOpen * 0.40);
       maxTh += (backLen - sideLen) * azBack * 0.62;
       maxTh += frame.sideburn * 0.12;
+      maxTh -= groove * 0.18;
 
       const th2 = u * maxTh;
       const rs = Math.sin(th2);
@@ -3867,13 +3878,21 @@ const G = {
       nx *= s * r; ny *= s * r; nz *= s * r;
       ny += Math.max(0, ny - 0.46) * 0.26;
 
+      if (groove > 0) {
+        nx *= 1 - groove * 0.10;
+        nz *= 1 - groove * 0.10;
+      }
+      nx += fringe * 0.07;
+      nz += fringe * 0.12;
+      ny -= fringe * 0.05;
+
       /* Cheek volume — a bob widens through the jaw, not a helmet cap. */
       const cheek = Math.exp(-Math.pow((uy + 0.02) / 0.38, 2) * 2.2) * side * 0.10;
       nx *= 1 + cheek * Math.sign(ux || 1);
 
-      if (frame.faceOpen > 0 && azFront > 0.28 && ny < frame.hairline + 0.06) {
-        const t = frame.faceOpen * Math.pow((azFront - 0.28) / 0.72, 1.15)
-          * Math.min(1, (frame.hairline + 0.06 - ny) / 0.26);
+      if (faceOpen > 0 && azFront > 0.26 && ny < frame.hairline + 0.08) {
+        const t = faceOpen * Math.pow((azFront - 0.26) / 0.74, 1.15)
+          * Math.min(1, (frame.hairline + 0.08 - ny) / 0.28);
         const Lh = Math.hypot(nx, ny, nz) || 1;
         const k = 1 - t + t * (1.04 / Lh);
         nx *= k; ny *= k; nz *= k;

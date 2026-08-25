@@ -416,8 +416,9 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`bobB${r}`") || !src.includes('Undercurl')) {
-    note('✗', 'mii.html — bob should be a jaw-length cut with bangs and an undercurl');
+  if (!src.includes("geoCache(`bobC${r}`") || !src.includes('Undercurl')
+      || !src.includes('ux + 0.22') || !src.includes('Side part at ux')) {
+    note('✗', 'mii.html — bob should be a jaw-length cut with a side part and an undercurl');
     failures++;
   } else {
     note('✓', 'mii.html bob is shaped as a short jaw-length cut');
