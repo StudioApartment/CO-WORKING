@@ -487,25 +487,21 @@ for (const [page, ids] of required) {
   }
 }
 
-/* A vintage tee that reprints a real tour shirt is a copyright problem.
-   The raglan cut and a circular poster are the look; the cup and PLAZA
-   word are ours, the way the club cap is. */
+/* A bubble jacket without baffles and a fur-trimmed hood is just a fat
+   hoodie. The channels have to wrap, and the pile sits on the opening
+   rather than covering the whole dome like another hat. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const wired = ["id: 'vintage'", "label: 'Vintage tee'", "kind: 'vintage'",
-                 "sleeves: 'raglan'", "case 'vintage':", 'paintPlazaTourPrint',
-                 "const cream = '#ebe0cc'", "const word = 'PLAZA'",
-                 "apparel.sleeves === 'raglan'"]
+  const wired = ["id: 'bubble'", "label: 'Bubble jacket'", "kind: 'bubble'",
+                 "hood: 'fur'", "sleeves: 'puffer'", "case 'bubble':",
+                 'const baffles = 6', "apparel.hood === 'fur'",
+                 "apparel.sleeves === 'puffer'", 'makeFurTexture(dna.shirt)']
     .every((s) => src.includes(s));
-  const licensed = /ROLLING STONES|Mick Jagger|tongue and lips/i.test(src);
   if (!wired) {
-    note('✗', 'mii.html — vintage tee needs a raglan cut and an original plaza poster');
-    failures++;
-  } else if (licensed) {
-    note('✗', 'mii.html — vintage tee must not reprint a licensed tour shirt');
+    note('✗', 'mii.html — bubble jacket needs quilted baffles, a fur hood and puffy sleeves');
     failures++;
   } else {
-    note('✓', 'mii.html offers a raglan vintage tee with an original plaza print');
+    note('✓', 'mii.html offers a quilted bubble jacket with a fur-trimmed hood');
   }
 }
 

@@ -3723,7 +3723,9 @@ const APPAREL = [
   { id: 'cardigan', label: 'Cardigan',  kind: 'cardigan', open: true },
   { id: 'argyle',   label: 'Argyle sweater', kind: 'argyle', open: true },
   { id: 'techvest', label: 'Tech vest', kind: 'techvest', mock: true },
-  { id: 'vintage',  label: 'Vintage tee', kind: 'vintage', open: true, sleeves: 'raglan' }
+  { id: 'vintage',  label: 'Vintage tee', kind: 'vintage', open: true, sleeves: 'raglan' },
+  { id: 'bubble',   label: 'Bubble jacket', kind: 'bubble',
+    hood: 'fur', sleeves: 'puffer', nocollar: true }
 ];
 const APPAREL_BY_ID = new Map(APPAREL.map((a) => [a.id, a]));
 
@@ -6212,6 +6214,51 @@ function makeApparelTexture(dna) {
       g.beginPath(); g.moveTo(back + 18, 0); g.lineTo(W, pit); g.stroke();
 
       paintPlazaTourPrint(g, front, vy(0.34), 40, cream);
+      break;
+    }
+    case 'bubble': {
+      /* Horizontal baffles all the way around, so they wrap as quilted
+         rings rather than a chest stripe. A nylon sheen lives on the
+         material; the paint just has to say "puffer". */
+      const baffles = 6;
+      const y0 = 0, y1 = vy(0.86);
+      const bh = (y1 - y0) / baffles;
+      for (let i = 0; i < baffles; i++) {
+        const y = y0 + i * bh;
+        g.fillStyle = i % 2 ? shade(base, 12) : shade(base, -10);
+        g.fillRect(0, y, W, bh + 1);
+        g.fillStyle = shade(base, 28);
+        g.globalAlpha = 0.22;
+        for (const x of [front, back]) {
+          g.beginPath();
+          g.ellipse(x, y + bh * 0.48, 36, bh * 0.32, 0, 0, TAU);
+          g.fill();
+        }
+        g.globalAlpha = 1;
+        g.strokeStyle = shade(base, -38);
+        g.lineWidth = 3;
+        g.beginPath();
+        g.moveTo(0, y);
+        g.lineTo(W, y);
+        g.stroke();
+      }
+      g.fillStyle = shade(base, -18);
+      g.fillRect(0, y1, W, H);                                 // knit waist
+      g.fillStyle = shade(base, -6);
+      for (let x = 0; x < W; x += 4) g.fillRect(x, y1, 2, H);
+
+      g.fillStyle = '#c8ced4';                                 // zipper
+      g.fillRect(front - 3.5, 0, 7, y1);
+      g.fillStyle = '#9aa3ab';
+      for (let y = 6; y < y1 - 8; y += 4) g.fillRect(front - 1.6, y, 3.2, 2);
+
+      for (const sx of [-1, 1]) {                              // vertical pockets
+        const x = front + sx * 32;
+        g.fillStyle = shade(base, -20);
+        g.fillRect(x - 7, vy(0.50), 14, vy(0.78) - vy(0.50));
+        g.fillStyle = '#c8ced4';
+        g.fillRect(x - 1.4, vy(0.50), 2.8, vy(0.78) - vy(0.50));
+      }
       break;
     }
   }
