@@ -503,6 +503,22 @@ for (const [page, ids] of required) {
   }
 }
 
+/* A tech vest without the mock collar and the quarter zip is just a darker
+   cutoff. Armholes have to show a polo, not skin, or it reads as a tank. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'techvest'", "label: 'Tech vest'", "kind: 'techvest'",
+                 'mock: true', "case 'techvest':", 'const zipH = vy(0.48)',
+                 'scoopAt(W * 0.5)', 'apparel.mock']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — tech vest needs a mock collar, quarter zip and polo armholes');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a quarter-zip tech vest over a polo');
+  }
+}
+
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("from '/lib/profanity.js'") || !src.includes('isCleanName')) {

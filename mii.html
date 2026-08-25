@@ -3721,7 +3721,8 @@ const APPAREL = [
   { id: 'skirt',    label: 'Skirt',     kind: 'skirt',    skirt: 'mini',
     skirtFrom: 'pants' },
   { id: 'cardigan', label: 'Cardigan',  kind: 'cardigan', open: true },
-  { id: 'argyle',   label: 'Argyle sweater', kind: 'argyle', open: true }
+  { id: 'argyle',   label: 'Argyle sweater', kind: 'argyle', open: true },
+  { id: 'techvest', label: 'Tech vest', kind: 'techvest', mock: true }
 ];
 const APPAREL_BY_ID = new Map(APPAREL.map((a) => [a.id, a]));
 
@@ -6091,6 +6092,72 @@ function makeApparelTexture(dna) {
       g.fillRect(0, vy(0.86), W, H);
       g.fillStyle = shade(field, -4);
       for (let x = 0; x < W; x += 4) g.fillRect(x, vy(0.86), 2, H);
+      break;
+    }
+    case 'techvest': {
+      /* Quarter-zip mock-neck vest over a polo. The rig has no arms, so the
+         sleeveless cut is painted at the side seams and the polo is the fill
+         inside those scoops — a skin hole would read as a tank. */
+      const vest = shade(base, -8);
+      const polo = '#cfd6de';
+      g.fillStyle = vest;
+      g.fillRect(0, 0, W, H);
+      g.globalAlpha = 0.12;
+      g.fillStyle = shade(vest, -22);
+      for (let x = 0; x < W; x += 2) g.fillRect(x, 0, 1, H);   // performance grain
+      g.globalAlpha = 1;
+
+      const scoopAt = (x) => {
+        g.fillStyle = polo;
+        g.beginPath();
+        g.moveTo(x - 40, 0);
+        g.quadraticCurveTo(x, vy(0.48), x + 40, 0);
+        g.closePath();
+        g.fill();
+        g.save();
+        g.beginPath();
+        g.moveTo(x - 40, 0);
+        g.quadraticCurveTo(x, vy(0.48), x + 40, 0);
+        g.closePath();
+        g.clip();
+        g.fillStyle = '#5b6570';
+        g.globalAlpha = 0.28;
+        for (let yy = 3; yy < vy(0.52); yy += 6) {
+          for (let xx = x - 40; xx < x + 40; xx += 6) {
+            g.fillRect(xx + ((yy / 6) | 0) % 2 * 3, yy, 2, 2);
+          }
+        }
+        g.restore();
+        g.strokeStyle = shade(vest, -26);
+        g.lineWidth = 6;
+        g.lineJoin = 'round';
+        g.beginPath();
+        g.moveTo(x - 40, 0);
+        g.quadraticCurveTo(x, vy(0.48), x + 40, 0);
+        g.stroke();
+      };
+      scoopAt(0);
+      scoopAt(W);
+      scoopAt(W * 0.5);
+
+      /* Colour-matched quarter zip: tape and teeth in the vest, so it reads
+         as hardware without turning into a white placket. */
+      const zipH = vy(0.48);
+      g.fillStyle = shade(vest, -24);
+      g.fillRect(front - 4, 0, 8, zipH);
+      g.fillStyle = shade(vest, 18);
+      for (let y = 4; y < zipH - 8; y += 3.2) g.fillRect(front - 1.4, y, 2.8, 1.8);
+      g.fillStyle = shade(vest, -36);
+      g.beginPath();
+      g.moveTo(front - 5, zipH - 2);
+      g.lineTo(front + 5, zipH - 2);
+      g.lineTo(front + 3.5, zipH + 9);
+      g.lineTo(front - 3.5, zipH + 9);
+      g.closePath();
+      g.fill();
+
+      g.fillStyle = shade(vest, -14);
+      g.fillRect(0, H - 11, W, 11);                            // bound hem
       break;
     }
   }
