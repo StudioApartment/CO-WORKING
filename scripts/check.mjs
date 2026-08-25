@@ -427,6 +427,17 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("sculptHair(`spkC${r}`") || !src.includes('Spiky front')
+      || src.includes("sculptHair(`spkB${r}`")) {
+    note('✗', 'mii.html — spiky should have a natural hairline, side hair, and a spiked front');
+    failures++;
+  } else {
+    note('✓', 'mii.html spiky has a natural hairline, side hair, and a spiked front');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`layersB${r}`") || !src.includes('tucked behind the ears')
       || src.includes("geoCache(`layersA${r}`") || src.includes('left-of-centre part sweeps')) {
     note('✗', 'mii.html — long layers should have a centre part tucked behind the ears');

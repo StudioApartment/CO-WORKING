@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3781,25 +3781,46 @@ const G = {
     if (ny < 0.31) ny = 0.31;
     return { nx, ny, nz };
   }),
-  spikes: (r) => sculptHair(`spkB${r}`, r, 1.70, 50, 38, (b, tl, rr) => {
-    /* Piecey vertical tufts on a short crop — a handful of ridges, not
-       cones stuck all around the skull. */
+  spikes: (r) => sculptHair(`spkC${r}`, r, 2.12, 64, 48, (b, tl, rr) => {
+    /* Spiky front, a curved natural hairline, and hair down the sides
+       to the mouth — not a high helmet rim. */
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
-    let cover = Math.pow(Math.max(0, (b.uy + 0.08) / 0.76), 0.75);
-    cover *= 1 - frame.faceOpen * 0.88;
-    cover *= 1 - b.side * Math.pow(Math.max(0, (0.42 - b.uy) / 0.40), 1.3) * 0.60;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.24 + cover * 0.16), rr);
-    const spike = Math.pow(Math.max(0, Math.cos(b.phi * 5.5)), 1.8)
-      * Math.max(0, b.uy - 0.12) * cover;
+    let cover = Math.pow(Math.max(0, (b.uy + 0.12) / 0.80), 0.7);
+    cover *= 1 - frame.faceOpen * 0.90;
+    cover *= 1 - b.side * Math.pow(Math.max(0, (0.18 - b.uy) / 0.42), 1.25) * 0.28;
+    cover = Math.max(cover, frame.sideburn * 0.62 + frame.nape * 0.35);
+    let { nx, ny, nz, skull } = superFromTheta(
+      b, (b.th / tl) * (1.28 + cover * 0.18 + frame.sideburn * 0.16), rr
+    );
+
+    const front = Math.pow(b.azFront, 1.05);
+    const ridges = Math.pow(Math.max(0, Math.cos(b.phi * 4.2)), 1.55)
+      + 0.35 * Math.pow(Math.max(0, Math.cos(b.phi * 7.0 + 0.4)), 1.8);
+    const spike = ridges * Math.max(0, b.uy - 0.04)
+      * (0.22 + front * 1.35) * Math.max(cover, 0.25);
     const L0 = Math.hypot(nx, ny, nz) || 1;
-    const k = (L0 + (cover * 0.06 + spike * 0.16) * rr) / L0;
+    const k = (L0 + (cover * 0.05 + spike * 0.28) * rr) / L0;
     nx *= k; ny *= k; nz *= k;
-    ny += spike * 0.14;
-    if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
-    else if (b.azFront > 0.32 && ny < 0.52) {
-      const t = Math.pow((b.azFront - 0.32) / 0.68, 1.2) * Math.min(1, (0.52 - ny) / 0.22);
+    ny += spike * 0.38;
+    nz += spike * front * 0.16;
+    nx *= 1 - spike * 0.10;
+
+    if (frame.sideburn > 0.04) {
+      ny -= frame.sideburn * 0.34;
+      nx *= 1 + frame.sideburn * 0.05 * Math.sign(b.ux || 1);
+    }
+    if (frame.nape > 0.04) {
+      ny -= frame.nape * 0.18;
+      nz -= frame.nape * 0.06;
+    }
+
+    if (cover < 0.08 && spike < 0.08 && frame.sideburn < 0.12) {
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    } else if (b.azFront > 0.22 && ny < frame.hairline + 0.10 && spike < 0.20) {
+      const t = frame.faceOpen * Math.pow((b.azFront - 0.22) / 0.78, 1.15)
+        * Math.min(1, (frame.hairline + 0.10 - ny) / 0.28);
       ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
-      if (ny < 0.31) ny = 0.31;
+      if (t > 0.40) ny = Math.max(ny, frame.hairline - 0.02);
     }
     return { nx, ny, nz };
   }),
