@@ -427,6 +427,20 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("st === 'pigtails'")
+      || src.includes('sx * 0.46, 0.88, -0.22, 0.17, 0.17, 0.17')
+      || !src.includes('cap(1.045, 1.68, 1.08)')
+      || !src.includes('sx * 0.40, 0.58, -0.78, 0.22, 0.22, 0.22')
+      || !src.includes('hang clear of the skull')) {
+    note('✗', 'mii.html — pigtails should hang off the back of the head');
+    failures++;
+  } else {
+    note('✓', 'mii.html pigtails hang off the back of the head');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`layersB${r}`") || !src.includes('tucked behind the ears')
       || src.includes("geoCache(`layersA${r}`") || src.includes('left-of-centre part sweeps')) {
     note('✗', 'mii.html — long layers should have a centre part tucked behind the ears');
