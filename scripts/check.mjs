@@ -457,6 +457,14 @@ for (const [page, ids] of required) {
     failures++;
   } else {
     note('✓', 'mii.html wolf is a vertical hi-top with a flat front');
+
+  if (!src.includes("geoCache(`mohawkA${r}`") || !src.includes("mullet: 'Mohawk'")
+      || !src.includes("mohawk: 'mullet'") || src.includes("geoCache(`mulletA${r}`")
+      || src.includes("mohawk: 'spiky'")) {
+    note('✗', 'mii.html — mullet should render as a mohawk crest, not a skullcap');
+    failures++;
+  } else {
+    note('✓', 'mii.html mullet is a mohawk with a spiky centre crest');
   }
 }
 
