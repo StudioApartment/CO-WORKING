@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3259,12 +3259,13 @@ const TATTOOS = [
 ];
 
 /* ---- apparel ------------------------------------------------
-   `kind` selects the torso texture painter; `hood`/`open` add
+   `kind` selects the torso texture painter; `hood`/`open`/`sleeves` add
    geometry on top of it. */
 /* Everyday clothes take the wearer's shirt colour. The jersey carries its
    own palette and number so it still reads as a kit rather than a dyed tee. */
 const APPAREL = [
   { id: 'tee',      label: 'T-shirt',   kind: 'plain'    },
+  { id: 'vintage',  label: 'Vintage tee', kind: 'vintage', open: true, sleeves: 'raglan' },
   { id: 'cutoff',   label: 'Cutoff',    kind: 'cutoff'   },
   { id: 'bare',     label: 'No shirt',  kind: 'bare', bare: true },
   { id: 'buttonup', label: 'Button-up', kind: 'buttonup' },
@@ -4998,6 +4999,108 @@ function skirtColor(dna, spec) {
   return dna.shirt;
 }
 
+/* Circular gig poster for the vintage raglan. Same house device as the club
+   cap — a coffee cup — and our own word, because a real tour print is not
+   ours to ship. Heavy fills: at 80px on the chest, thin line art dies. */
+function paintPlazaTourPrint(g, cx, cy, r, fade) {
+  g.save();
+  g.beginPath();
+  g.arc(cx, cy, r, 0, TAU);
+  g.clip();
+
+  const grd = g.createRadialGradient(cx - r * 0.15, cy - r * 0.2, r * 0.08, cx, cy, r);
+  grd.addColorStop(0, '#f4c45a');
+  grd.addColorStop(0.55, '#e07828');
+  grd.addColorStop(1, '#b84318');
+  g.fillStyle = grd;
+  g.fillRect(cx - r, cy - r, r * 2, r * 2);
+
+  g.fillStyle = 'rgba(70,22,8,.30)';
+  const step = Math.max(3.2, r * 0.11);
+  for (let y = cy - r; y < cy + r; y += step) {
+    for (let x = cx - r; x < cx + r; x += step) {
+      g.beginPath();
+      g.arc(x + (((y / step) | 0) % 2) * step * 0.5, y, step * 0.16, 0, TAU);
+      g.fill();
+    }
+  }
+
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.lineJoin = 'round';
+  g.lineCap = 'round';
+
+  const bubble = (text, size, x, y) => {
+    g.font = `900 ${size}px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif`;
+    g.lineWidth = Math.max(1.6, size * 0.16);
+    g.strokeStyle = '#1a1210';
+    g.fillStyle = '#ef7a22';
+    g.strokeText(text, x, y);
+    g.fillText(text, x, y);
+  };
+  bubble('THE', Math.round(r * 0.16), cx, cy - r * 0.68);
+
+  const word = 'PLAZA';
+  g.font = `900 ${Math.round(r * 0.26)}px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif`;
+  const letters = [...word];
+  const widths = letters.map((ch) => g.measureText(ch).width);
+  const total = widths.reduce((a, b) => a + b, 0);
+  const arcR = r * 1.85;
+  let acc = -total / 2;
+  for (let i = 0; i < letters.length; i++) {
+    const ang = (acc + widths[i] / 2) / arcR;
+    g.save();
+    g.translate(cx + Math.sin(ang) * r * 0.78, cy - r * 0.28 + (1 - Math.cos(ang)) * r * 0.22);
+    g.rotate(ang);
+    bubble(letters[i], Math.round(r * 0.26), 0, 0);
+    g.restore();
+    acc += widths[i];
+  }
+
+  const s = r * 0.34, ex = cx, ey = cy + r * 0.16;
+  g.fillStyle = '#1a1210';
+  g.strokeStyle = '#1a1210';
+  g.beginPath();
+  g.moveTo(ex - s * 0.64, ey - s * 0.42);
+  g.lineTo(ex + s * 0.64, ey - s * 0.42);
+  g.quadraticCurveTo(ex + s * 0.54, ey + s * 0.70, ex, ey + s * 0.78);
+  g.quadraticCurveTo(ex - s * 0.54, ey + s * 0.70, ex - s * 0.64, ey - s * 0.42);
+  g.closePath();
+  g.fill();
+  g.beginPath();
+  g.ellipse(ex, ey - s * 0.42, s * 0.64, s * 0.16, 0, 0, TAU);
+  g.fill();
+  g.lineWidth = s * 0.20;
+  g.beginPath();
+  g.arc(ex + s * 0.82, ey + s * 0.04, s * 0.34, -1.15, 1.15);
+  g.stroke();
+  g.lineWidth = s * 0.12;
+  for (const dx of [-s * 0.28, s * 0.02, s * 0.32]) {
+    g.beginPath();
+    g.moveTo(ex + dx, ey - s * 0.55);
+    g.quadraticCurveTo(ex + dx + s * 0.16, ey - s * 0.88, ex + dx, ey - s * 1.12);
+    g.stroke();
+  }
+
+  if (fade) {
+    g.fillStyle = fade;
+    g.globalAlpha = 0.28;
+    for (let i = 0; i < 14; i++) {
+      g.beginPath();
+      g.arc(cx + ((i * 19) % 37) - 18, cy + ((i * 13) % 35) - 16, 1.4 + (i % 3), 0, TAU);
+      g.fill();
+    }
+    g.globalAlpha = 1;
+  }
+  g.restore();
+
+  g.strokeStyle = '#1a1210';
+  g.lineWidth = Math.max(2.4, r * 0.07);
+  g.beginPath();
+  g.arc(cx, cy, r, 0, TAU);
+  g.stroke();
+}
+
 function makeApparelTexture(dna) {
   const spec = APPAREL_BY_ID.get(dna.apparel) || APPAREL_BY_ID.get('tee');
   if (spec.kind === 'plain') return null;            // flat colour, no texture needed
@@ -5256,6 +5359,59 @@ function makeApparelTexture(dna) {
       for (let i = 0; i < 4; i++) {
         g.beginPath(); g.arc(front - 18, vy(0.18 + i * 0.18), 4.5, 0, TAU); g.fill();
       }
+      break;
+    }
+    case 'vintage': {
+      /* Raglan baseball tee: cream body, shirt-coloured sleeves, faded
+         circular plaza poster. Not a licensed tour shirt. */
+      const cream = '#ebe0cc';
+      const sleeve = base;
+      g.fillStyle = cream;
+      g.fillRect(0, 0, W, H);
+      g.fillStyle = '#c9b89a';
+      g.globalAlpha = 0.10;
+      for (let i = 0; i < 90; i++) g.fillRect((i * 47) % W, (i * 31) % H, 3, 2);
+      g.globalAlpha = 1;
+
+      /* Sleeve wedges from the collar down to the armpits. Drawn at both
+         side seams, and again at u=1, so the wrap does not leave a cream
+         stripe under the arm. */
+      const pit = vy(0.48);
+      g.fillStyle = sleeve;
+      g.beginPath();
+      g.moveTo(front - 18, 0);
+      g.lineTo(0, 0);
+      g.lineTo(0, pit);
+      g.closePath();
+      g.fill();
+      g.beginPath();
+      g.moveTo(back + 18, 0);
+      g.lineTo(W, 0);
+      g.lineTo(W, pit);
+      g.closePath();
+      g.fill();
+      g.beginPath();
+      g.moveTo(front + 18, 0);
+      g.lineTo(W * 0.5, 0);
+      g.lineTo(W * 0.5, pit);
+      g.closePath();
+      g.fill();
+      g.beginPath();
+      g.moveTo(back - 18, 0);
+      g.lineTo(W * 0.5, 0);
+      g.lineTo(W * 0.5, pit);
+      g.closePath();
+      g.fill();
+
+      g.strokeStyle = shade(sleeve, -28);
+      g.lineWidth = 3;
+      g.lineCap = 'round';
+      g.beginPath(); g.moveTo(front - 18, 0); g.lineTo(0, pit); g.stroke();
+      g.beginPath(); g.moveTo(front + 18, 0); g.lineTo(W * 0.5, pit); g.stroke();
+      g.beginPath(); g.moveTo(back - 18, 0); g.lineTo(W * 0.5, pit); g.stroke();
+      g.beginPath(); g.moveTo(back + 18, 0); g.lineTo(W, pit); g.stroke();
+
+      paintPlazaTourPrint(g, front, vy(0.34), 40, cream);
       break;
     }
   }
@@ -6063,6 +6219,23 @@ function buildMii(dna) {
     hood.position.set(0, 0.78, -0.16);
     hood.rotation.x = -0.3;
     body.add(hood);
+  }
+
+  /* Three-quarter raglan tubes. The rig has no arms, so without these the
+     baseball tee is only a yoke painted on the chest. They stop short of
+     the hands so they read as sleeves, not a second pair of fists. */
+  if (apparel.sleeves === 'raglan') {
+    const slMat = new THREE.MeshStandardMaterial({
+      color: shade(dna.shirt, -6), roughness: 0.78
+    });
+    M.mats.push(slMat);
+    for (const sx of [-1, 1]) {
+      const sl = new THREE.Mesh(G.neck(), slMat);
+      sl.scale.set(0.088, 0.155, 0.088);
+      sl.position.set(sx * 0.34 * dna.girth, 0.545, 0.02);
+      sl.rotation.z = sx * 0.92;
+      body.add(sl);
+    }
   }
 
   if (apparel.skirt) {

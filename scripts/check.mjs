@@ -457,6 +457,28 @@ for (const [page, ids] of required) {
   }
 }
 
+/* A vintage tee that reprints a real tour shirt is a copyright problem.
+   The raglan cut and a circular poster are the look; the cup and PLAZA
+   word are ours, the way the club cap is. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'vintage'", "label: 'Vintage tee'", "kind: 'vintage'",
+                 "sleeves: 'raglan'", "case 'vintage':", 'paintPlazaTourPrint',
+                 "const cream = '#ebe0cc'", "const word = 'PLAZA'",
+                 "apparel.sleeves === 'raglan'"]
+    .every((s) => src.includes(s));
+  const licensed = /ROLLING STONES|Mick Jagger|tongue and lips/i.test(src);
+  if (!wired) {
+    note('✗', 'mii.html — vintage tee needs a raglan cut and an original plaza poster');
+    failures++;
+  } else if (licensed) {
+    note('✗', 'mii.html — vintage tee must not reprint a licensed tour shirt');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a raglan vintage tee with an original plaza print');
+  }
+}
+
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("from '/lib/profanity.js'") || !src.includes('isCleanName')) {
