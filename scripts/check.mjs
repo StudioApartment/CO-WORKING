@@ -374,7 +374,7 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`mopA${r}`") || !src.includes('G.medium(1.07)')
+  if (!src.includes("geoCache(`mopB${r}`") || !src.includes('G.medium(1.07)')
       || !src.includes("bowl: 'Mop-top'")
       || !src.includes('mixed tapered points')) {
     note('✗', 'mii.html — bowl should render as a mop-top with tapered edges');
@@ -640,8 +640,8 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`spkC${r}`") || !src.includes('Spiky front')
-      || src.includes("sculptHair(`spkB${r}`")) {
+  if (!src.includes("sculptHair(`spkD${r}`") || !src.includes('Spiky front')
+      || src.includes("sculptHair(`spkC${r}`")) {
     note('✗', 'mii.html — spiky should have a natural hairline, side hair, and a spiked front');
     failures++;
   } else {
@@ -731,8 +731,9 @@ for (const [page, ids] of required) {
   if (!src.includes("st === 'pigtails'")
       || src.includes('sx * 0.46, 0.88, -0.22, 0.17, 0.17, 0.17')
       || !src.includes('cap(1.045, 1.68, 1.08)')
-      || !src.includes('sx * 0.40, 0.58, -0.78, 0.22, 0.22, 0.22')
-      || !src.includes('hang clear of the skull')) {
+      || !src.includes('G.pigtailBangs(1.05)')
+      || !src.includes('sx * 0.78, 0.78, -0.16, 0.20, 0.20, 0.20')
+      || !src.includes('High twin-tails')) {
     note('✗', 'mii.html — pigtails should hang off the back of the head');
     failures++;
   } else {
@@ -744,6 +745,7 @@ for (const [page, ids] of required) {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes('G.highPonyScalp(1.05)') || !src.includes('G.smoothPony()')
       || !src.includes('U-shaped nape')
+      || !src.includes('side-swept S-bang')
       || src.includes('add(G.ball(), 0, 0.94, -0.42, 0.26, 0.26, 0.26)')
       || src.includes('add(G.ball(), 0, -0.58, -1.18, 0.20, 0.40, 0.22)')) {
     note('✗', 'mii.html — high ponytail should be one smooth tail with a curved nape');

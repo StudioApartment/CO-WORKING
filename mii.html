@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 38 -->
+<!-- plaza-client: 39 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3550,6 +3550,24 @@ const BANDANA_COLOR_ALIASES = {
   bandanagreen: '#2e7d32'
 };
 
+/* Closest plaza cut for each chunky reference mesh:
+ *   short side-part, ears out          → combover
+ *   high twin-tails + jagged bangs     → pigtails
+ *   layered spikes + ahoge             → spiky
+ *   faux-hawk, short sides             → mullet (mohawk)
+ *   jagged mop + crown tufts           → bowl
+ *   sleek side-swept bob               → bob
+ *   choppy full-bang bob               → shag
+ *   long hime, blunt bangs             → longmiddle
+ *   heavy side-swept fringe            → long
+ *   tall flame/swirl quiff             → quiff
+ *   swept-back clump pomp              → pompadour
+ *   middle part, ear flicks            → curtains
+ *   forehead open, side volume         → slickback
+ *   side-swept with pointed fringe     → swept
+ *   high pony + S-bang                 → highpony
+ *   tubular coil halo                  → shortcurl
+ */
 const STYLE_LABELS = {
   bald: 'Bald', buzz: 'Buzz cut', taper: 'Crew cut', crop: 'French crop',
   waves: 'Long ponytail', pixie: 'Pixie', bowl: 'Mop-top', combover: 'Comb over',
@@ -3557,7 +3575,7 @@ const STYLE_LABELS = {
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
   curtains: 'Curtains', shortcurl: 'Short curls', afro: 'Afro', dreads: 'Locs',
   bob: 'Bob', shag: 'Shag', wolf: 'Hi-top', mullet: 'Mohawk', flow: 'Flow',
-  long: 'Side-swept bangs', longmiddle: 'Long middle part', longside: 'Long center part',
+  long: 'Side-swept bangs', longmiddle: 'Hime bangs', longside: 'Long center part',
   longwavy: 'Long wavy', bun: 'Top bun', pony: 'Ponytail',
   highpony: 'High ponytail', pigtails: 'Pigtails',
   layers: 'Long layers', spacebuns: 'Space buns',
@@ -3925,6 +3943,17 @@ function hugToward(nx, ny, nz, t, skullL) {
   return { nx: nx * k, ny: ny * k, nz: nz * k };
 }
 
+/* Positive cosine lobes — the chunky triangular clumps in the reference
+   meshes, not a smooth sine rim. */
+function hairClumps(phi, a = 5.0, b = 8.0, c = 13.0) {
+  return Math.pow(
+    0.42 * Math.max(0, Math.cos(phi * a))
+    + 0.33 * Math.max(0, Math.cos(phi * b + 0.65))
+    + 0.25 * Math.max(0, Math.cos(phi * c + 1.35)),
+    1.45
+  );
+}
+
 function sculptHair(key, r, tl, w, h, fn) {
   return geoCache(key, () => {
     const g = new THREE.SphereGeometry(r, w, h, 0, TAU, 0, tl);
@@ -3986,22 +4015,28 @@ const G = {
   hairFront:(r, tl, ts = HAIR_CROWN) => geoCache(`hf${r}_${tl}_${ts}`, () => superball(r, 26, 12, HEAD_N, Math.PI / 2 - (HAIR_GAP + HAIR_OVER) / 2, HAIR_GAP + HAIR_OVER, ts, Math.max(0.12, tl - ts))),
   hairBand: (r) => geoCache(`hbd${r}`, () => superball(r, 26, 10, HEAD_N, Math.PI / 2 + HAIR_GAP / 2, TAU - HAIR_GAP, 1.15, 0.5)),
   dome: (r, tl) => geoCache(`dm${r}_${tl}`, () => superball(r, 36, 24, HEAD_N, 0, TAU, 0, tl)),
-  pomp: (r) => sculptHair(`pompG${r}`, r, 1.78, 48, 40, (b, tl, rr) => {
-    /* Dense mound swept BACK from the forehead, short sides. Volume has
-       to beat the pole or it reads as a bowl. */
+  pomp: (r) => sculptHair(`pompH${r}`, r, 1.82, 56, 44, (b, tl, rr) => {
+    /* Swept-back clump pomp from the photo library: a V at the hairline,
+       ridged locks running front→back, sides combed back. */
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
     let cover = Math.pow(Math.max(0, (b.uy + 0.12) / 0.80), 0.75);
     cover *= 1 - frame.faceOpen * 0.90;
     cover *= 1 - b.side * Math.pow(Math.max(0, (0.42 - b.uy) / 0.40), 1.4) * 0.55;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.28 + cover * 0.22), rr);
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.30 + cover * 0.24), rr);
     const L0 = Math.hypot(nx, ny, nz) || 1;
-    const k = (L0 + cover * 0.10 * rr) / L0;
+    const k = (L0 + cover * 0.11 * rr) / L0;
     nx *= k; ny *= k; nz *= k;
     const dx = nx * 0.80, dy = ny - 0.72, dz = nz - 0.42;
     const bump = Math.exp(-(dx * dx + dy * dy + dz * dz * 0.90) * 1.70)
       * Math.max(0, Math.min(1, (ny - 0.40) / 0.22));
-    ny += bump * 0.24;
-    nz -= bump * 0.10;
+    ny += bump * 0.26;
+    nz -= bump * 0.12;
+    /* Longitudinal clumps, not a smooth mound. */
+    const ridge = hairClumps(b.phi, 4.0, 7.0, 11.0) * cover * Math.max(0, b.uy - 0.12);
+    ny += ridge * 0.10;
+    nz -= ridge * 0.06;
+    const peak = Math.exp(-(b.ux * b.ux) * 18) * b.azFront * Math.max(0, b.uy - 0.28);
+    ny += peak * 0.10;
     if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
     else if (b.azFront > 0.30 && ny < 0.54) {
       const t = Math.pow((b.azFront - 0.30) / 0.70, 1.2) * Math.min(1, (0.54 - ny) / 0.24);
@@ -4010,22 +4045,29 @@ const G = {
     }
     return { nx, ny, nz };
   }),
-  quiff: (r) => sculptHair(`quiffG${r}`, r, 1.62, 46, 38, (b, tl, rr) => {
-    /* Smaller than pomp: lift UP and FORWARD at the forelock only. */
+  quiff: (r) => sculptHair(`quiffH${r}`, r, 1.68, 52, 42, (b, tl, rr) => {
+    /* Front-lift quiff: a central peak, chunky locks swept up and back,
+       V at the hairline. */
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
     let cover = Math.pow(Math.max(0, (b.uy + 0.10) / 0.78), 0.8);
     cover *= 1 - frame.faceOpen * 0.90;
     cover *= 1 - b.side * Math.pow(Math.max(0, (0.44 - b.uy) / 0.42), 1.35) * 0.62;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.24 + cover * 0.18), rr);
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.26 + cover * 0.20), rr);
     const L0 = Math.hypot(nx, ny, nz) || 1;
-    nx *= (L0 + cover * 0.07 * rr) / L0;
-    ny *= (L0 + cover * 0.07 * rr) / L0;
-    nz *= (L0 + cover * 0.07 * rr) / L0;
+    nx *= (L0 + cover * 0.08 * rr) / L0;
+    ny *= (L0 + cover * 0.08 * rr) / L0;
+    nz *= (L0 + cover * 0.08 * rr) / L0;
     const dx = nx * 1.20, dy = ny - 0.48, dz = nz - 0.78;
     const bump = Math.exp(-(dx * dx + dy * dy + dz * dz * 0.65) * 2.20)
       * Math.max(0, Math.min(1, (ny - 0.36) / 0.20));
-    ny += bump * 0.38;
-    nz += bump * 0.16;
+    ny += bump * 0.44;
+    nz += bump * 0.14;
+    const ridge = hairClumps(b.phi, 3.5, 6.5, 10.0) * cover * b.azFront;
+    ny += ridge * 0.12;
+    nz += ridge * 0.05;
+    const vPeak = Math.exp(-(b.ux * b.ux) * 22) * b.azFront * Math.max(0, b.uy - 0.22);
+    ny += vPeak * 0.08;
+    nz += vPeak * 0.04;
     if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
     else if (b.azFront > 0.32 && ny < 0.54) {
       const t = Math.pow((b.azFront - 0.32) / 0.68, 1.2) * Math.min(1, (0.54 - ny) / 0.24);
@@ -4168,26 +4210,30 @@ const G = {
     if (ny < 0.31) ny = 0.31;
     return { nx, ny, nz };
   }),
-  partedTop: (r, kind = 'side') => sculptHair(`partB${r}_${kind}`, r, 1.88, 50, 40, (b, tl, rr) => {
-    /* Hair stays on the head. The part is a groove, not a bald patch. */
+  partedTop: (r, kind = 'side') => sculptHair(`partC${r}_${kind}`, r, 1.92, 56, 44, (b, tl, rr) => {
+    /* Short side-part from the photo library: a left groove, the mass
+       swept across, ears out, a few pointed tips at the temples. */
     const vol = kind === 'combover' ? 1 : 0;
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
     const sweep = Math.max(0, b.ux);
-    const groove = Math.exp(-((b.ux + 0.14) * (b.ux + 0.14)) * 28) * Math.max(0, b.uy);
+    const groove = Math.exp(-((b.ux + 0.18) * (b.ux + 0.18)) * 22) * Math.max(0, b.uy);
     let cover = Math.pow(Math.max(0, (b.uy + 0.12) / 0.80), 0.7);
     cover *= 1 - frame.faceOpen * 0.72;
     cover *= 1 - b.side * Math.pow(Math.max(0, (0.38 - b.uy) / 0.38), 1.3) * 0.40;
-    cover += sweep * 0.12 * vol;
-    cover -= groove * 0.22;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.28 + cover * 0.22 + vol * 0.06), rr);
+    cover += sweep * 0.14 * vol;
+    cover -= groove * 0.24;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.30 + cover * 0.24 + vol * 0.06), rr);
     const L0 = Math.hypot(nx, ny, nz) || 1;
     const k = (L0 + (cover * (0.07 + vol * 0.05)) * rr) / L0;
     nx *= k; ny *= k; nz *= k;
-    nx += 0.045 * Math.max(0, b.uy) + sweep * 0.04;
-    ny += sweep * vol * 0.05 * Math.max(0, b.uy - 0.35);
+    nx += 0.050 * Math.max(0, b.uy) + sweep * 0.05;
+    ny += sweep * vol * 0.06 * Math.max(0, b.uy - 0.32);
+    const clumps = hairClumps(b.phi, 4.5, 7.5, 12.0) * cover * (0.45 + sweep * 0.55);
+    ny += clumps * 0.05;
+    nx += clumps * 0.03 * Math.sign(b.ux || 1);
     if (groove > 0.05) {
-      nx *= 1 - groove * 0.07;
-      ny -= groove * 0.035;
+      nx *= 1 - groove * 0.09;
+      ny -= groove * 0.04;
     }
     if (vol < 0.5 && ny > 1.12) ny = 1.12 + (ny - 1.12) * 0.40;
     if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
@@ -4225,21 +4271,29 @@ const G = {
     if (ny < 0.31) ny = 0.31;
     return { nx, ny, nz };
   }),
-  slickBack: (r) => sculptHair(`slickB${r}`, r, 1.88, 48, 38, (b, tl, rr) => {
-    /* Crown still covered — hair is combed back and flattened, not deleted.
-       The hairline sits further back; nape has a little length. */
+  slickBack: (r) => sculptHair(`slickC${r}`, r, 1.96, 56, 42, (b, tl, rr) => {
+    /* Forehead open, hair combed back, bulbous side volume — the
+       swept-back photo, not a flattened helmet. */
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
     let cover = Math.pow(Math.max(0, (b.uy + 0.16) / 0.82), 0.65);
-    cover *= 1 - frame.faceOpen * 0.70;
+    cover *= 1 - frame.faceOpen * 0.78;
     cover += b.azBack * Math.max(0, (0.50 - b.uy) / 0.55) * 0.22;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.30 + cover * 0.18), rr);
-    if (ny > 1.10) ny = 1.10 + (ny - 1.10) * 0.22;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.32 + cover * 0.20), rr);
+    if (ny > 1.14) ny = 1.14 + (ny - 1.14) * 0.22;
     const L0 = Math.hypot(nx, ny, nz) || 1;
-    const k = (L0 + cover * 0.055 * rr) / L0;
+    const k = (L0 + cover * 0.06 * rr) / L0;
     nx *= k; ny *= k; nz *= k;
     if (b.azFront > 0.20 && b.uy > 0.35) {
-      nz -= 0.08 * b.azFront * cover;
+      nz -= 0.10 * b.azFront * cover;
     }
+    /* Side lobes just above the ears. */
+    const lobe = b.side * Math.exp(-Math.pow((b.uy - 0.18) / 0.28, 2) * 2.2)
+      * (1 - b.azFront * 0.35);
+    nx *= 1 + lobe * 0.22;
+    ny += lobe * 0.04;
+    const ridge = hairClumps(b.phi, 3.2, 6.0, 9.0) * cover * Math.max(0, b.uy);
+    ny += ridge * 0.05;
+    nz -= ridge * 0.04;
     if (b.azBack > 0.25 && ny < 0.50) {
       nz -= 0.08 * b.azBack;
       ny -= 0.06 * b.azBack * Math.max(0, 0.46 - ny);
@@ -4310,29 +4364,34 @@ const G = {
     ));
     return { nx, ny, nz };
   }),
-  spikes: (r) => sculptHair(`spkC${r}`, r, 2.12, 64, 48, (b, tl, rr) => {
-    /* Spiky front, a curved natural hairline, and hair down the sides
-       to the mouth — not a high helmet rim. */
+  spikes: (r) => sculptHair(`spkD${r}`, r, 2.18, 72, 52, (b, tl, rr) => {
+    /* Spiky front from the photo library: triangular layered bangs,
+       a curved natural hairline, and hair down the sides. The ahoge is
+       a separate spike mesh in buildHair. */
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
     let cover = Math.pow(Math.max(0, (b.uy + 0.12) / 0.80), 0.7);
     cover *= 1 - frame.faceOpen * 0.90;
     cover *= 1 - b.side * Math.pow(Math.max(0, (0.18 - b.uy) / 0.42), 1.25) * 0.28;
     cover = Math.max(cover, frame.sideburn * 0.62 + frame.nape * 0.35);
     let { nx, ny, nz, skull } = superFromTheta(
-      b, (b.th / tl) * (1.28 + cover * 0.18 + frame.sideburn * 0.16), rr
+      b, (b.th / tl) * (1.30 + cover * 0.20 + frame.sideburn * 0.16), rr
     );
 
     const front = Math.pow(b.azFront, 1.05);
-    const ridges = Math.pow(Math.max(0, Math.cos(b.phi * 4.2)), 1.55)
-      + 0.35 * Math.pow(Math.max(0, Math.cos(b.phi * 7.0 + 0.4)), 1.8);
-    const spike = ridges * Math.max(0, b.uy - 0.04)
-      * (0.22 + front * 1.35) * Math.max(cover, 0.25);
+    const ridges = hairClumps(b.phi, 4.5, 7.2, 11.5)
+      + 0.22 * hairClumps(b.phi + 0.35, 6.0, 9.5, 14.0);
+    const spike = ridges * Math.max(0, b.uy + 0.02)
+      * (0.28 + front * 1.55) * Math.max(cover, 0.22);
     const L0 = Math.hypot(nx, ny, nz) || 1;
-    const k = (L0 + (cover * 0.05 + spike * 0.28) * rr) / L0;
+    const k = (L0 + (cover * 0.05 + spike * 0.34) * rr) / L0;
     nx *= k; ny *= k; nz *= k;
-    ny += spike * 0.38;
-    nz += spike * front * 0.16;
-    nx *= 1 - spike * 0.10;
+    ny += spike * 0.42;
+    nz += spike * front * 0.22;
+    nx *= 1 - spike * 0.08;
+    /* Bangs hang in pointed clumps over the brow. */
+    const bangs = front * Math.max(0, (0.48 - b.uy) / 0.42) * ridges;
+    ny -= bangs * 0.16;
+    nz += bangs * 0.10;
 
     if (frame.sideburn > 0.04) {
       ny -= frame.sideburn * 0.34;
@@ -4353,23 +4412,47 @@ const G = {
     }
     return { nx, ny, nz };
   }),
-  curtains: (r, tl) => geoCache(`curt${r}_${tl}`, () => {
-    const g = superball(r, 36, 28, HEAD_N, 0, TAU, 0, tl);
+  curtains: (r, tl) => geoCache(`curtB${r}_${tl}`, () => {
+    const g = superball(r, 48, 36, HEAD_N, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     for (let i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i);
-      /* Hang two panels at the front hairline, not on the crown. Puffing
-         the top made a canyon; a long dome covered the eyes. */
+      /* Centre part, two panels off the brow, and a sharp outward flick
+         at ear height — the curtain-bob photo. */
       const ax = Math.abs(v.x);
       const dx = ax - 0.44, dy = v.y - 0.34, dz = v.z - 0.86;
       const bump = Math.exp(-(dx * dx * 2.6 + dy * dy * 2.0 + dz * dz) * 2.8);
       v.y -= bump * 0.08;
       v.z += bump * 0.28;
+      const part = Math.exp(-(v.x * v.x) * 22) * Math.max(0, v.y - 0.08);
+      v.x *= 1 - part * 0.08;
+      v.z *= 1 - part * 0.04;
+      const flick = Math.exp(-Math.pow((v.y + 0.02) / 0.22, 2) * 2.4)
+        * Math.exp(-Math.pow((ax - 0.78) / 0.28, 2) * 2.0);
+      v.x += Math.sign(v.x || 1) * flick * 0.16;
+      v.y += flick * 0.06;
       p.setXYZ(i, v.x, v.y, v.z);
     }
     p.needsUpdate = true;
     g.computeVertexNormals();
     return g;
+  }),
+  pigtailBangs: (r) => sculptHair(`ptbA${r}`, r, 1.62, 48, 32, (b, tl, rr) => {
+    /* Jagged twin-tail bangs: a centre point plus side clumps over the
+       brow. Everything else hugs the skull so this can sit on the cap. */
+    const front = Math.pow(Math.max(0, b.azFront - 0.02), 1.15);
+    const clumps = hairClumps(b.phi, 3.0, 5.0, 8.0);
+    let cover = front * Math.max(0, (0.62 - b.uy) / 0.55) * (0.35 + clumps * 0.85);
+    cover *= 1 - b.side * 0.18;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.12 + cover * 0.55), rr);
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    const k = (L0 + cover * 0.10 * rr) / L0;
+    nx *= k; ny *= k; nz *= k;
+    ny -= cover * (0.18 + clumps * 0.16);
+    nz += cover * 0.22;
+    if (cover < 0.10) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.01));
+    if (ny < 0.18 && cover > 0.12) ny = 0.18 + clumps * 0.04;
+    return { nx, ny, nz };
   }),
   bob: (r) => geoCache(`bobC${r}`, () => {
     /* Jaw-length bob with a side part: fringe sweeps across the brow from
@@ -4459,9 +4542,9 @@ const G = {
       ny -= hem * 0.05 * (0.4 + azBack * 0.6);
 
       /* Subtle end flick on the sides — piecey, not one solid block. */
-      const flick = hem * side * 0.04 * Math.sin(phi * 4.0 + 0.5);
-      nx += flick * Math.sign(ux || 1) * 0.028;
-      ny -= Math.abs(flick) * 0.018;
+      const flick = hem * side * 0.025 * Math.sin(phi * 3.2 + 0.5);
+      nx += flick * Math.sign(ux || 1) * 0.022;
+      ny -= Math.abs(flick) * 0.012;
 
       ({ nx, ny, nz } = applySideburnsNape(
         nx, ny, nz, frame.sideburn, frame.nape * 0.42, ux, azFront, azBack
@@ -4735,9 +4818,9 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  medium: (r) => geoCache(`mopA${r}`, () => {
-    /* Mop-top: a full shaggy crown, choppy bangs over the brow, and a hem
-       of mixed tapered points — not a smooth bowl helmet. */
+  medium: (r) => geoCache(`mopB${r}`, () => {
+    /* Mop-top from the photo library: jagged triangular bangs, mixed tapered points,
+       and a few crown tufts added in buildHair. */
     const tl = 2.38;
     const g = new THREE.SphereGeometry(r, 88, 64, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
@@ -4754,25 +4837,18 @@ const G = {
       const phi = Math.atan2(ux, uz);
       const side = Math.abs(ux) / rs0;
 
-      /* Mixed-width tapers: a few broad locks plus skinny ones, so the
-         outline is points of different sizes instead of one rim. */
-      const lobes = Math.pow(
-        0.30 * Math.abs(Math.sin(phi * 4.2 + 0.15))
-        + 0.28 * Math.abs(Math.sin(phi * 7.0 + 0.90))
-        + 0.24 * Math.abs(Math.sin(phi * 11.5 + 1.70))
-        + 0.18 * Math.abs(Math.sin(phi * 18.0 + 0.40)),
-        1.40
-      );
+      const lobes = hairClumps(phi, 4.0, 7.0, 11.0) * 0.72
+        + 0.28 * Math.pow(Math.abs(Math.sin(phi * 5.5 + 0.4)), 1.6);
 
-      const bangTh = 1.42 + lobes * 0.26;
-      const sideTh = 1.94 + lobes * 0.32;
-      const napeTh = 2.04 + lobes * 0.26;
+      const bangTh = 1.50 + lobes * 0.38;
+      const sideTh = 1.90 + lobes * 0.28;
+      const napeTh = 2.00 + lobes * 0.22;
       const faceWin = Math.pow(Math.max(0, azFront - 0.06) / 0.94, 1.25);
       let maxTh = sideTh
         + (bangTh - sideTh) * faceWin
         + (napeTh - sideTh) * Math.pow(azBack, 1.15);
       const hem = Math.pow(Math.max(0, (u - 0.46) / 0.54), 1.12);
-      maxTh += (lobes - 0.40) * 0.42 * (0.45 + hem * 0.55);
+      maxTh += (lobes - 0.40) * 0.48 * (0.45 + hem * 0.55);
 
       const th2 = u * maxTh;
       const rs = Math.sin(th2);
@@ -4785,23 +4861,19 @@ const G = {
       );
       nx *= s * r; ny *= s * r; nz *= s * r;
 
-      /* Moppy crown — taller and irregular, not a smooth dome. */
-      ny += Math.max(0, ny - 0.38) * 0.40;
+      ny += Math.max(0, ny - 0.38) * 0.36;
       const fluff = (0.042 * Math.sin(phi * 3.6 + uy * 4.5)
         + 0.026 * Math.sin(phi * 6.8 - uy * 3.1 + 0.7)
         + 0.016 * Math.sin(phi * 12.2 + uy * 5.4 + 1.2))
         * Math.max(0, uy - 0.04);
-      ny += fluff * 0.90;
-      nx *= 1 + fluff * 0.60;
-      nz *= 1 + fluff * 0.42;
+      ny += fluff * 0.80;
+      nx *= 1 + fluff * 0.50;
+      nz *= 1 + fluff * 0.36;
 
-      /* Choppy bangs hang onto the brow. Extra +z reads as a visor, so
-         length goes down, not forward. */
-      const bangs = faceWin * Math.pow(Math.max(0, (u - 0.18) / 0.82), 1.05);
-      ny -= bangs * (0.10 + lobes * 0.20);
-      nz += bangs * 0.04;
+      const bangs = faceWin * Math.pow(Math.max(0, (u - 0.16) / 0.84), 1.05);
+      ny -= bangs * (0.12 + lobes * 0.28);
+      nz += bangs * 0.05;
 
-      /* Side and nape locks drop and pinch into tapers of mixed width. */
       const hang = hem * (0.50 + side * 0.22 + azBack * 0.28);
       ny -= hang * (0.14 + lobes * 0.36);
       const flare = 1 + hang * (0.05 + (lobes - 0.32) * 0.26);
@@ -5167,14 +5239,15 @@ const G = {
         maxTh -= groove * 0.18;
         maxTh += sweep * azFront * 0.24;
       } else if (part === 'middle' || part === 'side') {
-        /* Centre part: hair splits on the midline and falls to the sides.
-           Side used to be a left-of-centre sweep; it now matches the
-           middle part so this cut frames the face evenly. */
-        groove = Math.exp(-ux * ux * 22) * Math.max(0, uy - 0.02);
+        /* Hime: blunt bangs across the brow, a centre part only on the
+           crown, long sides that taper to points. */
+        groove = Math.exp(-ux * ux * 18) * Math.max(0, uy - 0.32);
+        const bangs = azFront * Math.max(0, (0.58 - uy) / 0.48) * (1 - side * 0.12);
         const sideFall = (1 - Math.exp(-side * side * 5.5)) * azFront;
-        faceOpen = Math.min(1, frame.faceOpen * 0.85 + groove * 0.55 + sideFall * 0.12);
-        maxTh = sideTh + (lengthTh - sideTh) * (1 - faceOpen * 0.40);
-        maxTh -= groove * 0.20;
+        faceOpen = Math.min(1, frame.faceOpen * 0.18 + groove * 0.40 + sideFall * 0.08);
+        maxTh = sideTh + (lengthTh - sideTh) * (1 - faceOpen * 0.22);
+        maxTh -= groove * 0.16;
+        maxTh += bangs * 0.12;
       }
 
       maxTh += frame.sideburn * 0.14 + frame.nape * 0.10;
@@ -5210,6 +5283,13 @@ const G = {
         nz += eyeCover * 0.28;
         ny -= eyeCover * 0.24;
         nx += eyeCover * 0.06;
+      } else if (part === 'middle' || part === 'side') {
+        /* Blunt hime bangs: a short visor across the brow, not a
+           split that opens the forehead. */
+        const hime = azFront * Math.max(0, (0.52 - uy) / 0.40)
+          * (1 - Math.pow(side, 1.6) * 0.35);
+        ny -= hime * 0.16;
+        nz += hime * 0.18;
       }
 
       if (faceOpen > 0 && azFront > 0.30 && ny < frame.hairline + 0.08) {
@@ -5683,6 +5763,9 @@ const G = {
     let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
     nz -= Math.max(0, b.uy) * 0.07;
     ny += Math.max(0, b.uy - 0.50) * 0.05;
+    const ridge = hairClumps(b.phi, 4.0, 7.0, 11.0) * (1 - open) * Math.max(0, b.uy - 0.08);
+    ny += ridge * 0.05;
+    nz -= ridge * 0.03;
     const L0 = Math.hypot(nx, ny, nz) || 1;
     const k = (L0 + 0.04 * (1 - open) * rr) / L0;
     nx *= k; ny *= k; nz *= k;
@@ -7164,13 +7247,23 @@ function buildHair(dna, mat, extraMats) {
   }
   else if (st === 'bowl') {
     add(G.medium(1.07), 0, 0, 0, 1, 1.04, 1);
+    /* Crown tufts from the jagged mop photo — three short spikes at the pole. */
+    for (let k = 0; k < 3; k++) {
+      const a = (k / 3) * TAU;
+      const tuft = add(G.spike(), Math.sin(a) * 0.10, 1.18, Math.cos(a) * 0.08,
+        0.045, 0.16, 0.045);
+      tuft.rotation.z = Math.sin(a) * 0.28;
+      tuft.rotation.x = -Math.cos(a) * 0.18;
+    }
   }
   else if (st === 'swept') {
     add(G.sweptHair(1.05), 0, 0, 0);
   }
   else if (st === 'spiky') {
     add(G.spikes(1.05), 0, 0, 0);
-
+    const ahoge = add(G.spike(), 0.06, 1.22, 0.10, 0.048, 0.32, 0.048);
+    ahoge.rotation.z = -0.42;
+    ahoge.rotation.x = 0.22;
   }
   else if (st === 'long') {
     /* Side-swept bangs that cover one eye. The face texture uses
@@ -7334,24 +7427,34 @@ function buildHair(dna, mat, extraMats) {
     add(G.flow(1.05), 0, 0, 0);
   }
   else if (st === 'highpony') {
-    /* One pulled-back scalp with a curved nape, plus a single tapered
-       tail. Three stacked balls were lumps; a cap hem was a ruler line. */
+    /* Pulled-back scalp, a high tail, a side-swept S-bang, and a ring
+       at the crown — the terracotta high-pony photo. */
     add(G.highPonyScalp(1.05), 0, 0, 0);
-    const tail = add(G.smoothPony(), 0, 0.22, -1.02, 1.0, 1.48, 1.0);
-    tail.rotation.x = -0.32;
+    const bang = add(G.ball(), -0.32, 0.28, 0.86, 0.16, 0.46, 0.14);
+    bang.rotation.z = 0.58;
+    bang.rotation.x = 0.32;
+    const tieMat = new THREE.MeshStandardMaterial({
+      color: '#3a7fc4', roughness: 0.72, metalness: 0.04
+    });
+    if (extraMats) extraMats.push(tieMat);
+    const tie = put(G.hoop(0.09), tieMat, 0, 0.98, -0.22, 0.20, 0.20, 0.20);
+    tie.rotation.x = Math.PI / 2;
+    const tail = add(G.smoothPony(), 0, 0.42, -0.78, 1.08, 1.22, 1.08);
+    tail.rotation.x = -0.55;
   }
   else if (st === 'pigtails') {
-    /* Two long tails off the back of the head. The old 0.17 nubs sat
-       inside the crown and vanished; these hang clear of the skull, and
-       the cap runs down the nape so the back is not bald. */
+    /* High twin-tails off the sides plus jagged bangs — the photo
+       library cut, not nubs on the nape. The cap still covers the back
+       so it is not bald. */
     cap(1.045, 1.68, 1.08);
+    add(G.pigtailBangs(1.05), 0, 0, 0);
     for (const sx of [-1, 1]) {
-      add(G.ball(), sx * 0.40, 0.58, -0.78, 0.22, 0.22, 0.22);
-      const t = add(G.ball(), sx * 0.50, -0.22, -0.98, 0.24, 1.28, 0.28);
-      t.rotation.x = -0.28;
-      t.rotation.z = sx * 0.16;
-      const tip = add(G.ball(), sx * 0.56, -0.88, -1.12, 0.18, 0.42, 0.22);
-      tip.rotation.x = -0.18;
+      add(G.ball(), sx * 0.78, 0.78, -0.16, 0.20, 0.20, 0.20);
+      const t = add(G.ball(), sx * 0.98, 0.08, -0.10, 0.28, 0.72, 0.28);
+      t.rotation.z = sx * 0.58;
+      t.rotation.x = -0.12;
+      const tip = add(G.ball(), sx * 1.08, -0.42, -0.06, 0.18, 0.36, 0.18);
+      tip.rotation.z = sx * 0.22;
     }
   }
   else if (st === 'layers') {
