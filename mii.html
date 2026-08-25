@@ -2896,38 +2896,13 @@ function drawFacialHair(g, U, dna) {
     g.restore();
   };
 
-  /* Sideburns and mutton chops belong in the outermost band of the face
-     patch. The patch only spans about ±56° of azimuth, so it never reaches
-     the ear at 90°; its edge is as far round as anything drawn here can go,
-     and that edge sits about four fifths of the way out to the silhouette,
-     which is where a sideburn reads from the front.
+  /* Mutton chops belong in the outermost band of the face patch. The
+     patch only spans about ±56° of azimuth, so it never reaches the ear
+     at 90°; its edge is as far round as anything drawn here can go.
 
-     Judging these in patch coordinates is misleading — a first pass at
-     x=16..31 looked like a healthy margin from the centre line and rendered
-     as two dark stripes flanking the eyes, because x=31 is only a third of
-     the way out. Everything here is pinned to the far edge instead.
-
-     Both start above eye level so they run up under the hair and read as
-     continuous with it. */
-  /* The back edge runs hard to x=0. Held a few units inboard it left a strip
-     of bare skin outboard of the hair, and that strip is what made these read
-     as dark patches floating on the cheek rather than as growth coming down
-     off the side of the head. The patch edge is also where the texture seam
-     already falls, so ending on it hides the cut. */
-  if (st === 'sideburns') {
-    bothSides(() => {
-      g.beginPath();
-      g.moveTo(0, 14 * U);
-      g.lineTo(16 * U, 14 * U);
-      g.quadraticCurveTo(18 * U, 40 * U, 16 * U, 55 * U);     // front edge
-      g.quadraticCurveTo(12 * U, 62 * U, 8 * U, 54 * U);      // tapered tip
-      g.quadraticCurveTo(1 * U, 40 * U, 0, 14 * U);           // back edge
-      g.closePath();
-      paint();
-    });
-    return;
-  }
-
+     The back edge runs hard to x=0. Held a few units inboard it left a strip
+     of bare skin outboard of the hair. The patch edge is also where the
+     texture seam already falls, so ending on it hides the cut. */
   if (st === 'mutton') {
     /* Wide chops sweeping forward along the jaw, with the chin and lip left
        clean — that gap is the whole difference between these and a full
@@ -3263,13 +3238,16 @@ const FACIAL_HAIR = [
   { id: 'none',      label: 'None' },
   { id: 'stubble',   label: 'Stubble' },
   { id: 'lineup',    label: 'Lineup' },
-  { id: 'sideburns', label: 'Sideburns' },
   { id: 'mutton',    label: 'Mutton chops' },
   { id: 'full',      label: 'Full beard' },
   { id: 'goatee',    label: 'Goatee' },
   { id: 'stache',    label: 'Moustache' },
   { id: 'handlebar', label: 'Handlebar' }
 ];
+
+/* Sideburns read as two dark rectangles flanking the eyes on the face
+   patch, so they are gone. Stored characters land on a clean face. */
+const FACIAL_HAIR_ALIASES = { sideburns: 'none' };
 
 /* ---- piercings ----------------------------------------------
    Nose only. Ear jewellery, brow bars and lip rings were dropped:
@@ -3402,6 +3380,7 @@ function normalizeDNA(d) {
   if (typeof d.facialHair !== 'string') {
     d.facialHair = d.beard ? 'full' : d.stache ? 'stache' : 'none';
   }
+  if (FACIAL_HAIR_ALIASES[d.facialHair]) d.facialHair = FACIAL_HAIR_ALIASES[d.facialHair];
   if (typeof d.piercing !== 'string') d.piercing = 'none';
   if (PIERCING_ALIASES[d.piercing]) d.piercing = PIERCING_ALIASES[d.piercing];
   delete d.ears;                       // ear jewellery was removed

@@ -262,19 +262,19 @@ for (const [page, ids] of required) {
   }
 }
 
-/* Sideburns only read if they run to the outer edge of the face patch. Held
-   inboard they render as dark stripes flanking the eyes, so the back edge
-   sitting at x=0 is the load-bearing part of both shapes. */
+/* Sideburns sat as two dark rectangles flanking the eyes on the face
+   patch, so they are gone. Stored characters have to land on none. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const listed = /id: 'sideburns'/.test(src) && /id: 'mutton'/.test(src);
-  const outer = /st === 'sideburns'[\s\S]{0,400}g\.moveTo\(0, 14 \* U\)/.test(src)
-    && /st === 'mutton'[\s\S]{0,500}g\.moveTo\(0, 13 \* U\)/.test(src);
-  if (!listed || !outer || !src.includes('bothSides')) {
-    note('✗', 'mii.html — sideburns and mutton chops must sit at the outer edge of the face patch');
+  const listed = /id: 'sideburns'/.test(src);
+  const draws = /st === 'sideburns'/.test(src);
+  const aliased = /sideburns:\s*'none'/.test(src);
+  const mutton = /id: 'mutton'/.test(src) && /st === 'mutton'/.test(src);
+  if (listed || draws || !aliased || !mutton) {
+    note('✗', 'mii.html — sideburns should be removed and aliased to none');
     failures++;
   } else {
-    note('✓', 'mii.html offers sideburns and mutton chops');
+    note('✓', 'mii.html drops the sideburns option');
   }
 }
 
