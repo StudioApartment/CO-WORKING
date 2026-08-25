@@ -195,6 +195,22 @@ for (const [page, ids] of required) {
   }
 }
 
+/* The furry buckets are the only hats built from a pile displacement, and the
+   fur only reads if the texture, the noise and both shells are all present —
+   dropping any one of them silently turns them back into felt. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ['makeFurTexture', 'G._furn', 'G.furCrown(', 'G.furBrim()',
+                 "'furry'", "'furrysage'", 'fur: true']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — furry bucket hats need a pile texture, noise and both fur shells');
+    failures++;
+  } else {
+    note('✓', 'mii.html includes furry bucket hats with a fur pile');
+  }
+}
+
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`medM${r}`") || !src.includes('G.medium(1.07)')) {

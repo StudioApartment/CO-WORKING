@@ -1177,16 +1177,49 @@ function makeFurTexture(base) {
     seed = (seed ^ (seed << 5)) >>> 0;
     return seed / 4294967296;
   };
+  const rgba = (hex, a) => {
+    const k = hex2rgb(hex);
+    return `rgba(${k.r | 0},${k.g | 0},${k.b | 0},${a})`;
+  };
+  /* Anything drawn near an edge is drawn again on the opposite side, so the
+     texture tiles without a visible seam running down the hat. */
+  const tiled = (x, y, r, draw) => {
+    const wrap = x < r || x > S - r || y < r || y > S - r;
+    for (const dx of wrap ? [-S, 0, S] : [0]) {
+      for (const dy of wrap ? [-S, 0, S] : [0]) {
+        g.save(); g.translate(x + dx, y + dy); draw(); g.restore();
+      }
+    }
+  };
 
-  g.fillStyle = shade(base, -16);
+  g.fillStyle = shade(base, -14);
   g.fillRect(0, 0, S, S);
 
-  /* Three passes, dark to light. Drawing the highlights last is what gives
-     the pile its depth — a single mid-tone pass reads as noise. */
+  /* Clumps first. Fur is not an even field of hairs — it separates into
+     tufts, and those soft light and shade patches are most of what makes it
+     read as fur rather than as felt or velvet at this distance. */
+  for (let i = 0; i < 320; i++) {
+    const x = rnd() * S, y = rnd() * S;
+    const r = S * (0.022 + rnd() * 0.055);
+    const tint = shade(base, rnd() < 0.5 ? -30 : 34);
+    tiled(x, y, r, () => {
+      const grd = g.createRadialGradient(0, 0, 0, 0, 0, r);
+      grd.addColorStop(0, rgba(tint, 0.5));
+      grd.addColorStop(1, rgba(tint, 0));
+      g.fillStyle = grd;
+      g.beginPath(); g.arc(0, 0, r, 0, TAU); g.fill();
+    });
+  }
+
+  /* Then individual hairs, dark to light so the highlights sit on top.
+     An earlier pass gave every strand the same downward bias, and once the
+     texture was repeated around the crown those aligned strokes turned into
+     ribbing that read as knitwear. Directions are free now, with only a
+     slight downward lean. */
   const passes = [
-    { n: 2600, amt: -34, len: 30, w: 3.4, a: 0.5 },
-    { n: 2600, amt: 12, len: 26, w: 2.6, a: 0.45 },
-    { n: 1800, amt: 42, len: 20, w: 1.8, a: 0.4 }
+    { n: 3000, amt: -36, len: 17, w: 2.6, a: 0.42 },
+    { n: 2600, amt: 16, len: 14, w: 2.0, a: 0.38 },
+    { n: 2000, amt: 46, len: 11, w: 1.4, a: 0.34 }
   ];
   g.lineCap = 'round';
   for (const pass of passes) {
@@ -1194,20 +1227,17 @@ function makeFurTexture(base) {
     g.globalAlpha = pass.a;
     for (let i = 0; i < pass.n; i++) {
       const x = rnd() * S, y = rnd() * S;
-      const len = pass.len * (0.45 + rnd() * 0.85);
-      // Mostly downward, so the pile has a direction like a brushed coat.
-      const ang = Math.PI / 2 + (rnd() - 0.5) * 1.15;
+      const len = pass.len * (0.4 + rnd() * 0.9);
+      const ang = rnd() * TAU + Math.sin(rnd() * TAU) * 0.3;
       g.lineWidth = pass.w * (0.5 + rnd() * 0.8);
-      g.beginPath();
-      g.moveTo(x, y);
-      /* Slight curl at the tip. A straight line looks like grass. */
-      g.quadraticCurveTo(
-        x + Math.cos(ang) * len * 0.5 + (rnd() - 0.5) * 6,
-        y + Math.sin(ang) * len * 0.5,
-        x + Math.cos(ang) * len,
-        y + Math.sin(ang) * len
-      );
-      g.stroke();
+      const ex = Math.cos(ang) * len, ey = Math.sin(ang) * len * 1.25;
+      tiled(x, y, len + 2, () => {
+        g.beginPath();
+        g.moveTo(0, 0);
+        /* Curl at the tip. Straight strokes look like grass. */
+        g.quadraticCurveTo(ex * 0.5 + (rnd() - 0.5) * 5, ey * 0.5, ex, ey);
+        g.stroke();
+      });
     }
   }
   g.globalAlpha = 1;
@@ -3535,7 +3565,7 @@ const G = {
   frusTube: (rt) => geoCache(`frt${rt}`, () => new THREE.CylinderGeometry(rt, 1, 1, 256, 1, true)),
   /* Boonie / bucket brim: open frustum with a wavy hem and front/back droop
      so it reads floppy instead of a stiff cone. */
-  bucketBrim: () => geoCache('bktbrim', () => {
+  bucketBrim: () => geoCache('bktbrim2', () => {
     const g = new THREE.CylinderGeometry(0.76, 1, 1, 256, 8, true);
     const p = g.attributes.position;
     for (let i = 0; i < p.count; i++) {
@@ -3544,12 +3574,14 @@ const G = {
       const rad = Math.hypot(x, z) || 1e-6;
       const u = y + 0.5; // 0 = lower edge, 1 = crown seam
 
-      /* Soft sag — brim hangs lower at front and back. */
-      if (u < 0.55) {
-        const sagAmt = (0.55 - u) * 0.11;
+      /* Sag — the brim hangs lower at front and back. The first pass capped
+         this at 0.11 and the brim still came out nearly horizontal, which
+         read as a pith helmet rather than a soft hat. */
+      if (u < 0.72) {
+        const sagAmt = (0.72 - u) * 0.26;
         const front = Math.max(0, Math.cos(ang));
         const back = Math.max(0, -Math.cos(ang));
-        y -= sagAmt * (0.35 + front * 0.45 + back * 0.38);
+        y -= sagAmt * (0.40 + front * 0.52 + back * 0.44);
       }
 
       /* Wavy hem with multiple stitch rows near the edge. */
@@ -3575,46 +3607,60 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  /* Fur pile displacement, shared by the furry crown and its brim. Layered
-     sine octaves rather than value noise: at this tessellation the octaves
-     are indistinguishable from noise and they stay seamless around the
-     azimuth, which a hashed lattice does not without extra wrapping work.
+  /* Fur pile displacement, shared by the furry crown and its brim.
 
-     Everything is biased outward. Symmetric displacement pushed vertices
-     inside the skull shell and the head showed through the pile. */
-  _furl: (ang, v, amp) => amp * (
-    0.34 * Math.sin(ang * 9 + v * 13)
-    + 0.26 * Math.sin(ang * 17 - v * 9 + 1.3)
-    + 0.18 * Math.sin(ang * 27 + v * 21 + 2.1)
-    + 0.14 * Math.sin(ang * 41 - v * 31 + 0.6)
-    + 0.12 * Math.sin(v * 23 + 0.9)
+     Evaluated on the vertex position in 3D rather than on (azimuth, height).
+     A sum of sines of dotted-in direction vectors is seamless everywhere by
+     construction — no wrapping to handle at the azimuth join, and no pinch
+     at the poles. The angular version this replaces used integer harmonics
+     of the azimuth, which corrugated the brim into regular radial ribs.
+
+     Directions are deliberately not commensurate, so the octaves never line
+     up into a repeating pattern within the size of a hat.
+
+     Amplitude is small. A first pass at 0.08 gave the crown a golf-ball
+     surface: at Mii scale a handful of large bumps read as dents, not as
+     fur. Pile has to be high frequency and shallow, and the fluff then
+     comes from the texture and the fringed hem. */
+  _furn: (x, y, z) => (
+    0.34 * Math.sin(x * 23.1 + y * 14.7 + z * 9.3)
+    + 0.27 * Math.sin(x * -11.9 + y * 27.3 + z * 18.1 + 1.7)
+    + 0.21 * Math.sin(x * 16.3 - y * 21.7 + z * 31.9 + 3.1)
+    + 0.15 * Math.sin(x * 38.7 + y * 33.1 - z * 12.3 + 0.4)
+    + 0.11 * Math.sin(x * -47.3 + y * 19.9 + z * 41.7 + 2.2)
   ),
-  /* Furry crown: an angora bucket sits tall and cylindrical, not domed, so
-     the shell keeps a near-constant radius until it rounds over at the top. */
-  furCrown: (r, tl) => geoCache(`furc${r}_${tl}`, () => {
-    const g = superball(r, 176, 88, HEAD_N, 0, TAU, 0, tl);
+  /* Furry crown. An angora bucket has a straight-sided crown with a flat top,
+     not a dome — built on the same rounded profile as the cotton hats it read
+     as a pith helmet. Raising the superellipsoid exponent well above the
+     skull's own gives near-vertical walls and a flat lid from one shell, and
+     a boxier exponent is automatically wider on the diagonals than the skull,
+     so the temples cannot poke through. */
+  furCrown: (r, tl, n) => geoCache(`furc4${r}_${tl}_${n}`, () => {
+    const g = superball(r, 200, 96, n, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     for (let i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i);
-      const L = v.length() || 1;
-      const ang = Math.atan2(v.x, v.z);
-      const uy = v.y / L;
-      /* Pile thins toward the hem so the crown meets the brim cleanly
-         instead of exploding into a ruff at the seam. */
-      const thin = Math.min(1, Math.max(0, (uy + 0.55) / 0.45));
-      const pile = 0.055 + G._furl(ang, uy, 0.075) * thin;
-      const k = 1 + Math.max(0.012, pile);
+      /* Biased outward. Symmetric displacement pushed vertices inside the
+         skull shell and the head showed through the pile.
+
+         Positions are scaled up before the noise is sampled, which raises its
+         frequency: at 1× the bumps were a quarter of a unit across and the
+         pale colourway looked like bubble wrap. */
+      const pile = 0.016 + G._furn(v.x * 2.1, v.y * 2.1, v.z * 2.1) * 0.020;
+      const k = 1 + Math.max(0.006, pile);
       p.setXYZ(i, v.x * k, v.y * k, v.z * k);
     }
     p.needsUpdate = true;
     g.computeVertexNormals();
     return g;
   }),
-  /* Furry brim: wider flare and a much shaggier hem than the cotton bucket.
-     Fur has no stiffener, so the edge is ragged and it drops at the sides
-     the way the real hat curtains over the ears. */
-  furBrim: () => geoCache('furbrim', () => {
-    const g = new THREE.CylinderGeometry(0.72, 1, 1, 224, 12, true);
+  /* Furry brim: a shallow flare with a fringed hem. The cotton bucket gets
+     its shape from a stiffener and reads as a cone; fur has none, so the
+     edge is uneven and the pile tips break the outline. */
+  furBrim: () => geoCache('furbrim4', () => {
+    /* Narrow top so the inner lip tucks inside the crown wall. At 0.80 the
+       lip came out wider than the crown and showed as a ring around it. */
+    const g = new THREE.CylinderGeometry(0.72, 1, 1, 256, 12, true);
     const p = g.attributes.position;
     for (let i = 0; i < p.count; i++) {
       let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
@@ -3622,20 +3668,24 @@ const G = {
       const rad = Math.hypot(x, z) || 1e-6;
       const u = y + 0.5;                      // 0 = hem, 1 = crown seam
 
-      /* Heavier droop than the cotton brim, and the sides fall furthest. */
+      /* Soft droop, a little deeper at the sides, where the real hat curtains
+         over the ears. Kept shallow: a stronger side droop tucked the hem
+         back in under the crown and the flare stopped reading at all. */
       const side = Math.abs(Math.sin(ang));
-      y -= (1 - u) * 0.20 * (0.45 + side * 0.55);
+      y -= (1 - u) * 0.09 * (0.50 + side * 0.50);
 
-      /* Ragged hem: big lobes for the silhouette, fine fuzz on top. */
-      const edgeT = Math.pow(1 - u, 1.3);
-      const lobes = 0.055 * Math.sin(ang * 4 + 0.4) + 0.035 * Math.sin(ang * 7 - 1.1);
-      const pile = 0.05 + G._furl(ang, u, 0.085) + lobes * edgeT;
-      const rs = rad * (1 + Math.max(0.012, pile));
+      const pile = 0.016 + G._furn(x * 2.1, y * 0.8, z * 2.1) * 0.024;
+      const rs = rad * (1 + Math.max(0.006, pile));
       x = (x / rad) * rs;
       z = (z / rad) * rs;
 
-      /* Tips of the pile flick down past the hem. */
-      if (u < 0.14) y -= (0.14 - u) * (0.30 + 0.5 * Math.abs(Math.sin(ang * 11)));
+      /* Fringe: pile tips hang past the hem, which is what separates a fur
+         edge from a hemmed one. Driven off the same noise as the pile so the
+         tips line up with the tufts they belong to. */
+      if (u < 0.18) {
+        const t = (0.18 - u) / 0.18;
+        y -= t * 0.055 * (0.5 + 0.5 * G._furn(x * 1.3, 0, z * 1.3));
+      }
 
       p.setXYZ(i, x, y, z);
     }
@@ -4145,7 +4195,7 @@ function buildHair(dna, mat, extraMats) {
       put(G.tube(), accMat, 0, 0.51, 0, 1.16, 0.13, 1.16);        // band
     } else if (st === 'bucket') {
       put(G.hatDome(1.11, 1.22), hatMat, 0, 0.02, 0, 1, 1.06, 1);
-      put(G.bucketBrim(), hatMat, 0, 0.34, 0, 1.54, 0.34, 1.54);
+      put(G.bucketBrim(), hatMat, 0, 0.40, 0, 1.44, 0.38, 1.44);
       put(G.tube(), accMat, 0, 0.50, 0, 1.20, 0.10, 1.20);
 
       const darkMat = new THREE.MeshStandardMaterial({
@@ -4186,47 +4236,47 @@ function buildHair(dna, mat, extraMats) {
       put(G.tube(), cordMat, 0, -0.06, 0.10, 0.82, 0.014, 0.014);
       put(G.ball(), darkMat, 0, -0.16, 0.10, 0.058, 0.085, 0.058);
     } else if (H.fur) {
-      /* Angora bucket. The crown stands taller than the cotton one and the
-         brim flares wider, because the pile adds bulk in every direction —
-         built at cotton proportions it read as a fuzzy beanie. */
-      put(G.furCrown(1.11, 1.30), hatMat, 0, 0.04, 0, 1.05, 1.20, 1.05);
-      put(G.furBrim(), hatMat, 0, 0.30, 0, 1.60, 0.42, 1.60);
+      /* Angora bucket: a straight-sided crown standing well above the skull,
+         with a short flared brim under it.
 
-      /* Tufts around the crown-to-brim seam. The two shells meet at a clean
-         circle no matter how ragged each one is, and a hard horizontal line
-         is the one thing that gives fur away as two cylinders. */
-      for (let i = 0; i < 13; i++) {
-        const a = (i / 13) * TAU + 0.24;
-        const tuft = put(G.ball(), hatMat,
-          Math.sin(a) * 1.20, 0.42 + 0.055 * Math.sin(i * 2.7), Math.cos(a) * 1.20,
-          0.21 + 0.05 * Math.sin(i * 1.9), 0.17, 0.19);
-        tuft.rotation.y = -a;
-      }
+         Two earlier passes missed the shape. Scaling the brim to 1.60 like a
+         boonie made the hat swallow the face, and building the crown on the
+         same rounded dome as the cotton hats made it a helmet — the whole
+         read of this hat is the vertical wall and the flat top. */
+      /* n=5 walls were dead vertical with square top corners, which read as a
+         pillbox; 3.8 keeps the wall straight but rounds the top edge. The
+         crown is narrower than the brim by a clear margin so the flare is
+         visible from the front — at 1.12 against a 1.38 brim the two were
+         almost the same width and the brim disappeared. */
+      put(G.furCrown(1.05, 1.29, 4.4), hatMat, 0, 0.02, 0, 1, 1.20, 1);
+      put(G.furBrim(), hatMat, 0, 0.40, 0, 1.44, 0.26, 1.44);
 
-      /* A few on the dome as well, so the top is not a smooth silhouette. */
-      for (let i = 0; i < 5; i++) {
-        const a = (i / 5) * TAU + 1.1;
-        put(G.ball(), hatMat,
-          Math.sin(a) * 0.52, 1.24 + 0.05 * Math.cos(i * 2.1), Math.cos(a) * 0.52,
-          0.28, 0.16, 0.26);
-      }
+      /* Closes the line where the two shells cross. Both hems are ragged but
+         they still meet on a clean circle, and a hard horizontal edge is
+         what gives fur away as cylinders stacked up. */
+      put(G.tube(), hatMat, 0, 0.47, 0, 1.08, 0.15, 1.08);
 
       if (H.mark) {
-        /* Embroidery sits on a felt backing rather than straight on the pile:
-           a bare plane at this radius was swallowed by the tufts from any
-           angle off dead centre. The backing pushes clear of the fur and the
-           lettering rides just outside it. */
-        const badge = put(G.foot(), accMat, -0.30, 0.56, 1.00, 0.19, 0.13, 0.11);
-        badge.rotation.y = 0.30;
+        /* Embroidered front-left, the way these are branded, and small — at
+           cap-logo scale it covered a third of the crown.
 
+           The thread has to contrast with the crown rather than tint from it.
+           A lightened shade of the navy was invisible at Mii scale, and the
+           same trick on the sage colourway would be invisible the other way
+           round, so the choice keys off the crown's luminance. */
+        const cw = hex2rgb(crownCol);
+        const lum = (cw.r * 0.299 + cw.g * 0.587 + cw.b * 0.114) / 255;
         const logoMat = new THREE.MeshBasicMaterial({
-          map: makeCapLogo(H.mark, shade(crownCol, 62)), transparent: true, depthWrite: false
+          map: makeCapLogo(H.mark, lum > 0.55 ? '#2b3038' : '#f4f6fa'),
+          transparent: true, depthWrite: false
         });
         if (extraMats) extraMats.push(logoMat);
         const logo = new THREE.Mesh(geoCache('quad', () => new THREE.PlaneGeometry(1, 1)), logoMat);
-        logo.position.set(-0.33, 0.56, 1.11);
-        logo.rotation.y = 0.30;
-        logo.scale.set(0.28, 0.21, 1);
+        /* Straight walls mean the crown is at full radius here, so the quad
+           has to clear 1.12 plus the pile or the tufts eat half the letters. */
+        logo.position.set(-0.29, 0.72, 1.10);
+        logo.rotation.y = 0.24;
+        logo.scale.set(0.32, 0.24, 1);
         logo.renderOrder = 3;
         out.push(logo);
       }
