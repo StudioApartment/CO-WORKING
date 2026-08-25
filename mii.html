@@ -2633,13 +2633,11 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  bob: (r) => geoCache(`bob${r}`, () => {
-    /* One shell. Extra balls on a cap always read as earmuffs. Length
-       follows azimuth so only the face stays short — a wide front window
-       left a diagonal cut on the sides. The face hem hugs the skull so
-       it is a hairline, not a visor you can see into. */
-    const tl = 2.24;
-    const g = new THREE.SphereGeometry(r, 40, 32, 0, TAU, 0, tl);
+  bob: (r) => geoCache(`bobB${r}`, () => {
+    /* Jaw-length bob: blunt arched bangs, cheek volume, an undercurl at the
+       hem, and a slightly shorter back — not a centre-part curtain or bowl. */
+    const tl = 2.18;
+    const g = new THREE.SphereGeometry(r, 52, 40, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     const n = HEAD_N;
     for (let i = 0; i < p.count; i++) {
@@ -2647,11 +2645,29 @@ const G = {
       const L = v.length() || 1;
       const ux = v.x / L, uy = v.y / L, uz = v.z / L;
       const th = Math.acos(Math.max(-1, Math.min(1, uy)));
+      const u = th / tl;
       const rs0 = Math.hypot(ux, uz) || 1e-6;
       const azFront = Math.max(0, uz / rs0);
-      const faceWin = Math.pow(Math.max(0, azFront - 0.18) / 0.82, 2);
-      const maxTh = 2.12 - faceWin * 1.04;
-      const th2 = (th / tl) * maxTh;
+      const azBack = Math.max(0, -uz / rs0);
+      const phi = Math.atan2(ux, uz);
+      const side = Math.abs(ux) / rs0;
+      const frame = hairFrame(ux, uy, azFront, azBack, side);
+
+      /* Blunt bangs sit on the arched hairline, not a flat visor. */
+      const aboveLine = Math.max(0, uy - frame.hairline + 0.04);
+      const bangAmt = azFront * Math.pow(Math.min(1, aboveLine / 0.16), 1.55)
+        * Math.pow(Math.max(0, 1 - side * 0.32), 1.05);
+
+      /* Classic bob: chin on the sides, a touch shorter in back. */
+      const sideLen = 2.04;
+      const frontLen = 1.90 + bangAmt * 0.16;
+      const backLen = 1.84;
+      let maxTh = sideLen;
+      maxTh += (frontLen - sideLen) * azFront * (1 - frame.faceOpen * 0.45);
+      maxTh += (backLen - sideLen) * azBack * 0.62;
+      maxTh += frame.sideburn * 0.12;
+
+      const th2 = u * maxTh;
       const rs = Math.sin(th2);
       let nx = ux / rs0 * rs;
       let ny = Math.cos(th2);
@@ -2661,21 +2677,39 @@ const G = {
         -1 / n
       );
       nx *= s * r; ny *= s * r; nz *= s * r;
-      ny += Math.max(0, ny - 0.48) * 0.32;
-      if (azFront > 0.4 && ny < 0.62) {
-        const t = Math.pow((azFront - 0.4) / 0.6, 1.3) * Math.min(1, (0.62 - ny) / 0.32);
+      ny += Math.max(0, ny - 0.46) * 0.26;
+
+      /* Cheek volume — a bob widens through the jaw, not a helmet cap. */
+      const cheek = Math.exp(-Math.pow((uy + 0.02) / 0.38, 2) * 2.2) * side * 0.10;
+      nx *= 1 + cheek * Math.sign(ux || 1);
+
+      if (frame.faceOpen > 0 && azFront > 0.28 && ny < frame.hairline + 0.06) {
+        const t = frame.faceOpen * Math.pow((azFront - 0.28) / 0.72, 1.15)
+          * Math.min(1, (frame.hairline + 0.06 - ny) / 0.26);
         const Lh = Math.hypot(nx, ny, nz) || 1;
-        const k = 1 - t + t * (1.05 / Lh);
+        const k = 1 - t + t * (1.04 / Lh);
         nx *= k; ny *= k; nz *= k;
+        if (t > 0.45 && ny < frame.hairline - 0.02) {
+          ny = Math.max(ny, frame.hairline - 0.02);
+        }
       }
-      const side = Math.abs(ux) / rs0;
-      const puff = Math.max(0, 0.06 - ny) * side * 0.14;
-      nx *= 1 + puff;
-      if (ny < -0.10) {
-        const tuck = Math.min(0.14, (-0.10 - ny) * 0.18);
-        nx *= 1 - tuck;
-        nz *= 1 - tuck * 0.28;
-      }
+
+      /* Undercurl: hem tucks inward toward the chin like a real bob. */
+      const hem = Math.pow(Math.max(0, (u - 0.56) / 0.44), 1.35);
+      const undercurl = hem * (0.14 + side * 0.10);
+      nx *= 1 - undercurl;
+      nz *= 1 - undercurl * 0.42;
+      ny -= hem * 0.05 * (0.4 + azBack * 0.6);
+
+      /* Subtle end flick on the sides — piecey, not one solid block. */
+      const flick = hem * side * 0.04 * Math.sin(phi * 4.0 + 0.5);
+      nx += flick * Math.sign(ux || 1) * 0.028;
+      ny -= Math.abs(flick) * 0.018;
+
+      ({ nx, ny, nz } = applySideburnsNape(
+        nx, ny, nz, frame.sideburn, frame.nape * 0.42, ux, azFront, azBack
+      ));
+
       p.setXYZ(i, nx, ny, nz);
     }
     p.needsUpdate = true;
