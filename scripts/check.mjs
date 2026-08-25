@@ -457,6 +457,25 @@ for (const [page, ids] of required) {
   }
 }
 
+/* A chest box with someone else's word is a trademark. The pullover cut
+   is the look; Co-Working on a red field is ours, like the club cap. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'boxhoodie'", "label: 'Box hoodie'", "kind: 'boxhoodie'",
+                 "case 'boxhoodie':", "const boxWord = 'Co-Working'",
+                 "g.fillStyle = '#e11b22'", 'italic 900']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — box hoodie needs a red chest box with our own word');
+    failures++;
+  } else if (/Supreme/i.test(src)) {
+    note('✗', 'mii.html — box hoodie must not reprint a licensed box logo');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a box hoodie with a Co-Working chest mark');
+  }
+}
+
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("from '/lib/profanity.js'") || !src.includes('isCleanName')) {

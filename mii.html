@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3270,6 +3270,7 @@ const APPAREL = [
   { id: 'buttonup', label: 'Button-up', kind: 'buttonup' },
   { id: 'flannel',  label: 'Flannel',   kind: 'flannel', open: true },
   { id: 'hoodie',   label: 'Hoodie',    kind: 'hoodie',  hood: true },
+  { id: 'boxhoodie', label: 'Box hoodie', kind: 'boxhoodie', hood: true },
   { id: 'suit',     label: 'Suit',      kind: 'suit'     },
   { id: 'jersey',   label: 'Jersey',    kind: 'football',
     body: '#1d5cab', trim: '#f4f6f8', num: 10 },
@@ -5101,6 +5102,38 @@ function makeApparelTexture(dna) {
       g.stroke();
       break;
     }
+    case 'boxhoodie': {
+      /* Pullover with a chest box. The word and the red field are ours —
+         same house name as the club cap — not a licensed box logo. */
+      g.fillStyle = shade(base, -20);
+      g.fillRect(0, vy(0.86), W, H);
+      g.fillStyle = shade(base, -9);
+      g.fillRect(front - 46, vy(0.42), 92, vy(0.86) - vy(0.42));
+      g.strokeStyle = shade(base, -40); g.lineWidth = 5;
+      g.strokeRect(front - 46, vy(0.42), 92, vy(0.86) - vy(0.42));
+      g.strokeStyle = shade(base, 22); g.lineWidth = 2; g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(front - 17, vy(0.0)); g.lineTo(front - 13, vy(0.22));
+      g.moveTo(front + 17, vy(0.0)); g.lineTo(front + 13, vy(0.22));
+      g.stroke();
+
+      const bw = 96, bh = 30;
+      const bx = front - bw / 2, by = vy(0.16);
+      g.fillStyle = '#e11b22';
+      g.fillRect(bx, by, bw, bh);
+      g.fillStyle = '#f5f5f0';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      const boxWord = 'Co-Working';
+      let size = 15;
+      g.font = `italic 900 ${size}px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif`;
+      while (size > 8 && g.measureText(boxWord).width > bw - 10) {
+        size--;
+        g.font = `italic 900 ${size}px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif`;
+      }
+      g.fillText(boxWord, front, by + bh / 2 + 1);
+      break;
+    }
     case 'buttonup': {
       g.fillStyle = base; g.fillRect(0, 0, W, H);
       g.fillStyle = shade(base, -12);                         // placket
@@ -6027,7 +6060,10 @@ function buildMii(dna) {
      the jersey look padded, so only football gets a tighter xz — height stays
      so the collar and pants still meet. */
   const kit = apparel.kind === 'football';
-  torso.scale.set((kit ? 0.29 : 0.33) * dna.girth, 0.28, (kit ? 0.235 : 0.27) * dna.girth);
+  const boxy = apparel.kind === 'boxhoodie';
+  torso.scale.set((kit ? 0.29 : boxy ? 0.36 : 0.33) * dna.girth,
+    boxy ? 0.29 : 0.28,
+    (kit ? 0.235 : boxy ? 0.29 : 0.27) * dna.girth);
   torso.position.y = 0.5;
   body.add(torso);
 
