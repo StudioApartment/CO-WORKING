@@ -427,6 +427,17 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("geoCache(`flowD${r}`") || !src.includes('stubble-short sides')
+      || src.includes("geoCache(`flowC${r}`") || src.includes('add(G.flow(1.09)')) {
+    note('✗', 'mii.html — flow should have a natural hairline and stubble-short sides');
+    failures++;
+  } else {
+    note('✓', 'mii.html flow has a natural hairline and stubble-short sides');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`layersB${r}`") || !src.includes('tucked behind the ears')
       || src.includes("geoCache(`layersA${r}`") || src.includes('left-of-centre part sweeps')) {
     note('✗', 'mii.html — long layers should have a centre part tucked behind the ears');
