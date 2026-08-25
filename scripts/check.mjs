@@ -416,14 +416,15 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`sweptC${r}`") || !src.includes('G.sweptHair(1.05)')
-      || !src.includes('Taper out')
-      || src.includes("sculptHair(`sweptB${r}`")
-      || src.includes('still a full cap')) {
-    note('✗', 'mii.html — swept hair should drop down the sides and taper out');
+  if (!src.includes("sculptHair(`wavC${r}`") || !src.includes('G.waves360(1.04)')
+      || !src.includes('G.longPony()')
+      || !src.includes("waves: 'Long ponytail'")
+      || src.includes("sculptHair(`wavB${r}`")
+      || src.includes("waves: 'Waves'")) {
+    note('✗', 'mii.html — waves should be a long ponytail with a natural hairline');
     failures++;
   } else {
-    note('✓', 'mii.html swept hair drops down the sides and tapers out');
+    note('✓', 'mii.html waves is a long ponytail with a natural hairline');
   }
 }
 
