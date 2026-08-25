@@ -3548,7 +3548,7 @@ const STYLE_LABELS = {
   sidepart: 'Side part', quiff: 'Quiff', pompadour: 'Pompadour', swoop: 'Swoop',
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
   curtains: 'Curtains', shortcurl: 'Short curls', afro: 'Afro', dreads: 'Locs',
-  bob: 'Bob', shag: 'Shag', wolf: 'Wolf cut', mullet: 'Mullet', flow: 'Flow',
+  bob: 'Bob', shag: 'Shag', wolf: 'Hi-top', mullet: 'Mullet', flow: 'Flow',
   long: 'Long middle layers', longmiddle: 'Long middle part', longside: 'Long center part',
   longwavy: 'Long wavy', bun: 'Top bun', pony: 'Ponytail',
   highpony: 'High ponytail', pigtails: 'Pigtails',
@@ -4495,17 +4495,13 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  wolf: (r) => geoCache(`wolfD${r}`, () => {
-    /* Long on top and down the back, crop on the sides. Face-window
-       interpolation used to shave the temples; extra y-scale made a
-       tall egg instead of a nape. */
-    const tl = 2.55;
-    const g = new THREE.SphereGeometry(r, 48, 40, 0, TAU, 0, tl);
+  wolf: (r) => geoCache(`hitopA${r}`, () => {
+    /* Hi-top fade: a vertical column on the crown, short faded sides,
+       and a flat normal hairline — not a round bowl. */
+    const tl = 1.92;
+    const g = new THREE.SphereGeometry(r, 64, 52, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     const n = HEAD_N;
-    const faceTh = 1.08;
-    const sideTh = 1.58;
-    const napeTh = 2.42;
     for (let i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i);
       const L = v.length() || 1;
@@ -4514,16 +4510,17 @@ const G = {
       const rs0 = Math.hypot(ux, uz) || 1e-6;
       const azFront = Math.max(0, uz / rs0);
       const azBack = Math.max(0, -uz / rs0);
-      const phi = Math.atan2(ux, uz);
-      const faceWin = Math.pow(Math.max(0, azFront - 0.18) / 0.82, 2);
-      const backAmt = Math.pow(azBack, 2.2);
-      const chop = (0.035 * Math.sin(phi * 7.0) + 0.016 * Math.sin(phi * 13.0 + 0.6))
-        * backAmt;
-      const maxTh = sideTh
-        + (faceTh - sideTh) * faceWin
-        + (napeTh - sideTh) * backAmt
-        + chop;
-      const th2 = (th / tl) * maxTh;
+      const side = Math.abs(ux) / rs0;
+      const frame = hairFrame(ux, uy, azFront, azBack, side);
+
+      const earFade = side * Math.pow(Math.max(0, (0.52 - uy) / 0.58), 1.12);
+      const napeFade = azBack * Math.pow(Math.max(0, (0.48 - uy) / 0.54), 1.08);
+      const fadeAmt = Math.min(1, earFade * 1.18 + napeFade * 1.05);
+      let cover = Math.pow(Math.max(0, (uy + 0.06) / 0.72), 0.75);
+      cover *= 1 - fadeAmt * 0.97;
+      cover *= 1 - frame.faceOpen * 0.88;
+
+      const th2 = (th / tl) * (1.16 + cover * 0.12);
       const rs = Math.sin(th2);
       let nx = ux / rs0 * rs;
       let ny = Math.cos(th2);
@@ -4533,19 +4530,49 @@ const G = {
         -1 / n
       );
       nx *= s * r; ny *= s * r; nz *= s * r;
-      ny += Math.max(0, ny - 0.42) * 0.36;
-      const mane = Math.exp(-ux * ux * 7.0) * Math.max(0, ny - 0.22);
-      ny += mane * 0.10;
-      if (azFront > 0.4 && ny < 0.62) {
-        const t = Math.pow((azFront - 0.4) / 0.6, 1.3) * Math.min(1, (0.62 - ny) / 0.32);
+
+      /* Vertical column: keep xz on a cylinder and grow up, not out. */
+      const col = Math.pow(Math.max(0, uy - 0.16) / 0.84, 0.95)
+        * Math.pow(Math.max(0, 0.78 - side) / 0.78, 1.45)
+        * (1 - fadeAmt * 0.85);
+      const horiz = Math.hypot(nx, nz) || 1e-6;
+      const cylR = r * (0.50 + azFront * 0.03 - azBack * 0.02);
+      const nxC = nx / horiz * cylR;
+      const nzC = nz / horiz * cylR;
+      const nyC = r * (0.30 + Math.max(0, uy - 0.12) * 1.48);
+      nx = nx * (1 - col) + nxC * col;
+      nz = nz * (1 - col) + nzC * col;
+      ny = ny * (1 - col) + nyC * col;
+
+      /* Flat top of the column. */
+      const capY = r * 1.56;
+      if (ny > capY) ny = capY + (ny - capY) * 0.10;
+
+      /* Flatten the front wall so it is not a round dome or visor. */
+      if (azFront > 0.22 && col > 0.18) {
+        const flat = Math.pow((azFront - 0.22) / 0.78, 1.15) * col;
+        const zWall = r * 0.56;
+        nz = nz * (1 - flat * 0.42) + zWall * flat * 0.42;
+      }
+
+      /* Level hairline across the brow, a touch lower at the temples. */
+      const hairlineY = 0.32 + side * side * 0.10;
+      if (azFront > 0.20 && ny < hairlineY + 0.12 && col < 0.55) {
+        const t = Math.pow((azFront - 0.20) / 0.80, 1.2)
+          * Math.min(1, (hairlineY + 0.12 - ny) / 0.28)
+          * (1 - col * 0.35);
         const Lh = Math.hypot(nx, ny, nz) || 1;
-        const k = 1 - t + t * (1.05 / Lh);
+        const k = 1 - t + t * (s * r * 1.02 / Lh);
+        nx *= k; ny *= k; nz *= k;
+        if (t > 0.35) ny = Math.max(ny, hairlineY);
+      }
+
+      if (cover < 0.08 && col < 0.12) {
+        const Lh = Math.hypot(nx, ny, nz) || 1;
+        const k = s * r * 1.010 / Lh;
         nx *= k; ny *= k; nz *= k;
       }
-      const hang = backAmt * Math.max(0, -ny + 0.15);
-      ny -= hang * 0.55;
-      nz -= hang * 0.22;
-      nx *= 1 - backAmt * 0.10;
+
       p.setXYZ(i, nx, ny, nz);
     }
     p.needsUpdate = true;
@@ -6588,9 +6615,9 @@ function buildHair(dna, mat, extraMats) {
        face was three haircuts glued together. */
     add(G.shag(1.09), 0, 0, 0, 1, 1.08, 1);
   } else if (st === 'wolf') {
-    /* Long on top and down the back, short on the sides. Side teardrops
-       on a bowl were earmuffs; the nape has to be the same shell. */
-    add(G.wolf(1.09), 0, 0, 0, 1, 1.08, 1);
+    /* One hi-top shell. Extra y-scale on a bowl was a tall egg; the
+       column has to grow up, not out, with a flat hairline. */
+    add(G.wolf(1.05), 0, 0, 0);
   } else if (st === 'mullet') {
     /* Short on top, long at the back. Cap plus nape ovals left a bald
        stripe — the hem has to be the same surface as the crown. */
