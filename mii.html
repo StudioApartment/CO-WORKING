@@ -3548,7 +3548,7 @@ const STYLE_LABELS = {
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
   curtains: 'Curtains', shortcurl: 'Short curls', afro: 'Afro', dreads: 'Locs',
   bob: 'Bob', shag: 'Shag', wolf: 'Hi-top', mullet: 'Mohawk', flow: 'Flow',
-  long: 'Long middle layers', longmiddle: 'Long middle part', longside: 'Long center part',
+  long: 'Long middle layers', longmiddle: 'Long middle part', longside: 'Long side part',
   longwavy: 'Long wavy', bun: 'Top bun', pony: 'Ponytail',
   highpony: 'High ponytail', pigtails: 'Pigtails',
   layers: 'Long layers', spacebuns: 'Space buns',
@@ -5054,7 +5054,7 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  longHair: (r, part = 'bangs', wave = 0, hem = '') => geoCache(`longO${r}_${part}_${wave}_${hem}`, () => {
+  longHair: (r, part = 'bangs', wave = 0, hem = '') => geoCache(`longP${r}_${part}_${wave}_${hem}`, () => {
     /* One flowing shell. Bangs/middle get V-tapers; hem === 'feet' is a
        blunt curtain that hems near the floor for the top-bun cut. */
     const tl = 2.48;
@@ -5080,10 +5080,25 @@ const G = {
       let faceOpen = frame.faceOpen;
       let groove = 0;
 
-      if (part === 'bangs' || part === 'middle' || part === 'side') {
-        /* Centre part: hair splits on the midline and falls to the sides.
-           Side used to be a left-of-centre sweep; it now matches the
-           middle part so this cut frames the face evenly. */
+      if (part === 'side') {
+        /* Natural mid-forehead side part. Groove sits left of centre;
+           the fringe side keeps volume down the temples so hair sits
+           closer to the ears instead of as a high cap behind the head. */
+        const sweep = Math.max(0, ux);
+        const partLine = Math.max(0, -ux);
+        groove = Math.exp(-((ux + 0.24) * (ux + 0.24)) * 15) * Math.max(0, uy + 0.04);
+        const brow = Math.pow(Math.max(0, azFront - 0.12) / 0.88, 1.4) * (1 - side * 0.62);
+        faceOpen = Math.min(1,
+          frame.faceOpen * 0.16 * (1 - sweep * 0.75)
+          + partLine * brow * 0.62
+          + groove * 0.36
+        );
+        maxTh = sideTh + (lengthTh - sideTh) * (1 - faceOpen * 0.16);
+        maxTh -= groove * 0.20;
+        maxTh += sweep * azFront * 0.14;
+        maxTh += side * 0.12;
+      } else if (part === 'bangs' || part === 'middle') {
+        /* Centre part: hair splits on the midline and falls to the sides. */
         groove = Math.exp(-ux * ux * 22) * Math.max(0, uy - 0.02);
         const sideFall = (1 - Math.exp(-side * side * 5.5)) * azFront;
         faceOpen = Math.min(1, frame.faceOpen * 0.85 + groove * 0.55 + sideFall * 0.12);
@@ -5116,16 +5131,50 @@ const G = {
         nz *= 1 - groove * 0.07;
       }
 
-      if (faceOpen > 0 && azFront > 0.30 && ny < frame.hairline + 0.08) {
-        const t = faceOpen * Math.pow((azFront - 0.30) / 0.70, 1.15)
-          * Math.min(1, (frame.hairline + 0.08 - ny) / 0.28);
-        const Lh = Math.hypot(nx, ny, nz) || 1;
-        const k = 1 - t + t * (1.04 / Lh);
-        nx *= k; ny *= k; nz *= k;
-        if (t > 0.5 && ny < frame.hairline - 0.02) ny = Math.max(ny, frame.hairline - 0.02);
+      if (part === 'side') {
+        const fringe = Math.max(0, ux) * azFront
+          * Math.exp(-Math.pow((uy - 0.22) / 0.40, 2) * 1.5);
+        nx += fringe * 0.10;
+        nz += fringe * 0.14;
+        ny -= fringe * 0.08;
       }
 
-      ({ nx, ny, nz } = applySideburnsNape(nx, ny, nz, frame.sideburn, frame.nape, ux, azFront, azBack));
+      const hairY = part === 'side'
+        ? 0.22 + Math.max(0, -ux) * azFront * 0.14 - Math.max(0, ux) * 0.10 - side * 0.12
+        : frame.hairline;
+      const forehead = part === 'side'
+        ? Math.max(0, azFront - 0.38) * (1 - side * 0.70)
+        : azFront;
+      if (faceOpen > 0 && (part === 'side' ? forehead > 0.08 : azFront > 0.22)
+          && ny < hairY + 0.12) {
+        const win = part === 'side' ? forehead : (azFront - 0.22);
+        const t = faceOpen * Math.pow(Math.max(0, win) / 0.62, 1.1)
+          * Math.min(1, (hairY + 0.12 - ny) / 0.30);
+        const Lh = Math.hypot(nx, ny, nz) || 1;
+        const k = 1 - t + t * ((part === 'side' ? 1.055 : 1.04) / Lh);
+        nx *= k; ny *= k; nz *= k;
+        if (t > 0.55) ny = Math.max(ny, hairY - (part === 'side' ? 0.06 : 0.02));
+      }
+
+      const sb = part === 'side'
+        ? Math.max(frame.sideburn, side * (0.48 + azFront * 0.36) * Math.max(0, 0.28 - uy))
+        : frame.sideburn;
+      ({ nx, ny, nz } = applySideburnsNape(nx, ny, nz, sb, frame.nape, ux, azFront, azBack));
+
+      if (part === 'side') {
+        /* Temple band: hug in toward the ears and a little forward so
+           the sides cover the head instead of sitting behind it. */
+        const temple = side * Math.exp(-Math.pow((uy - 0.02) / 0.44, 2) * 1.7)
+          * (1 - Math.max(0, azBack) * 0.22);
+        if (temple > 0.02) {
+          const radT = Math.hypot(nx, nz) || 1e-6;
+          const want = radT * (1 - temple * 0.24) + 1.08 * temple * 0.24;
+          nx *= want / radT;
+          nz *= want / radT;
+          nz += temple * 0.12 * azFront;
+          ny -= temple * 0.10;
+        }
+      }
 
       /* Curtain down the back and sides. Bangs and middle get several
          V-points. hem === 'feet' is a straight line near the floor for
@@ -5133,8 +5182,11 @@ const G = {
       const feet = hem === 'feet';
       const layered = !feet && (part === 'bangs' || part === 'middle');
       const rear = Math.max(0, 1 - azFront * 1.25);
+      const sideHang = part === 'side'
+        ? side * 0.92 * (1 - Math.min(1, faceOpen * 0.22))
+        : 0;
       const hang = Math.pow(Math.max(0, (u - 0.38) / 0.62), 1.12)
-        * rear * (1 - Math.min(1, faceOpen * 0.88));
+        * Math.max(rear, sideHang) * (1 - Math.min(1, faceOpen * (part === 'side' ? 0.28 : 0.88)));
       const hemY = feet ? -1.72 : part === 'bangs' ? -0.98 : layered ? -1.18 : -1.50;
       const hemR = layered ? 0.84 : 0.90;
       let point = 0;
@@ -5154,7 +5206,7 @@ const G = {
         const wantR = rad * (1 - hang) + hemR * (1 - point * 0.38) * hang;
         nx *= wantR / rad;
         nz *= wantR / rad;
-        nz -= hang * (0.10 + azBack * 0.12);
+        nz -= hang * (part === 'side' ? (0.04 + azBack * 0.14) : (0.10 + azBack * 0.12));
       }
 
       const sway = Math.sin(Math.min(hang, 1) * (wave ? 3.2 : 2.7));
