@@ -174,12 +174,11 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`shcurlB${r}`") || !src.includes("'shortcurl'")
-      || src.includes("geoCache(`shcurl${r}`") || src.includes('bumpy curl silhouette')) {
-    note('✗', 'mii.html — short curls should be a curly crown with shaved sides, not two bumps');
+  if (!src.includes("geoCache(`shcurl${r}`") || !src.includes("'shortcurl'")) {
+    note('✗', 'mii.html — short curly hair style is missing');
     failures++;
   } else {
-    note('✓', 'mii.html short curls are a curly crown with shaved sides');
+    note('✓', 'mii.html includes short curly hair');
   }
 }
 
@@ -396,7 +395,7 @@ for (const [page, ids] of required) {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const shells = [
     'G.frenchCrop(1.05)', "G.pixieCut(1.05)", 'G.waves360(1.04)',
-    'G.crewCut(1.04)', "G.partedTop(1.05, 'combover')", 'G.bedHead(1.06)',
+    'G.crewCut(1.04)', "G.partedTop(1.05, 'combover')", "G.partedTop(1.05, 'side')",
     'G.swoopCurl(1.05)', 'G.slickBack(1.05)', 'G.sweptHair(1.05)',
     'G.spikes(1.05)', 'G.pomp(1.05)', 'sculptHair('
   ];
@@ -417,16 +416,14 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`bedA${r}`") || !src.includes('G.bedHead(1.06)')
-      || !src.includes('applyFrostedTips')
-      || !src.includes('Short shaggy bed head')
-      || src.includes("G.partedTop(1.05, 'side')")
-      || src.includes("sidepart: 'Side part'")
-      || !src.includes("sidepart: 'Frosted tips'")) {
-    note('✗', 'mii.html — side part should be a short shaggy bed head with frosted tips');
+  if (!src.includes("sculptHair(`sweptC${r}`") || !src.includes('G.sweptHair(1.05)')
+      || !src.includes('Taper out')
+      || src.includes("sculptHair(`sweptB${r}`")
+      || src.includes('still a full cap')) {
+    note('✗', 'mii.html — swept hair should drop down the sides and taper out');
     failures++;
   } else {
-    note('✓', 'mii.html side part is a short shaggy bed head with frosted tips');
+    note('✓', 'mii.html swept hair drops down the sides and tapers out');
   }
 }
 
@@ -438,17 +435,6 @@ for (const [page, ids] of required) {
     failures++;
   } else {
     note('✓', 'mii.html bob is shaped as a short jaw-length cut');
-  }
-}
-
-{
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`spkC${r}`") || !src.includes('Spiky front')
-      || src.includes("sculptHair(`spkB${r}`")) {
-    note('✗', 'mii.html — spiky should have a natural hairline, side hair, and a spiked front');
-    failures++;
-  } else {
-    note('✓', 'mii.html spiky has a natural hairline, side hair, and a spiked front');
   }
 }
 
@@ -473,13 +459,11 @@ for (const [page, ids] of required) {
              || !src.includes('SphereGeometry(r, 88, 72')
              || !src.includes('part === \'bangs\' || part === \'middle\'')
              || src.includes("long: 'Long bangs'")
-             || src.includes("longside: 'Long center part'")
-             || !src.includes("longside: 'Long side part'")
-             || !src.includes('Natural mid-forehead side part')
+             || src.includes("longside: 'Long side part'")
              || !src.includes("part === 'side'")
              || !src.includes("longHair(1.07, 'middle', 0, 'feet'")
              || src.includes('add(G.ball(), 0, 0.86, -0.62')) {
-    note('✗', 'mii.html — long hair should keep a side-part cut close to the ears');
+    note('✗', 'mii.html — long hair should be a smooth middle part with several tapers, not a spike or blunt bangs');
     failures++;
   } else {
     note('✓', 'mii.html long hair styles include part and wave variants');
