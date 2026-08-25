@@ -390,6 +390,18 @@ for (const [page, ids] of required) {
   }
 }
 
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = src.includes('G.locFade(1.04)') && src.includes('sculptHair(`locFadeA${r}`');
+  const hanging = src.includes('add(G.neck()');
+  if (!wired || hanging) {
+    note('✗', 'mii.html — locs should use a shaved fade shell, not hanging loc tubes');
+    failures++;
+  } else {
+    note('✓', 'mii.html locs use a clean shaved fade on the sides and back');
+  }
+}
+
 /* Extra balls on a cap read as buns or earmuffs. Each barbershop cut has
    to be one shell that matches the real silhouette (French crop fringe,
    360 waves, crew vs buzz, etc.). */
