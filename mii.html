@@ -3519,7 +3519,7 @@ const PANTS  = ['#3f4d5c','#2f3a47','#4a5a6b','#5c4633','#37506e'];
 const SHOES  = ['#2f3a45','#e8ecef','#c0392b','#33506b','#4a4a4a'];
 /* Real haircuts people ask for, rather than novelty shapes. Ordered roughly
    short to long so the picker reads sensibly. */
-const HAIRSTYLES = ['bald','buzz','taper','crop','waves','fade','pixie','bowl','combover','sidepart',
+const HAIRSTYLES = ['bald','buzz','taper','crop','waves','pixie','bowl','combover','sidepart',
                     'quiff','pompadour','swoop','slickback','swept','spiky','curtains','shortcurl',
                     'afro','dreads','bob','shag','wolf','mullet','flow','long','longmiddle',
                     'longside','longwavy','bun','pony','highpony','pigtails','layers','spacebuns',
@@ -3538,12 +3538,14 @@ const HAIRSTYLE_ALIASES = {
   afrofade: 'afro',
   // Every bandana knots at the back now, so the separate variant is the red one.
   bandanaback: 'bandana'
+,
+  fade: 'taper'
 };
 
 /* Raw ids are terse; the picker shows these. */
 const STYLE_LABELS = {
   bald: 'Bald', buzz: 'Buzz cut', taper: 'Crew cut', crop: 'French crop',
-  waves: 'Long ponytail', fade: 'Fade', pixie: 'Pixie', bowl: 'Mop-top', combover: 'Comb over',
+  waves: 'Long ponytail', pixie: 'Pixie', bowl: 'Mop-top', combover: 'Comb over',
   sidepart: 'Frosted tips', quiff: 'Quiff', pompadour: 'Pompadour', swoop: 'Swoop',
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
   curtains: 'Curtains', shortcurl: 'Short curls', afro: 'Afro', dreads: 'Locs',
@@ -6762,11 +6764,6 @@ function buildHair(dna, mat, extraMats) {
     }
 
   /* ---- barbershop cuts --------------------------------------
-     A fade is the tricky one: a character carries a single hair
-     colour, so the taper is implied by capping the sides short and
-     massing the top. It reads in silhouette, which is what this
-     style leans on anyway.
-
      Volume lives above y≈0.29 wherever possible — that is the brow
      line, and anything crossing it starts covering the eyes. */
   }
@@ -6783,9 +6780,6 @@ function buildHair(dna, mat, extraMats) {
     add(G.ball(), 0, 0.18, -1.02, 0.14, 0.14, 0.14);
     const tail = add(G.longPony(), 0, -0.58, -1.10, 1.02, 1.92, 1.02);
     tail.rotation.x = -0.16;
-  }
-  else if (st === 'fade') {
-    add(G.fade(1.04), 0, 0, 0);
   }
   else if (st === 'pixie') {
     add(G.pixieCut(1.05), 0, 0, 0);
