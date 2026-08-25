@@ -496,6 +496,23 @@ for (const [page, ids] of required) {
   }
 }
 
+/* Minimal ink is sparse fine-line geometry on jaw and hands — stacked
+   triangles and a celestial column. Stroke-only, but thick enough to
+   survive plaza scale. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'minimal'", "label: 'Minimal'", 'function inkTwinTriangles',
+                 'function inkCelestial', 'function drawMinimalFace',
+                 "kind === 'minimal'", 'Math.max(3.2, s * 0.07)']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — minimal ink needs stacked triangles and a celestial column');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers minimal tattoos on the jaw and hands');
+  }
+}
+
 /* A broken vercel.json fails the production deploy while GitHub still
    merges — the last plaza fix never reached phones because of that. */
 {

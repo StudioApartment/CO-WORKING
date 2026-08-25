@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -2811,16 +2811,124 @@ function inkKnuckleBars(g, s) {
   }
 }
 
+/* The rig has no arms, so every ink style has to live on the jaw patch
+   and/or the floating hand spheres. Minimal covers both, sparsely. */
+function tattooHasJaw(t) {
+  return t === 'neck' || t === 'both' || t === 'minimal';
+}
+function tattooHasHand(t) {
+  return t === 'hand' || t === 'both' || t === 'minimal';
+}
+
+/* ---- minimal ----------------------------------------------
+   Original fine-line geometry: two stacked triangles, a short celestial
+   column. Stroke-only besides a couple of dots, still thick enough that
+   a 20px hand does not erase it. Not a copy of anyone's flash. */
+function inkFine(g, s) {
+  g.strokeStyle = INK;
+  g.fillStyle = INK;
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+  g.lineWidth = Math.max(3.2, s * 0.07);
+}
+
+function inkTwinTriangles(g, s) {
+  /* Two downward triangles, the second shifted so they interlock. */
+  inkFine(g, s);
+  const draw = (cy) => {
+    g.beginPath();
+    g.moveTo(0, cy + s * 0.50);
+    g.lineTo(s * 0.46, cy - s * 0.28);
+    g.lineTo(-s * 0.46, cy - s * 0.28);
+    g.closePath();
+    g.stroke();
+  };
+  draw(-s * 0.18);
+  draw(s * 0.18);
+}
+
+function inkCelestial(g, s) {
+  /* Vertical stack of tiny glyphs. Original order, not a copied chart. */
+  inkFine(g, s);
+  const step = s * 0.30;
+  const glyphs = [
+    (y) => { g.beginPath(); g.arc(0, y, s * 0.05, 0, TAU); g.fill(); },
+    (y) => {
+      g.beginPath();
+      g.moveTo(0, y - s * 0.12); g.lineTo(0, y + s * 0.12);
+      g.moveTo(-s * 0.12, y); g.lineTo(s * 0.12, y);
+      g.stroke();
+    },
+    (y) => {
+      g.beginPath();
+      g.arc(s * 0.03, y, s * 0.10, 0.55, -0.55);
+      g.stroke();
+    },
+    (y) => {
+      g.beginPath(); g.arc(0, y, s * 0.09, 0, TAU); g.stroke();
+      g.beginPath(); g.ellipse(0, y, s * 0.16, s * 0.045, -0.28, 0, TAU); g.stroke();
+    },
+    (y) => {
+      g.beginPath();
+      g.moveTo(s * 0.05, y - s * 0.12);
+      g.lineTo(-s * 0.04, y - s * 0.01);
+      g.lineTo(s * 0.05, y - s * 0.01);
+      g.lineTo(-s * 0.05, y + s * 0.12);
+      g.stroke();
+    },
+    (y) => {
+      g.beginPath();
+      g.moveTo(0, y - s * 0.08);
+      g.lineTo(s * 0.05, y);
+      g.lineTo(0, y + s * 0.08);
+      g.lineTo(-s * 0.05, y);
+      g.closePath();
+      g.fill();
+    },
+    (y) => { g.beginPath(); g.arc(0, y, s * 0.05, 0, TAU); g.fill(); }
+  ];
+  const y0 = -((glyphs.length - 1) * step) / 2;
+  for (let i = 0; i < glyphs.length; i++) glyphs[i](y0 + i * step);
+}
+
+function drawMinimalFace(g, U) {
+  /* Sparse: triangles on one jaw, a celestial column on the other,
+     a four-point on the chin. Nothing on the forehead or under the eyes. */
+  g.save();
+  g.translate(22 * U, 76 * U);
+  inkTwinTriangles(g, 11 * U);
+  g.restore();
+
+  g.save();
+  g.translate(78 * U, 76 * U);
+  inkCelestial(g, 9.5 * U);
+  g.restore();
+
+  g.save();
+  g.translate(50 * U, 90 * U);
+  inkFine(g, 5 * U);
+  g.beginPath();
+  g.moveTo(0, -3.2 * U); g.lineTo(0, 3.2 * U);
+  g.moveTo(-3.2 * U, 0); g.lineTo(3.2 * U, 0);
+  g.stroke();
+  g.restore();
+}
+
 /* ---- neck ink -----------------------------------------------
    Painted along the jaw rather than on the neck mesh, because the head
    hides that mesh entirely. Drawn before facial hair so a beard covers
    it the way one actually would. Stays below the eyes — never the forehead. */
 function drawNeckInk(g, U, dna) {
-  if (dna.tattoo !== 'neck' && dna.tattoo !== 'both') return;
+  if (!tattooHasJaw(dna.tattoo)) return;
 
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.lineCap = 'round';
   g.lineJoin = 'round';
+
+  if (dna.tattoo === 'minimal') {
+    drawMinimalFace(g, U);
+    return;
+  }
 
   /* Left jaw: a big traditional rose plus a nautical star. Vines at this
      scale collapsed into slashes, so the flower has to carry the read. */
@@ -3250,12 +3358,15 @@ const PIERCING_ALIASES = { brow: 'none', lip: 'none' };
 
 /* ---- tattoos ------------------------------------------------
    The Wii rig has floating hands and no arms, so forearm and
-   sleeve ink has no surface to sit on. Hands and neck do. */
+   sleeve ink has no surface to sit on. Hands and jaw do. Hands /
+   Jaw / Both keep the traditional flash; Minimal is a separate
+   fine-line style on both surfaces. */
 const TATTOOS = [
-  { id: 'none',  label: 'None' },
-  { id: 'hand',  label: 'Hands' },
-  { id: 'neck',  label: 'Jaw' },
-  { id: 'both',  label: 'Both' }
+  { id: 'none',    label: 'None' },
+  { id: 'hand',    label: 'Hands' },
+  { id: 'neck',    label: 'Jaw' },
+  { id: 'both',    label: 'Both' },
+  { id: 'minimal', label: 'Minimal' }
 ];
 
 /* ---- apparel ------------------------------------------------
@@ -3337,7 +3448,7 @@ function randomDNA(opts = {}) {
     freckles: chance(0.18),
     facialHair: male && chance(0.42) ? pickOne(['stubble','lineup','full','goatee','stache','handlebar']) : 'none',
     piercing: 'none',
-    tattoo: chance(0.16) ? pickOne(['hand','neck','both']) : 'none',
+    tattoo: chance(0.16) ? pickOne(['hand','neck','both','minimal']) : 'none',
     apparel: opts.apparel || pickOne(APPAREL).id,
     hue: Math.random()
   };
@@ -3368,6 +3479,7 @@ function normalizeDNA(d) {
   if (PIERCING_ALIASES[d.piercing]) d.piercing = PIERCING_ALIASES[d.piercing];
   delete d.ears;                       // ear jewellery was removed
   if (typeof d.tattoo !== 'string') d.tattoo = 'none';
+  if (!TATTOOS.some((t) => t.id === d.tattoo)) d.tattoo = 'none';
   if (APPAREL_ALIASES[d.apparel]) d.apparel = APPAREL_ALIASES[d.apparel];
   if (typeof d.apparel !== 'string' || !APPAREL_BY_ID.has(d.apparel)) d.apparel = 'tee';
   delete d.badge;                      // the 3D ID badge overlay was removed
@@ -5285,7 +5397,6 @@ function makeApparelTexture(dna) {
 function makeInkTexture(kind) {
   /* Jaw ink lives on the face patch (drawNeckInk). This map is the floating
      hand sphere. 512px so a rose still has petal edges after minification. */
-  void kind;
   const S = 512;
   const c = cv(S);
   const g = c.getContext('2d');
@@ -5305,37 +5416,71 @@ function makeInkTexture(kind) {
 
   // Sphere front is u=0.25: the back of the hand is what faces the camera.
   const front = S * 0.25;
-  wrapped(front, () => {
-    g.save();
-    g.translate(0, S * 0.26);
-    inkKnuckleBars(g, S * 0.34);
-    g.restore();
 
-    g.save();
-    g.translate(0, S * 0.52);
-    inkRose(g, S * 0.18);
-    g.restore();
-
-    g.save();
-    g.translate(0, S * 0.74);
-    inkStar(g, S * 0.07);
-    g.restore();
-  });
-
-  // Wrist band all the way round, with stars so it reads from any angle.
-  g.lineWidth = S * 0.038;
-  g.strokeStyle = INK;
-  g.beginPath(); g.moveTo(0, S * 0.86); g.lineTo(S, S * 0.86); g.stroke();
-  g.lineWidth = S * 0.016;
-  g.beginPath(); g.moveTo(0, S * 0.915); g.lineTo(S, S * 0.915); g.stroke();
-  for (let i = 0; i < 4; i++) {
-    const cx = (i + 0.5) * (S / 4);
-    wrapped(cx, () => {
+  if (kind === 'minimal') {
+    wrapped(front, () => {
       g.save();
-      g.translate(0, S * 0.888);
-      inkStar(g, S * 0.032);
+      g.translate(0, S * 0.24);
+      g.fillStyle = INK;
+      for (let i = -1; i <= 1; i++) {
+        g.beginPath();
+        g.arc(i * S * 0.08, 0, S * 0.016, 0, TAU);
+        g.fill();
+      }
+      g.restore();
+
+      g.save();
+      g.translate(0, S * 0.46);
+      inkTwinTriangles(g, S * 0.14);
+      g.restore();
+
+      g.save();
+      g.translate(0, S * 0.68);
+      inkCelestial(g, S * 0.11);
       g.restore();
     });
+    wrapped(S * 0.75, () => {
+      g.save();
+      g.translate(0, S * 0.50);
+      inkTwinTriangles(g, S * 0.11);
+      g.restore();
+    });
+    g.strokeStyle = INK;
+    g.lineWidth = S * 0.018;
+    g.beginPath(); g.moveTo(0, S * 0.88); g.lineTo(S, S * 0.88); g.stroke();
+  } else {
+    wrapped(front, () => {
+      g.save();
+      g.translate(0, S * 0.26);
+      inkKnuckleBars(g, S * 0.34);
+      g.restore();
+
+      g.save();
+      g.translate(0, S * 0.52);
+      inkRose(g, S * 0.18);
+      g.restore();
+
+      g.save();
+      g.translate(0, S * 0.74);
+      inkStar(g, S * 0.07);
+      g.restore();
+    });
+
+    // Wrist band all the way round, with stars so it reads from any angle.
+    g.lineWidth = S * 0.038;
+    g.strokeStyle = INK;
+    g.beginPath(); g.moveTo(0, S * 0.86); g.lineTo(S, S * 0.86); g.stroke();
+    g.lineWidth = S * 0.016;
+    g.beginPath(); g.moveTo(0, S * 0.915); g.lineTo(S, S * 0.915); g.stroke();
+    for (let i = 0; i < 4; i++) {
+      const cx = (i + 0.5) * (S / 4);
+      wrapped(cx, () => {
+        g.save();
+        g.translate(0, S * 0.888);
+        inkStar(g, S * 0.032);
+        g.restore();
+      });
+    }
   }
 
   const t = new THREE.CanvasTexture(c);
@@ -6081,10 +6226,10 @@ function buildMii(dna) {
 
   /* ---- floating hands ---- */
   M.hands = [];
-  const handInk = dna.tattoo === 'hand' || dna.tattoo === 'both';
+  const handInk = tattooHasHand(dna.tattoo);
   const handInkMat = handInk
     ? new THREE.MeshStandardMaterial({
-        map: makeInkTexture('hand'), transparent: true, roughness: 0.85, depthWrite: false
+        map: makeInkTexture(dna.tattoo), transparent: true, roughness: 0.85, depthWrite: false
       })
     : null;
   if (handInkMat) M.mats.push(handInkMat);
