@@ -380,11 +380,13 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`medM${r}`") || !src.includes('G.medium(1.07)')) {
-    note('✗', 'mii.html — bowl should render as a medium-length side-swept cut');
+  if (!src.includes("geoCache(`mopA${r}`") || !src.includes('G.medium(1.07)')
+      || !src.includes("bowl: 'Mop-top'")
+      || !src.includes('mixed tapered points')) {
+    note('✗', 'mii.html — bowl should render as a mop-top with tapered edges');
     failures++;
   } else {
-    note('✓', 'mii.html bowl is a medium-length men\'s style');
+    note('✓', 'mii.html bowl is a mop-top with tapered edges');
   }
 }
 
