@@ -211,6 +211,22 @@ for (const [page, ids] of required) {
   }
 }
 
+/* The western hat's whole read is the cattleman crease on the crown and the
+   upswept sides of the brim. Both are geometry, and losing either drops it
+   back to the bowler-with-a-tray it used to be. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ['G._cattle', 'G.cowboyWall(', 'G.cowboyTop()', 'G.cowboyBrim(',
+                 'cattleman: true']
+    .every((s) => src.includes(s));
+  if (!wired || /st === 'cowboy'\)/.test(src)) {
+    note('✗', 'mii.html — cowboy hat needs a creased cattleman crown and a swept brim');
+    failures++;
+  } else {
+    note('✓', 'mii.html shapes the cowboy hat with a cattleman crease');
+  }
+}
+
 /* The conical hat's weave is an interlace, not a crosshatch. The diamond
    lattice in makeStrawTexture is what makes it read as basketwork, and the
    style must stay under a descriptive name rather than the slur. */

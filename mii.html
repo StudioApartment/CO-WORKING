@@ -2699,7 +2699,7 @@ const HAIRSTYLES = ['bald','buzz','taper','crop','waves','fade','pixie','bowl','
                     'long','longmiddle','longside','longwavy',
                     'bun','pony',
                     'highpony','pigtails','layers','spacebuns',
-                    'cap','flatbrim','dadhat','knicks','yankees','bucket','furry','furrysage','cowboy','beanie',
+                    'cap','flatbrim','dadhat','knicks','yankees','bucket','furry','furrysage','cowboy','cowboystraw','beanie',
                     'fossil','fossilblack','conical','bandana','bandanablue','bandanagreen','tophat'];
 
 /* Styles that existed before this list was rewritten. Stored characters keep
@@ -2729,7 +2729,8 @@ const STYLE_LABELS = {
   layers: 'Long layers', spacebuns: 'Space buns',
   cap: 'Cap', flatbrim: 'Flat brim', dadhat: 'Dad hat', knicks: 'Orange & blue',
   yankees: 'Navy & white', bucket: 'Bucket', furry: 'Furry bucket',
-  furrysage: 'Furry sage', cowboy: 'Cowboy', beanie: 'Beanie',
+  furrysage: 'Furry sage', cowboy: 'Cowboy', cowboystraw: 'Cowboy straw',
+  beanie: 'Beanie',
   fossil: 'Fossil knit', fossilblack: 'Fossil knit black',
   conical: 'Straw conical hat',
   bandana: 'Red bandana', bandanablue: 'Blue bandana', bandanagreen: 'Green bandana',
@@ -4139,6 +4140,127 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
+  /* ── Cattleman crown ────────────────────────────────────────────────────
+     The defining shape of a western hat is all in the top, and none of it was
+     there: a plain tube with a ball on it is a bowler. What makes it read is
+     a single longitudinal crease down the middle of the crown with a ridge
+     standing either side of it, pinched hardest at the front — two peaks and
+     a valley between them, seen head-on.
+
+     _cattle returns the height of the crown's top surface over its own top
+     radius, in units of the crown height, for a point (u, w) where u runs
+     left-to-right and w runs back (-1) to front (+1). Both the top disc and
+     the top edge of the wall are driven from it, so they meet exactly. */
+  _cattle: (u, w) => {
+    const au = Math.abs(u);
+    const ridge = Math.exp(-Math.pow((au - 0.60) / 0.42, 2));
+    const dent = Math.exp(-Math.pow(u / 0.32, 2));
+    const front = Math.max(0, Math.min(1, (w + 1) / 2));
+    // The crease runs the whole crown but bites deepest at the front.
+    const bite = 0.55 + 0.55 * front * front;
+    // Ridges stand tallest over the middle and die away fore and aft.
+    const along = Math.exp(-Math.pow(w / 0.90, 2));
+    let y = ridge * 0.165 * (0.45 + 0.55 * along) - dent * 0.150 * bite;
+    y -= 0.045 * w;                                   // worn low at the front
+    y -= Math.pow(Math.min(1, Math.hypot(u, w)), 3.2) * 0.060;   // edge rolls over
+    return y;
+  },
+  /* Crown wall. Tapers in toward the top, faintly hollow the way a blocked
+     felt crown is, and carries the crease down from its top edge. */
+  cowboyWall: (taper) => geoCache(`cwall${taper}`, () => {
+    const g = new THREE.CylinderGeometry(taper, 1, 1, 192, 22, true);
+    const p = g.attributes.position, uv = g.attributes.uv;
+    for (let i = 0; i < p.count; i++) {
+      let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+      const v = y + 0.5;                    // 0 at the base, 1 at the top edge
+      const rad = Math.hypot(x, z) || 1e-6;
+      const sn = x / rad, cs = z / rad;
+      const k = 1 - Math.sin(v * Math.PI) * 0.030;
+      x *= k; z *= k;
+      /* The crease is blocked into the top of the crown and fades out
+         downward — it does not reach the hatband. */
+      y += G._cattle(sn, cs) * Math.pow(v, 2.0);
+      p.setXYZ(i, x, y, z);
+      /* Weave density baked in, so a straw colourway needs no per-surface
+         texture repeat — the crown and the brim are wildly different sizes
+         and one shared repeat cannot suit both. */
+      uv.setXY(i, uv.getX(i) * 9, uv.getY(i) * 0.9);
+    }
+    p.needsUpdate = true;
+    uv.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  }),
+  /* The crown's top surface, as a radial grid so the crease has somewhere to
+     go. A CylinderGeometry cap is a single fan and cannot hold it. */
+  cowboyTop: () => geoCache('ctop2', () => {
+    const NA = 192, NR = 20, pos = [], uvs = [], idx = [];
+    for (let j = 0; j <= NR; j++) {
+      const rad = 0.004 + (1 - 0.004) * (j / NR);
+      for (let i = 0; i <= NA; i++) {
+        const a = (i / NA) * TAU;
+        const sn = Math.sin(a), cs = Math.cos(a);
+        pos.push(sn * rad, G._cattle(sn * rad, cs * rad), cs * rad);
+        /* Planar UVs, not (angle, radius). Radial ones converge at the centre
+           of the disc and wound the straw weave into a vortex there. Flat is
+           also how the plait actually lies across the top of a crown. */
+        uvs.push(sn * rad * 1.14 + 0.5, cs * rad * 1.14 + 0.5);
+      }
+    }
+    for (let j = 0; j < NR; j++) {
+      for (let i = 0; i < NA; i++) {
+        const a = j * (NA + 1) + i, b = a + 1;
+        const c = (j + 1) * (NA + 1) + i, d = c + 1;
+        idx.push(a, c, b, b, c, d);
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  }),
+  /* Cattleman brim: the sides sweep up hard through the outer half while the
+     front and back droop. That opposition is the whole silhouette, and a flat
+     annulus — which is what this was — throws it away entirely.
+
+     Built as its own grid rather than a RingGeometry so the seam vertex is
+     duplicated with a whole-turn UV, which lets the weave run concentrically
+     round the brim instead of as a flat sheet laid across it. Normalised to
+     an outer radius of 1, so heights are fractions of it and the whole thing
+     scales as one piece. */
+  cowboyBrim: (ri) => geoCache(`cbrim3${ri}`, () => {
+    const NA = 176, NR = 16, pos = [], uvs = [], idx = [];
+    for (let j = 0; j <= NR; j++) {
+      const t = j / NR;
+      const rad = ri + (1 - ri) * t;
+      for (let i = 0; i <= NA; i++) {
+        const a = (i / NA) * TAU;
+        const sn = Math.sin(a), cs = Math.cos(a);
+        const side = sn * sn, fb = cs * cs;
+        /* A shallow dip before the sweep, so the brim leaves the crown level
+           and then lifts, rather than climbing straight off the hatband. */
+        let y = side * (0.190 * Math.pow(t, 1.9) - 0.075 * t * (1 - t));
+        y -= fb * 0.050 * Math.pow(t, 1.7);
+        pos.push(sn * rad, y, cs * rad);
+        uvs.push((i / NA) * 15, t * 1.15);
+      }
+    }
+    for (let j = 0; j < NR; j++) {
+      for (let i = 0; i < NA; i++) {
+        const a = j * (NA + 1) + i, b = a + 1;
+        const c = (j + 1) * (NA + 1) + i, d = c + 1;
+        idx.push(a, c, b, b, c, d);
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  }),
   hatDome: (r, tl) => geoCache(`hdm${r}_${tl}`, () => superball(r, 128, 32, HEAD_N, 0, TAU, 0, tl)),
   hatVisor: () => geoCache('hvis', () => superball(1, 64, 28, 3.0)),
 };
@@ -4166,7 +4288,10 @@ const HATS = {
      wordmark and a leaping-kangaroo device, and neither is mine to copy. */
   furry:     { crown: '#3c5280', accent: '#2a3a5c', fur: true, mark: 'CO' },
   furrysage: { crown: '#a3a983', accent: '#7f855f', fur: true, mark: 'CO' },
-  cowboy:   { crown: '#8a6236', accent: '#5d4023' },
+  cowboy:      { crown: '#8a6236', accent: '#4a3220', cattleman: true },
+  /* Same block in shantung straw, which is what most of them actually are. */
+  cowboystraw: { crown: '#e0d3ad', accent: '#4f3a29', cattleman: true,
+                 straw: true, strawRepeat: [1, 1] },
   beanie:       { crown: null,      accent: null      },
   /* Jacquard fossil beanies. The motif is knitted, not printed — see
      makeKnitTexture — and it is my own fossil rather than the alpine brand's
@@ -4619,7 +4744,11 @@ function buildHair(dna, mat, extraMats) {
       /* Dried sedge has a faint sheen along the strips, so this one is not
          pushed as matte as the fur and the knit. */
       hatMat.map = makeStrawTexture(crownCol);
-      hatMat.map.repeat.set(5, 1);
+      /* The conical hat leans on the repeat; the western one bakes its weave
+         density into each surface's UVs instead, because its crown and brim
+         are too different in size to share one. */
+      const rep = H.strawRepeat || [5, 1];
+      hatMat.map.repeat.set(rep[0], rep[1]);
       hatMat.color.set('#ffffff');
       hatMat.roughness = 0.72;
       hatMat.metalness = 0.02;
@@ -4731,23 +4860,45 @@ function buildHair(dna, mat, extraMats) {
         logo.renderOrder = 3;
         out.push(logo);
       }
-    } else if (st === 'cowboy') {
-      /* Brim at the brow, crown standing directly on it. An earlier version
-         added curled side pieces to suggest a western roll; at this scale
-         they detached into floating discs, so the read comes from a tall
-         crown and a heavy band instead. Spans are written out because the
-         crown floated when they did not meet. */
-      // The crown has to be wider than the head, or it sits inside the hair
-      // shell at r=1.022 and disappears — which is exactly what it did at
-      // r=0.92. r=1.05 on a capped cylinder still clipped the temples
-      // (the plateau is wider on the diagonal) and the end disc at y=1.0
-      // sat on the pole. A tube at r≈1.12 plus a lid above the apex
-      // encloses the skull the way a real one does.
-      put(G.ring(1.08 / 1.58), hatMat, 0, 0.30, 0.02, 1.74, 1, 1.58);
-      put(G.tube(), hatMat, 0, 0.68, 0, 1.14, 0.70, 1.12);        // crown 0.330..1.030
-      put(G.ball(), hatMat, 0, 1.08, 0, 1.14, 0.26, 1.12);        // rounded top
-      put(G.ball(), hatMat, 0, 1.14, 0, 0.34, 0.14, 0.58);        // centre crease
-      put(G.tube(), accMat, 0, 0.41, 0, 1.18, 0.12, 1.16);        // band
+    } else if (H.cattleman) {
+      /* Western hat, cattleman crease.
+
+         What was here before was a straight tube with a ball on top and a
+         flat annulus for a brim, which reads as a bowler with a tray round
+         it. Both halves of the real shape were missing: the crown's crease,
+         and the brim's upswept sides.
+
+         The crown has to be wider than the head or it sits inside the hair
+         shell at r=1.022 and disappears. A capped cylinder at r=1.05 still
+         clipped the temples, because the skull's plateau is wider on the
+         diagonal than on the axes. */
+      /* The crown has to stand well clear of the skull, not just above it.
+         At a top of 1.08 the crease valley dropped to y≈1.02 while the hair
+         shell under the hat reaches 1.05, so the hair showed through the
+         crease as a coloured sliver right on the centre line. */
+      /* Raised a little to buy the front droop somewhere to go: the brim dips
+         at the front and back, and off a base of 0.36 that dip reached the
+         brow and started cutting across the eyes. */
+      const BASE_Y = 0.40, TOP_Y = 1.24, R_BASE = 1.14, TAPER = 0.80;
+      const CH = TOP_Y - BASE_Y;
+      const rTop = R_BASE * TAPER;
+
+      /* Wall and top share _cattle, and the top is parked exactly half a
+         crown height above the wall's centre with the same y-scale, so their
+         edges land on the same undulating rim rather than leaving a step. */
+      put(G.cowboyWall(TAPER), hatMat, 0, BASE_Y + CH / 2, 0, R_BASE, CH, R_BASE);
+      put(G.cowboyTop(), hatMat, 0, TOP_Y, 0, rTop, CH, rTop);
+
+      const BRIM_R = 1.92;
+      put(G.cowboyBrim(1.00 / BRIM_R), hatMat, 0, BASE_Y, 0, BRIM_R, BRIM_R, BRIM_R);
+
+      /* Ribbon band, sitting on the taper just above the brim. */
+      put(G.tube(), accMat, 0, 0.49, 0, 1.12, 0.13, 1.12);
+      /* Keeper and buckle, front right, where the ribbon is joined. */
+      const buck = put(G.ball(), accMat, 0.72, 0.49, 0.86, 0.075, 0.085, 0.045);
+      buck.rotation.y = -0.70;
+      const pin = put(G.ball(), hatMat, 0.73, 0.49, 0.875, 0.030, 0.042, 0.030);
+      pin.rotation.y = -0.70;
     } else if (st === 'beanie') {
       // Same depth as the baseball crown, so the edge lands on the brow
       // rather than across the eyes. y-scale clears the flattened pole.
