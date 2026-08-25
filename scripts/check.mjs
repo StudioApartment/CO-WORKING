@@ -125,6 +125,39 @@ for (const [page, ids] of required) {
   }
 }
 
+/* Caps/beanies/bandana share one colour chip. The three dyed bandanas
+   collapsed into that chip, so a leftover bandanablue tray slot would
+   put the old colourways back next to the picker. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const pickers = src.match(/const PICKERS = \[[\s\S]*?\n\];/);
+  const hair = src.match(/const HAIRSTYLES = \[[\s\S]*?\];/);
+  const hats = src.match(/const HATS = \{[\s\S]*?\n\};/);
+  const hatPicker = pickers && pickers[0].includes("key: 'hat'")
+    && pickers[0].includes('d.hatColor');
+  const oneBandana = hair && /\bbandana\b/.test(hair[0])
+    && !/\bbandanablue\b/.test(hair[0])
+    && !/\bbandanagreen\b/.test(hair[0]);
+  const hatsOne = hats && hats[0].includes('paisley: true')
+    && !hats[0].includes('bandanablue')
+    && !hats[0].includes('bandanagreen');
+  const aliased = src.includes("bandanablue: 'bandana'")
+    && src.includes("bandanagreen: 'bandana'");
+  const labelled = src.includes("bandana: 'Bandana'");
+  if (!hatPicker) {
+    note('✗', 'mii.html — colour pickers need a Hat chip bound to hatColor');
+    failures++;
+  } else if (!oneBandana || !hatsOne || !labelled) {
+    note('✗', 'mii.html — bandana should be one hat, recolored from the Hat chip');
+    failures++;
+  } else if (!aliased) {
+    note('✗', 'mii.html — saved blue/green bandanas must alias onto bandana');
+    failures++;
+  } else {
+    note('✓', 'mii.html has a Hat colour chip and a single bandana');
+  }
+}
+
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const accept = src.match(/async accept\(\) \{[\s\S]*?this\.showBadge\(rec/);
