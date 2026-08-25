@@ -167,6 +167,16 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("geoCache(`medM${r}`") || !src.includes('G.medium(1.07)')) {
+    note('✗', 'mii.html — bowl should render as a medium-length side-swept cut');
+    failures++;
+  } else {
+    note('✓', 'mii.html bowl is a medium-length men\'s style');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`bobB${r}`") || !src.includes('Undercurl')) {
     note('✗', 'mii.html — bob should be a jaw-length cut with bangs and an undercurl');
     failures++;
