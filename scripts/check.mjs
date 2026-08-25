@@ -485,7 +485,8 @@ for (const [page, ids] of required) {
              || src.includes('geoCache(`longI') || !src.includes('Math.sin(phi * 2.5)')
              || !src.includes('SphereGeometry(r, 88, 72')
              || !src.includes('part === \'middle\' || part === \'side\'')
-             || !src.includes('cover one eye')
+             || src.includes('cover one eye')
+             || !src.includes('Wii hair never covers an eye')
              || src.includes("long: 'Long bangs'")
              || src.includes("long: 'Long middle layers'")
              || !src.includes("long: 'Side-swept bangs'")
@@ -493,7 +494,7 @@ for (const [page, ids] of required) {
              || !src.includes("part === 'side'")
              || !src.includes("longHair(1.07, 'middle', 0, 'feet'")
              || src.includes('add(G.ball(), 0, 0.86, -0.62')) {
-    note('✗', 'mii.html — long bangs should cover one eye with a side part');
+    note('✗', 'mii.html — long bangs should leave a forehead, not cover an eye');
     failures++;
   } else {
     note('✓', 'mii.html long hair styles include part and wave variants');
@@ -684,6 +685,25 @@ for (const [page, ids] of required) {
     failures++;
   } else {
     note('✓', 'mii.html buildHair returns its meshes');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = src.includes('const BANGS_FLOOR = 0.40')
+    && src.includes('const LINE = {')
+    && src.includes('function clearBrow(')
+    && src.includes('LINE.widow')
+    && src.includes('LINE.recede')
+    && src.includes('LINE.bangs')
+    && src.includes('LINE.sideL')
+    && src.includes('LINE.hime')
+    && !src.includes('const hairline = 0.28 + side * side * 0.22');
+  if (!wired) {
+    note('✗', 'mii.html — Wii hairlines need per-style recipes and a bangs floor above the brow');
+    failures++;
+  } else {
+    note('✓', 'mii.html hairlines vary by style and stay above the eyes');
   }
 }
 
