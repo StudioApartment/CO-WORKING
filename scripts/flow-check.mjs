@@ -359,6 +359,8 @@ try {
     check('women\'s outfits are in the list',
       ['dress','sundress','skirt','cardigan'].every((id) => extras.outfits.includes(id)),
       extras.outfits.join(', '));
+    check('argyle sweater is in the list', extras.outfits.includes('argyle'),
+      extras.outfits.join(', '));
     check('bandanas come in red, blue and green',
       extras.bandanas.includes('bandana') && extras.bandanas.includes('bandanablue')
         && extras.bandanas.includes('bandanagreen'),
