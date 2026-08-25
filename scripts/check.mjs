@@ -262,19 +262,18 @@ for (const [page, ids] of required) {
   }
 }
 
-/* Sideburns sat as two dark rectangles flanking the eyes on the face
-   patch, so they are gone. Stored characters have to land on none. */
+/* Sideburns and mutton chops sat as two dark rectangles flanking the
+   eyes on the face patch, so they are gone. Stored characters land on none. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const listed = /id: 'sideburns'/.test(src);
-  const draws = /st === 'sideburns'/.test(src);
-  const aliased = /sideburns:\s*'none'/.test(src);
-  const mutton = /id: 'mutton'/.test(src) && /st === 'mutton'/.test(src);
-  if (listed || draws || !aliased || !mutton) {
-    note('✗', 'mii.html — sideburns should be removed and aliased to none');
+  const listed = /id: 'sideburns'/.test(src) || /id: 'mutton'/.test(src);
+  const draws = /st === 'sideburns'/.test(src) || /st === 'mutton'/.test(src);
+  const aliased = /sideburns:\s*'none'/.test(src) && /mutton:\s*'none'/.test(src);
+  if (listed || draws || !aliased) {
+    note('✗', 'mii.html — sideburns and mutton chops should be removed and aliased to none');
     failures++;
   } else {
-    note('✓', 'mii.html drops the sideburns option');
+    note('✓', 'mii.html drops the sideburns and mutton chops options');
   }
 }
 
