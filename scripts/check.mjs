@@ -167,6 +167,16 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("geoCache(`shcurl${r}`") || !src.includes("'shortcurl'")) {
+    note('✗', 'mii.html — short curly hair style is missing');
+    failures++;
+  } else {
+    note('✓', 'mii.html includes short curly hair');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("st === 'bald'") || src.includes("st === 'bald'") && /st === 'bald'[\s\S]{0,80}hairBand/.test(src)) {
     note('✗', 'mii.html — bald should render with no hair geometry');
     failures++;
