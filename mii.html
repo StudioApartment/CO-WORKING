@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3121,7 +3121,7 @@ const STYLE_LABELS = {
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
   curtains: 'Curtains', shortcurl: 'Short curls', afro: 'Afro', dreads: 'Locs',
   bob: 'Bob', shag: 'Shag', wolf: 'Wolf cut', mullet: 'Mullet', flow: 'Flow',
-  long: 'Long middle layers', longmiddle: 'Long middle part', longside: 'Long center part',
+  long: 'Long middle layers', longmiddle: 'Long middle part', longside: 'Long side part',
   longwavy: 'Long wavy', bun: 'Top bun', pony: 'Ponytail',
   highpony: 'High ponytail', pigtails: 'Pigtails',
   layers: 'Long layers', spacebuns: 'Space buns',
@@ -4477,7 +4477,7 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  longHair: (r, part = 'bangs', wave = 0, hem = '') => geoCache(`longO${r}_${part}_${wave}_${hem}`, () => {
+  longHair: (r, part = 'bangs', wave = 0, hem = '') => geoCache(`longP${r}_${part}_${wave}_${hem}`, () => {
     /* One flowing shell. Bangs/middle get V-tapers; hem === 'feet' is a
        blunt curtain that hems near the floor for the top-bun cut. */
     const tl = 2.48;
@@ -4503,10 +4503,22 @@ const G = {
       let faceOpen = frame.faceOpen;
       let groove = 0;
 
-      if (part === 'bangs' || part === 'middle' || part === 'side') {
-        /* Centre part: hair splits on the midline and falls to the sides.
-           Side used to be a left-of-centre sweep; it now matches the
-           middle part so this cut frames the face evenly. */
+      if (part === 'side') {
+        /* Left-of-centre side part, a lower natural hairline, and hair
+           that comes down toward the ears instead of sitting behind the head. */
+        const sweep = Math.max(0, ux);
+        const partLine = Math.max(0, -ux);
+        groove = Math.exp(-((ux + 0.20) * (ux + 0.20)) * 16) * Math.max(0, uy - 0.02);
+        faceOpen = Math.min(1,
+          frame.faceOpen * 0.42
+          + partLine * azFront * 0.38
+          + groove * 0.28
+        );
+        maxTh = sideTh + (lengthTh - sideTh) * (1 - faceOpen * 0.28);
+        maxTh -= groove * 0.18;
+        maxTh += sweep * azFront * 0.12;
+      } else if (part === 'bangs' || part === 'middle') {
+        /* Centre part: hair splits on the midline and falls to the sides. */
         groove = Math.exp(-ux * ux * 22) * Math.max(0, uy - 0.02);
         const sideFall = (1 - Math.exp(-side * side * 5.5)) * azFront;
         faceOpen = Math.min(1, frame.faceOpen * 0.85 + groove * 0.55 + sideFall * 0.12);
@@ -4539,16 +4551,30 @@ const G = {
         nz *= 1 - groove * 0.07;
       }
 
-      if (faceOpen > 0 && azFront > 0.30 && ny < frame.hairline + 0.08) {
-        const t = faceOpen * Math.pow((azFront - 0.30) / 0.70, 1.15)
-          * Math.min(1, (frame.hairline + 0.08 - ny) / 0.28);
+      if (part === 'side') {
+        const fringe = Math.max(0, ux) * azFront
+          * Math.exp(-Math.pow((uy - 0.30) / 0.32, 2) * 1.8);
+        nx += fringe * 0.08;
+        nz += fringe * 0.10;
+        ny -= fringe * 0.05;
+      }
+
+      const hairY = part === 'side'
+        ? 0.16 + Math.max(0, -ux) * 0.10 + side * side * 0.06
+        : frame.hairline;
+      if (faceOpen > 0 && azFront > 0.22 && ny < hairY + 0.10) {
+        const t = faceOpen * Math.pow((azFront - 0.22) / 0.78, 1.12)
+          * Math.min(1, (hairY + 0.10 - ny) / 0.28);
         const Lh = Math.hypot(nx, ny, nz) || 1;
         const k = 1 - t + t * (1.04 / Lh);
         nx *= k; ny *= k; nz *= k;
-        if (t > 0.5 && ny < frame.hairline - 0.02) ny = Math.max(ny, frame.hairline - 0.02);
+        if (t > 0.45) ny = Math.max(ny, hairY - 0.02);
       }
 
-      ({ nx, ny, nz } = applySideburnsNape(nx, ny, nz, frame.sideburn, frame.nape, ux, azFront, azBack));
+      const sb = part === 'side'
+        ? Math.max(frame.sideburn, side * (0.35 + azFront * 0.40) * Math.max(0, 0.22 - uy + 0.12))
+        : frame.sideburn;
+      ({ nx, ny, nz } = applySideburnsNape(nx, ny, nz, sb, frame.nape, ux, azFront, azBack));
 
       /* Curtain down the back and sides. Bangs and middle get several
          V-points. hem === 'feet' is a straight line near the floor for
@@ -4556,8 +4582,11 @@ const G = {
       const feet = hem === 'feet';
       const layered = !feet && (part === 'bangs' || part === 'middle');
       const rear = Math.max(0, 1 - azFront * 1.25);
+      const sideHang = part === 'side'
+        ? side * 0.82 * (1 - Math.min(1, faceOpen * 0.45))
+        : 0;
       const hang = Math.pow(Math.max(0, (u - 0.38) / 0.62), 1.12)
-        * rear * (1 - Math.min(1, faceOpen * 0.88));
+        * Math.max(rear, sideHang) * (1 - Math.min(1, faceOpen * (part === 'side' ? 0.55 : 0.88)));
       const hemY = feet ? -1.72 : part === 'bangs' ? -0.98 : layered ? -1.18 : -1.50;
       const hemR = layered ? 0.84 : 0.90;
       let point = 0;

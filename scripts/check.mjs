@@ -446,11 +446,13 @@ for (const [page, ids] of required) {
              || !src.includes('SphereGeometry(r, 88, 72')
              || !src.includes('part === \'bangs\' || part === \'middle\'')
              || src.includes("long: 'Long bangs'")
-             || src.includes("longside: 'Long side part'")
+             || src.includes("longside: 'Long center part'")
+             || !src.includes("longside: 'Long side part'")
+             || !src.includes('Left-of-centre side part')
              || !src.includes("part === 'side'")
              || !src.includes("longHair(1.07, 'middle', 0, 'feet'")
              || src.includes('add(G.ball(), 0, 0.86, -0.62')) {
-    note('✗', 'mii.html — long hair should be a smooth middle part with several tapers, not a spike or blunt bangs');
+    note('✗', 'mii.html — long hair should keep a side-part cut close to the ears');
     failures++;
   } else {
     note('✓', 'mii.html long hair styles include part and wave variants');
