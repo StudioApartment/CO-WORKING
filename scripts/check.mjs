@@ -416,6 +416,20 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("sculptHair(`wavC${r}`") || !src.includes('G.waves360(1.04)')
+      || !src.includes('G.longPony()')
+      || !src.includes("waves: 'Long ponytail'")
+      || src.includes("sculptHair(`wavB${r}`")
+      || src.includes("waves: 'Waves'")) {
+    note('✗', 'mii.html — waves should be a long ponytail with a natural hairline');
+    failures++;
+  } else {
+    note('✓', 'mii.html waves is a long ponytail with a natural hairline');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`bobC${r}`") || !src.includes('Undercurl')
       || !src.includes('ux + 0.22') || !src.includes('Side part at ux')) {
     note('✗', 'mii.html — bob should be a jaw-length cut with a side part and an undercurl');
