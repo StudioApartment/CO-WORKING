@@ -127,36 +127,6 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const pickers = src.match(/const PICKERS = \[[\s\S]*?\n\];/);
-  const hair = src.match(/const HAIRSTYLES = \[[\s\S]*?\];/);
-  const hats = src.match(/const HATS = \{[\s\S]*?\n\};/);
-  const hatPicker = pickers && pickers[0].includes("key: 'hat'")
-    && pickers[0].includes('d.hatColor');
-  const oneBandana = hair && /\bbandana\b/.test(hair[0])
-    && !/\bbandanablue\b/.test(hair[0])
-    && !/\bbandanagreen\b/.test(hair[0]);
-  const hatsOne = hats && hats[0].includes('paisley: true')
-    && !hats[0].includes('bandanablue')
-    && !hats[0].includes('bandanagreen');
-  const aliased = src.includes("bandanablue: 'bandana'")
-    && src.includes("bandanagreen: 'bandana'");
-  const labelled = src.includes("bandana: 'Bandana'");
-  if (!hatPicker) {
-    note('✗', 'mii.html — colour pickers need a Hat chip bound to hatColor');
-    failures++;
-  } else if (!oneBandana || !hatsOne || !labelled) {
-    note('✗', 'mii.html — bandana should be one hat, recolored from the Hat chip');
-    failures++;
-  } else if (!aliased) {
-    note('✗', 'mii.html — saved blue/green bandanas must alias onto bandana');
-    failures++;
-  } else {
-    note('✓', 'mii.html has a Hat colour chip and a single bandana');
-  }
-}
-
-{
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const accept = src.match(/async accept\(\) \{[\s\S]*?this\.showBadge\(rec/);
   if (!accept) {
     note('✗', 'mii.html — could not find Cam.accept() → showBadge');
@@ -191,20 +161,18 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes('afro: (r) => geoCache') || src.includes("add(G.ball(), 0, 0.74, -0.08")) {
-    note('✗', 'mii.html — afro should wrap the head, not sit as a top ball');
-    failures++;
-  } else if (!src.includes('function hairFrame') || !src.includes('applySideburnsNape')) {
-    note('✗', 'mii.html — volumetric hair should shape sideburns and the nape');
+  if (!src.includes("geoCache(`afroI${r}`") || src.includes("add(G.ball(), 0, 0.74, -0.08")
+      || !src.includes('cloud-like puff') || src.includes('const tl = 2.88')) {
+    note('✗', 'mii.html — afro should be a round cloud-like puff, not an inverted teardrop');
     failures++;
   } else {
-    note('✓', 'mii.html afro wraps the whole head with sideburns and nape');
+    note('✓', 'mii.html afro is a round cloud-like puff');
   }
 }
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`shcurl${r}`") || !src.includes("'shortcurl'")) {
+  if (!src.includes("geoCache(`shcurlB${r}`") || !src.includes("'shortcurl'")) {
     note('✗', 'mii.html — short curly hair style is missing');
     failures++;
   } else {
@@ -224,19 +192,6 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`fadeY${r}`") || !src.includes("'fade'")) {
-    note('✗', 'mii.html — fade cut should be a waved crown with tapered sides');
-    failures++;
-  } else {
-    note('✓', 'mii.html includes a shaved fade style');
-  }
-}
-
-/* The furry buckets are the only hats built from a pile displacement, and the
-   fur only reads if the texture, the noise and both shells are all present —
-   dropping any one of them silently turns them back into felt. */
-{
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = ['makeFurTexture', 'G._furn', 'G.furCrown(', 'G.furBrim()',
                  "'furry'", "'furrysage'", 'fur: true']
     .every((s) => src.includes(s));
@@ -248,9 +203,6 @@ for (const [page, ids] of required) {
   }
 }
 
-/* Loud fashion acetate: four pinned colourways whose shapes are the point
-   of the piece. Lose cateye/hex/jelly/rim2 and they collapse into the
-   existing thick-plastic family. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = ["label: 'Cat-eye'", "frame: 'cateye'", "label: 'Hex'",
@@ -266,9 +218,6 @@ for (const [page, ids] of required) {
   }
 }
 
-/* The plastic pilot's signature is the double bridge — a brow bar plus the
-   vented block under it. Without both it is just a big round frame, and the
-   tortoiseshell has to stay a real pattern rather than a flat brown. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = ["label: 'Tortoise pilot'", "frame: 'pilot'", 'browBar: true',
@@ -283,8 +232,6 @@ for (const [page, ids] of required) {
   }
 }
 
-/* Wrap shades have to be a Pit Viper / Oakley shield: tall, chunky, with a
-   deep nose cutout. A short rounded visor reads as a tinted eye-band. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const specs = ["label: 'Amber wrap'", 'w: 70, h: 38, lw: 5.2'];
@@ -298,9 +245,6 @@ for (const [page, ids] of required) {
   }
 }
 
-/* The bold frame's browline is heavier than the rest of its rim, which is what
-   separates it from the thick square already in the list. Lose spec.brow and
-   the two become near-duplicates. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = ["label: 'Big frames'", "frame: 'bold'", 'brow: 2.0',
@@ -314,8 +258,6 @@ for (const [page, ids] of required) {
   }
 }
 
-/* Sideburns and mutton chops sat as two dark rectangles flanking the
-   eyes on the face patch, so they are gone. Stored characters land on none. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const listed = /id: 'sideburns'/.test(src) || /id: 'mutton'/.test(src);
@@ -329,9 +271,6 @@ for (const [page, ids] of required) {
   }
 }
 
-/* The club cap's script has to stay arched — set straight it reads as a label
-   stuck on the panel — and its lower band has to take the bill's colour, or
-   the two-tone leaves a pale ring between crown and bill. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = ['makeScriptPatch', 'twoTone: true', "script: 'Co-Working'",
@@ -345,8 +284,6 @@ for (const [page, ids] of required) {
   }
 }
 
-/* The dad cap's patch has to carry its own pale border: that cap takes the
-   wearer's shirt colour, so without one the globe disappears on a blue hat. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes('makeCapEmblem') || !src.includes('emblem: true')
@@ -358,9 +295,6 @@ for (const [page, ids] of required) {
   }
 }
 
-/* The western hat's whole read is the cattleman crease on the crown and the
-   upswept sides of the brim. Both are geometry, and losing either drops it
-   back to the bowler-with-a-tray it used to be. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = ['G._cattle', 'G.cowboyWall(', 'G.cowboyTop()', 'G.cowboyBrim(',
@@ -374,9 +308,6 @@ for (const [page, ids] of required) {
   }
 }
 
-/* The conical hat's weave is an interlace, not a crosshatch. The diamond
-   lattice in makeStrawTexture is what makes it read as basketwork, and the
-   style must stay under a descriptive name rather than the slur. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = ['makeStrawTexture', 'G.strawCone()', 'G.hoop(', "'conical'", 'straw: true']
@@ -393,8 +324,6 @@ for (const [page, ids] of required) {
   }
 }
 
-/* The fossil beanies only read as knitwear because the motif is rasterised to
-   a stitch grid before it is drawn. Lose knitMask and it becomes a decal. */
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = ['makeKnitTexture', 'makeRibTexture', 'knitMask(', 'KNIT_COLS',
@@ -410,22 +339,33 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`medM${r}`") || !src.includes('G.medium(1.07)')) {
-    note('✗', 'mii.html — bowl should render as a medium-length side-swept cut');
+  if (!src.includes("geoCache(`mopA${r}`") || !src.includes('G.medium(1.07)')
+      || !src.includes("bowl: 'Mop-top'")
+      || !src.includes('mixed tapered points')) {
+    note('✗', 'mii.html — bowl should render as a mop-top with tapered edges');
     failures++;
   } else {
-    note('✓', 'mii.html bowl is a medium-length men\'s style');
+    note('✓', 'mii.html bowl is a mop-top with tapered edges');
   }
 }
 
-/* Extra balls on a cap read as buns or earmuffs. Each barbershop cut has
-   to be one shell that matches the real silhouette (French crop fringe,
-   360 waves, crew vs buzz, etc.). */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = src.includes('G.locFade(1.04)') && src.includes('sculptHair(`locFadeA${r}`');
+  const hanging = src.includes('add(G.neck()');
+  if (!wired || hanging) {
+    note('✗', 'mii.html — locs should use a shaved fade shell, not hanging loc tubes');
+    failures++;
+  } else {
+    note('✓', 'mii.html locs use a clean shaved fade on the sides and back');
+  }
+}
+
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const shells = [
     'G.frenchCrop(1.05)', "G.pixieCut(1.05)", 'G.waves360(1.04)',
-    'G.crewCut(1.04)', "G.partedTop(1.05, 'combover')", "G.partedTop(1.05, 'side')",
+    'G.crewCut(1.04)', "G.partedTop(1.05, 'combover')", 'G.bedHead(1.06)',
     'G.swoopCurl(1.05)', 'G.slickBack(1.05)', 'G.sweptHair(1.05)',
     'G.spikes(1.05)', 'G.pomp(1.05)', 'sculptHair('
   ];
@@ -457,6 +397,41 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("geoCache(`shagF${r}`") || !src.includes('Side-parted shag')
+      || !src.includes('napeTh = 2.40') || src.includes("geoCache(`shagE${r}`")) {
+    note('✗', 'mii.html — shag should have a side part, shaggy top, and longer back');
+    failures++;
+  } else {
+    note('✓', 'mii.html shag has a side part, shaggy top, and longer nape');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("geoCache(`hitopA${r}`") || !src.includes("wolf: 'Hi-top'")
+      || !src.includes('G.wolf(1.05)') || src.includes("geoCache(`wolfD${r}`")
+      || src.includes('add(G.wolf(1.09)')) {
+    note('✗', 'mii.html — wolf should render as a vertical hi-top with a flat hairline');
+    failures++;
+  } else {
+    note('✓', 'mii.html wolf is a vertical hi-top with a flat front');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("geoCache(`mohawkA${r}`") || !src.includes("mullet: 'Mohawk'")
+      || !src.includes("mohawk: 'mullet'") || src.includes("geoCache(`mulletA${r}`")
+      || src.includes("mohawk: 'spiky'")) {
+    note('✗', 'mii.html — mullet should render as a mohawk crest, not a skullcap');
+    failures++;
+  } else {
+    note('✓', 'mii.html mullet is a mohawk with a spiky centre crest');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`layersB${r}`") || !src.includes('tucked behind the ears')
       || src.includes("geoCache(`layersA${r}`") || src.includes('left-of-centre part sweeps')) {
     note('✗', 'mii.html — long layers should have a centre part tucked behind the ears');
@@ -474,35 +449,19 @@ for (const [page, ids] of required) {
   } else if (src.includes('taper = 1 - hang * 0.24') || !src.includes('layered ? -1.18 : -1.50')
              || src.includes('geoCache(`longI') || !src.includes('Math.sin(phi * 2.5)')
              || !src.includes('SphereGeometry(r, 88, 72')
-             || !src.includes('part === \'bangs\' || part === \'middle\'')
+             || !src.includes('part === \'middle\' || part === \'side\'')
+             || !src.includes('cover one eye')
              || src.includes("long: 'Long bangs'")
+             || src.includes("long: 'Long middle layers'")
+             || !src.includes("long: 'Side-swept bangs'")
              || src.includes("longside: 'Long side part'")
              || !src.includes("part === 'side'")
              || !src.includes("longHair(1.07, 'middle', 0, 'feet'")
              || src.includes('add(G.ball(), 0, 0.86, -0.62')) {
-    note('✗', 'mii.html — long hair should be a smooth middle part with several tapers, not a spike or blunt bangs');
+    note('✗', 'mii.html — long bangs should cover one eye with a side part');
     failures++;
   } else {
     note('✓', 'mii.html long hair styles include part and wave variants');
-  }
-}
-
-/* A chest box with someone else's word is a trademark. The pullover cut
-   is the look; Co-Working on a red field is ours, like the club cap. */
-{
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const wired = ["id: 'boxhoodie'", "label: 'Box hoodie'", "kind: 'boxhoodie'",
-                 "case 'boxhoodie':", "const boxWord = 'Co-Working'",
-                 "g.fillStyle = '#e11b22'", 'italic 900']
-    .every((s) => src.includes(s));
-  if (!wired) {
-    note('✗', 'mii.html — box hoodie needs a red chest box with our own word');
-    failures++;
-  } else if (/Supreme/i.test(src)) {
-    note('✗', 'mii.html — box hoodie must not reprint a licensed box logo');
-    failures++;
-  } else {
-    note('✓', 'mii.html offers a box hoodie with a Co-Working chest mark');
   }
 }
 
@@ -545,8 +504,68 @@ for (const [page, ids] of required) {
   }
 }
 
-/* A broken vercel.json fails the production deploy while GitHub still
-   merges — the last plaza fix never reached phones because of that. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'argyle'", "label: 'Argyle sweater'", "case 'argyle': {",
+                 'for (const ox of [-W, 0, W])', "g.setLineDash([5, 5])"]
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — argyle sweater needs wrap-aware diamonds and dashed overlays');
+    failures++;
+  } else if (/CELINE|Triomphe|Celine/i.test(src)) {
+    note('✗', 'mii.html — argyle must not reprint a licensed house mark');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers an argyle knit sweater');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'tribal'", "label: 'Tribal'", 'function inkTribalSpiral',
+                 'function inkTribalTeeth', 'function inkTribalClaws',
+                 "kind === 'tribal'", 'destination-out']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — tribal ink needs jaw and hand painters with a punched spiral');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers tribal tattoos on the jaw and hands');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'hipster'", "label: 'Hipster'", 'function inkWatch',
+                 'function inkCandle', 'function inkPlus', 'function drawHipsterFace',
+                 'ey + sz * 0.72', "kind === 'hipster'"]
+    .every((s) => src.includes(s));
+  const hipster = src.slice(src.indexOf('function inkPlus'), src.indexOf('function drawNeckInk'));
+  if (!wired) {
+    note('✗', 'mii.html — hipster ink needs a watch, a candle, and under-eye marks');
+    failures++;
+  } else if (/LOVED|1 Cor|fillText/.test(hipster) || hipster.includes('777')) {
+    note('✗', 'mii.html — hipster ink must not reprint words, verses, or dates');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers hipster tattoos on the face and hands');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'minimal'", "label: 'Minimal'", 'function inkTwinTriangles',
+                 'function inkCelestial', 'function drawMinimalFace',
+                 "kind === 'minimal'", 'Math.max(4.2, s * 0.10)']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — minimal ink needs stacked triangles and a celestial column');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers minimal tattoos on the jaw and hands');
+  }
+}
+
 {
   try {
     const cfg = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'));
@@ -570,6 +589,245 @@ for (const [page, ids] of required) {
   } catch (e) {
     note('✗', `vercel.json — ${e.message}`);
     failures++;
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("geoCache(`flowD${r}`") || !src.includes('stubble-short sides')
+      || src.includes("geoCache(`flowC${r}`") || src.includes('add(G.flow(1.09)')) {
+    note('✗', 'mii.html — flow should have a natural hairline and stubble-short sides');
+    failures++;
+  } else {
+    note('✓', 'mii.html flow has a natural hairline and stubble-short sides');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("sculptHair(`spkC${r}`") || !src.includes('Spiky front')
+      || src.includes("sculptHair(`spkB${r}`")) {
+    note('✗', 'mii.html — spiky should have a natural hairline, side hair, and a spiked front');
+    failures++;
+  } else {
+    note('✓', 'mii.html spiky has a natural hairline, side hair, and a spiked front');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("geoCache(`shcurlB${r}`") || !src.includes("'shortcurl'")
+      || src.includes("geoCache(`shcurl${r}`") || src.includes('bumpy curl silhouette')) {
+    note('✗', 'mii.html — short curls should be a curly crown with shaved sides, not two bumps');
+    failures++;
+  } else {
+    note('✓', 'mii.html short curls are a curly crown with shaved sides');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("sculptHair(`bedA${r}`") || !src.includes('G.bedHead(1.06)')
+      || !src.includes('applyFrostedTips')
+      || !src.includes('Short shaggy bed head')
+      || src.includes("G.partedTop(1.05, 'side')")
+      || src.includes("sidepart: 'Side part'")
+      || !src.includes("sidepart: 'Frosted tips'")) {
+    note('✗', 'mii.html — side part should be a short shaggy bed head with frosted tips');
+    failures++;
+  } else {
+    note('✓', 'mii.html side part is a short shaggy bed head with frosted tips');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("sculptHair(`sweptC${r}`") || !src.includes('G.sweptHair(1.05)')
+      || !src.includes('Taper out')
+      || src.includes("sculptHair(`sweptB${r}`")
+      || src.includes('still a full cap')) {
+    note('✗', 'mii.html — swept hair should drop down the sides and taper out');
+    failures++;
+  } else {
+    note('✓', 'mii.html swept hair drops down the sides and tapers out');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("sculptHair(`wavC${r}`") || !src.includes('G.waves360(1.04)')
+      || !src.includes('G.longPony()')
+      || !src.includes("waves: 'Long ponytail'")
+      || src.includes("sculptHair(`wavB${r}`")
+      || src.includes("waves: 'Waves'")) {
+    note('✗', 'mii.html — waves should be a long ponytail with a natural hairline');
+    failures++;
+  } else {
+    note('✓', 'mii.html waves is a long ponytail with a natural hairline');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (src.includes("sculptHair(`fadeY${r}`") || src.includes("st === 'fade'")
+      || src.includes("fade: 'Fade'") || src.includes("'waves','fade','pixie'")
+      || !src.includes("fade: 'taper'")) {
+    note('✗', 'mii.html — the fade helmet should be removed from the picker');
+    failures++;
+  } else {
+    note('✓', 'mii.html drops the fade helmet from the picker');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("st === 'pigtails'")
+      || src.includes('sx * 0.46, 0.88, -0.22, 0.17, 0.17, 0.17')
+      || !src.includes('cap(1.045, 1.68, 1.08)')
+      || !src.includes('sx * 0.40, 0.58, -0.78, 0.22, 0.22, 0.22')
+      || !src.includes('hang clear of the skull')) {
+    note('✗', 'mii.html — pigtails should hang off the back of the head');
+    failures++;
+  } else {
+    note('✓', 'mii.html pigtails hang off the back of the head');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes('G.highPonyScalp(1.05)') || !src.includes('G.smoothPony()')
+      || !src.includes('U-shaped nape')
+      || src.includes('add(G.ball(), 0, 0.94, -0.42, 0.26, 0.26, 0.26)')
+      || src.includes('add(G.ball(), 0, -0.58, -1.18, 0.20, 0.40, 0.22)')) {
+    note('✗', 'mii.html — high ponytail should be one smooth tail with a curved nape');
+    failures++;
+  } else {
+    note('✓', 'mii.html high ponytail is one smooth tail with a curved nape');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const pickers = src.match(/const PICKERS = \[[\s\S]*?\n\];/);
+  const hair = src.match(/const HAIRSTYLES = \[[\s\S]*?\];/);
+  const hats = src.match(/const HATS = \{[\s\S]*?\n\};/);
+  const hatPicker = pickers && pickers[0].includes("key: 'hat'")
+    && pickers[0].includes('d.hatColor');
+  const oneBandana = hair && /\bbandana\b/.test(hair[0])
+    && !/\bbandanablue\b/.test(hair[0])
+    && !/\bbandanagreen\b/.test(hair[0]);
+  const hatsOne = hats && hats[0].includes('paisley: true')
+    && !hats[0].includes('bandanablue')
+    && !hats[0].includes('bandanagreen');
+  const aliased = src.includes("bandanablue: 'bandana'")
+    && src.includes("bandanagreen: 'bandana'");
+  const labelled = src.includes("bandana: 'Bandana'");
+  if (!hatPicker) {
+    note('✗', 'mii.html — colour pickers need a Hat chip bound to hatColor');
+    failures++;
+  } else if (!oneBandana || !hatsOne || !labelled) {
+    note('✗', 'mii.html — bandana should be one hat, recolored from the Hat chip');
+    failures++;
+  } else if (!aliased) {
+    note('✗', 'mii.html — saved blue/green bandanas must alias onto bandana');
+    failures++;
+  } else {
+    note('✓', 'mii.html has a Hat colour chip and a single bandana');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'techvest'", "label: 'Tech vest'", "kind: 'techvest'",
+                 'mock: true', "case 'techvest':", 'const zipH = vy(0.48)',
+                 'scoopAt(W * 0.5)', 'apparel.mock']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — tech vest needs a mock collar, quarter zip and polo armholes');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a quarter-zip tech vest over a polo');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'vintage'", "label: 'Vintage tee'", "kind: 'vintage'",
+                 "sleeves: 'raglan'", "case 'vintage':", 'paintPlazaTourPrint',
+                 "const cream = '#ebe0cc'", "const word = 'PLAZA'",
+                 "apparel.sleeves === 'raglan'"]
+    .every((s) => src.includes(s));
+  const licensed = /ROLLING STONES|Mick Jagger|tongue and lips/i.test(src);
+  if (!wired) {
+    note('✗', 'mii.html — vintage tee needs a raglan cut and an original plaza poster');
+    failures++;
+  } else if (licensed) {
+    note('✗', 'mii.html — vintage tee must not reprint a licensed tour shirt');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a raglan vintage tee with an original plaza print');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'bubble'", "label: 'Bubble jacket'", "kind: 'bubble'",
+                 "hood: 'fur'", "sleeves: 'puffer'", "case 'bubble':",
+                 'const baffles = 6', "apparel.hood === 'fur'",
+                 "apparel.sleeves === 'puffer'", 'makeFurTexture(dna.shirt)']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — bubble jacket needs quilted baffles, a fur hood and puffy sleeves');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a quilted bubble jacket with a fur-trimmed hood');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'tank'", "label: 'Tank top'", "kind: 'tank', nocollar: true",
+                 "case 'tank':", 'const strapW = 12', 'g.lineTo(front, vy(0.38))',
+                 'arm(W * 0.5)']
+    .every((s) => src.includes(s));
+  const tankBlock = src.match(/case 'tank': \{[\s\S]*?break;\n    \}/);
+  const frayed = tankBlock && tankBlock[0].includes('raw edge');
+  if (!wired || frayed) {
+    note('✗', 'mii.html — tank top needs a V-neck, medium straps and a clean hem');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a bodycon tank with a V-neck');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'protector'", "label: 'Pocket protector'", "kind: 'protector'",
+                 "case 'protector':", 'const pens = [', 'py - p.h * 0.52',
+                 'rgba(186, 220, 228, 0.72)']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — pocket protector shirt needs pens sticking out of the plastic');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a button-up with a pocket protector');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'boxhoodie'", "label: 'Box hoodie'", "kind: 'boxhoodie'",
+                 "case 'boxhoodie':", "const boxWord = 'Co-Working'",
+                 "g.fillStyle = '#e11b22'", 'italic 900']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — box hoodie needs a red chest box with our own word');
+    failures++;
+  } else if (/Supreme/i.test(src)) {
+    note('✗', 'mii.html — box hoodie must not reprint a licensed box logo');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a box hoodie with a Co-Working chest mark');
   }
 }
 

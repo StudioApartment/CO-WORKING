@@ -362,16 +362,39 @@ try {
       extras.outfits.join(', '));
     check('argyle sweater is in the list', extras.outfits.includes('argyle'),
       extras.outfits.join(', '));
+    check('tech vest is in the outfit list', extras.outfits.includes('techvest'),
+      extras.outfits.join(', '));
+    check('vintage tee is in the outfit list', extras.outfits.includes('vintage'),
+      extras.outfits.join(', '));
+    check('bubble jacket is in the outfit list', extras.outfits.includes('bubble'),
+      extras.outfits.join(', '));
+    check('tank top is in the outfit list', extras.outfits.includes('tank'),
+      extras.outfits.join(', '));
+    check('pocket protector shirt is in the outfit list', extras.outfits.includes('protector'),
+      extras.outfits.join(', '));
+    check('box hoodie is in the outfit list', extras.outfits.includes('boxhoodie'),
+      extras.outfits.join(', '));
     check('tribal ink is in the list', extras.tattoos.includes('tribal'),
       extras.tattoos.join(', '));
     check('hipster ink is in the list', extras.tattoos.includes('hipster'),
       extras.tattoos.join(', '));
     check('minimal ink is in the list', extras.tattoos.includes('minimal'),
       extras.tattoos.join(', '));
-    check('bandanas come in red, blue and green',
-      extras.bandanas.includes('bandana') && extras.bandanas.includes('bandanablue')
-        && extras.bandanas.includes('bandanagreen'),
+    check('one bandana in the hat tray',
+      extras.bandanas.length === 1 && extras.bandanas[0] === 'bandana',
       JSON.stringify(extras.bandanas));
+    const bandanaAlias = await evaluate(`(() => {
+      const blue = MiiPlaza.normalizeDNA({ hair: { style: 'bandanablue', color: '#333' }, shirt: '#ffffff' });
+      const green = MiiPlaza.normalizeDNA({ hair: { style: 'bandanagreen', color: '#333' }, shirt: '#ffffff' });
+      return {
+        blue: blue.hair.style, blueCol: blue.hatColor,
+        green: green.hair.style, greenCol: green.hatColor
+      };
+    })()`);
+    check('blue/green bandanas fold onto one style and keep their colour',
+      bandanaAlias.blue === 'bandana' && bandanaAlias.blueCol === '#1565c0'
+        && bandanaAlias.green === 'bandana' && bandanaAlias.greenCol === '#2e7d32',
+      JSON.stringify(bandanaAlias));
     check('no triangular wedge frames', extras.wedge.length === 0, extras.wedge.join(','));
     check('wrap-around baseball shades are in the list', extras.wrap.length >= 3, extras.wrap.join(', '));
     check('tinted lenses are actually tinted', extras.tints.every((t) => {

@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 36 -->
+<!-- plaza-client: 37 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3536,13 +3536,11 @@ const HAIRSTYLE_ALIASES = {
   tails: 'pony',
   undercut: 'slickback',
   afrofade: 'afro',
+  fade: 'taper',
   // Every bandana knots at the back now, so the separate variant is the red one.
   bandanaback: 'bandana',
-  fade: 'taper'
-,
+  bandanablue: 'bandana',
   bandanagreen: 'bandana'
-,
-  bandanablue: 'bandana'
 };
 
 /* Raw ids are terse; the picker shows these. */
@@ -3558,7 +3556,7 @@ const STYLE_LABELS = {
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
   curtains: 'Curtains', shortcurl: 'Short curls', afro: 'Afro', dreads: 'Locs',
   bob: 'Bob', shag: 'Shag', wolf: 'Hi-top', mullet: 'Mohawk', flow: 'Flow',
-  long: 'Side-swept bangs', longmiddle: 'Long middle part', longside: 'Long side part',
+  long: 'Side-swept bangs', longmiddle: 'Long middle part', longside: 'Long center part',
   longwavy: 'Long wavy', bun: 'Top bun', pony: 'Ponytail',
   highpony: 'High ponytail', pigtails: 'Pigtails',
   layers: 'Long layers', spacebuns: 'Space buns',
@@ -3999,36 +3997,6 @@ const G = {
       const t = Math.pow((b.azFront - 0.32) / 0.68, 1.2) * Math.min(1, (0.54 - ny) / 0.24);
       ({ nx, ny, nz } = hugToward(nx, ny, nz, t * (1 - bump), skull * 1.02));
       if (ny < 0.31) ny = 0.31;
-    }
-    return { nx, ny, nz };
-  }),
-  fade: (r) => sculptHair(`fadeY${r}`, r, 2.05, 56, 44, (b, tl, rr) => {
-    /* Waved crown + skin-faded sides. Flatten the pole so waves do not
-       pile into a Hershey-kiss spike. */
-    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
-    const earFade = b.side * Math.pow(Math.max(0, (0.46 - b.uy) / 0.50), 1.25);
-    const napeFade = b.azBack * Math.pow(Math.max(0, (0.38 - b.uy) / 0.48), 1.15);
-    const fadeAmt = Math.min(1, earFade * 1.08 + napeFade * 0.92);
-    let cover = Math.pow(Math.max(0, (b.uy + 0.08) / 0.72), 0.7);
-    cover *= 1 - fadeAmt * 0.97;
-    cover *= 1 - frame.faceOpen * 0.88;
-    const sideburn = Math.pow(Math.max(0, (b.side - 0.42) / 0.58), 1.15)
-      * Math.exp(-Math.pow((b.uy - 0.06) / 0.28, 2) * 2.6)
-      * b.azFront * (1 - fadeAmt * 0.65);
-    cover = Math.max(cover, sideburn * 0.45);
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.22 + cover * 0.20), rr);
-    if (b.uy > 0.88) ny -= (b.uy - 0.88) * 0.55;
-    const cr = Math.hypot(nx, ny - 0.78, nz + 0.04);
-    const wave = cover * (0.010 * Math.sin(cr * 72) + 0.006 * Math.sin(cr * 118 + 0.7));
-    const L0 = Math.hypot(nx, ny, nz) || 1;
-    const k = (L0 + (cover * 0.09 + wave + sideburn * 0.03) * rr) / L0;
-    nx *= k; ny *= k; nz *= k;
-    if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
-    else if (b.azFront > 0.26 && ny < 0.52) {
-      const t = b.azFront * Math.pow(Math.max(0, (0.52 - ny) / 0.22), 1.2)
-        * Math.pow(Math.max(0, 1 - cover), 0.4);
-      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.018));
-      if (ny < 0.30) ny = 0.30;
     }
     return { nx, ny, nz };
   }),
@@ -5758,7 +5726,8 @@ const HATS = {
      this hat in English is a slur for Asian labourers, and it is not going in
      anyone's style picker. */
   conical:  { crown: '#c6a44f', accent: '#9c6a2e', straw: true },
-  bandana:      { crown: null, paisley: true }   // takes hatColor, like a cap,};
+  bandana:      { crown: null, paisley: true }   // takes hatColor, like a cap
+};
 const HAT_STYLES = Object.keys(HATS);
 
 /* ══════════════════════════════════════════════════════════════
@@ -5781,6 +5750,105 @@ function skirtColor(dna, spec) {
     return lum > 0.72 ? shade(dna.shirt, -44) : shade(dna.shirt, 38);
   }
   return dna.shirt;
+}
+
+function paintPlazaTourPrint(g, cx, cy, r, fade) {
+  g.save();
+  g.beginPath();
+  g.arc(cx, cy, r, 0, TAU);
+  g.clip();
+
+  const grd = g.createRadialGradient(cx - r * 0.15, cy - r * 0.2, r * 0.08, cx, cy, r);
+  grd.addColorStop(0, '#f4c45a');
+  grd.addColorStop(0.55, '#e07828');
+  grd.addColorStop(1, '#b84318');
+  g.fillStyle = grd;
+  g.fillRect(cx - r, cy - r, r * 2, r * 2);
+
+  g.fillStyle = 'rgba(70,22,8,.30)';
+  const step = Math.max(3.2, r * 0.11);
+  for (let y = cy - r; y < cy + r; y += step) {
+    for (let x = cx - r; x < cx + r; x += step) {
+      g.beginPath();
+      g.arc(x + (((y / step) | 0) % 2) * step * 0.5, y, step * 0.16, 0, TAU);
+      g.fill();
+    }
+  }
+
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.lineJoin = 'round';
+  g.lineCap = 'round';
+
+  const bubble = (text, size, x, y) => {
+    g.font = `900 ${size}px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif`;
+    g.lineWidth = Math.max(1.6, size * 0.16);
+    g.strokeStyle = '#1a1210';
+    g.fillStyle = '#ef7a22';
+    g.strokeText(text, x, y);
+    g.fillText(text, x, y);
+  };
+  bubble('THE', Math.round(r * 0.16), cx, cy - r * 0.68);
+
+  const word = 'PLAZA';
+  g.font = `900 ${Math.round(r * 0.26)}px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif`;
+  const letters = [...word];
+  const widths = letters.map((ch) => g.measureText(ch).width);
+  const total = widths.reduce((a, b) => a + b, 0);
+  const arcR = r * 1.85;
+  let acc = -total / 2;
+  for (let i = 0; i < letters.length; i++) {
+    const ang = (acc + widths[i] / 2) / arcR;
+    g.save();
+    g.translate(cx + Math.sin(ang) * r * 0.78, cy - r * 0.28 + (1 - Math.cos(ang)) * r * 0.22);
+    g.rotate(ang);
+    bubble(letters[i], Math.round(r * 0.26), 0, 0);
+    g.restore();
+    acc += widths[i];
+  }
+
+  const s = r * 0.34, ex = cx, ey = cy + r * 0.16;
+  g.fillStyle = '#1a1210';
+  g.strokeStyle = '#1a1210';
+  g.beginPath();
+  g.moveTo(ex - s * 0.64, ey - s * 0.42);
+  g.lineTo(ex + s * 0.64, ey - s * 0.42);
+  g.quadraticCurveTo(ex + s * 0.54, ey + s * 0.70, ex, ey + s * 0.78);
+  g.quadraticCurveTo(ex - s * 0.54, ey + s * 0.70, ex - s * 0.64, ey - s * 0.42);
+  g.closePath();
+  g.fill();
+  g.beginPath();
+  g.ellipse(ex, ey - s * 0.42, s * 0.64, s * 0.16, 0, 0, TAU);
+  g.fill();
+  g.lineWidth = s * 0.20;
+  g.beginPath();
+  g.arc(ex + s * 0.82, ey + s * 0.04, s * 0.34, -1.15, 1.15);
+  g.stroke();
+  g.lineWidth = s * 0.12;
+  for (const dx of [-s * 0.28, s * 0.02, s * 0.32]) {
+    g.beginPath();
+    g.moveTo(ex + dx, ey - s * 0.55);
+    g.quadraticCurveTo(ex + dx + s * 0.16, ey - s * 0.88, ex + dx, ey - s * 1.12);
+    g.stroke();
+  }
+
+  if (fade) {
+    g.fillStyle = fade;
+    g.globalAlpha = 0.28;
+    for (let i = 0; i < 14; i++) {
+      g.beginPath();
+      g.arc(cx + ((i * 19) % 37) - 18, cy + ((i * 13) % 35) - 16, 1.4 + (i % 3), 0, TAU);
+      g.fill();
+    }
+    g.globalAlpha = 1;
+  }
+  g.restore();
+
+  g.strokeStyle = '#1a1210';
+  g.lineWidth = Math.max(2.4, r * 0.07);
+  g.beginPath();
+  g.arc(cx, cy, r, 0, TAU);
+  g.stroke();
 }
 
 function makeApparelTexture(dna) {
@@ -7261,9 +7329,6 @@ function buildHair(dna, mat, extraMats) {
     cap(1.038, 1.30, 1.0);
     for (const sx of [-1, 1]) add(G.ball(), sx * 0.34, 1.02, -0.10, 0.22, 0.22, 0.22);
   }
-  else if (st === 'fade') {
-    add(G.fade(1.04), 0, 0, 0);
-  }
 }
 
 function buildMii(dna) {
@@ -7286,8 +7351,11 @@ function buildMii(dna) {
     // Bare skin is softer than fabric; a suit has a slight sheen; argyle
     // is a wool knit.
     roughness: apparel.bare ? 0.82 : apparel.kind === 'suit' ? 0.55
-      : apparel.kind === 'argyle' ? 0.84 : 0.72,
-    metalness: 0
+      : apparel.kind === 'argyle' ? 0.84
+      : apparel.kind === 'tank' ? 0.78
+      : apparel.kind === 'techvest' ? 0.60
+      : 0.72,
+    metalness: apparel.kind === 'techvest' ? 0.04 : 0
   });
   const legCol = apparel.skirt && apparel.skirtFrom !== 'pants'
     ? skirtColor(dna, apparel) : dna.pants;
@@ -7336,10 +7404,14 @@ function buildMii(dna) {
      the jersey look padded, so only football gets a tighter xz — height stays
      so the collar and pants still meet. */
   const kit = apparel.kind === 'football';
+  const puffer = apparel.kind === 'bubble';
   const boxy = apparel.kind === 'boxhoodie';
-  torso.scale.set((kit ? 0.29 : boxy ? 0.36 : 0.33) * dna.girth,
-    boxy ? 0.29 : 0.28,
-    (kit ? 0.235 : boxy ? 0.29 : 0.27) * dna.girth);
+  const tank = apparel.kind === 'tank';
+  const vestFit = apparel.kind === 'techvest';
+  const xz = kit ? 0.29 : puffer ? 0.38 : boxy ? 0.36 : tank ? 0.30 : vestFit ? 0.31 : 0.33;
+  const y = puffer ? 0.30 : boxy ? 0.29 : 0.28;
+  const z = kit ? 0.235 : puffer ? 0.33 : boxy ? 0.29 : tank ? 0.245 : vestFit ? 0.255 : 0.27;
+  torso.scale.set(xz * dna.girth, y, z * dna.girth);
   torso.position.y = 0.5;
   body.add(torso);
 
@@ -7355,19 +7427,54 @@ function buildMii(dna) {
 
   /* The collar is a white crew neck by default. Layered garments take it in
      their own colour, a suit gets a shirt collar, and bare skin gets none at
-     all — a floating white ring above an undressed chest looks like a bug. */
+     all — a floating white ring above an undressed chest looks like a bug.
+     A mock neck is the same torus stretched up the neck so a quarter-zip
+     vest does not sit under a crew ring. */
   if (!apparel.bare && !apparel.nocollar) {
-    const collarMat = apparel.open
-      ? new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -30), roughness: 0.7 })
-      : whiteMat;
-    if (apparel.open) M.mats.push(collarMat);
+    const mock = apparel.mock;
+    const collarMat = mock
+      ? new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -8), roughness: 0.6, metalness: 0.04 })
+      : apparel.open
+        ? new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -30), roughness: 0.7 })
+        : whiteMat;
+    if (mock || apparel.open) M.mats.push(collarMat);
     const collar = new THREE.Mesh(G.collar(), collarMat);
-    collar.scale.set(0.135, 0.135, 0.13); collar.rotation.x = Math.PI / 2;
-    collar.position.y = 0.7; body.add(collar);
+    if (mock) {
+      collar.scale.set(0.126, 0.126, 0.22);
+      collar.position.y = 0.735;
+    } else {
+      collar.scale.set(0.135, 0.135, 0.13);
+      collar.position.y = 0.7;
+    }
+    collar.rotation.x = Math.PI / 2;
+    body.add(collar);
   }
 
   // A hood is a shell behind the head, not headwear — it coexists with hats.
-  if (apparel.hood) {
+  if (apparel.hood === 'fur') {
+    /* Nylon shell plus a fur ruff at the opening. Fur on the whole dome
+       read as a second hat; the pile belongs on the trim. */
+    const furMap = makeFurTexture(dna.shirt);
+    const furMat = new THREE.MeshStandardMaterial({
+      map: furMap, color: '#ffffff', roughness: 0.98, metalness: 0,
+      side: THREE.DoubleSide
+    });
+    const shellMat = new THREE.MeshStandardMaterial({
+      color: shade(dna.shirt, -6), roughness: 0.5, metalness: 0.06,
+      side: THREE.DoubleSide
+    });
+    M.mats.push(furMat, shellMat);
+    const hood = new THREE.Mesh(G.dome(1, 1.5), shellMat);
+    hood.scale.set(0.50, 0.38, 0.44);
+    hood.position.set(0, 0.82, -0.14);
+    hood.rotation.x = -0.22;
+    body.add(hood);
+    const trim = new THREE.Mesh(G.collar(), furMat);
+    trim.scale.set(0.28, 0.28, 0.22);
+    trim.rotation.x = Math.PI / 2 - 0.35;
+    trim.position.set(0, 0.90, 0.10);
+    body.add(trim);
+  } else if (apparel.hood) {
     const hoodMat = new THREE.MeshStandardMaterial({ color: shade(dna.shirt, -10), roughness: 0.76 });
     M.mats.push(hoodMat);
     const hood = new THREE.Mesh(G.dome(1, 1.5), hoodMat);
@@ -7390,6 +7497,20 @@ function buildMii(dna) {
       sl.scale.set(0.088, 0.155, 0.088);
       sl.position.set(sx * 0.34 * dna.girth, 0.545, 0.02);
       sl.rotation.z = sx * 0.92;
+      body.add(sl);
+    }
+  }
+
+  if (apparel.sleeves === 'puffer') {
+    const slMat = new THREE.MeshStandardMaterial({
+      color: shade(dna.shirt, -4), roughness: 0.5, metalness: 0.06
+    });
+    M.mats.push(slMat);
+    for (const sx of [-1, 1]) {
+      const sl = new THREE.Mesh(G.neck(), slMat);
+      sl.scale.set(0.125, 0.18, 0.125);
+      sl.position.set(sx * 0.40 * dna.girth, 0.54, 0.02);
+      sl.rotation.z = sx * 0.88;
       body.add(sl);
     }
   }
