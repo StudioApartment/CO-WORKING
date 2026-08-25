@@ -427,6 +427,17 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("geoCache(`shagF${r}`") || !src.includes('Side-parted shag')
+      || !src.includes('napeTh = 2.40') || src.includes("geoCache(`shagE${r}`")) {
+    note('✗', 'mii.html — shag should have a side part, shaggy top, and longer back');
+    failures++;
+  } else {
+    note('✓', 'mii.html shag has a side part, shaggy top, and longer nape');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`layersB${r}`") || !src.includes('tucked behind the ears')
       || src.includes("geoCache(`layersA${r}`") || src.includes('left-of-centre part sweeps')) {
     note('✗', 'mii.html — long layers should have a centre part tucked behind the ears');
