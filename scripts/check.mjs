@@ -430,9 +430,10 @@ for (const [page, ids] of required) {
   if (!src.includes('longHair') || !src.includes("'longmiddle'") || !src.includes("'longwavy'")) {
     note('✗', 'mii.html — long hair should offer bangs, middle part, side part, and wavy');
     failures++;
-  } else if (src.includes('taper = 1 - hang * 0.24') || !src.includes('const hemY = layered ? -0.98 : -1.50')
+  } else if (src.includes('taper = 1 - hang * 0.24') || !src.includes('layered ? -1.18 : -1.50')
              || src.includes('geoCache(`longI') || !src.includes('Math.sin(phi * 2.5)')
              || !src.includes('SphereGeometry(r, 88, 72')
+             || !src.includes('part === \'bangs\' || part === \'middle\'')
              || src.includes("long: 'Long bangs'")
              || src.includes("longside: 'Long side part'")
              || !src.includes("part === 'side'")) {

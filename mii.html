@@ -4450,7 +4450,7 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  longHair: (r, part = 'bangs', wave = 0) => geoCache(`longL${r}_${part}_${wave}`, () => {
+  longHair: (r, part = 'bangs', wave = 0) => geoCache(`longN${r}_${part}_${wave}`, () => {
     /* One flowing shell. Bangs became a centre part with several V-tapers
        that stop above the feet; the other long cuts keep a blunt hem at
        the torso. Higher tessellation so the curtain is smooth, not faceted. */
@@ -4524,30 +4524,30 @@ const G = {
 
       ({ nx, ny, nz } = applySideburnsNape(nx, ny, nz, frame.sideburn, frame.nape, ux, azFront, azBack));
 
-      /* Curtain down the back and sides. Layered (the old bangs cut) gets
-         several V-points that stop above the feet; the rest keep a blunt
-         hem at the torso. */
-      const layered = part === 'bangs';
+      /* Curtain down the back and sides. Bangs and the middle/wavy cuts
+         get several V-points instead of one spike; the leftover side-id
+         cut keeps a blunt hem. Tips stop at the torso, not below the feet. */
+      const layered = part === 'bangs' || part === 'middle';
       const rear = Math.max(0, 1 - azFront * 1.25);
       const hang = Math.pow(Math.max(0, (u - 0.38) / 0.62), 1.12)
         * rear * (1 - Math.min(1, faceOpen * 0.88));
-      const hemY = layered ? -0.98 : -1.50;
+      const hemY = part === 'bangs' ? -0.98 : layered ? -1.18 : -1.50;
       const hemR = layered ? 0.84 : 0.90;
       let point = 0;
       if (layered && hang > 0.001) {
         const lobes = Math.pow(
-          0.40 * Math.abs(Math.sin(phi * 2.5))
-          + 0.35 * Math.abs(Math.sin(phi * 4.2 + 0.65))
-          + 0.25 * Math.abs(Math.sin(phi * 6.8 + 1.35)),
-          1.55
+          0.36 * Math.abs(Math.sin(phi * 2.5))
+          + 0.34 * Math.abs(Math.sin(phi * 4.2 + 0.65))
+          + 0.30 * Math.abs(Math.sin(phi * 6.8 + 1.35)),
+          1.35
         );
         point = lobes * hang;
       }
       if (hang > 0.001) {
         const rad = Math.hypot(nx, nz) || 1e-6;
-        const drop = layered ? 0.30 * point : 0;
+        const drop = layered ? (part === 'bangs' ? 0.30 : 0.28) * point : 0;
         ny = ny * (1 - hang) + (hemY - drop) * hang;
-        const wantR = rad * (1 - hang) + hemR * (1 - point * 0.28) * hang;
+        const wantR = rad * (1 - hang) + hemR * (1 - point * 0.38) * hang;
         nx *= wantR / rad;
         nz *= wantR / rad;
         nz -= hang * (0.10 + azBack * 0.12);
