@@ -174,11 +174,12 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("geoCache(`shcurl${r}`") || !src.includes("'shortcurl'")) {
-    note('✗', 'mii.html — short curly hair style is missing');
+  if (!src.includes("geoCache(`shcurlB${r}`") || !src.includes("'shortcurl'")
+      || src.includes("geoCache(`shcurl${r}`") || src.includes('bumpy curl silhouette')) {
+    note('✗', 'mii.html — short curls should be a curly crown with shaved sides, not two bumps');
     failures++;
   } else {
-    note('✓', 'mii.html includes short curly hair');
+    note('✓', 'mii.html short curls are a curly crown with shaved sides');
   }
 }
 
