@@ -1456,6 +1456,104 @@ function makeRibTexture(base) {
   return t;
 }
 
+/* Plaited straw, for the conical hat.
+
+   Basketwork is an interlace, and the interlace is the whole read: two
+   families of flat strips crossing at right angles, each passing alternately
+   over and under the other. A diagonal crosshatch of lines gives none of
+   that — it looks printed.
+
+   So the weave is built on its true structure. The crossings of two strip
+   families tile the plane as diamonds, one per crossing, and at each crossing
+   exactly one family is on top. Filling each diamond with a rounded gradient
+   running across whichever strip wins gives the over-under relief for free.
+
+   The lattice is chosen so it tiles the texture exactly: cells sit at every
+   (p, q) grid point of the same parity, so a shift of one texture width is a
+   whole number of cells and there is no seam down the back of the hat. */
+function makeStrawTexture(base) {
+  const W = 512, D = 32;              // D = half-diagonal of one crossing
+  const c = cv(W), g = c.getContext('2d');
+  g.fillStyle = shade(base, -38);
+  g.fillRect(0, 0, W, W);
+
+  const diamond = (cx, cy) => {
+    g.beginPath();
+    g.moveTo(cx + D, cy);
+    g.lineTo(cx, cy + D);
+    g.lineTo(cx - D, cy);
+    g.lineTo(cx, cy - D);
+    g.closePath();
+  };
+
+  for (let p = -1; p <= W / D + 1; p++) {
+    for (let q = -1; q <= W / D + 1; q++) {
+      /* Only same-parity points carry a crossing; the rest are the gaps the
+         diamonds already fill between them. */
+      if ((p + q) & 1) continue;
+      const cx = p * D, cy = q * D;
+      const over = (p & 1) === 0;
+      /* The two families take slightly different tones. Straw is cut from
+         one plant, but the strips run across each other, so they never catch
+         the light the same way — matching them exactly read as a flat lattice. */
+      const tone = over ? 10 : -10;
+
+      // Gradient runs across the winning strip, so it reads as rounded.
+      const gr = over
+        ? g.createLinearGradient(cx - D * 0.85, cy + D * 0.85, cx + D * 0.85, cy - D * 0.85)
+        : g.createLinearGradient(cx - D * 0.85, cy - D * 0.85, cx + D * 0.85, cy + D * 0.85);
+      gr.addColorStop(0, shade(base, tone - 34));
+      gr.addColorStop(0.40, shade(base, tone + 26));
+      gr.addColorStop(0.66, shade(base, tone + 14));
+      gr.addColorStop(1, shade(base, tone - 34));
+      g.fillStyle = gr;
+      diamond(cx, cy);
+      g.fill();
+
+      // Fibres along the strip, which is what stops it reading as plastic.
+      g.save();
+      diamond(cx, cy);
+      g.clip();
+      g.strokeStyle = shade(base, tone - 22);
+      g.lineWidth = 1;
+      for (let k = -3; k <= 3; k++) {
+        const o = k * 7;
+        g.beginPath();
+        if (over) { g.moveTo(cx - D + o, cy - D + o); g.lineTo(cx + D + o, cy + D + o); }
+        else { g.moveTo(cx - D + o, cy + D - o); g.lineTo(cx + D + o, cy - D - o); }
+        g.stroke();
+      }
+      g.restore();
+
+      // Shadowed gap where the strips part.
+      g.strokeStyle = shade(base, -50);
+      g.lineWidth = 1.6;
+      diamond(cx, cy);
+      g.stroke();
+    }
+  }
+
+  /* Two stitched rings. A real conical hat is sewn through in concentric
+     circles to hold the sedge to its frame, and on a cone a line of constant
+     v is exactly such a ring. */
+  for (const v of [0.30, 0.74]) {
+    const y = v * W;
+    g.strokeStyle = shade(base, -44);
+    g.lineWidth = 3;
+    g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke();
+    g.strokeStyle = shade(base, 30);
+    g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(0, y - 2.4); g.lineTo(W, y - 2.4); g.stroke();
+  }
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 8;
+  t.userData.own = true;
+  return t;
+}
+
 /* Angora fur pile for the furry bucket hat. Real fur reads as thousands of
    overlapping strands, each catching light differently along its length, so
    flat colour plus a bumped silhouette is not enough — the crown still looks
@@ -2602,7 +2700,7 @@ const HAIRSTYLES = ['bald','buzz','taper','crop','waves','fade','pixie','bowl','
                     'bun','pony',
                     'highpony','pigtails','layers','spacebuns',
                     'cap','flatbrim','dadhat','knicks','yankees','bucket','furry','furrysage','cowboy','beanie',
-                    'fossil','fossilblack','bandana','bandanablue','bandanagreen','tophat'];
+                    'fossil','fossilblack','conical','bandana','bandanablue','bandanagreen','tophat'];
 
 /* Styles that existed before this list was rewritten. Stored characters keep
    working by landing on the nearest real cut instead of rendering bald. */
@@ -2633,6 +2731,7 @@ const STYLE_LABELS = {
   yankees: 'Navy & white', bucket: 'Bucket', furry: 'Furry bucket',
   furrysage: 'Furry sage', cowboy: 'Cowboy', beanie: 'Beanie',
   fossil: 'Fossil knit', fossilblack: 'Fossil knit black',
+  conical: 'Straw conical hat',
   bandana: 'Red bandana', bandanablue: 'Blue bandana', bandanagreen: 'Green bandana',
   tophat: 'Top hat'
 };
@@ -4011,6 +4110,35 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
+  /* Torus for bound edges. G.collar is too fat and only 24 segments around,
+     which reads as a hexagon at hat scale. */
+  hoop: (thick) => geoCache(`hoop${thick}`, () => new THREE.TorusGeometry(1, thick, 8, 192)),
+  /* Conical hat shell. Open cone, near-zero radius at the apex, with enough
+     height segments to shape the profile: a real one is not a straight cone —
+     the sides are faintly hollow and the very edge kicks out and droops. */
+  strawCone: () => geoCache('strawcone', () => {
+    const g = new THREE.CylinderGeometry(0.02, 1, 1, 256, 18, true);
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+      const rad = Math.hypot(x, z) || 1e-6;
+      const u = y + 0.5;                    // 0 at the rim, 1 at the apex
+      /* Slightly hollow flanks. A dead-straight cone reads as a party hat. */
+      let k = 1 + Math.sin(u * Math.PI) * 0.035;
+      /* The outer inch of the brim flares and drops, which is where a woven
+         hat loses its stiffness. */
+      if (u < 0.10) {
+        const t = (0.10 - u) / 0.10;
+        k += t * 0.045;
+        y -= t * t * 0.045;
+      }
+      x *= k; z *= k;
+      p.setXYZ(i, x, y, z);
+    }
+    p.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  }),
   hatDome: (r, tl) => geoCache(`hdm${r}_${tl}`, () => superball(r, 128, 32, HEAD_N, 0, TAU, 0, tl)),
   hatVisor: () => geoCache('hvis', () => superball(1, 64, 28, 3.0)),
 };
@@ -4045,6 +4173,11 @@ const HATS = {
      archaeopteryx device, which is a registered mark. */
   fossil:      { crown: '#1c4f68', accent: '#16404f', knit: true, ink: '#a6c8e4' },
   fossilblack: { crown: '#191a1d', accent: '#121316', knit: true, ink: '#9ba3ab' },
+  /* Woven conical sun hat — the douli / non lá worn across east and south-east
+     Asia. Listed under a plain descriptive name: the word often attached to
+     this hat in English is a slur for Asian labourers, and it is not going in
+     anyone's style picker. */
+  conical:  { crown: '#c6a44f', accent: '#9c6a2e', straw: true },
   bandana:      { crown: '#c62828', paisley: true     },
   bandanablue:  { crown: '#1565c0', paisley: true     },
   bandanagreen: { crown: '#2e7d32', paisley: true     }
@@ -4482,6 +4615,15 @@ function buildHair(dna, mat, extraMats) {
       hatMat.roughness = 0.94;
       hatMat.metalness = 0;
     }
+    if (H.straw) {
+      /* Dried sedge has a faint sheen along the strips, so this one is not
+         pushed as matte as the fur and the knit. */
+      hatMat.map = makeStrawTexture(crownCol);
+      hatMat.map.repeat.set(5, 1);
+      hatMat.color.set('#ffffff');
+      hatMat.roughness = 0.72;
+      hatMat.metalness = 0.02;
+    }
 
     /* Hair still shows under a hat, but only down to the brow. Taken any
        lower it reaches eye level and reads as a coloured patch stuck to the
@@ -4612,6 +4754,83 @@ function buildHair(dna, mat, extraMats) {
       put(G.hatDome(1.11, 1.3), hatMat, 0, 0.02, 0, 1, 1.06, 1);
       put(G.tube(), accMat, 0, 0.33, 0, 1.18, 0.16, 1.16);        // folded cuff
       put(G.ball(), accMat, 0, 1.16, 0, 0.2, 0.2, 0.2);           // bobble
+    } else if (H.straw) {
+      /* One wide cone resting on the head. CylinderGeometry is height 1
+         centred, so the shell spans rim..apex through its own scale: rim at
+         the brow, apex a good way above the skull. It is a big hat — the
+         whole point is the shade it throws — so the brim reaches well past
+         the shoulders. */
+      const RIM_Y = 0.40, APEX_Y = 1.50, RIM_R = 1.74;
+      const h = APEX_Y - RIM_Y;
+      put(G.strawCone(), hatMat, 0, RIM_Y + h / 2, 0, RIM_R, h, RIM_R);
+
+      /* Bound edge. A woven brim is finished with a strip of cane whipped
+         round the rim, and without it the shell ends on a bare cut edge. */
+      const bindMat = new THREE.MeshStandardMaterial({
+        color: accCol, roughness: 0.66, metalness: 0.02, side: THREE.DoubleSide
+      });
+      if (extraMats) extraMats.push(bindMat);
+      const bind = put(G.hoop(0.038 / (RIM_R * 1.045)), bindMat,
+        0, RIM_Y - 0.046, 0, RIM_R * 1.045, RIM_R * 1.045, RIM_R * 1.045);
+      bind.rotation.x = Math.PI / 2;
+
+      /* Finial: the apex is where the weave is gathered and capped, and it
+         is also where the cone's own UVs collapse to a point, so a cap both
+         finishes the hat and hides that. */
+      put(G.frus(0.06), bindMat, 0, APEX_Y + 0.045, 0, 0.10, 0.13, 0.10);
+
+      /* Chin cord, knotted under the jaw the way it is actually worn — the
+         hat is far too broad to stay on otherwise.
+
+         A cord really does lie flat against the cheek, and straight tubes
+         strung from the brim to the chin vanished inside the skull because of
+         it. Instead the path is walked as directions from the temple round to
+         under the chin, and every step is projected onto the superellipsoid
+         and lifted clear of it, so the cord follows the face. */
+      const cordMat = new THREE.MeshStandardMaterial({
+        color: '#b5333a', roughness: 0.78, metalness: 0.01, side: THREE.DoubleSide
+      });
+      if (extraMats) extraMats.push(cordMat);
+      const onSkull = (x, y, z, lift) => {
+        const n = HEAD_N;
+        const s = Math.pow(Math.pow(Math.abs(x), n) + Math.pow(Math.abs(y), n)
+          + Math.pow(Math.abs(z), n), -1 / n) * lift;
+        return [x * s, y * s, z * s];
+      };
+      /* Three control points rather than two, because a straight run from
+         temple to chin projects to a path down the side of the jaw. The
+         middle one pulls it forward, in front of the ear, where the strap of
+         one of these actually sits. */
+      const up = new THREE.Vector3(0, 1, 0);
+      for (const sx of [-1, 1]) {
+        const p0 = [sx * 0.95, 0.52, 0.42];
+        const p1 = [sx * 0.82, -0.40, 0.66];
+        const p2 = [sx * 0.05, -0.92, 0.44];
+        const pts = [];
+        for (let i = 0; i <= 10; i++) {
+          const t = i / 10, m = 1 - t;
+          pts.push(onSkull(
+            m * m * p0[0] + 2 * m * t * p1[0] + t * t * p2[0],
+            m * m * p0[1] + 2 * m * t * p1[1] + t * t * p2[1],
+            m * m * p0[2] + 2 * m * t * p1[2] + t * t * p2[2], 1.05));
+        }
+        /* Joined segments, not a line of beads: spheres spaced along the
+           path read as a necklace unless they overlap heavily, and tubes
+           between the points cost fewer meshes to do it properly. */
+        for (let i = 0; i < pts.length - 1; i++) {
+          const a = pts[i], b = pts[i + 1];
+          const d = new THREE.Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+          const len = d.length();
+          const seg = put(G.tube(), cordMat,
+            (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2,
+            0.017, len * 1.2, 0.017);
+          seg.quaternion.setFromUnitVectors(up, d.normalize());
+        }
+      }
+      // Knot and a short loose end below the jaw.
+      const [kx, ky, kz] = onSkull(0, -0.92, 0.44, 1.06);
+      put(G.ball(), cordMat, kx, ky, kz, 0.05, 0.055, 0.05);
+      put(G.tube(), cordMat, kx, ky - 0.14, kz, 0.018, 0.20, 0.018);
     } else if (H.knit) {
       /* Knit beanie: hem at the brow, ribbed turn-up at the bottom, and no
          bobble — this is the flat-crowned alpine cut, not a pom hat.

@@ -211,6 +211,25 @@ for (const [page, ids] of required) {
   }
 }
 
+/* The conical hat's weave is an interlace, not a crosshatch. The diamond
+   lattice in makeStrawTexture is what makes it read as basketwork, and the
+   style must stay under a descriptive name rather than the slur. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ['makeStrawTexture', 'G.strawCone()', 'G.hoop(', "'conical'", 'straw: true']
+    .every((s) => src.includes(s));
+  const named = /conical:\s*'Straw conical hat'/.test(src);
+  if (!wired || !named) {
+    note('✗', 'mii.html — conical hat needs a plaited straw weave under a descriptive label');
+    failures++;
+  } else if (/coolie/i.test(src)) {
+    note('✗', 'mii.html — the conical hat must not be labelled with the slur');
+    failures++;
+  } else {
+    note('✓', 'mii.html includes a woven conical straw hat');
+  }
+}
+
 /* The fossil beanies only read as knitwear because the motif is rasterised to
    a stitch grid before it is drawn. Lose knitMask and it becomes a decal. */
 {
