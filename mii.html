@@ -3538,293 +3538,304 @@ const G = {
   hairFront:(r, tl, ts = HAIR_CROWN) => geoCache(`hf${r}_${tl}_${ts}`, () => superball(r, 26, 12, HEAD_N, Math.PI / 2 - (HAIR_GAP + HAIR_OVER) / 2, HAIR_GAP + HAIR_OVER, ts, Math.max(0.12, tl - ts))),
   hairBand: (r) => geoCache(`hbd${r}`, () => superball(r, 26, 10, HEAD_N, Math.PI / 2 + HAIR_GAP / 2, TAU - HAIR_GAP, 1.15, 0.5)),
   dome: (r, tl) => geoCache(`dm${r}_${tl}`, () => superball(r, 36, 24, HEAD_N, 0, TAU, 0, tl)),
-  pomp: (r) => sculptHair(`pompF${r}`, r, 1.62, 48, 40, (b, tl, rr) => {
-    /* Swept BACK from the forehead, dense rounded volume, short sides —
-       Elvis / rockabilly, not a horn and not a quiff. */
-    const faceWin = Math.pow(Math.max(0, b.azFront - 0.08) / 0.92, 1.15);
-    const backAmt = Math.pow(b.azBack, 1.45);
-    let maxTh = 1.16
-      + (1.48 - 1.16) * faceWin * Math.pow(Math.max(0, 1 - b.side * 0.72), 1.15)
-      + (1.22 - 1.16) * backAmt;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
-    ny -= Math.max(0, ny - 0.72) * 0.18 * (1 - faceWin);
-    const dx = nx * 0.85, dy = ny - 0.78, dz = nz - 0.22;
-    const bump = Math.exp(-(dx * dx + dy * dy + dz * dz * 1.15) * 1.85)
-      * Math.max(0, Math.min(1, (ny - 0.42) / 0.22));
-    ny += bump * 0.40;
-    nz -= bump * 0.14;
-    if (b.side > 0.48 && ny < 0.58) nx *= 0.86 + 0.14 * Math.max(0, (ny - 0.32) / 0.26);
-    if (b.azFront > 0.30 && ny < 0.56) {
-      const t = Math.pow((b.azFront - 0.30) / 0.70, 1.2) * Math.min(1, (0.56 - ny) / 0.26);
-      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
+  pomp: (r) => sculptHair(`pompG${r}`, r, 1.78, 48, 40, (b, tl, rr) => {
+    /* Dense mound swept BACK from the forehead, short sides. Volume has
+       to beat the pole or it reads as a bowl. */
+    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
+    let cover = Math.pow(Math.max(0, (b.uy + 0.12) / 0.80), 0.75);
+    cover *= 1 - frame.faceOpen * 0.90;
+    cover *= 1 - b.side * Math.pow(Math.max(0, (0.42 - b.uy) / 0.40), 1.4) * 0.55;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.28 + cover * 0.22), rr);
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    const k = (L0 + cover * 0.10 * rr) / L0;
+    nx *= k; ny *= k; nz *= k;
+    const dx = nx * 0.80, dy = ny - 0.72, dz = nz - 0.42;
+    const bump = Math.exp(-(dx * dx + dy * dy + dz * dz * 0.90) * 1.70)
+      * Math.max(0, Math.min(1, (ny - 0.40) / 0.22));
+    ny += bump * 0.24;
+    nz -= bump * 0.10;
+    if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    else if (b.azFront > 0.30 && ny < 0.54) {
+      const t = Math.pow((b.azFront - 0.30) / 0.70, 1.2) * Math.min(1, (0.54 - ny) / 0.24);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t * (1 - bump), skull * 1.02));
       if (ny < 0.31) ny = 0.31;
     }
     return { nx, ny, nz };
   }),
-  quiff: (r) => sculptHair(`quiffF${r}`, r, 1.48, 46, 38, (b, tl, rr) => {
-    /* Smaller than a pomp: lift UP and slightly FORWARD at the forelock,
-       short sides, rest of the top modest. */
-    const faceWin = Math.pow(Math.max(0, b.azFront - 0.10) / 0.90, 1.35);
-    let maxTh = 1.14
-      + (1.34 - 1.14) * faceWin * Math.pow(Math.max(0, 1 - b.side * 0.85), 1.4)
-      + (1.18 - 1.14) * Math.pow(b.azBack, 1.6);
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
-    ny -= Math.max(0, ny - 0.68) * 0.22 * (1 - faceWin);
-    const dx = nx * 1.15, dy = ny - 0.50, dz = nz - 0.82;
-    const bump = Math.exp(-(dx * dx + dy * dy + dz * dz * 0.70) * 2.40)
-      * Math.max(0, Math.min(1, (ny - 0.38) / 0.20));
-    ny += bump * 0.42;
-    nz += bump * 0.20;
-    if (b.side > 0.50 && ny < 0.55) nx *= 0.84;
-    if (b.azFront > 0.32 && ny < 0.56) {
-      const t = Math.pow((b.azFront - 0.32) / 0.68, 1.2) * Math.min(1, (0.56 - ny) / 0.26);
-      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
+  quiff: (r) => sculptHair(`quiffG${r}`, r, 1.62, 46, 38, (b, tl, rr) => {
+    /* Smaller than pomp: lift UP and FORWARD at the forelock only. */
+    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
+    let cover = Math.pow(Math.max(0, (b.uy + 0.10) / 0.78), 0.8);
+    cover *= 1 - frame.faceOpen * 0.90;
+    cover *= 1 - b.side * Math.pow(Math.max(0, (0.44 - b.uy) / 0.42), 1.35) * 0.62;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.24 + cover * 0.18), rr);
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    nx *= (L0 + cover * 0.07 * rr) / L0;
+    ny *= (L0 + cover * 0.07 * rr) / L0;
+    nz *= (L0 + cover * 0.07 * rr) / L0;
+    const dx = nx * 1.20, dy = ny - 0.48, dz = nz - 0.78;
+    const bump = Math.exp(-(dx * dx + dy * dy + dz * dz * 0.65) * 2.20)
+      * Math.max(0, Math.min(1, (ny - 0.36) / 0.20));
+    ny += bump * 0.38;
+    nz += bump * 0.16;
+    if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    else if (b.azFront > 0.32 && ny < 0.54) {
+      const t = Math.pow((b.azFront - 0.32) / 0.68, 1.2) * Math.min(1, (0.54 - ny) / 0.24);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t * (1 - bump), skull * 1.02));
       if (ny < 0.31) ny = 0.31;
     }
     return { nx, ny, nz };
   }),
-  fade: (r) => sculptHair(`fadeX${r}`, r, 2.10, 56, 44, (b, tl, rr) => {
-    /* Waved crown + skin-faded sides. Old version hugged so hard the
-       waves collapsed into a peaked tuft. */
-    const earFade = b.side * Math.pow(Math.max(0, (0.44 - b.uy) / 0.50), 1.35);
-    const napeFade = b.azBack * Math.pow(Math.max(0, (0.36 - b.uy) / 0.48), 1.2);
-    const fadeAmt = Math.min(1, earFade * 1.05 + napeFade * 0.90);
-    let cover = Math.pow(Math.max(0, (b.uy - 0.10) / 0.62), 0.92);
-    cover *= 1 - fadeAmt * 0.96;
-    if (b.azFront > 0.12) {
-      const brow = Math.pow(Math.max(0, (b.uy - 0.34) / 0.40), 1.8)
-        * Math.pow(Math.max(0, 1 - b.side * 0.88), 1.7);
-      cover *= brow;
-      cover *= 1 - b.side * Math.pow(Math.max(0, (0.44 - b.uy) / 0.38), 1.6) * b.azFront * 0.90;
-    }
+  fade: (r) => sculptHair(`fadeY${r}`, r, 2.05, 56, 44, (b, tl, rr) => {
+    /* Waved crown + skin-faded sides. Flatten the pole so waves do not
+       pile into a Hershey-kiss spike. */
+    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
+    const earFade = b.side * Math.pow(Math.max(0, (0.46 - b.uy) / 0.50), 1.25);
+    const napeFade = b.azBack * Math.pow(Math.max(0, (0.38 - b.uy) / 0.48), 1.15);
+    const fadeAmt = Math.min(1, earFade * 1.08 + napeFade * 0.92);
+    let cover = Math.pow(Math.max(0, (b.uy + 0.08) / 0.72), 0.7);
+    cover *= 1 - fadeAmt * 0.97;
+    cover *= 1 - frame.faceOpen * 0.88;
     const sideburn = Math.pow(Math.max(0, (b.side - 0.42) / 0.58), 1.15)
       * Math.exp(-Math.pow((b.uy - 0.06) / 0.28, 2) * 2.6)
       * b.azFront * (1 - fadeAmt * 0.65);
-    cover = Math.max(cover, sideburn * 0.50);
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.18 + cover * 0.32), rr);
-    const cr = Math.hypot(nx, ny - 0.78, nz + 0.06);
-    const wave = cover * (0.024 * Math.sin(cr * 24) + 0.013 * Math.sin(cr * 40 + 0.6));
+    cover = Math.max(cover, sideburn * 0.45);
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.22 + cover * 0.20), rr);
+    if (b.uy > 0.88) ny -= (b.uy - 0.88) * 0.55;
+    const cr = Math.hypot(nx, ny - 0.78, nz + 0.04);
+    const wave = cover * (0.010 * Math.sin(cr * 72) + 0.006 * Math.sin(cr * 118 + 0.7));
     const L0 = Math.hypot(nx, ny, nz) || 1;
-    const k = (L0 + (cover * 0.11 + wave + sideburn * 0.04) * rr) / L0;
+    const k = (L0 + (cover * 0.09 + wave + sideburn * 0.03) * rr) / L0;
     nx *= k; ny *= k; nz *= k;
-    if (cover < 0.08) {
-      ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
-    } else if (b.azFront > 0.26 && ny < 0.52) {
-      const t = b.azFront * Math.pow(Math.max(0, (0.52 - ny) / 0.22), 1.25)
-        * Math.pow(Math.max(0, 1 - cover), 0.45);
+    if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    else if (b.azFront > 0.26 && ny < 0.52) {
+      const t = b.azFront * Math.pow(Math.max(0, (0.52 - ny) / 0.22), 1.2)
+        * Math.pow(Math.max(0, 1 - cover), 0.4);
       ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.018));
       if (ny < 0.30) ny = 0.30;
     }
     return { nx, ny, nz };
   }),
-  crewCut: (r) => sculptHair(`crewA${r}`, r, 1.72, 44, 34, (b, tl, rr) => {
-    /* Longer on top than a buzz, tapered sides, short pomp at the front
-       hairline so the side profile reads almost horizontal. */
-    const faceWin = Math.pow(Math.max(0, b.azFront - 0.10) / 0.90, 1.4);
-    const backAmt = Math.pow(b.azBack, 1.35);
-    let maxTh = 1.20
-      + (1.46 - 1.20) * faceWin * Math.pow(Math.max(0, 1 - b.side * 0.55), 1.1)
-      + (1.14 - 1.20) * backAmt;
-    if (b.side > 0.55 && b.uy < 0.42) maxTh -= (b.side - 0.55) * 0.22;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
-    if (ny > 0.74) ny = 0.74 + (ny - 0.74) * 0.28;
-    if (b.side > 0.50 && ny < 0.56) nx *= 0.88;
-    if (b.azFront > 0.32 && ny < 0.54) {
-      const t = Math.pow((b.azFront - 0.32) / 0.68, 1.2) * Math.min(1, (0.54 - ny) / 0.24);
+  crewCut: (r) => sculptHair(`crewB${r}`, r, 1.70, 44, 34, (b, tl, rr) => {
+    /* More top than a buzz, tapered sides, short pomp at the front so the
+       profile is nearly horizontal. */
+    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
+    let cover = Math.pow(Math.max(0, (b.uy + 0.10) / 0.78), 0.7);
+    cover *= 1 - frame.faceOpen * 0.88;
+    cover *= 1 - b.side * Math.pow(Math.max(0, (0.40 - b.uy) / 0.38), 1.25) * 0.70;
+    const frontPomp = b.azFront * Math.pow(Math.max(0, 1 - b.side * 0.6), 1.2)
+      * Math.max(0, (b.uy - 0.30) / 0.50);
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.26 + cover * 0.16), rr);
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    const k = (L0 + (cover * 0.11 + frontPomp * 0.05) * rr) / L0;
+    nx *= k; ny *= k; nz *= k;
+    if (ny > 1.14) ny = 1.14 + (ny - 1.14) * 0.35;
+    if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    else if (b.azFront > 0.32 && ny < 0.52) {
+      const t = Math.pow((b.azFront - 0.32) / 0.68, 1.2) * Math.min(1, (0.52 - ny) / 0.22);
       ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
       if (ny < 0.31) ny = 0.31;
     }
     return { nx, ny, nz };
   }),
-  frenchCrop: (r) => sculptHair(`fcropA${r}`, r, 1.78, 48, 38, (b, tl, rr) => {
-    /* Short faded sides, textured top brushed FORWARD, choppy fringe at
-       mid-forehead — a Caesar with piecey texture, not a pancake bang. */
+  frenchCrop: (r) => sculptHair(`fcropB${r}`, r, 1.78, 50, 40, (b, tl, rr) => {
+    /* Short sides, textured top, blunt fringe sitting mid-forehead —
+       a horizontal shelf, not a widow's peak. */
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
-    const backAmt = Math.pow(b.azBack, 1.5);
-    let maxTh = 1.16
-      + 0.22 * Math.pow(Math.max(0, b.uy), 1.05) * (1 - b.side * 0.42)
-      + (1.12 - 1.16) * backAmt;
-    const fringe = b.azFront * Math.pow(Math.max(0, 1 - b.side * 0.48), 1.15)
-      * Math.pow(Math.max(0, (0.70 - b.uy) / 0.38), 1.15);
-    maxTh += fringe * 0.28;
-    maxTh += (0.028 * Math.sin(b.phi * 9.0) + 0.014 * Math.sin(b.phi * 17.0 + 0.7))
-      * (1 - frame.faceOpen * 0.7);
-    maxTh -= frame.faceOpen * 0.55;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
-    ny += Math.max(0, ny - 0.62) * 0.08;
-    nz += fringe * 0.12;
-    ny -= fringe * 0.04;
-    const chop = Math.sin(b.phi * 11.0 + ny * 4.0) * 0.016 * Math.max(0, b.uy);
-    nx *= 1 + chop; nz *= 1 + chop * 0.4;
-    if (b.side > 0.48 && ny < 0.54) nx *= 0.84;
-    if (b.azFront > 0.28 && ny < 0.50) {
-      const t = Math.pow((b.azFront - 0.28) / 0.72, 1.15)
-        * Math.min(1, (0.50 - ny) / 0.22) * (1 - fringe * 0.65);
+    let cover = Math.pow(Math.max(0, (b.uy + 0.10) / 0.78), 0.7);
+    cover *= 1 - frame.faceOpen * 0.70;
+    cover *= 1 - b.side * Math.pow(Math.max(0, (0.42 - b.uy) / 0.40), 1.3) * 0.72;
+    const across = Math.max(0, 1 - Math.abs(b.ux) / 0.48);
+    const fringe = b.azFront * across * Math.pow(Math.max(0, (0.62 - b.uy) / 0.34), 1.05)
+      * Math.max(0, (b.uy - 0.26) / 0.20);
+    cover = Math.max(cover, fringe * 0.85);
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.24 + cover * 0.18), rr);
+    const chop = (0.012 * Math.sin(b.phi * 14) + 0.007 * Math.sin(b.phi * 23 + 0.6)) * cover;
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    const k = (L0 + (cover * 0.07 + chop) * rr) / L0;
+    nx *= k; ny *= k; nz *= k;
+    nz += fringe * 0.14;
+    ny -= fringe * 0.03;
+    if (cover < 0.08 && fringe < 0.12) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    else if (b.azFront > 0.28 && ny < 0.42 && fringe < 0.25) {
+      const t = Math.pow((b.azFront - 0.28) / 0.72, 1.15) * Math.min(1, (0.42 - ny) / 0.16);
       ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
     }
     if (ny < 0.32) ny = 0.32;
     return { nx, ny, nz };
   }),
-  waves360: (r) => sculptHair(`wavA${r}`, r, 1.92, 56, 44, (b, tl, rr) => {
-    /* 360 waves: short coily hair trained into concentric ripples from
-       the crown — not four sausage ridges on a cap. */
+  waves360: (r) => sculptHair(`wavB${r}`, r, 1.88, 56, 44, (b, tl, rr) => {
+    /* Fine concentric ripples from the crown — many rings, small amplitude,
+       not four sausage ridges. */
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
-    let maxTh = 1.32 - frame.faceOpen * 0.88 + frame.sideburn * 0.10;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
-    const cover = Math.max(0, 1 - frame.faceOpen);
-    const cr = Math.hypot(nx, ny - 0.82, nz + 0.04);
-    const wave = cover * (0.026 * Math.sin(cr * 26) + 0.014 * Math.sin(cr * 44 + 0.5));
+    let cover = Math.pow(Math.max(0, (b.uy + 0.18) / 0.82), 0.65);
+    cover *= 1 - frame.faceOpen * 0.90;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.28 + cover * 0.14), rr);
+    if (b.uy > 0.90) ny -= (b.uy - 0.90) * 0.40;
+    const cr = Math.hypot(nx, ny - 0.80, nz + 0.02);
+    const wave = cover * (0.009 * Math.sin(cr * 78) + 0.005 * Math.sin(cr * 126 + 0.8));
     const L0 = Math.hypot(nx, ny, nz) || 1;
-    const k = (L0 + (cover * 0.055 + wave) * rr) / L0;
+    const k = (L0 + (cover * 0.06 + wave) * rr) / L0;
     nx *= k; ny *= k; nz *= k;
-    if (b.azFront > 0.22 && ny < 0.52) {
-      const t = frame.faceOpen * Math.pow((b.azFront - 0.22) / 0.78, 1.15)
+    if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    else if (b.azFront > 0.24 && ny < 0.52) {
+      const t = frame.faceOpen * Math.pow((b.azFront - 0.24) / 0.76, 1.15)
         * Math.min(1, (0.52 - ny) / 0.24);
       ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.016));
       if (ny < 0.30) ny = 0.30;
     }
     return { nx, ny, nz };
   }),
-  pixieCut: (r) => sculptHair(`pixA${r}`, r, 1.88, 48, 38, (b, tl, rr) => {
-    /* Short nape, ears out, textured crown, very short bangs with a
-       slight side sweep — one crop, not a cap with an earmuff. */
+  pixieCut: (r) => sculptHair(`pixB${r}`, r, 1.82, 50, 40, (b, tl, rr) => {
+    /* Short nape, ears out, a bit of textured crown and a tiny side-swept
+       fringe — still one crop that covers the whole top. */
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
-    const backAmt = Math.pow(b.azBack, 1.55);
     const sweep = Math.max(0, b.ux);
-    let maxTh = 1.18
-      + 0.30 * Math.pow(Math.max(0, b.uy - 0.08), 0.95) * (1 - b.side * 0.38)
-      + (1.08 - 1.18) * backAmt
-      + sweep * b.azFront * 0.12;
-    maxTh += (0.030 * Math.sin(b.phi * 8.0) + 0.014 * Math.sin(b.phi * 15.0 + 0.5))
-      * Math.max(0, b.uy);
-    maxTh -= frame.faceOpen * 0.72;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
-    ny += Math.max(0, ny - 0.58) * 0.10;
-    if (b.side > 0.52 && ny < 0.50 && ny > 0.18) nx *= 0.78;
-    if (backAmt > 0.2 && ny < 0.48) {
-      ny = Math.max(ny, 0.36);
-      nz *= 0.90;
-    }
-    nz += sweep * b.azFront * 0.06;
-    nx += sweep * 0.04;
-    if (b.azFront > 0.28 && ny < 0.54) {
-      const t = Math.pow((b.azFront - 0.28) / 0.72, 1.2) * Math.min(1, (0.54 - ny) / 0.26);
-      ({ nx, ny, nz } = hugToward(nx, ny, nz, t * (0.55 + frame.faceOpen * 0.45), skull * 1.02));
+    let cover = Math.pow(Math.max(0, (b.uy + 0.08) / 0.78), 0.7);
+    cover *= 1 - frame.faceOpen * 0.82;
+    cover *= 1 - b.side * Math.pow(Math.max(0, (0.36 - b.uy) / 0.36), 1.35) * 0.55;
+    cover *= 1 - Math.pow(b.azBack, 1.4) * Math.pow(Math.max(0, (0.38 - b.uy) / 0.40), 1.2) * 0.45;
+    cover += sweep * b.azFront * Math.max(0, (0.55 - b.uy) / 0.30) * 0.18;
+    const chop = (0.014 * Math.sin(b.phi * 9) + 0.008 * Math.sin(b.phi * 17 + 0.4)) * cover;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.26 + cover * 0.20), rr);
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    const k = (L0 + (cover * 0.08 + chop) * rr) / L0;
+    nx *= k; ny *= k; nz *= k;
+    nx += sweep * 0.04 * cover;
+    nz += sweep * b.azFront * 0.05;
+    if (b.side > 0.58 && ny < 0.48 && ny > 0.16) nx *= 0.86;
+    if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    else if (b.azFront > 0.28 && ny < 0.52) {
+      const t = Math.pow((b.azFront - 0.28) / 0.72, 1.2) * Math.min(1, (0.52 - ny) / 0.24);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t * 0.7, skull * 1.02));
     }
     if (ny < 0.31) ny = 0.31;
     return { nx, ny, nz };
   }),
-  partedTop: (r, kind = 'side') => sculptHair(`partA${r}_${kind}`, r, 1.92, 50, 40, (b, tl, rr) => {
-    /* Part on the left, hair combed to the right. Comb over is taller;
-       side part is flatter and neater. */
+  partedTop: (r, kind = 'side') => sculptHair(`partB${r}_${kind}`, r, 1.88, 50, 40, (b, tl, rr) => {
+    /* Hair stays on the head. The part is a groove, not a bald patch. */
     const vol = kind === 'combover' ? 1 : 0;
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
     const sweep = Math.max(0, b.ux);
-    const groove = Math.exp(-((b.ux + 0.16) * (b.ux + 0.16)) * 24) * Math.max(0, b.uy);
-    let maxTh = 1.28 + vol * 0.08
-      + sweep * (0.22 + vol * 0.18) * (0.45 + b.azFront * 0.40)
-      + Math.max(0, -b.ux) * b.azFront * 0.06
-      - groove * (0.20 + vol * 0.04)
-      - frame.faceOpen * 0.78
-      + (1.22 - 1.28) * Math.pow(b.azBack, 1.3) * (1 - vol * 0.4);
-    if (b.side > 0.58 && b.uy < 0.40) maxTh -= 0.14;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
-    ny += Math.max(0, ny - 0.58) * (0.06 + vol * 0.10 + sweep * 0.08);
-    nx += 0.05 + sweep * 0.05;
-    if (groove > 0.04) {
-      nx *= 1 - groove * 0.10;
-      nz *= 1 - groove * 0.08;
-      ny -= groove * 0.04;
+    const groove = Math.exp(-((b.ux + 0.14) * (b.ux + 0.14)) * 28) * Math.max(0, b.uy);
+    let cover = Math.pow(Math.max(0, (b.uy + 0.12) / 0.80), 0.7);
+    cover *= 1 - frame.faceOpen * 0.72;
+    cover *= 1 - b.side * Math.pow(Math.max(0, (0.38 - b.uy) / 0.38), 1.3) * 0.40;
+    cover += sweep * 0.12 * vol;
+    cover -= groove * 0.22;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.28 + cover * 0.22 + vol * 0.06), rr);
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    const k = (L0 + (cover * (0.07 + vol * 0.05)) * rr) / L0;
+    nx *= k; ny *= k; nz *= k;
+    nx += 0.045 * Math.max(0, b.uy) + sweep * 0.04;
+    ny += sweep * vol * 0.05 * Math.max(0, b.uy - 0.35);
+    if (groove > 0.05) {
+      nx *= 1 - groove * 0.07;
+      ny -= groove * 0.035;
     }
-    if (vol < 0.5 && ny > 0.70) ny = 0.70 + (ny - 0.70) * 0.35;
-    if (b.azFront > 0.26 && ny < 0.54) {
+    if (vol < 0.5 && ny > 1.12) ny = 1.12 + (ny - 1.12) * 0.40;
+    if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    else if (b.azFront > 0.26 && ny < 0.52) {
       const t = frame.faceOpen * Math.pow((b.azFront - 0.26) / 0.74, 1.15)
-        * Math.min(1, (0.54 - ny) / 0.26);
+        * Math.min(1, (0.52 - ny) / 0.24);
       ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
     }
     if (ny < 0.31) ny = 0.31;
     return { nx, ny, nz };
   }),
-  swoopCurl: (r) => sculptHair(`swoopA${r}`, r, 1.70, 48, 38, (b, tl, rr) => {
-    /* James Dean / elephant-trunk: one wide forehead curl, sides slicked,
-       the rest combed back — not a mohawk stack of balls. */
-    let maxTh = 1.18
-      + (1.32 - 1.18) * (1 - b.side * 0.7) * Math.max(0, b.uy)
-      + (1.24 - 1.18) * Math.pow(b.azBack, 1.2);
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
-    if (b.side > 0.46 && ny < 0.56) nx *= 0.82;
-    nz -= Math.max(0, -b.uz) * 0.05;
-    const dx = (nx - 0.10) * 0.95, dy = ny - 0.58, dz = nz - 0.70;
-    const curl = Math.exp(-(dx * dx * 1.4 + dy * dy * 1.8 + dz * dz * 0.85) * 2.05)
-      * Math.max(0, Math.min(1, (ny - 0.36) / 0.22));
-    ny += curl * 0.22;
-    nz += curl * 0.22;
-    nx += curl * 0.10;
-    if (nz > 0.52 && curl > 0.15) ny -= (nz - 0.52) * 0.35 * curl;
-    if (b.azFront > 0.34 && ny < 0.50 && curl < 0.25) {
-      const t = Math.pow((b.azFront - 0.34) / 0.66, 1.2) * Math.min(1, (0.50 - ny) / 0.22);
-      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
-    }
-    if (ny < 0.31) ny = 0.31;
-    return { nx, ny, nz };
-  }),
-  slickBack: (r) => sculptHair(`slickA${r}`, r, 1.95, 48, 38, (b, tl, rr) => {
-    /* Combed straight back and laid flat — length at the nape, no lift. */
+  swoopCurl: (r) => sculptHair(`swoopB${r}`, r, 1.74, 48, 38, (b, tl, rr) => {
+    /* One wide forehead curl, sides short, rest combed back. */
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
-    let maxTh = 1.30
-      + b.azBack * 0.32
-      - frame.faceOpen * 0.92
-      - b.azFront * 0.10;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
-    if (ny > 0.62) ny = 0.62 + (ny - 0.62) * 0.22;
-    if (b.azFront > 0.12) {
-      nz -= 0.12 * b.azFront;
-      ny -= 0.03 * b.azFront;
-    }
-    if (b.azBack > 0.20 && ny < 0.52) {
-      nz -= 0.10 * b.azBack;
-      ny -= 0.08 * b.azBack * Math.max(0, 0.48 - ny);
-    }
-    if (b.side > 0.50 && ny < 0.50) nx *= 0.90;
-    if (b.azFront > 0.28 && ny < 0.54) {
-      const t = Math.pow((b.azFront - 0.28) / 0.72, 1.15) * Math.min(1, (0.54 - ny) / 0.26);
+    let cover = Math.pow(Math.max(0, (b.uy + 0.10) / 0.78), 0.75);
+    cover *= 1 - frame.faceOpen * 0.80;
+    cover *= 1 - b.side * Math.pow(Math.max(0, (0.42 - b.uy) / 0.40), 1.3) * 0.55;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.26 + cover * 0.16), rr);
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    const k = (L0 + cover * 0.07 * rr) / L0;
+    nx *= k; ny *= k; nz *= k;
+    nz -= Math.max(0, -b.uz) * 0.04 * cover;
+    const dx = (nx - 0.08) * 0.70, dy = ny - 0.52, dz = nz - 0.68;
+    const curl = Math.exp(-(dx * dx * 1.1 + dy * dy * 1.5 + dz * dz * 0.70) * 1.65)
+      * Math.max(0, Math.min(1, (ny - 0.34) / 0.22));
+    ny += curl * 0.20;
+    nz += curl * 0.24;
+    nx += curl * 0.09;
+    if (nz > 0.50 && curl > 0.18) ny -= (nz - 0.50) * 0.28 * curl;
+    if (cover < 0.08 && curl < 0.12) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    else if (b.azFront > 0.34 && ny < 0.48 && curl < 0.22) {
+      const t = Math.pow((b.azFront - 0.34) / 0.66, 1.2) * Math.min(1, (0.48 - ny) / 0.20);
       ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
     }
     if (ny < 0.31) ny = 0.31;
     return { nx, ny, nz };
   }),
-  sweptHair: (r) => sculptHair(`sweptA${r}`, r, 1.82, 46, 36, (b, tl, rr) => {
-    /* Casual fall to the right, no sharp part and no extra ball. */
+  slickBack: (r) => sculptHair(`slickB${r}`, r, 1.88, 48, 38, (b, tl, rr) => {
+    /* Crown still covered — hair is combed back and flattened, not deleted.
+       The hairline sits further back; nape has a little length. */
+    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
+    let cover = Math.pow(Math.max(0, (b.uy + 0.16) / 0.82), 0.65);
+    cover *= 1 - frame.faceOpen * 0.70;
+    cover += b.azBack * Math.max(0, (0.50 - b.uy) / 0.55) * 0.22;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.30 + cover * 0.18), rr);
+    if (ny > 1.10) ny = 1.10 + (ny - 1.10) * 0.22;
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    const k = (L0 + cover * 0.055 * rr) / L0;
+    nx *= k; ny *= k; nz *= k;
+    if (b.azFront > 0.20 && b.uy > 0.35) {
+      nz -= 0.08 * b.azFront * cover;
+    }
+    if (b.azBack > 0.25 && ny < 0.50) {
+      nz -= 0.08 * b.azBack;
+      ny -= 0.06 * b.azBack * Math.max(0, 0.46 - ny);
+    }
+    if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    else if (b.azFront > 0.32 && ny < 0.50) {
+      const t = Math.pow((b.azFront - 0.32) / 0.68, 1.15) * Math.min(1, (0.50 - ny) / 0.22);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
+    }
+    if (ny < 0.31) ny = 0.31;
+    return { nx, ny, nz };
+  }),
+  sweptHair: (r) => sculptHair(`sweptB${r}`, r, 1.80, 46, 36, (b, tl, rr) => {
+    /* Casual fall to the right, still a full cap. */
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
     const sweep = Math.max(0, b.ux);
-    let maxTh = 1.30 + sweep * 0.20 - frame.faceOpen * 0.80;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
-    ny += Math.max(0, ny - 0.58) * 0.08 * sweep;
-    nx += 0.07 * Math.max(0, b.uy);
-    nz += sweep * b.azFront * 0.06;
-    if (b.azFront > 0.28 && ny < 0.54) {
+    let cover = Math.pow(Math.max(0, (b.uy + 0.12) / 0.80), 0.7);
+    cover *= 1 - frame.faceOpen * 0.75;
+    cover += sweep * 0.10;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.28 + cover * 0.18), rr);
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    const k = (L0 + cover * 0.07 * rr) / L0;
+    nx *= k; ny *= k; nz *= k;
+    nx += 0.06 * Math.max(0, b.uy);
+    nz += sweep * b.azFront * 0.05;
+    ny += sweep * 0.04 * Math.max(0, b.uy - 0.40);
+    if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    else if (b.azFront > 0.28 && ny < 0.52) {
       const t = frame.faceOpen * Math.pow((b.azFront - 0.28) / 0.72, 1.15)
-        * Math.min(1, (0.54 - ny) / 0.26);
+        * Math.min(1, (0.52 - ny) / 0.24);
       ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
     }
     if (ny < 0.31) ny = 0.31;
     return { nx, ny, nz };
   }),
-  spikes: (r) => sculptHair(`spkA${r}`, r, 1.68, 48, 36, (b, tl, rr) => {
-    /* Piecey vertical texture on a short crop — matte spikes, not a
-       hedgehog of cones around the whole head. */
-    const faceWin = Math.pow(Math.max(0, b.azFront - 0.14) / 0.86, 1.5);
-    let maxTh = 1.16
-      + 0.24 * Math.pow(Math.max(0, b.uy), 1.15) * (1 - b.side * 0.55)
-      - faceWin * 0.18;
-    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
-    const spike = Math.pow(Math.max(0, Math.cos(b.phi * 6.5)), 2.4)
-      * Math.max(0, b.uy - 0.18) * (1 - faceWin * 0.5);
-    ny += spike * 0.18;
-    nz += spike * 0.03 * b.azFront;
-    if (b.side > 0.50 && ny < 0.54) nx *= 0.84;
-    if (b.azFront > 0.32 && ny < 0.54) {
-      const t = Math.pow((b.azFront - 0.32) / 0.68, 1.2) * Math.min(1, (0.54 - ny) / 0.24);
+  spikes: (r) => sculptHair(`spkB${r}`, r, 1.70, 50, 38, (b, tl, rr) => {
+    /* Piecey vertical tufts on a short crop — a handful of ridges, not
+       cones stuck all around the skull. */
+    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
+    let cover = Math.pow(Math.max(0, (b.uy + 0.08) / 0.76), 0.75);
+    cover *= 1 - frame.faceOpen * 0.88;
+    cover *= 1 - b.side * Math.pow(Math.max(0, (0.42 - b.uy) / 0.40), 1.3) * 0.60;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * (1.24 + cover * 0.16), rr);
+    const spike = Math.pow(Math.max(0, Math.cos(b.phi * 5.5)), 1.8)
+      * Math.max(0, b.uy - 0.12) * cover;
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    const k = (L0 + (cover * 0.06 + spike * 0.16) * rr) / L0;
+    nx *= k; ny *= k; nz *= k;
+    ny += spike * 0.14;
+    if (cover < 0.08) ({ nx, ny, nz } = hugToward(nx, ny, nz, 1, skull * 1.012));
+    else if (b.azFront > 0.32 && ny < 0.52) {
+      const t = Math.pow((b.azFront - 0.32) / 0.68, 1.2) * Math.min(1, (0.52 - ny) / 0.22);
       ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.02));
       if (ny < 0.31) ny = 0.31;
     }

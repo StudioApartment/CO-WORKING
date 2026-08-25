@@ -187,7 +187,7 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`fadeX${r}`") || !src.includes("'fade'")) {
+  if (!src.includes("sculptHair(`fadeY${r}`") || !src.includes("'fade'")) {
     note('✗', 'mii.html — fade cut should be a waved crown with tapered sides');
     failures++;
   } else {
