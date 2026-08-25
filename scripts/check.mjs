@@ -427,15 +427,14 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("st === 'pigtails'")
-      || src.includes('sx * 0.46, 0.88, -0.22, 0.17, 0.17, 0.17')
-      || !src.includes('cap(1.045, 1.68, 1.08)')
-      || !src.includes('sx * 0.40, 0.58, -0.78, 0.22, 0.22, 0.22')
-      || !src.includes('hang clear of the skull')) {
-    note('✗', 'mii.html — pigtails should hang off the back of the head');
+  if (!src.includes('G.highPonyScalp(1.05)') || !src.includes('G.smoothPony()')
+      || !src.includes('U-shaped nape')
+      || src.includes('add(G.ball(), 0, 0.94, -0.42, 0.26, 0.26, 0.26)')
+      || src.includes('add(G.ball(), 0, -0.58, -1.18, 0.20, 0.40, 0.22)')) {
+    note('✗', 'mii.html — high ponytail should be one smooth tail with a curved nape');
     failures++;
   } else {
-    note('✓', 'mii.html pigtails hang off the back of the head');
+    note('✓', 'mii.html high ponytail is one smooth tail with a curved nape');
   }
 }
 

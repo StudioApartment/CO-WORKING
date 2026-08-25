@@ -5651,6 +5651,49 @@ const G = {
     g.computeVertexNormals();
     return g;
   })
+,
+  highPonyScalp: (r) => sculptHair(`hponyA${r}`, r, 2.18, 52, 42, (b, tl, rr) => {
+    /* Pulled back to a high pony: natural brow, and a U-shaped nape
+       that sits lower at the centre back instead of a straight cap hem. */
+    const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
+    const hairY = 0.30 - b.side * 0.10;
+    const brow = Math.pow(Math.max(0, b.azFront - 0.16) / 0.84, 1.35) * (1 - b.side * 0.50);
+    const open = Math.min(1, frame.faceOpen * 0.32 + brow * 0.16);
+    const napeU = b.azBack * Math.pow(Math.max(0, 1 - b.side * 0.85), 1.15);
+    let maxTh = 1.52 + napeU * 0.44 + b.side * 0.10 + frame.nape * 0.08 - open * 0.22;
+    let { nx, ny, nz, skull } = superFromTheta(b, (b.th / tl) * maxTh, rr);
+    nz -= Math.max(0, b.uy) * 0.07;
+    ny += Math.max(0, b.uy - 0.50) * 0.05;
+    const L0 = Math.hypot(nx, ny, nz) || 1;
+    const k = (L0 + 0.04 * (1 - open) * rr) / L0;
+    nx *= k; ny *= k; nz *= k;
+    const forehead = Math.max(0, b.azFront - 0.32) * (1 - b.side * 0.50);
+    if (open > 0 && forehead > 0.05 && ny < hairY + 0.10) {
+      const t = open * Math.pow(forehead / 0.68, 1.1)
+        * Math.min(1, (hairY + 0.10 - ny) / 0.28);
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t, skull * 1.05));
+    }
+    ({ nx, ny, nz } = applySideburnsNape(
+      nx, ny, nz, frame.sideburn * 0.35, frame.nape * 0.55 + napeU * 0.25,
+      b.ux, b.azFront, b.azBack
+    ));
+    return { nx, ny, nz };
+  })
+,
+  smoothPony: () => geoCache('sponyA', () => {
+    const g = new THREE.CylinderGeometry(0.22, 0.12, 1, 32, 18, true);
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+      const u = y + 0.5;
+      const belly = Math.sin(u * Math.PI) * 0.08;
+      const s = 1 + belly;
+      p.setXYZ(i, x * s, y, z * s - (1 - u) * (1 - u) * 0.20);
+    }
+    p.needsUpdate = true;
+    g.computeVertexNormals();
+    return g;
+  })
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -6859,12 +6902,11 @@ function buildHair(dna, mat, extraMats) {
     add(G.flow(1.05), 0, 0, 0);
   }
   else if (st === 'highpony') {
-    // Pulled up to the crown, not the nape pony already in the list.
-    cap(1.04, 1.34, 0.98);
-    add(G.ball(), 0, 0.94, -0.42, 0.26, 0.26, 0.26);
-    const t = add(G.ball(), 0, 0.08, -1.08, 0.24, 0.92, 0.28);
-    t.rotation.x = -0.22;
-    add(G.ball(), 0, -0.58, -1.18, 0.20, 0.40, 0.22);
+    /* One pulled-back scalp with a curved nape, plus a single tapered
+       tail. Three stacked balls were lumps; a cap hem was a ruler line. */
+    add(G.highPonyScalp(1.05), 0, 0, 0);
+    const tail = add(G.smoothPony(), 0, 0.22, -1.02, 1.0, 1.48, 1.0);
+    tail.rotation.x = -0.32;
   }
   else if (st === 'pigtails') {
     /* Two long tails off the back of the head. The old 0.17 nubs sat
