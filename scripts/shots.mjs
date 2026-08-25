@@ -140,14 +140,13 @@ try {
 
   const stepTo = async (cat, times) => {
     for (let i = 0; i < times; i++) {
-      await ev(`[...document.querySelectorAll('.cyc')]
-        .find(b => b.querySelector('.cat').textContent === ${JSON.stringify(cat)}).click()`);
+      await ev(`document.querySelector('.tray-cell[data-tray="${cat}"] .cyc-main').click()`);
       await sleep(220);
     }
   };
-  await stepTo('Hat', 6);
-  await stepTo('Eyewear', 12);
-  await stepTo('Top', 7);
+  await stepTo('hat', 6);
+  await stepTo('eyewear', 12);
+  await stepTo('apparel', 7);
   await sleep(400);
   await shoot('02c-tray-stepped');
   await viewport(1280, 860);

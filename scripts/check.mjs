@@ -141,6 +141,19 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes('function trayIsOff') || !src.includes('cyc-clear')) {
+    note('✗', 'mii.html — style tray should step linearly and offer a clear control');
+    failures++;
+  } else if (!src.includes('(i + 1) % options.length')) {
+    note('✗', 'mii.html — style tray should cycle options in order');
+    failures++;
+  } else {
+    note('✓', 'mii.html style tray steps in order with a clear button');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes('for="miiEmail">Email</label>')) {
     note('✗', 'mii.html — email field should just say Email');
     failures++;

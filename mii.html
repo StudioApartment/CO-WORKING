@@ -377,25 +377,21 @@ body.native-cursor #pointer{display:none}
 #fileIn{display:none}
 
 /* ============================================================
-   STYLE TRAY — one shuffle button per category
+   STYLE TRAY — one stepper per category
    ---------------------------------------------------------------
    Listing every option as its own chip meant ~34 controls on screen
    at once. Each category is a single button instead: tapping it
-   picks another value at random. The character is the preview, so
-   the button does not also spell out "French crop".
+   steps through options in order. The character is the preview.
    ============================================================ */
-/* The colour pickers hang their labels below themselves, and the panel's
-   own padding used to be the gap. Without it the row needs its own. */
 .tray{display:none;margin-top:22px}
 .stage.done ~ .tray{display:block}
-
-/* The buttons sit in the flow, not on a panel of their own. An inset bar
-   read as a floating toolbar over the card, and holding seven equal
-   columns on one line squeezed the labels until "Facial hair" clipped to
-   "FACIAL HA…". They size to their text and wrap instead. */
 .tray-cycles{
   display:flex;flex-wrap:wrap;justify-content:center;align-items:stretch;gap:7px;
 }
+.tray-cell{
+  display:inline-flex;align-items:stretch;gap:4px;
+}
+.tray-cell .cyc-main{flex:1 1 auto}
 
 .cyc{
   flex:0 0 auto;border:0;cursor:pointer;font:inherit;text-align:center;
@@ -422,10 +418,24 @@ body.native-cursor #pointer{display:none}
   box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.85),0 1px 2px rgba(90,115,135,.3);
 }
 
+.cyc-clear{
+  flex:none;width:28px;height:100%;min-height:36px;border:0;border-radius:11px;
+  cursor:pointer;display:none;place-items:center;padding:0;
+  font-size:15px;font-weight:900;line-height:1;color:#9db2c0;
+  background:linear-gradient(#fff,#eef4f8);
+  box-shadow:inset 0 1px 0 #fff,0 1px 3px rgba(90,115,135,.18),0 0 0 2px #fff,0 0 0 3px #d9e3ea;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:transform .12s ease,color .12s ease;
+}
+.tray-cell.on .cyc-clear{display:grid}
+.cyc-clear:hover{color:#d0453c;transform:translateY(-1px)}
+.cyc-clear:active{transform:translateY(1px)}
+
 @media (max-width:560px){
   .tray-cycles{gap:6px}
   .cyc{padding:8px 11px 7px;border-radius:11px}
   .cyc .cat{font-size:9.5px;letter-spacing:.03em}
+  .cyc-clear{width:26px;min-height:34px;border-radius:10px;font-size:14px}
 }
 
 /* ============================================================
@@ -648,7 +658,7 @@ body.native-cursor #pointer{display:none}
     </div>
     <div class="palette" id="camPalette"></div>
 
-    <!-- one shuffle button per category: the character is the preview -->
+    <!-- one stepper per category: tap to cycle, × to turn off -->
     <div class="tray" id="camTray">
       <div class="tray-cycles" id="trayCycles"></div>
     </div>
@@ -5490,9 +5500,16 @@ const TRAY = [
   },
 ];
 
+function trayIsOff(opt) {
+  return Boolean(opt && (opt.label === 'None' || opt.label === 'Off'));
+}
+function trayOffOption(options) {
+  return options.find(trayIsOff) || null;
+}
+
 /* One button per category. It names the category, not the current pick —
-   the spinning character is the preview. A tap shuffles to another value.
-   While a hat is on, the first tap on Hair only takes it off. */
+   the spinning character is the preview. A tap steps forward in a fixed
+   order; while a hat is on, the first tap on Hair only takes it off. */
 function renderTray() {
   const box = $('trayCycles');
   if (!box || !Cam.dna) return;
@@ -5505,15 +5522,18 @@ function renderTray() {
     let i = options.findIndex((o) => o.v === current);
     if (i < 0) i = 0;
     const now = options[i];
+    const off = trayOffOption(options);
+    const isOff = trayIsOff(now);
+
+    const cell = document.createElement('div');
+    cell.className = 'tray-cell' + (off && !isOff ? ' on' : '');
+    cell.dataset.tray = cat.key;
 
     const b = document.createElement('button');
     b.type = 'button';
-    // Judged on the label, not the value: squad number 0 is a real choice,
-    // whereas "None" and "Off" are the absence of one.
-    const isOff = now.label === 'None' || now.label === 'Off';
-    b.className = 'cyc' + (isOff ? ' empty' : '');
-    b.title = `${cat.label} — tap to shuffle`;
-    b.setAttribute('aria-label', `${cat.label} — tap to shuffle`);
+    b.className = 'cyc cyc-main' + (isOff ? ' empty' : '');
+    b.title = `${cat.label} — tap to cycle`;
+    b.setAttribute('aria-label', `${cat.label} — tap to cycle`);
 
     const catEl = document.createElement('span');
     catEl.className = 'cat';
@@ -5529,23 +5549,42 @@ function renderTray() {
       b.appendChild(chip);
     }
 
-    const shuffle = () => {
-      // A category that does not currently own its slot spends the first tap
-      // claiming it, so nothing is skipped over on the way in.
-      const claiming = typeof cat.claims === 'function' && cat.claims(Cam.dna);
-      const others = options.filter((o) => o.v !== now.v);
-      const next = claiming ? now : (others.length ? pickOne(others) : now);
-      cat.set(Cam.dna, next.v);
+    const apply = () => {
       Preview.build(Cam.dna);
       renderPickers();
       renderTray();
       Sound.fx.boing();
     };
 
-    b.addEventListener('click', shuffle);
-    b.addEventListener('contextmenu', (e) => { e.preventDefault(); shuffle(); });
+    const step = () => {
+      const claiming = typeof cat.claims === 'function' && cat.claims(Cam.dna);
+      if (claiming) cat.set(Cam.dna, now.v);
+      else cat.set(Cam.dna, options[(i + 1) % options.length].v);
+      apply();
+    };
 
-    box.appendChild(b);
+    b.addEventListener('pointerenter', () => Sound.fx.hover());
+    b.addEventListener('click', step);
+    b.addEventListener('contextmenu', (e) => { e.preventDefault(); step(); });
+    cell.appendChild(b);
+
+    if (off && !isOff) {
+      const x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'cyc-clear';
+      x.title = `Remove ${cat.label.toLowerCase()}`;
+      x.setAttribute('aria-label', `Remove ${cat.label.toLowerCase()}`);
+      x.textContent = '×';
+      x.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cat.set(Cam.dna, off.v);
+        apply();
+        Sound.fx.click();
+      });
+      cell.appendChild(x);
+    }
+
+    box.appendChild(cell);
   }
 }
 
@@ -5593,7 +5632,7 @@ function openPalette(key, force) {
 }
 
 /* ---------------- feature rerolls ----------------
-   Hair, outfit and the rest are shuffled from the tray. Face proportions
+   Hair, outfit and the rest are stepped from the tray. Face proportions
    are not an enumerable list — there is no "next nose" — so they have
    their own shuffle. */
 function rerollFace(d) {

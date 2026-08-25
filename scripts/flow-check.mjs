@@ -183,8 +183,8 @@ try {
   console.log('\ncustomisation');
   {
     const cats = await evaluate(
-      `[...document.querySelectorAll('.cyc .cat')].map(b => b.textContent)`);
-    check('one shuffle button per category', cats.length >= 7, `got ${cats.length}: ${cats}`);
+      `[...document.querySelectorAll('.tray-cell .cat')].map(b => b.textContent)`);
+    check('one stepper per category', cats.length >= 7, `got ${cats.length}: ${cats}`);
     check('headwear is labelled Hat', cats.includes('Hat') && !cats.includes('Headwear'), cats.join(', '));
     check('outfit is labelled Top', cats.includes('Top') && !cats.includes('Outfit'), cats.join(', '));
     check('ear jewellery is gone', !cats.includes('Ears'), cats.join(', '));
@@ -202,8 +202,33 @@ try {
 
     // The whole point of the rewrite: far fewer controls on screen than a
     // tab row plus a grid of every option.
-    const controls = await evaluate(`document.querySelectorAll('#camTray button').length`);
-    check('the tray stays compact', controls <= 14, `${controls} controls`);
+    const controls = await evaluate(`document.querySelectorAll('#camTray .tray-cell').length`);
+    check('the tray stays compact', controls <= 7, `${controls} categories`);
+    check('style tray steps in a fixed order', await evaluate(`(() => {
+      const main = () => document.querySelector('.tray-cell[data-tray="hat"] .cyc-main');
+      const clear = () => document.querySelector('.tray-cell[data-tray="hat"] .cyc-clear');
+      if (clear()) clear().click();
+      const seq = [];
+      for (let n = 0; n < 3; n++) {
+        main().click();
+        seq.push(MiiPlaza.Cam.dna.hair.style);
+      }
+      clear().click();
+      const again = [];
+      for (let n = 0; n < 3; n++) {
+        main().click();
+        again.push(MiiPlaza.Cam.dna.hair.style);
+      }
+      return seq.length === 3 && JSON.stringify(seq) === JSON.stringify(again);
+    })()`));
+    check('× clears an active modifier', await evaluate(`(() => {
+      const main = () => document.querySelector('.tray-cell[data-tray="hat"] .cyc-main');
+      const clear = () => document.querySelector('.tray-cell[data-tray="hat"] .cyc-clear');
+      main().click();
+      if (!clear()) return false;
+      clear().click();
+      return !clear();
+    })()`));
     check('a colour chip closes when you tap elsewhere', await evaluate(`(() => {
       const pick = document.querySelector('#camPickers .pick');
       const pal = document.getElementById('camPalette');
@@ -216,12 +241,12 @@ try {
       return !pal.classList.contains('open');
     })()`));
     check('steppers sit in one row', await evaluate(`(() => {
-      const tops = [...document.querySelectorAll('.cyc')]
+      const tops = [...document.querySelectorAll('.tray-cell')]
         .map(b => Math.round(b.getBoundingClientRect().top));
       return tops.length >= 7 && tops.every(t => t === tops[0]);
     })()`));
 
-    // Shuffling must actually change the character and not throw. Catalogues
+    // Stepping must actually change the character and not throw. Catalogues
     // are data; a bad entry would only surface as an unrenderable mesh.
     const sweep = await evaluate(`(() => {
       const failures = [];
@@ -232,13 +257,14 @@ try {
         p: MiiPlaza.Cam.dna.piercing, t: MiiPlaza.Cam.dna.tattoo,
         a: MiiPlaza.Cam.dna.apparel
       });
-      const cats = [...document.querySelectorAll('.cyc .cat')].map(c => c.textContent);
+      const cats = [...document.querySelectorAll('.tray-cell .cat')].map(c => c.textContent);
       for (const name of cats) {
         const before = snap();
         let changed = false;
         for (let i = 0; i < 12; i++) {
-          const btn = [...document.querySelectorAll('.cyc')]
-            .find(b => b.querySelector('.cat').textContent === name);
+          const btn = [...document.querySelectorAll('.tray-cell')]
+            .find(c => c.querySelector('.cat')?.textContent === name)
+            ?.querySelector('.cyc-main');
           if (!btn) { failures.push(name + ': button vanished'); break; }
           try { btn.click(); clicks++; }
           catch (e) { failures.push(name + ': ' + e.message); break; }
@@ -248,17 +274,18 @@ try {
       }
       return { clicks, failures };
     })()`);
-    check('every shuffle button runs without throwing', sweep.failures.length === 0,
+    check('every stepper runs without throwing', sweep.failures.length === 0,
       sweep.failures.slice(0, 3).join(' | '));
-    check('tapped every shuffle button', sweep.clicks === cats.length * 12,
-      `${sweep.clicks} shuffles across ${cats.length} buttons`);
+    check('tapped every stepper', sweep.clicks === cats.length * 12,
+      `${sweep.clicks} steps across ${cats.length} buttons`);
 
     // Hair and headwear share one slot. The first tap on Hair has to take
     // the hat off rather than also skipping the cut underneath.
     const slot = await evaluate(`(() => {
       const hats = MiiPlaza.catalog.HAT_STYLES;
-      const byCat = (n) => [...document.querySelectorAll('.cyc')]
-        .find(b => b.querySelector('.cat').textContent === n);
+      const byCat = (n) => [...document.querySelectorAll('.tray-cell')]
+        .find(c => c.querySelector('.cat')?.textContent === n)
+        ?.querySelector('.cyc-main');
       let guard = 0;
       while (!hats.includes(MiiPlaza.Cam.dna.hair.style) && guard++ < 40) {
         byCat('Hat').click();
@@ -272,7 +299,7 @@ try {
         hatAfter: hats.includes(MiiPlaza.Cam.dna.hair.style)
       };
     })()`);
-    check('a hat can be shuffled on', Boolean(slot.hatOn) && slot.hatOn !== slot.hairUnder,
+    check('a hat can be stepped on', Boolean(slot.hatOn) && slot.hatOn !== slot.hairUnder,
       JSON.stringify(slot));
     check('tapping hair reveals that same cut', slot.afterClaim === slot.hairUnder, JSON.stringify(slot));
     check('and takes the hat off', slot.hatAfter === false, JSON.stringify(slot));
