@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3103,7 +3103,7 @@ const HAIRSTYLES = ['bald','buzz','taper','crop','waves','fade','pixie','bowl','
 /* Styles that existed before this list was rewritten. Stored characters keep
    working by landing on the nearest real cut instead of rendering bald. */
 const HAIRSTYLE_ALIASES = {
-  mohawk: 'spiky',
+  mohawk: 'mullet',
   buzzline: 'taper',
   topknot: 'bun',
   tails: 'pony',
@@ -3120,7 +3120,7 @@ const STYLE_LABELS = {
   sidepart: 'Side part', quiff: 'Quiff', pompadour: 'Pompadour', swoop: 'Swoop',
   slickback: 'Slick back', swept: 'Swept', spiky: 'Spiky',
   curtains: 'Curtains', shortcurl: 'Short curls', afro: 'Afro', dreads: 'Locs',
-  bob: 'Bob', shag: 'Shag', wolf: 'Wolf cut', mullet: 'Mullet', flow: 'Flow',
+  bob: 'Bob', shag: 'Shag', wolf: 'Wolf cut', mullet: 'Mohawk', flow: 'Flow',
   long: 'Long middle layers', longmiddle: 'Long middle part', longside: 'Long center part',
   longwavy: 'Long wavy', bun: 'Top bun', pony: 'Ponytail',
   highpony: 'High ponytail', pigtails: 'Pigtails',
@@ -4032,16 +4032,13 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  mullet: (r) => geoCache(`mulletA${r}`, () => {
-    /* Short on top, long at the back. A cap plus nape balls left a bald
-       stripe between them — the party has to be the same shell. */
-    const tl = 2.58;
-    const g = new THREE.SphereGeometry(r, 48, 40, 0, TAU, 0, tl);
+  mullet: (r) => geoCache(`mohawkA${r}`, () => {
+    /* Mohawk: a spiky crest along the centre line, sides shaved to the
+       skull. A dome here was an unreadable skullcap. */
+    const tl = 1.88;
+    const g = new THREE.SphereGeometry(r, 80, 56, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     const n = HEAD_N;
-    const faceTh = 1.04;
-    const sideTh = 1.48;
-    const napeTh = 2.48;
     for (let i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i);
       const L = v.length() || 1;
@@ -4050,16 +4047,17 @@ const G = {
       const rs0 = Math.hypot(ux, uz) || 1e-6;
       const azFront = Math.max(0, uz / rs0);
       const azBack = Math.max(0, -uz / rs0);
-      const phi = Math.atan2(ux, uz);
-      const faceWin = Math.pow(Math.max(0, azFront - 0.18) / 0.82, 2);
-      const backAmt = Math.pow(azBack, 1.85);
-      const chop = (0.03 * Math.sin(phi * 6.0) + 0.014 * Math.sin(phi * 12.0 + 0.4))
-        * backAmt;
-      const maxTh = sideTh
-        + (faceTh - sideTh) * faceWin
-        + (napeTh - sideTh) * backAmt
-        + chop;
-      const th2 = (th / tl) * maxTh;
+      const frame = hairFrame(ux, uy, azFront, azBack, Math.abs(ux) / rs0);
+
+      const strip = Math.exp(-ux * ux * 20);
+      const sag = Math.atan2(uz, Math.max(uy, 0.02));
+      const peaks = Math.pow(Math.max(0, Math.sin(sag * 4.6 + 1.35)), 1.55);
+
+      let cover = Math.pow(Math.max(0, (uy + 0.08) / 0.72), 0.7);
+      cover *= 1 - (1 - strip) * 0.96;
+      cover *= 1 - frame.faceOpen * 0.70 * (1 - strip);
+
+      const th2 = (th / tl) * (1.14 + cover * 0.10);
       const rs = Math.sin(th2);
       let nx = ux / rs0 * rs;
       let ny = Math.cos(th2);
@@ -4069,17 +4067,29 @@ const G = {
         -1 / n
       );
       nx *= s * r; ny *= s * r; nz *= s * r;
-      ny += Math.max(0, ny - 0.52) * 0.20;
-      if (azFront > 0.4 && ny < 0.62) {
-        const t = Math.pow((azFront - 0.4) / 0.6, 1.3) * Math.min(1, (0.62 - ny) / 0.32);
+
+      /* Three triangular spikes along the sagittal crest. */
+      const crest = strip * Math.max(0, uy + 0.08) * (0.10 + peaks * 0.78);
+      ny += crest * r;
+      nx *= 1 - strip * (0.18 + peaks * 0.50);
+      nz += strip * peaks * azFront * 0.04 * r;
+      nz -= strip * peaks * azBack * 0.05 * r;
+
+      if (azFront > 0.28 && ny < 0.34 && strip < 0.35) {
+        const t = Math.pow((azFront - 0.28) / 0.72, 1.2)
+          * Math.min(1, (0.34 - ny) / 0.22);
         const Lh = Math.hypot(nx, ny, nz) || 1;
-        const k = 1 - t + t * (1.04 / Lh);
+        const k = 1 - t + t * (s * r * 1.02 / Lh);
+        nx *= k; ny *= k; nz *= k;
+        if (t > 0.4) ny = Math.max(ny, 0.30);
+      }
+
+      if (strip < 0.10) {
+        const Lh = Math.hypot(nx, ny, nz) || 1;
+        const k = s * r * 1.008 / Lh;
         nx *= k; ny *= k; nz *= k;
       }
-      const hang = backAmt * Math.max(0, -ny + 0.22);
-      ny -= hang * 0.72;
-      nz -= hang * 0.28;
-      nx *= 1 - backAmt * 0.08;
+
       p.setXYZ(i, nx, ny, nz);
     }
     p.needsUpdate = true;
@@ -5926,9 +5936,8 @@ function buildHair(dna, mat, extraMats) {
        on a bowl were earmuffs; the nape has to be the same shell. */
     add(G.wolf(1.09), 0, 0, 0, 1, 1.08, 1);
   } else if (st === 'mullet') {
-    /* Short on top, long at the back. Cap plus nape ovals left a bald
-       stripe — the hem has to be the same surface as the crown. */
-    add(G.mullet(1.09), 0, 0, 0, 1, 1.04, 1);
+    /* One mohawk shell — a centre crest of spikes, sides shaved. */
+    add(G.mullet(1.05), 0, 0, 0);
   } else if (st === 'flow') {
     /* One swept-back shell. A cap plus top/side/nape balls was a helmet
        with earmuffs — the hem has to be the same surface as the crown. */

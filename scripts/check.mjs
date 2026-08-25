@@ -427,6 +427,18 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("geoCache(`mohawkA${r}`") || !src.includes("mullet: 'Mohawk'")
+      || !src.includes("mohawk: 'mullet'") || src.includes("geoCache(`mulletA${r}`")
+      || src.includes("mohawk: 'spiky'")) {
+    note('✗', 'mii.html — mullet should render as a mohawk crest, not a skullcap');
+    failures++;
+  } else {
+    note('✓', 'mii.html mullet is a mohawk with a spiky centre crest');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`layersB${r}`") || !src.includes('tucked behind the ears')
       || src.includes("geoCache(`layersA${r}`") || src.includes('left-of-centre part sweeps')) {
     note('✗', 'mii.html — long layers should have a centre part tucked behind the ears');
