@@ -335,6 +335,7 @@ try {
         hasLayers: cuts.includes('layers'),
         hasSpacebuns: cuts.includes('spacebuns'),
         outfits: cat.APPAREL.map(a => a.id),
+        tattoos: cat.TATTOOS.map(t => t.id),
         bandanas: cat.HAT_STYLES.filter(s => s.startsWith('bandana')),
         wedge: glasses.filter(e => e.frame === 'wedge').map(e => e.id),
         wrap: glasses.filter(e => e.frame === 'wrap').map(e => e.label),
@@ -361,6 +362,8 @@ try {
       extras.outfits.join(', '));
     check('argyle sweater is in the list', extras.outfits.includes('argyle'),
       extras.outfits.join(', '));
+    check('tribal ink is in the list', extras.tattoos.includes('tribal'),
+      extras.tattoos.join(', '));
     check('bandanas come in red, blue and green',
       extras.bandanas.includes('bandana') && extras.bandanas.includes('bandanablue')
         && extras.bandanas.includes('bandanagreen'),
