@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 35 -->
+<!-- plaza-client: 36 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -2815,10 +2815,10 @@ function inkKnuckleBars(g, s) {
 /* The rig has no arms, so every ink style has to live on the jaw patch
    and/or the floating hand spheres. Style options cover both. */
 function tattooHasJaw(t) {
-  return t === 'neck' || t === 'both' || t === 'tribal' || t === 'hipster';
+  return t === 'neck' || t === 'both' || t === 'tribal' || t === 'hipster' || t === 'minimal';
 }
 function tattooHasHand(t) {
-  return t === 'hand' || t === 'both' || t === 'tribal' || t === 'hipster';
+  return t === 'hand' || t === 'both' || t === 'tribal' || t === 'hipster' || t === 'minimal';
 }
 
 /* ---- tribal -----------------------------------------------
@@ -3146,6 +3146,85 @@ function drawHipsterFace(g, U, dna) {
   inkHeart(g, 6.5 * U);
   g.restore();
 
+/* ---- minimal ----------------------------------------------
+   Original fine-line geometry: two stacked triangles, a short celestial
+   column. Stroke-only besides a couple of dots, still thick enough that
+   a 20px hand does not erase it. Not a copy of anyone's flash. */
+function inkFine(g, s) {
+  g.strokeStyle = INK;
+  g.fillStyle = INK;
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+  g.lineWidth = Math.max(4.2, s * 0.10);
+}
+
+function inkTwinTriangles(g, s) {
+  /* Two downward triangles, the second shifted so they interlock. */
+  inkFine(g, s);
+  const draw = (cy) => {
+    g.beginPath();
+    g.moveTo(0, cy + s * 0.50);
+    g.lineTo(s * 0.46, cy - s * 0.28);
+    g.lineTo(-s * 0.46, cy - s * 0.28);
+    g.closePath();
+    g.stroke();
+  };
+  draw(-s * 0.18);
+  draw(s * 0.18);
+}
+
+function inkCelestial(g, s) {
+  /* Four glyphs, not a dozen — extra marks minified into a dotted smear. */
+  inkFine(g, s);
+  const step = s * 0.42;
+  const glyphs = [
+    (y) => { g.beginPath(); g.arc(0, y, s * 0.07, 0, TAU); g.fill(); },
+    (y) => {
+      g.beginPath();
+      g.moveTo(0, y - s * 0.16); g.lineTo(0, y + s * 0.16);
+      g.moveTo(-s * 0.16, y); g.lineTo(s * 0.16, y);
+      g.stroke();
+    },
+    (y) => {
+      g.beginPath(); g.arc(0, y, s * 0.12, 0, TAU); g.stroke();
+      g.beginPath(); g.ellipse(0, y, s * 0.22, s * 0.06, -0.28, 0, TAU); g.stroke();
+    },
+    (y) => {
+      g.beginPath();
+      g.moveTo(s * 0.07, y - s * 0.16);
+      g.lineTo(-s * 0.06, y);
+      g.lineTo(s * 0.07, y);
+      g.lineTo(-s * 0.07, y + s * 0.16);
+      g.stroke();
+    }
+  ];
+  const y0 = -((glyphs.length - 1) * step) / 2;
+  for (let i = 0; i < glyphs.length; i++) glyphs[i](y0 + i * step);
+}
+
+function drawMinimalFace(g, U) {
+  /* Sparse: triangles on one jaw, a celestial column on the other,
+     a four-point on the chin. Nothing on the forehead or under the eyes. */
+  g.save();
+  g.translate(22 * U, 76 * U);
+  inkTwinTriangles(g, 16 * U);
+  g.restore();
+
+  g.save();
+  g.translate(78 * U, 74 * U);
+  inkCelestial(g, 13 * U);
+  g.restore();
+
+  g.save();
+  g.translate(50 * U, 90 * U);
+  inkFine(g, 6.5 * U);
+  g.beginPath();
+  g.moveTo(0, -4.2 * U); g.lineTo(0, 4.2 * U);
+  g.moveTo(-4.2 * U, 0); g.lineTo(4.2 * U, 0);
+  g.stroke();
+  g.restore();
+}
+
 /* ---- neck ink -----------------------------------------------
    Painted along the jaw rather than on the neck mesh, because the head
    hides that mesh entirely. Drawn before facial hair so a beard covers
@@ -3164,6 +3243,10 @@ function drawNeckInk(g, U, dna) {
   }
   if (dna.tattoo === 'hipster') {
     drawHipsterFace(g, U, dna);
+    return;
+  }
+  if (dna.tattoo === 'minimal') {
+    drawMinimalFace(g, U);
     return;
   }
 
@@ -3596,15 +3679,16 @@ const PIERCING_ALIASES = { brow: 'none', lip: 'none' };
 /* ---- tattoos ------------------------------------------------
    The Wii rig has floating hands and no arms, so forearm and
    sleeve ink has no surface to sit on. Hands and jaw do. Hands /
-   Jaw / Both keep the traditional flash; Tribal and Hipster are
-   separate styles on both surfaces. */
+   Jaw / Both keep the traditional flash; Tribal, Hipster, and Minimal
+   are separate styles on both surfaces. */
 const TATTOOS = [
   { id: 'none',    label: 'None' },
   { id: 'hand',    label: 'Hands' },
   { id: 'neck',    label: 'Jaw' },
   { id: 'both',    label: 'Both' },
   { id: 'tribal',  label: 'Tribal' },
-  { id: 'hipster', label: 'Hipster' }
+  { id: 'hipster', label: 'Hipster' },
+  { id: 'minimal', label: 'Minimal' }
 ];
 
 /* ---- apparel ------------------------------------------------
@@ -3687,7 +3771,7 @@ function randomDNA(opts = {}) {
     freckles: chance(0.18),
     facialHair: male && chance(0.42) ? pickOne(['stubble','lineup','full','goatee','stache','handlebar']) : 'none',
     piercing: 'none',
-    tattoo: chance(0.16) ? pickOne(['hand','neck','both','tribal','hipster']) : 'none',
+    tattoo: chance(0.16) ? pickOne(['hand','neck','both','tribal','hipster','minimal']) : 'none',
     apparel: opts.apparel || pickOne(APPAREL).id,
     hue: Math.random()
   };
@@ -5789,6 +5873,33 @@ function makeInkTexture(kind) {
       inkTrio(g, S * 0.08);
       g.restore();
     });
+  } else if (kind === 'minimal') {
+    wrapped(front, () => {
+      g.save();
+      g.translate(0, S * 0.40);
+      inkTwinTriangles(g, S * 0.20);
+      g.restore();
+
+      g.save();
+      g.translate(0, S * 0.68);
+      inkCelestial(g, S * 0.14);
+      g.restore();
+    });
+    wrapped(S * 0.75, () => {
+      g.save();
+      g.translate(0, S * 0.50);
+      inkFine(g, S * 0.14);
+      g.beginPath();
+      g.arc(0, 0, S * 0.09, 0, TAU);
+      g.stroke();
+      g.beginPath();
+      g.ellipse(0, 0, S * 0.16, S * 0.045, -0.28, 0, TAU);
+      g.stroke();
+      g.restore();
+    });
+    g.strokeStyle = INK;
+    g.lineWidth = S * 0.022;
+    g.beginPath(); g.moveTo(0, S * 0.88); g.lineTo(S, S * 0.88); g.stroke();
   } else {
     wrapped(front, () => {
       g.save();

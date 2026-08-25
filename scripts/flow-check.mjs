@@ -366,6 +366,8 @@ try {
       extras.tattoos.join(', '));
     check('hipster ink is in the list', extras.tattoos.includes('hipster'),
       extras.tattoos.join(', '));
+    check('minimal ink is in the list', extras.tattoos.includes('minimal'),
+      extras.tattoos.join(', '));
     check('bandanas come in red, blue and green',
       extras.bandanas.includes('bandana') && extras.bandanas.includes('bandanablue')
         && extras.bandanas.includes('bandanagreen'),
