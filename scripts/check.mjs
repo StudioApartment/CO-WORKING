@@ -416,6 +416,19 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  if (!src.includes("sculptHair(`sweptC${r}`") || !src.includes('G.sweptHair(1.05)')
+      || !src.includes('Taper out')
+      || src.includes("sculptHair(`sweptB${r}`")
+      || src.includes('still a full cap')) {
+    note('✗', 'mii.html — swept hair should drop down the sides and taper out');
+    failures++;
+  } else {
+    note('✓', 'mii.html swept hair drops down the sides and tapers out');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("geoCache(`bobC${r}`") || !src.includes('Undercurl')
       || !src.includes('ux + 0.22') || !src.includes('Side part at ux')) {
     note('✗', 'mii.html — bob should be a jaw-length cut with a side part and an undercurl');
