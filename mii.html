@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3266,6 +3266,7 @@ const TATTOOS = [
 const APPAREL = [
   { id: 'tee',      label: 'T-shirt',   kind: 'plain'    },
   { id: 'cutoff',   label: 'Cutoff',    kind: 'cutoff'   },
+  { id: 'tank',     label: 'Tank top',  kind: 'tank', nocollar: true },
   { id: 'bare',     label: 'No shirt',  kind: 'bare', bare: true },
   { id: 'buttonup', label: 'Button-up', kind: 'buttonup' },
   { id: 'flannel',  label: 'Flannel',   kind: 'flannel', open: true },
@@ -5258,6 +5259,61 @@ function makeApparelTexture(dna) {
       }
       break;
     }
+    case 'tank': {
+      /* Bodycon tank: a V in the visible chest and medium straps. Armholes
+         stay narrow at the shoulder so this is not a racerback or a vest,
+         and there is no frayed hem — that look is the cutoff. */
+      g.fillStyle = base;
+      g.fillRect(0, 0, W, H);
+      g.globalAlpha = 0.14;
+      g.fillStyle = shade(base, -24);
+      for (let y = 0; y < H; y += 4) g.fillRect(0, y, W, 1);   // jersey rib
+      g.globalAlpha = 1;
+
+      g.fillStyle = dna.skin;
+      g.beginPath();
+      g.moveTo(front - 30, 0);
+      g.lineTo(front + 30, 0);
+      g.lineTo(front, vy(0.38));
+      g.closePath();
+      g.fill();
+      g.beginPath();
+      g.moveTo(back - 18, 0);
+      g.lineTo(back + 18, 0);
+      g.lineTo(back, vy(0.14));
+      g.closePath();
+      g.fill();
+
+      const arm = (x) => {
+        g.beginPath();
+        g.moveTo(x - 18, 0);
+        g.lineTo(x + 18, 0);
+        g.lineTo(x + 18, vy(0.16));
+        g.quadraticCurveTo(x + 30, vy(0.38), x, vy(0.46));
+        g.quadraticCurveTo(x - 30, vy(0.38), x - 18, vy(0.16));
+        g.closePath();
+        g.fill();
+      };
+      arm(0);
+      arm(W);
+      arm(W * 0.5);
+
+      /* Straps painted last so a scoop cannot nibble them down to spaghetti. */
+      const strapW = 12;
+      g.fillStyle = base;
+      g.fillRect(front - 38, 0, strapW, vy(0.16));
+      g.fillRect(front + 26, 0, strapW, vy(0.16));
+
+      g.strokeStyle = shade(base, -22);
+      g.lineWidth = 3;
+      g.lineJoin = 'round';
+      g.beginPath();
+      g.moveTo(front - 30, 0);
+      g.lineTo(front, vy(0.38));
+      g.lineTo(front + 30, 0);
+      g.stroke();
+      break;
+    }
   }
 
   const t = new THREE.CanvasTexture(c);
@@ -5976,8 +6032,10 @@ function buildMii(dna) {
   const shirtMat = new THREE.MeshStandardMaterial({
     color: apparelTex ? '#ffffff' : dna.shirt,
     map: apparelTex || null,
-    // Bare skin is softer than fabric; a suit has a slight sheen.
-    roughness: apparel.bare ? 0.82 : apparel.kind === 'suit' ? 0.55 : 0.72,
+    // Bare skin is softer than fabric; a suit has a slight sheen; a tank
+    // is a matte jersey.
+    roughness: apparel.bare ? 0.82 : apparel.kind === 'suit' ? 0.55
+      : apparel.kind === 'tank' ? 0.78 : 0.72,
     metalness: 0
   });
   const legCol = apparel.skirt && apparel.skirtFrom !== 'pants'
@@ -6027,7 +6085,9 @@ function buildMii(dna) {
      the jersey look padded, so only football gets a tighter xz — height stays
      so the collar and pants still meet. */
   const kit = apparel.kind === 'football';
-  torso.scale.set((kit ? 0.29 : 0.33) * dna.girth, 0.28, (kit ? 0.235 : 0.27) * dna.girth);
+  const tank = apparel.kind === 'tank';
+  torso.scale.set((kit ? 0.29 : tank ? 0.30 : 0.33) * dna.girth, 0.28,
+    (kit ? 0.235 : tank ? 0.245 : 0.27) * dna.girth);
   torso.position.y = 0.5;
   body.add(torso);
 

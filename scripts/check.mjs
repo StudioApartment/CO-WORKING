@@ -457,6 +457,24 @@ for (const [page, ids] of required) {
   }
 }
 
+/* A tank without a V and medium straps is just a cutoff with a clean hem.
+   Armholes have to stay narrow at the shoulder or it reads as a vest. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'tank'", "label: 'Tank top'", "kind: 'tank', nocollar: true",
+                 "case 'tank':", 'const strapW = 12', 'g.lineTo(front, vy(0.38))',
+                 'arm(W * 0.5)']
+    .every((s) => src.includes(s));
+  const tankBlock = src.match(/case 'tank': \{[\s\S]*?break;\n    \}/);
+  const frayed = tankBlock && tankBlock[0].includes('raw edge');
+  if (!wired || frayed) {
+    note('✗', 'mii.html — tank top needs a V-neck, medium straps and a clean hem');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a bodycon tank with a V-neck');
+  }
+}
+
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("from '/lib/profanity.js'") || !src.includes('isCleanName')) {
