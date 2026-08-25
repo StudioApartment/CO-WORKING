@@ -13,7 +13,7 @@ if (location.hostname === 'coworking.fyi') {
 }
 </script>
 <title>Mii Plaza</title>
-<!-- plaza-client: 34 -->
+<!-- plaza-client: 35 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -3268,6 +3268,7 @@ const APPAREL = [
   { id: 'cutoff',   label: 'Cutoff',    kind: 'cutoff'   },
   { id: 'bare',     label: 'No shirt',  kind: 'bare', bare: true },
   { id: 'buttonup', label: 'Button-up', kind: 'buttonup' },
+  { id: 'protector', label: 'Pocket protector', kind: 'protector' },
   { id: 'flannel',  label: 'Flannel',   kind: 'flannel', open: true },
   { id: 'hoodie',   label: 'Hoodie',    kind: 'hoodie',  hood: true },
   { id: 'suit',     label: 'Suit',      kind: 'suit'     },
@@ -5114,6 +5115,69 @@ function makeApparelTexture(dna) {
       }
       g.fillStyle = shade(base, -20);                         // chest pocket
       g.fillRect(front + 32, vy(0.12), 34, 30);
+      break;
+    }
+    case 'protector': {
+      /* Closed oxford with a pocket protector. The flannel is an open
+         check; the plain button-up's pocket is empty. Pens have to stick
+         out of the plastic or this is just another plaid. */
+      const cream = '#f3eee4';
+      const check = shade(base, 10);
+      const cell = 14;
+      for (let y = 0; y < H; y += cell) {
+        for (let x = 0; x < W; x += cell) {
+          g.fillStyle = ((x / cell + y / cell) | 0) % 2 ? cream : check;
+          g.fillRect(x, y, cell + 1, cell + 1);
+        }
+      }
+      g.strokeStyle = shade(base, -18);
+      g.globalAlpha = 0.22;
+      g.lineWidth = 1;
+      for (let i = 0; i <= W; i += cell) {
+        g.beginPath(); g.moveTo(i, 0); g.lineTo(i, H); g.stroke();
+      }
+      for (let i = 0; i <= H; i += cell) {
+        g.beginPath(); g.moveTo(0, i); g.lineTo(W, i); g.stroke();
+      }
+      g.globalAlpha = 1;
+
+      g.fillStyle = shade(check, -12);
+      g.fillRect(front - 14, 0, 28, H);
+      g.fillStyle = shade(check, -32);
+      g.fillRect(front - 15, 0, 3, H);
+      g.fillRect(front + 12, 0, 3, H);
+      g.fillStyle = '#f7fafc';
+      for (let i = 0; i < 4; i++) {
+        g.beginPath(); g.arc(front, vy(0.14 + i * 0.24), 5.5, 0, TAU); g.fill();
+      }
+
+      const px = front + 30, py = vy(0.20), pw = 34, ph = 36;
+      g.fillStyle = shade(check, -18);
+      g.fillRect(px, py, pw, ph);
+
+      const pens = [
+        { dx: 6,  col: '#2f6f9e', h: 28 },
+        { dx: 13, col: '#1c1c1c', h: 24 },
+        { dx: 20, col: '#d4a017', h: 30 }
+      ];
+      for (const p of pens) {
+        g.fillStyle = p.col;
+        g.fillRect(px + p.dx, py - p.h * 0.52, 4.2, p.h);
+        g.fillStyle = shade(p.col, 28);
+        g.fillRect(px + p.dx, py - p.h * 0.52, 4.2, 6);
+      }
+      g.fillStyle = '#c5d0d6';
+      g.fillRect(px + 27, py - 18, 4, 40);
+      g.fillStyle = '#5c6570';
+      for (let i = 0; i < 6; i++) g.fillRect(px + 27, py - 16 + i * 5, 4, 1);
+
+      g.fillStyle = 'rgba(186, 220, 228, 0.72)';
+      g.fillRect(px + 1, py, pw - 2, ph - 2);
+      g.strokeStyle = 'rgba(255,255,255,.65)';
+      g.lineWidth = 2;
+      g.strokeRect(px + 2, py + 1, pw - 4, ph - 4);
+      g.fillStyle = '#e7f3f6';
+      g.fillRect(px, py - 5, pw, 8);
       break;
     }
     case 'flannel': {

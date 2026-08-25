@@ -457,6 +457,23 @@ for (const [page, ids] of required) {
   }
 }
 
+/* A pocket-protector shirt without pens sticking out of the plastic is
+   just a plaid button-up. The regular button-up's pocket is empty on
+   purpose; this one has to show the stationery. */
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["id: 'protector'", "label: 'Pocket protector'", "kind: 'protector'",
+                 "case 'protector':", 'const pens = [', 'py - p.h * 0.52',
+                 'rgba(186, 220, 228, 0.72)']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — pocket protector shirt needs pens sticking out of the plastic');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a button-up with a pocket protector');
+  }
+}
+
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   if (!src.includes("from '/lib/profanity.js'") || !src.includes('isCleanName')) {
