@@ -4431,10 +4431,10 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  longHair: (r, part = 'bangs', wave = 0) => geoCache(`longI${r}_${part}_${wave}`, () => {
-    /* One flowing shell — arched hairline, sideburns, and nape length so the
-       front is not a straight bowl and the back reaches the neck. */
-    const tl = 2.95;
+  longHair: (r, part = 'bangs', wave = 0) => geoCache(`longK${r}_${part}_${wave}`, () => {
+    /* One flowing shell. The back is a curtain with a blunt, straight hem
+       at the base of the body — never a south-pole spike past the feet. */
+    const tl = 2.48;
     const g = new THREE.SphereGeometry(r, 56, 48, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
     const n = HEAD_N;
@@ -4518,32 +4518,40 @@ const G = {
         if (t > 0.5 && ny < frame.hairline - 0.02) ny = Math.max(ny, frame.hairline - 0.02);
       }
 
-      const hang = Math.pow(Math.max(0, (u - 0.46) / 0.54), 1.4)
-        * (1 - Math.min(1, faceOpen * 0.70));
-      const backBoost = 0.52 + azBack * 0.58 + frame.nape * 0.35;
-      const hemWave = wave
-        ? 0.10 * Math.sin(phi * 2.5 + 0.6) + 0.05 * Math.sin(phi * 4.8 - 1.1)
-        : 0.05 * Math.sin(phi * 3.0 + 0.5) + 0.025 * Math.sin(phi * 5.5 - 0.8);
-      ny -= hang * backBoost * (0.46 + hemWave);
-      const taper = 1 - hang * 0.24;
-      nx *= taper; nz *= taper;
+      ({ nx, ny, nz } = applySideburnsNape(nx, ny, nz, frame.sideburn, frame.nape, ux, azFront, azBack));
+
+      /* Curtain down the back and sides. The old path used the sphere's
+         south pole, then pinched xz, which is why the hem came to a point
+         below the body. Stop at a nape ring and drop that ring to a
+         constant y — the torso base after HEAD_Y + ny * HEAD_R * 1.06. */
+      const rear = Math.max(0, 1 - azFront * 1.25);
+      const hang = Math.pow(Math.max(0, (u - 0.38) / 0.62), 1.12)
+        * rear * (1 - Math.min(1, faceOpen * 0.88));
+      const hemY = -1.50;
+      const hemR = 0.90;
+      if (hang > 0.001) {
+        const rad = Math.hypot(nx, nz) || 1e-6;
+        ny = ny * (1 - hang) + hemY * hang;
+        const wantR = rad * (1 - hang) + hemR * hang;
+        nx *= wantR / rad;
+        nz *= wantR / rad;
+        nz -= hang * (0.10 + azBack * 0.12);
+      }
 
       const sway = Math.sin(Math.min(hang, 1) * (wave ? 3.2 : 2.7));
-      nx *= 1 + sway * (wave ? 0.14 : 0.10) * side;
-      nz -= sway * (wave ? 0.14 : 0.10) * azBack;
+      nx *= 1 + sway * (wave ? 0.10 : 0.06) * side * (1 - hang * 0.65);
+      nz -= sway * (wave ? 0.10 : 0.06) * azBack * (1 - hang * 0.50);
 
       if (wave) {
-        const curl = Math.sin(u * 5.5 + phi * 1.8) * hang * 0.08;
+        const curl = Math.sin(u * 5.5 + phi * 1.8) * hang * (1 - hang) * 0.10;
         nx += curl * side * (ux >= 0 ? 1 : -1);
         nz -= curl * 0.35 * azBack;
       }
 
       const locks = Math.max(0, Math.cos(phi * 5.0))
         + Math.max(0, Math.cos(phi * 9.0 + 1.1)) * 0.5;
-      const gk = 1 - locks * 0.042 * Math.min(1, hang * 2.2);
+      const gk = 1 - locks * 0.028 * hang * (1 - hang);
       nx *= gk; nz *= gk;
-
-      ({ nx, ny, nz } = applySideburnsNape(nx, ny, nz, frame.sideburn, frame.nape, ux, azFront, azBack));
 
       if (Math.abs(ny) < 0.985) {
         const rad = Math.hypot(nx, nz);
