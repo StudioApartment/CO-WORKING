@@ -18,6 +18,30 @@ export { publicView };
 
 const normalizeEmail = (e) => String(e || '').trim().toLowerCase();
 
+/* Known office cities for people who joined before the location field existed.
+ * Display-only: the client also stamps these, and scripts/backfill-locations.mjs
+ * writes them when a service-role key is present. */
+function officeLocationFor(name) {
+  const n = String(name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  if (n === 'gage' || n === 'gage salzano') {
+    return { label: 'New York City, NY', city: 'New York City', region: 'NY', country: 'US', zip: '' };
+  }
+  if (n === 'james' || n === 'james acklin') {
+    return { label: 'Pittsburgh, PA', city: 'Pittsburgh', region: 'PA', country: 'US', zip: '' };
+  }
+  return null;
+}
+
+function stampKnownLocation(row) {
+  const dna = row && row.dna && typeof row.dna === 'object' ? { ...row.dna } : {};
+  const has = dna.location && (dna.location.label || dna.location.city);
+  if (!has) {
+    const loc = officeLocationFor(row && (row.name || dna.name));
+    if (loc) dna.location = loc;
+  }
+  return { ...row, dna };
+}
+
 /* Postgres unique-violation. Surfaced as a 409 with a "manage yours" hint
  * rather than a generic failure. */
 const isUniqueViolation = (error) =>
@@ -59,12 +83,12 @@ export async function listPublic(viewer = {}) {
       ...publicView(r),
       mine: (sessionId != null && r.id === sessionId) ||
             (tokenHash != null && r.token_hash === tokenHash)
-    }));
+    })).map(stampKnownLocation);
   }
 
   const rows = await legacy.listAll();
   rows.sort((a, b) => (a.created || 0) - (b.created || 0));
-  return rows.map((r) => ({
+  return rows.map((r) => stampKnownLocation({
     id: r.id,
     dna: r.dna,
     name: r.dna?.name || r.name || '',

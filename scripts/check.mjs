@@ -73,7 +73,7 @@ for (const page of ['mii.html', 'admin.html']) {
 }
 
 const required = [
-  ['mii.html', ['camEmailRow', 'camBanner', 'camBadge', 'badgeWallet', 'badgeAppleWallet', 'badgeMii', 'badgeEmail', 'badgeSince', 'camRecover', 'mineChip', 'btnLost', 'camLocationRow', 'miiLocation', 'badgePlace', 'miiDock', 'btnMiiInfo', 'miiCard', 'camProfile', 'miiFullName', 'miiUrl', 'loader', 'loader-status', 'loader-count', 'logoLink']],
+  ['mii.html', ['camEmailRow', 'camBanner', 'camBadge', 'badgePass', 'badgeOrbitHost', 'badgeWallet', 'badgeAppleWallet', 'badgeMii', 'badgeMiiSide', 'badgeEmail', 'badgeSince', 'camRecover', 'mineChip', 'mineEdit', 'mineDelete', 'btnLost', 'camLocationRow', 'miiLocation', 'badgePlace', 'miiDock', 'btnMiiInfo', 'miiCard', 'camProfile', 'miiFullName', 'loader', 'loader-status', 'loader-count', 'logoLink']],
   ['admin.html', ['gateForm', 'rows', 'btnExport']]
 ];
 for (const [page, ids] of required) {
@@ -88,16 +88,33 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const wired = ['id="btnLost"', 'Lost my Co-Worker', 'openRecover()',
+  const wired = ['id="btnLost"', 'id="helpDock"', 'Lost my Co-Worker', 'openRecover()',
                  "$('btnLost').addEventListener('click', () => Cam.openRecover())",
-                 'this.showRecover(\'\')'].every((s) => src.includes(s));
+                 'this.showRecover(\'\')',
+                 'function hasActiveMii()', 'help.hidden = has'].every((s) => src.includes(s));
   const recover = src.match(/openRecover\(\) \{[\s\S]*?\n  \},/);
   const usesCamera = recover && (recover[0].includes('getUserMedia') || recover[0].includes('this.open()'));
   if (!wired || usesCamera) {
-    note('✗', 'mii.html — Lost my Co-Worker should open email recovery without the camera');
+    note('✗', 'mii.html — Lost my Co-Worker should open email recovery without the camera, and hide when a Mii is active');
     failures++;
   } else {
-    note('✓', 'mii.html has a Lost my Co-Worker control that emails a reclaim link');
+    note('✓', 'mii.html has a Lost my Co-Worker control that emails a reclaim link (hidden with an active Mii)');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = [
+    'id="mineChip"', 'id="mineEdit"', 'id="mineDelete"', 'id="mineManage"',
+    'Join the Office', '.mine-chip.show ~ #btnCamera{display:none}',
+    'deleteOwnedMii', "Cam.openEdit(m)",
+    "$('mineEdit').addEventListener", "$('mineDelete').addEventListener"
+  ].every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — with an active Mii, Join should hide and the name chip should offer edit/delete');
+    failures++;
+  } else {
+    note('✓', 'mii.html hides Join after claim and puts edit/delete on the name chip');
   }
 }
 
@@ -130,10 +147,11 @@ for (const [page, ids] of required) {
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = ['id="miiDock"', 'id="btnMiiInfo"', 'id="miiCard"', 'fillMiiCard',
-                 'id="camProfile"', 'id="miiFullName"', 'id="miiUrl"',
+                 'id="camProfile"', 'id="miiFullName"',
                  'Gage Salzano', 'James Acklin', 'contactEmail'].every((s) => src.includes(s));
-  if (!wired) {
-    note('✗', 'mii.html — hovering a Co-Worker should open an info card');
+  if (!wired || src.includes('id="miiUrl"') || src.includes('id="camSocialRow"')
+      || src.includes('placeholder="yoursite.com"')) {
+    note('✗', 'mii.html — hovering a Co-Worker should open an info card (no website/socials in creation)');
     failures++;
   } else {
     note('✓', 'mii.html shows a Co-Worker card on the info icon');
@@ -244,6 +262,22 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const pass = src.includes('class="wallet-pass"')
+    && src.includes('employee badge')
+    && src.includes('Days coworking')
+    && src.includes('badgeOrbitHost')
+    && src.includes('fillBadgeQr')
+    && src.includes('parkPreviewCanvas');
+  if (!pass) {
+    note('✗', 'mii.html — badge preview should be an Apple Wallet–style pass with dual Mii + QR');
+    failures++;
+  } else {
+    note('✓', 'mii.html badge preview is a Wallet-style pass with orbit Mii and QR');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const css = src.slice(src.indexOf('.tray-cell{'), src.indexOf('.cyc-clear:hover'));
   const clearCss = src.slice(src.indexOf('.cyc-clear{'), src.indexOf('.tray-cell.on .cyc-clear'));
   const ownBox = /0 0 0 3px/.test(clearCss) || /linear-gradient/.test(clearCss);
@@ -299,15 +333,17 @@ for (const [page, ids] of required) {
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = ['makeFurTexture', 'G._furn', 'G.furCrown(', 'G.furBrim()',
-                 "'furry'", 'fur: true', 'makeRooPatch', 'roo: true',
+                 "'furry'", 'fur: true', 'co: true', 'addHatCoMark',
                  "furrysage: 'furry'"]
     .every((s) => src.includes(s));
+  const furryHat = src.match(/furry:\s*\{[^}]*\}/)?.[0] || '';
+  const furryCo = /co:\s*true/.test(furryHat) && !/roo:\s*true/.test(furryHat);
   const noSage = !/^\s*furrysage\s*:/m.test(src.match(/const HATS = \{[\s\S]*?\n\};/)?.[0] || 'furrysage:');
-  if (!wired || !noSage) {
-    note('✗', 'mii.html — furry bucket needs pile shells, a kangaroo patch, and furrysage aliased away');
+  if (!wired || !furryCo || !noSage) {
+    note('✗', 'mii.html — furry bucket needs pile shells, a Co- mark, and furrysage aliased away');
     failures++;
   } else {
-    note('✓', 'mii.html includes furry bucket with pile and kangaroo patch');
+    note('✓', 'mii.html includes furry bucket with pile and Co- mark');
   }
 }
 
@@ -368,6 +404,36 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const faceStart = src.indexOf('function drawFace');
+  const faceChunk = faceStart < 0 ? '' : src.slice(faceStart, faceStart + 2200);
+  const layered = src.includes('function drawEyewearTex')
+    && src.includes('drawEyewearTex(dna)')
+    && /eyewear\.renderOrder\s*=\s*5/.test(src)
+    && /depthTest:\s*false,\s*depthWrite:\s*false/.test(src)
+    && !faceChunk.includes('drawEyewear(g, U, dna)');
+  if (!layered) {
+    note('✗', 'mii.html — eyewear should be a post-hair overlay (not buried in the face shell)');
+    failures++;
+  } else {
+    note('✓', 'mii.html layers eyewear above hair');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ["label: 'Tri shades'", "frame: 'wedge'", "case 'wedge': {",
+                 'Tiny Italian luxury triangle', 'w: 14, h: 12, lw: 1.25']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — Tri shades need tiny triangular wedge lenses');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers tiny triangular Italian-style shades');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const listed = /id: 'sideburns'/.test(src) || /id: 'mutton'/.test(src);
   const draws = /st === 'sideburns'/.test(src) || /st === 'mutton'/.test(src);
   const aliased = /sideburns:\s*'none'/.test(src) && /mutton:\s*'none'/.test(src);
@@ -381,25 +447,32 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  const wired = ['makeScriptPatch', 'twoTone: true', "script: 'Co-Working'",
-                 'H.twoTone ? accMat : hatMat', 'Math.sin(ang) * arcR']
+  const wired = ['makeScriptPatch', 'twoTone: true',
+                 'H.twoTone ? accMat : hatMat', 'H.script',
+                 "creamgreen: 'White & green'", "crown: '#f7f7f4'",
+                 "accent: '#1f7a45'", "script: 'Co-Working'",
+                 'Horse + rider crest', 'dangling near leg', 'Cowboy hat']
     .every((s) => src.includes(s));
-  if (!wired) {
-    note('✗', 'mii.html — club cap needs an arched script and a two-tone lower band');
+  const creamScript = /creamgreen:\s*\{[^}]*script:\s*'Co-Working'/.test(src);
+  const creamCo = /creamgreen:\s*\{[^}]*co:\s*true/.test(src);
+  const creamTone = /creamgreen:\s*\{[^}]*twoTone:\s*true/.test(src);
+  if (!wired || !creamScript || creamCo || !creamTone) {
+    note('✗', 'mii.html — club cap needs Co-Working script + horse-and-rider on a two-tone white/green band');
     failures++;
   } else {
-    note('✓', 'mii.html includes a two-tone club cap with an arched script');
+    note('✓', 'mii.html includes a two-tone white & green club cap with horse-and-rider mark');
   }
 }
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes('makeCapEmblem') || !src.includes('emblem: true')
-      || !/satin\(disc\(R \* 1\.17\)/.test(src)) {
-    note('✗', 'mii.html — dad hat needs an embroidered emblem with a pale satin border');
+  const dadBanana = /dadhat:\s*\{[^}]*banana:\s*true/.test(src);
+  const dadCo = /dadhat:\s*\{[^}]*co:\s*true/.test(src);
+  if (!src.includes('makeBananaPatch') || !src.includes('H.banana') || !dadBanana || dadCo) {
+    note('✗', 'mii.html — dad hat needs a small banana patch, not a Co- mark');
     failures++;
   } else {
-    note('✓', 'mii.html puts an embroidered globe patch on the dad hat');
+    note('✓', 'mii.html puts a small banana on the dad hat');
   }
 }
 
@@ -465,14 +538,18 @@ for (const [page, ids] of required) {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = src.includes("st !== 'dreads'")
     && src.includes('Dense hanging loc columns')
-    && src.includes('No undercap shell');
+    && src.includes('No undercap shell')
+    && src.includes('locsPartV2')
+    && src.includes('Face-frame loc columns')
+    && src.includes('not bangs over the forehead');
   const shellOnDreads = /st === 'dreads'[\s\S]{0,400}add\(G\.(locFade|scalpCover)\(/.test(src);
   const tubes = src.includes('add(G.neck()');
-  if (!wired || shellOnDreads || tubes || src.includes('locFade:')) {
-    note('✗', 'mii.html — locs should hang as chunky loc columns, not a smooth fade matte');
+  const bangsStubs = src.includes('Front-dome stubs');
+  if (!wired || shellOnDreads || tubes || bangsStubs || src.includes('locFade:')) {
+    note('✗', 'mii.html — locs should be centre-part face frames, not bangs or a fade matte');
     failures++;
   } else {
-    note('✓', 'mii.html locs hang as chunky loc columns on the sides and back');
+    note('✓', 'mii.html locs are centre-part face-frame columns (no bangs)');
   }
 }
 
@@ -516,13 +593,15 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`bobE${r}`") || !src.includes('Clean chin-length bob')
-      || !src.includes('Conical silhouette') || !src.includes('Flat bang hem')
-      || src.includes("sculptHair(`bobD${r}`") || src.includes("geoCache(`bobC${r}`")) {
-    note('✗', 'mii.html — bob should be a clean cut with flat bangs, conical taper, and raised nape');
+  if (!src.includes("sculptHair(`bobF${r}`") || !src.includes('center-part chunks flowing')
+      || !src.includes('Two main panels from the crown part') || !src.includes('Flat bang hem')
+      || !src.includes('nape hem that fills the occiput')
+      || src.includes("sculptHair(`bobE${r}`") || src.includes("sculptHair(`bobD${r}`")
+      || src.includes("geoCache(`bobC${r}`")) {
+    note('✗', 'mii.html — bob should have center-part chunks and a low nape fill');
     failures++;
   } else {
-    note('✓', 'mii.html bob is a clean cut with flat bangs and conical taper');
+    note('✓', 'mii.html bob has center-part chunks and a low nape fill');
   }
 }
 
@@ -557,10 +636,12 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`mohawkI${r}`") || !src.includes("mullet: 'Mohawk'")
+  if (!src.includes("sculptHair(`mohawkQ${r}`") || !src.includes("mullet: 'Mohawk'")
       || !src.includes('Mohawk: stubble-tight sides') || !src.includes("mohawk: 'mullet'")
+      || !src.includes('spikeChunkC') || !src.includes('five solid flat wedges')
       || src.includes("sculptHair(`mulletB${r}`") || src.includes("mullet: 'Mullet'")
-      || src.includes('Business in front, party in back')) {
+      || src.includes('Business in front, party in back')
+      || src.includes("sculptHair(`mohawkO${r}`") || src.includes('smoke-spiked jagged')) {
     note('✗', 'mii.html — mullet slot should be a mohawk crest with shaved sides');
     failures++;
   } else {
@@ -819,57 +900,167 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`spkH${r}`") || !src.includes('G.spikes(1.05)')
+  if (!src.includes("sculptHair(`spkO${r}`")
+      || src.includes("sculptHair(`spkN${r}`") || !src.includes('G.spikes(1.05)')
       || !src.includes('chunky radial spikes')
+      || !src.includes('fade into the shared stubble underlayer')
+      || !src.includes('fadeIntoStubble')
+      || !src.includes("st === 'spiky'")
       || !src.includes("st !== 'spiky'")
+      || !src.includes('applyStubbleRimFade(spikeGeo')
+      || src.includes("sculptHair(`spkM${r}`")
+      || src.includes("sculptHair(`spkL${r}`")
+      || src.includes("sculptHair(`spkK${r}`")
+      || src.includes("sculptHair(`spkJ${r}`")
+      || src.includes("sculptHair(`spkI${r}`")
+      || src.includes("sculptHair(`spkH${r}`")
       || src.includes("sculptHair(`spkG${r}`")
       || src.includes("sculptHair(`spkF${r}`")
       || src.includes("sculptHair(`spkE${r}`")
       || src.includes("sculptHair(`spkD${r}`")) {
-    note('✗', 'mii.html — spiky should fade the sides and put chunky spikes on the crown');
+    note('✗', 'mii.html — spiky should use stubble sides/back with chunky crown spikes');
     failures++;
   } else {
-    note('✓', 'mii.html spiky fades the sides with chunky crown spikes');
+    note('✓', 'mii.html spiky has stubble sides/back with chunky crown spikes');
   }
 }
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`buzzC${r}`") || !src.includes('Smooth #1 clipper')
+  if (!src.includes("sculptHair(`buzzY${r}`")
+      || src.includes("sculptHair(`buzzX${r}`") || !src.includes('stubble underlayer')
+      || !src.includes('straight-across')
+      || !src.includes('stubbleHairMat')
+      || !src.includes('buzzStubbleHemY')
+      || !src.includes('stubbleHemY')
+      || !src.includes('lineupHemY')
+      || !src.includes('templeFill')
+      || !src.includes('templePad')
+      || !src.includes('stubbleJoinTaper')
+      || !src.includes('boxy straight-across')
+      || !src.includes('no cheek dagger')
+      || !src.includes('napeBand')
+      || !src.includes('full occiput')
+      || !src.includes('flatFront')
+      || !src.includes('hardFlat')
+      || !src.includes('Jittered hex grid')
+      || !src.includes('dense hex dots only')
+      || !src.includes('stubHairM')
+      || !src.includes('hair→skin wash')
+      || !src.includes('Peak density in the join band')
+      || !src.includes('applyStubbleRimFade')
+      || !src.includes('const step = 1.55')
+      || !src.includes('m.alphaTest = 0.02')
       || !src.includes("st !== 'buzz'")
+      || !src.includes('stubbleHairMat(mat, dna.hair.color, extraMats, dna.skin)')
+      || !src.includes('parkAtHairline(b, rr, hem, 1.002)')
+      || !src.includes('put(G.buzzCut(1.005)')
+      || src.includes('stubHairL')
+      || src.includes('stubHairK')
+      || src.includes('stubHairJ')
+      || src.includes('stubHairI')
+      || src.includes('stubHairH')
+      || src.includes('stubHairG')
+      || src.includes('stubHairF')
+      || src.includes("sculptHair(`buzzV${r}`")
+      || src.includes("sculptHair(`buzzW${r}`")
+      || src.includes("sculptHair(`buzzU${r}`")
+      || src.includes("sculptHair(`buzzT${r}`")
+      || src.includes("sculptHair(`buzzS${r}`")
+      || src.includes("sculptHair(`buzzR${r}`")
+      || src.includes("sculptHair(`buzzQ${r}`")
+      || src.includes("sculptHair(`buzzP${r}`")
+      || src.includes("sculptHair(`buzzO${r}`")
+      || src.includes("sculptHair(`buzzN${r}`")
+      || src.includes("sculptHair(`buzzM${r}`")
+      || src.includes("sculptHair(`buzzL${r}`")
+      || src.includes("sculptHair(`buzzK${r}`")
+      || src.includes("sculptHair(`buzzJ${r}`")
+      || src.includes("sculptHair(`buzzI${r}`")
+      || src.includes("sculptHair(`buzzH${r}`")
+      || src.includes("sculptHair(`buzzG${r}`")
+      || src.includes("sculptHair(`buzzF${r}`")
+      || src.includes("sculptHair(`buzzE${r}`")
+      || src.includes("sculptHair(`buzzD${r}`")
+      || src.includes("sculptHair(`buzzC${r}`")
       || src.includes("sculptHair(`buzzA${r}`")
       || src.includes('add(G.buzzCut(1.038), 0, 0, 0, 1, 1.06, 1)')) {
-    note('✗', 'mii.html — buzz should be a smooth short clipper with ears out');
+    note('✗', 'mii.html — buzz should be even stubble with a straight-across hairline');
     failures++;
   } else {
-    note('✓', 'mii.html buzz is a smooth short clipper with a natural hairline');
+    note('✓', 'mii.html buzz is even stubble with a straight-across hairline');
   }
 }
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`crewC${r}`") || !src.includes('High-and-tight crew')
+  if (!src.includes("sculptHair(`crewR${r}`")
+      || src.includes("sculptHair(`crewQ${r}`") || !src.includes('Military crown pad')
       || !src.includes("st !== 'taper'")
+      || !src.includes('stubbleHairMat(mat, dna.hair.color')
+      || !src.includes('fadeIntoStubble')
+      || !src.includes('stubbleJoinTaper')
+      || !src.includes('lineupHemY')
+      || !src.includes('faded.keep')
+      || !src.includes('applyStubbleRimFade')
+      || !src.includes('putStubbleFadeStack')
+      || !src.includes('stubbleFadeZone')
+      || !src.includes("sculptHair(`fadeBandA${level}_${r}`")
+      || !src.includes('stacked mid fade bands')
+      || src.includes("sculptHair(`crewO${r}`")
+      || src.includes("sculptHair(`crewP${r}`")
+      || src.includes("sculptHair(`crewN${r}`")
+      || src.includes("sculptHair(`crewM${r}`")
+      || src.includes("sculptHair(`crewL${r}`")
+      || src.includes("sculptHair(`crewK${r}`")
+      || src.includes("sculptHair(`crewJ${r}`")
+      || src.includes("sculptHair(`crewI${r}`")
+      || src.includes("sculptHair(`crewH${r}`")
+      || src.includes("sculptHair(`crewG${r}`")
+      || src.includes("sculptHair(`crewF${r}`")
+      || src.includes("sculptHair(`crewE${r}`")
+      || src.includes("sculptHair(`crewD${r}`")
+      || src.includes("sculptHair(`crewC${r}`")
       || src.includes("sculptHair(`crewB${r}`")
       || src.includes('add(G.crewCut(1.04), 0, 0, 0, 1, 1.06, 1)')) {
-    note('✗', 'mii.html — crew should be a short top with stubble-short faded sides');
+    note('✗', 'mii.html — crew should have stubble sides and a longer shaved top');
     failures++;
   } else {
-    note('✓', 'mii.html crew is a short top with stubble-short faded sides');
+    note('✓', 'mii.html crew has stubble sides and a longer shaved top');
   }
 }
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`fcropD${r}`") || !src.includes('French crop with a crew-like fade')
+  if (!src.includes("sculptHair(`fcropS${r}`")
+      || src.includes("sculptHair(`fcropR${r}`") || !src.includes('gradual thickness fade into stubble')
       || !src.includes("st !== 'crop'")
+      || !src.includes('lineupHemY')
+      || !src.includes('fadeIntoStubble')
+      || !src.includes('applyStubbleRimFade')
+      || !src.includes('putStubbleFadeStack')
+      || !src.includes("sculptHair(`fadeBandA${level}_${r}`")
+      || src.includes("sculptHair(`fcropP${r}`")
+      || src.includes("sculptHair(`fcropQ${r}`")
+      || src.includes("sculptHair(`fcropO${r}`")
+      || src.includes("sculptHair(`fcropN${r}`")
+      || src.includes("sculptHair(`fcropM${r}`")
+      || src.includes("sculptHair(`fcropL${r}`")
+      || src.includes("sculptHair(`fcropK${r}`")
+      || src.includes("sculptHair(`fcropJ${r}`")
+      || src.includes("sculptHair(`fcropI${r}`")
+      || src.includes("sculptHair(`fcropH${r}`")
+      || src.includes("sculptHair(`fcropG${r}`")
+      || src.includes("sculptHair(`fcropF${r}`")
+      || src.includes("sculptHair(`fcropE${r}`")
+      || src.includes("sculptHair(`fcropD${r}`")
       || src.includes("sculptHair(`fcropC${r}`")
       || src.includes("sculptHair(`fcropB${r}`")
       || src.includes('add(G.frenchCrop(1.05), 0, 0, 0, 1, 1.06, 1)')) {
-    note('✗', 'mii.html — french crop should fade like the crew with the forehead open');
+    note('✗', 'mii.html — french crop should fade on the sides with forward bangs');
     failures++;
   } else {
-    note('✓', 'mii.html french crop fades like the crew with the forehead open');
+    note('✓', 'mii.html french crop fades on the sides with forward bangs');
   }
 }
 
@@ -900,14 +1091,34 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`pompB${r}`") || !src.includes('G.pomp(1.05)')
-      || !src.includes('big front swoop')
+  if (!src.includes("sculptHair(`pompP${r}`")
+      || src.includes("sculptHair(`pompO${r}`") || src.includes("sculptHair(`pompN${r}`")
+      || !src.includes('G.pomp(1.05)')
+      || !src.includes('crownBridge')
       || !src.includes("st !== 'pompadour'")
-      || src.includes("sculptHair(`pompH${r}`")) {
-    note('✗', 'mii.html — pompadour should swoop at the front and fade on the sides');
+      || !src.includes('stubbleHairMat')
+      || !src.includes('fadeIntoStubble')
+      || !src.includes('lineupHemY')
+      || !src.includes('applyStubbleRimFade')
+      || !src.includes('putStubbleFadeStack')
+      || !src.includes("sculptHair(`fadeBandA${level}_${r}`")
+      || src.includes("sculptHair(`pompL${r}`")
+      || src.includes("sculptHair(`pompM${r}`")
+      || src.includes("sculptHair(`pompK${r}`")
+      || src.includes("sculptHair(`pompJ${r}`")
+      || src.includes("sculptHair(`pompI${r}`")
+      || src.includes("sculptHair(`pompH${r}`")
+      || src.includes("sculptHair(`pompG${r}`")
+      || src.includes("sculptHair(`pompF${r}`")
+      || src.includes("sculptHair(`pompE${r}`")
+      || src.includes("sculptHair(`pompD${r}`")
+      || src.includes("sculptHair(`pompC${r}`")
+      || src.includes("sculptHair(`pompB${r}`")
+      || src.includes('add(G.pomp(1.05)')) {
+    note('✗', 'mii.html — pompadour should be a continuous front→crown sweep that fades on the sides');
     failures++;
   } else {
-    note('✓', 'mii.html pompadour swoops at the front and fades on the sides');
+    note('✓', 'mii.html pompadour is a continuous front→crown sweep that fades on the sides');
   }
 }
 
@@ -943,14 +1154,31 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`swoopC${r}`") || !src.includes('G.swoopCurl(1.05)')
-      || !src.includes('Side-part swoop')
+  if (!src.includes("sculptHair(`swoopO${r}`")
+      || src.includes("sculptHair(`swoopN${r}`") || src.includes("sculptHair(`swoopM${r}`")
+      || !src.includes('G.swoopCurl(1.05)')
+      || !src.includes('frontChunks')
+      || !src.includes('crownRidge')
       || !src.includes("st !== 'swoop'")
+      || !src.includes('lineupHemY')
+      || !src.includes('fadeIntoStubble')
+      || !src.includes('applyStubbleRimFade')
+      || !src.includes('putStubbleFadeStack')
+      || !src.includes("sculptHair(`fadeBandA${level}_${r}`")
+      || src.includes("sculptHair(`swoopK${r}`")
+      || src.includes("sculptHair(`swoopJ${r}`")
+      || src.includes("sculptHair(`swoopI${r}`")
+      || src.includes("sculptHair(`swoopH${r}`")
+      || src.includes("sculptHair(`swoopG${r}`")
+      || src.includes("sculptHair(`swoopF${r}`")
+      || src.includes("sculptHair(`swoopE${r}`")
+      || src.includes("sculptHair(`swoopD${r}`")
+      || src.includes("sculptHair(`swoopC${r}`")
       || src.includes("sculptHair(`swoopB${r}`")) {
-    note('✗', 'mii.html — swoop should have a high side part and chunky swept clumps');
+    note('✗', 'mii.html — swoop should be a continuous multi-chunk side-part sweep without a deep V notch');
     failures++;
   } else {
-    note('✓', 'mii.html swoop has a high side part and chunky swept clumps');
+    note('✓', 'mii.html swoop is a continuous multi-chunk side-part sweep without a deep V notch');
   }
 }
 
@@ -1101,21 +1329,38 @@ for (const [page, ids] of required) {
 
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
-  if (!src.includes("sculptHair(`gathC${r}`") || !src.includes("sculptHair(`bunU${r}`")
+  if (!src.includes("sculptHair(`gathG${r}`") || !src.includes("sculptHair(`bunAK${r}`")
+      || src.includes("sculptHair(`bunAJ${r}`")
       || !src.includes('G.gatherScalp(1.04)') || !src.includes('G.bunStubble(1.045)')
+      || !src.includes("put(G.bunStubble(1.045)")
+      || !src.includes('stubbleHairMat(mat, dna.hair.color, extraMats, dna.skin)')
+      || !src.includes('stubbleHemY')
+      || !src.includes('buzzStubbleHemY')
+      || !src.includes('lineupHemY')
+      || !src.includes('stubbleJoinTaper')
+      || src.includes('add(G.bunStubble(1.045), 0, 0, 0)')
+      || src.includes("sculptHair(`bunAH${r}`")
+      || src.includes("sculptHair(`bunAI${r}`")
+      || src.includes("sculptHair(`bunAG${r}`")
+      || src.includes("sculptHair(`bunAF${r}`")
+      || src.includes("sculptHair(`bunAE${r}`")
+      || src.includes("sculptHair(`bunAD${r}`")
+      || src.includes("sculptHair(`bunAC${r}`")
+      || src.includes("sculptHair(`gathF${r}`")
+      || src.includes("sculptHair(`gathE${r}`")
+      || src.includes("sculptHair(`gathD${r}`")
+      || src.includes("sculptHair(`gathC${r}`")
       || src.includes("sculptHair(`gathB${r}`")
       || src.includes("sculptHair(`gathA${r}`")
+      || src.includes("sculptHair(`bunU${r}`")
       || src.includes("sculptHair(`bunT${r}`")
       || src.includes("sculptHair(`bunS${r}`")
       || src.includes("cap(1.05, 1.52, 1.06)")
       || src.includes('cap(1.038, 1.30, 1.0)')
       || !src.includes("st !== 'bun'") || !src.includes("st !== 'pony'")
       || !src.includes("st !== 'spacebuns'")
-      || !src.includes('add(G.ball(), 0, 1.42, -0.06, 0.72, 0.66, 0.72)')
-      || !src.includes('sx * 0.58, 1.08, 0.00, 0.44, 0.40, 0.44')
       || !src.includes('Bang chunk from crown V')
       || !src.includes('one continuous flowy back pony')
-      || !src.includes('tight smooth coverage, not stubble')
       || src.includes('sx * 0.70, 1.04, 0.04, 0.48, 0.46, 0.48')
       || src.includes('add(G.ball(), 0, 0.3, -1.02, 0.34, 0.34, 0.34)')) {
     note('✗', 'mii.html — bun / pony / spacebuns should use a gathered scalp, not a hat-brim cap');
@@ -1188,15 +1433,15 @@ for (const [page, ids] of required) {
 {
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = ["id: 'techvest'", "label: 'Tech vest'", "kind: 'techvest'",
-                 'mock: true', "case 'techvest':", "const vest = '#1a1b1e'",
-                 "const shirt = '#f3f5f7'", 'openTop', 'scoopAt(W * 0.5)',
-                 'apparel.mock']
+                 'open: true', "case 'techvest':", 'techvestB',
+                 "const vest = '#1a1b1e'", "const shirt = '#2f6f9e'",
+                 'openTop', 'scoopAt(W * 0.5)', "yBot = vy(0.82)"]
     .every((s) => src.includes(s));
   if (!wired) {
-    note('✗', 'mii.html — tech vest needs a black open front over a white shirt');
+    note('✗', 'mii.html — tech vest needs a black deep-V over a blue button-up');
     failures++;
   } else {
-    note('✓', 'mii.html offers a black tech vest open over a white shirt');
+    note('✓', 'mii.html offers a black tech vest with a deep V over a blue shirt');
   }
 }
 
@@ -1250,6 +1495,25 @@ for (const [page, ids] of required) {
 }
 
 {
+  /* Hoodie / Bubble / Box share a folded rest-hood pouch on the upper back
+     (opening rim at the collar), not a nape marble and not a cape flap. */
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const hooded = ["id: 'hoodie'", "id: 'bubble'", "id: 'boxhoodie'"]
+    .every((s) => src.includes(s));
+  const folded = src.includes('Folded-down rest hood')
+    && src.includes("geoCache('rhoodA'")
+    && src.includes('G.restHood()')
+    && src.includes('Opening rim')
+    && !src.includes('little nape bump');
+  if (!hooded || !folded) {
+    note('✗', 'mii.html — hooded tops need a small folded rest-hood on the upper back');
+    failures++;
+  } else {
+    note('✓', 'mii.html hooded tops use a folded rest-hood pouch with a collar rim');
+  }
+}
+
+{
   const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
   const wired = ["id: 'tank'", "label: 'Tank top'", "kind: 'tank', nocollar: true",
                  "case 'tank':", 'const strapW = 12', 'g.lineTo(front, vy(0.38))',
@@ -1293,6 +1557,40 @@ for (const [page, ids] of required) {
     failures++;
   } else {
     note('✓', 'mii.html offers a box hoodie with a Co-Working chest mark');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const apparel = src.match(/const APPAREL = \[[\s\S]*?\];/)?.[0] || '';
+  const block = src.match(/case 'blacktee': \{[\s\S]*?break;\n    \}/)?.[0] || '';
+  const wired = ["id: 'blacktee'", "label: 'Co- pocket tee'", "kind: 'blacktee'",
+                 "case 'blacktee':", 'paintCoMark', 'g.scale(0.58, 1)',
+                 'front + 12']
+    .every((s) => src.includes(s));
+  const inCatalogue = /id:\s*'blacktee'/.test(apparel);
+  const squeezed = block.includes('g.scale(0.58, 1)') && block.includes('paintCoMark');
+  if (!wired || !inCatalogue || !squeezed) {
+    note('✗', 'mii.html — Co- pocket tee needs an inward pocket stamp with X squeezed for sphere UVs');
+    failures++;
+  } else {
+    note('✓', 'mii.html offers a Co- pocket tee with a narrowed chest stamp');
+  }
+}
+
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ['function installPlazaProps', 'userData.plazaItem',
+                 'buildLeafyPlant', 'buildAloePlant', 'buildGlossySucculent',
+                 'buildCactus', 'buildBamboo', 'buildTallLamp',
+                 'buildCoffeeMachine', 'buildWaterCooler', 'buildDeskLaptop',
+                 'buildArcadeCabinet', 'PIXEL RAID', 'World.props']
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — plaza needs clay office props with plazaItem tags');
+    failures++;
+  } else {
+    note('✓', 'mii.html installs clay plaza props (plants, lamp, coffee, cooler, desk, arcade)');
   }
 }
 

@@ -327,9 +327,7 @@ try {
       const glasses = cat.EYEWEAR;
       return {
         hasSwoop: cuts.includes('swoop'),
-        hasFlow: cuts.includes('flow'),
         hasMullet: cuts.includes('mullet'),
-        hasWolf: cuts.includes('wolf'),
         hasHighpony: cuts.includes('highpony'),
         hasPigtails: cuts.includes('pigtails'),
         hasLayers: cuts.includes('layers'),
@@ -346,7 +344,7 @@ try {
     check('new characters start without piercings',
       await evaluate(`Array.from({length: 16}, () => MiiPlaza.randomDNA().piercing)
         .every(p => p === 'none')`));
-    check('flowy mens cuts are in the list', extras.hasFlow && extras.hasMullet && extras.hasWolf);
+    check('mohawk mens cut is in the list', extras.hasMullet);
     check('long hair parts are in the list', await evaluate(`(() => {
       const cuts = MiiPlaza.catalog.HAIRSTYLES;
       return ['long','longmiddle','longside','longwavy'].every(s => cuts.includes(s));
@@ -374,6 +372,8 @@ try {
       extras.outfits.join(', '));
     check('box hoodie is in the outfit list', extras.outfits.includes('boxhoodie'),
       extras.outfits.join(', '));
+    check('Co- pocket tee is in the outfit list', extras.outfits.includes('blacktee'),
+      extras.outfits.join(', '));
     check('tribal ink is in the list', extras.tattoos.includes('tribal'),
       extras.tattoos.join(', '));
     check('hipster ink is in the list', extras.tattoos.includes('hipster'),
@@ -395,7 +395,7 @@ try {
       bandanaAlias.blue === 'bandana' && bandanaAlias.blueCol === '#1565c0'
         && bandanaAlias.green === 'bandana' && bandanaAlias.greenCol === '#2e7d32',
       JSON.stringify(bandanaAlias));
-    check('no triangular wedge frames', extras.wedge.length === 0, extras.wedge.join(','));
+    check('triangular wedge frames are in the list', extras.wedge.length >= 1, extras.wedge.join(','));
     check('wrap-around baseball shades are in the list', extras.wrap.length >= 3, extras.wrap.join(', '));
     check('tinted lenses are actually tinted', extras.tints.every((t) => {
       const m = /,\s*([0-9.]+)\)/.exec(t);

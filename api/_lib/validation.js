@@ -2,7 +2,7 @@
  * input we actually trust. */
 
 import { z } from 'zod';
-import { isCleanName, NAME_BLOCKED_MESSAGE } from '../../lib/profanity.js';
+import { dnaPublicError, publicNameError } from '../../lib/profanity.js';
 
 export const emailSchema = z
   .string()
@@ -19,7 +19,10 @@ export const nameSchema = z
   .max(14, 'Names cap at 14 characters')
   // Control characters would corrupt the name texture baked onto the model.
   .regex(/^[^\p{C}]+$/u, 'That name has characters we cannot render')
-  .refine(isCleanName, NAME_BLOCKED_MESSAGE);
+  .superRefine((v, ctx) => {
+    const err = publicNameError(v);
+    if (err) ctx.addIssue({ code: z.ZodIssueCode.custom, message: err });
+  });
 
 /* mii_data is authored by the client renderer and its shape evolves with the
  * art, so it is accepted as opaque JSON with a hard size ceiling rather than
@@ -42,6 +45,9 @@ export const createMiiSchema = z.object({
   name: nameSchema,
   dna: miiDataSchema,
   preview: previewSchema
+}).superRefine((data, ctx) => {
+  const err = dnaPublicError(data.dna);
+  if (err) ctx.addIssue({ code: z.ZodIssueCode.custom, message: err, path: ['dna'] });
 });
 
 export const updateMiiSchema = z.object({
@@ -50,13 +56,12 @@ export const updateMiiSchema = z.object({
   preview: previewSchema
 }).superRefine((data, ctx) => {
   const candidate = data.name || (data.dna && data.dna.name);
-  if (!candidate || typeof candidate !== 'string') return;
-  if (isCleanName(candidate)) return;
-  ctx.addIssue({
-    code: z.ZodIssueCode.custom,
-    message: NAME_BLOCKED_MESSAGE,
-    path: ['name']
-  });
+  if (candidate && typeof candidate === 'string') {
+    const err = publicNameError(candidate);
+    if (err) ctx.addIssue({ code: z.ZodIssueCode.custom, message: err, path: ['name'] });
+  }
+  const dnaErr = dnaPublicError(data.dna);
+  if (dnaErr) ctx.addIssue({ code: z.ZodIssueCode.custom, message: dnaErr, path: ['dna'] });
 });
 
 export const magicLinkSchema = z.object({ email: emailSchema });

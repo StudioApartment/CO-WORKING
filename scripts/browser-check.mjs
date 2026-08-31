@@ -162,7 +162,7 @@ try {
   console.log(`\nLoading pages from ${ORIGIN}\n`);
 
   await checkPage('/mii.html', {
-    expectIds: ['scene', 'camEmailRow', 'camBadge', 'badgeWallet', 'badgeAppleWallet', 'badgeMii', 'badgeEmail', 'badgeSince', 'camRecover', 'mineChip'],
+    expectIds: ['scene', 'camEmailRow', 'camBadge', 'badgeWallet', 'badgeAppleWallet', 'badgeMii', 'badgeEmail', 'badgeSince', 'camRecover', 'mineChip', 'mineEdit', 'mineDelete', 'btnLost', 'camLocationRow', 'miiLocation', 'badgePlace', 'miiDock', 'btnMiiInfo', 'miiCard', 'camProfile', 'miiFullName', 'loader', 'loader-status', 'loader-count', 'logoLink'],
     settle: 5000
   });
   console.log('  mii.html   loaded');

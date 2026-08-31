@@ -156,8 +156,15 @@ console.log('\nvalidation');
   const rude = await call(miis, { method: 'POST', body: { email: 'a@b.co', name: 'fuck', dna: DNA } });
   check('rejects offensive names', rude.statusCode === 400, `got ${rude.statusCode}`);
 
-  // Four bad requests in a row above: the quota must still be untouched, or a
-  // typo would cost someone their hourly allowance.
+  const rudeFull = await call(miis, {
+    method: 'POST', body: { email: 'a@b.co', name: 'Alex', dna: { ...DNA, fullName: 'fuck you' } }
+  });
+  check('rejects offensive full names', rudeFull.statusCode === 400, `got ${rudeFull.statusCode}`);
+
+  const spamName = await call(miis, { method: 'POST', body: { email: 'a@b.co', name: 'aaaaaaa', dna: DNA } });
+  check('rejects spammy names', spamName.statusCode === 400, `got ${spamName.statusCode}`);
+
+  // Bad requests above must not consume the hourly create quota.
   const after = await call(miis, {
     method: 'POST', body: { email: 'typo-recovery@example.com', name: 'Fixed', dna: DNA }
   });
