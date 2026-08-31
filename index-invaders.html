@@ -375,10 +375,10 @@
 
   const GAME_W = 480, GAME_H = 640;
   const PLAYER_W = 32, PLAYER_H = 32;
-  const PLAYER_SPEED = 11;
-  const BULLET_SPEED = 18;
-  const ENEMY_BULLET_SPEED = 8;
-  const SHOOT_CD = 5;
+  const PLAYER_SPEED = 8;
+  const BULLET_SPEED = 14;
+  const ENEMY_BULLET_SPEED = 5;
+  const SHOOT_CD = 7;
   const MAX_BULLETS = 6;
   const SHIELD_COUNT = 4;
   const COLS = 7, ROWS = 8;
@@ -817,7 +817,7 @@
         });
       }
     enemyDir = 1;
-    enemyBaseSpeed = 1.8 + (wave - 1) * 0.2;
+    enemyBaseSpeed = 1.05 + (wave - 1) * 0.12;
     enemyTotalAlive = ROWS * COLS;
     eBullets = []; bonus = null;
     bonusTimer = 300 + Math.random() * 400 | 0;
@@ -954,7 +954,7 @@
     }
 
     bullets  = bullets.filter(b  => { b.y -= BULLET_SPEED; return b.y > -10; });
-    eBullets = eBullets.filter(b => { b.y += ENEMY_BULLET_SPEED + (wave - 1) * 0.18; return b.y < GAME_H + 10; });
+    eBullets = eBullets.filter(b => { b.y += ENEMY_BULLET_SPEED + (wave - 1) * 0.1; return b.y < GAME_H + 10; });
 
     if (invulnTimer > 0) invulnTimer--;
 
@@ -963,21 +963,21 @@
     if (enemyTotalAlive === 0) { SFX.waveWin(); nextWave(); return; }
 
     const spMul = Math.max(1, (ROWS * COLS) / Math.max(enemyTotalAlive, 1));
-    const curSp = Math.min(enemyBaseSpeed * Math.sqrt(spMul), 4);
+    const curSp = Math.min(enemyBaseSpeed * Math.sqrt(spMul), 2.4);
 
     let minX = GAME_W, maxX = 0;
     alive.forEach(e => { minX = Math.min(minX, e.x - EW / 2); maxX = Math.max(maxX, e.x + EW / 2); });
 
     if ((enemyDir > 0 && maxX + curSp >= GAME_W - 8) || (enemyDir < 0 && minX - curSp <= 8)) {
       enemyDir *= -1;
-      enemies.forEach(e => { if (e.alive) e.y += 12 + wave * 0.4; });
+      enemies.forEach(e => { if (e.alive) e.y += 9 + wave * 0.25; });
     } else {
       enemies.forEach(e => { if (e.alive) e.x += curSp * enemyDir; });
     }
 
     enemies.forEach(e => { if (e.hit > 0) e.hit--; });
 
-    const fc = 0.004 + wave * 0.0012;
+    const fc = 0.0025 + wave * 0.00075;
     const bots = [];
     for (let c = 0; c < COLS; c++)
       for (let r = ROWS - 1; r >= 0; r--) { const e = enemies[r * COLS + c]; if (e && e.alive) { bots.push(e); break; } }
@@ -987,7 +987,7 @@
       bonusTimer--;
       if (bonusTimer <= 0) {
         const fl = Math.random() > 0.5;
-        bonus = { x: fl ? -30 : GAME_W + 30, y: 36, dir: fl ? 1 : -1, speed: 2 + wave * 0.2,
+        bonus = { x: fl ? -30 : GAME_W + 30, y: 36, dir: fl ? 1 : -1, speed: 1.4 + wave * 0.12,
           pts: [150, 200, 250, 300][Math.random() * 4 | 0] };
       }
     } else {

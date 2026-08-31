@@ -9,6 +9,9 @@
     "dev:api": "vercel dev --listen 4444",
     "check": "node scripts/check.mjs",
     "smoke": "node scripts/smoke.mjs",
+    "health": "node scripts/health.mjs",
+    "health:strict": "node scripts/health.mjs --strict",
+    "health:browser": "node scripts/health.mjs && node scripts/browser-check.mjs",
     "check:browser": "node scripts/browser-check.mjs"
   },
   "type": "module",

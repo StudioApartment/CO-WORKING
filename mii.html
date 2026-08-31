@@ -12,11 +12,14 @@ if (location.hostname === 'coworking.fyi') {
   location.replace('https://www.coworking.fyi' + location.pathname + location.search + location.hash);
 }
 </script>
-<title>Mii Plaza</title>
+<title>The Co-Working Office</title>
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
-<!-- plaza-client: 486 -->
+<!-- plaza-client: 501 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -299,6 +302,29 @@ body.native-cursor #pointer{display:none}
 @keyframes toastIn{from{opacity:0;transform:translateY(16px) scale(.8)}to{opacity:1;transform:none}}
 @keyframes toastOut{to{opacity:0;transform:translateY(-10px) scale(.92)}}
 
+/* Confirm before removing your own Co-Worker from the plaza */
+.delete-confirm{
+  position:fixed;inset:0;z-index:120;display:none;place-items:center;
+  background:rgba(206,224,236,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  padding:20px;
+}
+.delete-confirm.show{display:grid;animation:fadeIn .2s ease both}
+.delete-confirm-card{
+  width:min(360px,100%);padding:22px 20px 18px;border-radius:24px;text-align:center;
+  background:linear-gradient(180deg,#fff,#eef5f8);
+  box-shadow:0 20px 50px rgba(60,90,115,.32),0 0 0 3px #fff,0 0 0 6px #cad7e0;
+  animation:cardIn .32s cubic-bezier(.2,1.4,.4,1) both;
+}
+.delete-confirm-card p{
+  margin:0 0 18px;font-size:16px;line-height:1.45;font-weight:800;color:var(--ink-dk);
+}
+.delete-confirm-actions{display:flex;gap:10px;justify-content:center}
+.delete-confirm-actions .wbtn{min-width:96px;height:44px}
+.delete-confirm-actions .wbtn.danger{
+  background:linear-gradient(#f06a62,#d0453c);color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 3px 8px rgba(208,69,60,.35);
+}
+
 /* ============================================================
    MODAL (camera)
    ============================================================ */
@@ -531,6 +557,18 @@ body.native-cursor #pointer{display:none}
 .tray-cell.on .cyc-clear{display:grid}
 .cyc-clear:hover,.cyc-clear:active{color:#d0453c}
 
+.tray-swatch{
+  flex:none;width:22px;height:22px;margin:0 4px 0 2px;border:0;padding:0;border-radius:50%;cursor:pointer;
+  box-shadow:inset 0 -3px 6px rgba(0,0,0,.16),0 0 0 2px #fff,0 0 0 3px #d3dee5;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:transform .12s ease,box-shadow .18s;
+}
+.tray-swatch:hover{transform:scale(1.1)}
+.tray-swatch.on{
+  box-shadow:inset 0 -3px 6px rgba(0,0,0,.16),0 0 0 2px #fff,0 0 0 3px var(--blue),0 0 14px rgba(63,169,224,.55);
+}
+.tray-cell.on .tray-swatch{margin-right:2px}
+
 @media (max-width:560px){
   .tray-cycles{gap:6px}
   .tray-cell{border-radius:11px}
@@ -583,7 +621,7 @@ body.native-cursor #pointer{display:none}
   color:#fff;
 }
 .pass-logo{
-  display:block;height:28px;width:auto;max-width:140px;object-fit:contain;
+  display:block;height:32px;width:auto;max-width:min(100%, 168px);object-fit:contain;
   filter:brightness(0) invert(1);
 }
 .pass-kind{
@@ -591,6 +629,10 @@ body.native-cursor #pointer{display:none}
   text-transform:lowercase;color:rgba(255,255,255,.88);
 }
 .pass-body{padding:16px 18px 18px;color:#1b2a33}
+.pass-head{
+  display:flex;gap:14px;align-items:flex-start;justify-content:space-between;
+}
+.pass-info{flex:1;min-width:0}
 .pass-field{min-width:0}
 .pass-label{
   display:block;margin:0 0 2px;
@@ -631,39 +673,27 @@ body.native-cursor #pointer{display:none}
   text-shadow:0 1px 0 rgba(255,255,255,.7);
 }
 .pass-qr-wrap{
-  display:flex;justify-content:center;margin-top:16px;padding-top:14px;
-  border-top:1px solid #e6eef3;
+  flex:none;display:flex;justify-content:flex-end;align-self:flex-start;
+  margin:0;padding:0;border:0;
 }
 .badgeout .qr{
-  width:132px;height:132px;object-fit:contain;flex:none;
+  width:96px;height:96px;object-fit:contain;flex:none;
   border-radius:8px;background:#fff;padding:8px;box-sizing:border-box;
   box-shadow:0 0 0 1px #e2eaef;
 }
-.badgeout .awallet,.badgeout .gwallet{width:min(340px,100%);justify-content:center}
-.badgeout .tiny{max-width:340px}
-
-/* Google's brand guidance wants the button visually distinct from ours */
-.gwallet{
-  display:inline-flex;align-items:center;justify-content:center;gap:9px;
-  margin-top:16px;height:50px;padding:0 22px;border:0;border-radius:999px;cursor:pointer;
-  background:linear-gradient(#3c4043,#202124);color:#fff;
-  font:inherit;font-size:13.5px;font-weight:800;letter-spacing:.01em;text-decoration:none;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 3px 8px rgba(32,33,36,.34);
+.wallet-badges{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  margin-top:16px;width:min(340px,100%);
 }
-.gwallet:hover{filter:brightness(1.12)}
-.gwallet:active{transform:translateY(1px)}
-.gwallet svg{flex:none}
-
-.awallet{
-  display:inline-flex;align-items:center;justify-content:center;gap:9px;
-  margin-top:12px;height:50px;padding:0 22px;border:0;border-radius:999px;cursor:pointer;
-  background:#111;color:#fff;
-  font:inherit;font-size:13.5px;font-weight:800;letter-spacing:.01em;text-decoration:none;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 3px 8px rgba(17,17,17,.34);
+.wallet-badge{
+  display:block;width:min(152px,100%);line-height:0;text-decoration:none;
+  border-radius:8px;transition:transform .12s ease,opacity .12s ease;
 }
-.awallet:hover{filter:brightness(1.12)}
-.awallet:active{transform:translateY(1px)}
-.awallet svg{flex:none}
+.wallet-badge img{display:block;width:100%;height:auto}
+.wallet-badge:not(.disabled):hover{transform:translateY(-1px)}
+.wallet-badge:not(.disabled):active{transform:translateY(1px)}
+.wallet-badge.disabled{opacity:.42;pointer-events:none;cursor:default}
+.badgeout .tiny{max-width:340px;margin-top:12px}
 
 /* small text button row under the primary actions */
 .minor{display:flex;gap:16px;justify-content:center;align-items:center;margin-top:12px;flex-wrap:wrap}
@@ -719,7 +749,9 @@ body.native-cursor #pointer{display:none}
 @media (max-width:600px){
   .mine-chip b{max-width:8ch}
   .wallet-pass{width:min(320px,100%)}
-  .badgeout .qr{width:118px;height:118px}
+  .pass-head{flex-direction:column;align-items:stretch}
+  .pass-qr-wrap{justify-content:center;margin-top:4px}
+  .badgeout .qr{width:96px;height:96px}
   .pass-value{font-size:18px}
 }
 
@@ -786,6 +818,16 @@ body:not(.plaza-ready) #pointer{visibility:hidden;opacity:0}
   </div>
 </div>
 <div id="stage"><canvas id="scene"></canvas></div>
+
+<div id="deleteConfirm" class="delete-confirm" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle" hidden>
+  <div class="delete-confirm-card">
+    <p id="deleteConfirmTitle">Are you sure you want to delete your Co-Worker?</p>
+    <div class="delete-confirm-actions">
+      <button type="button" class="wbtn" id="deleteConfirmNo">No</button>
+      <button type="button" class="wbtn danger" id="deleteConfirmYes">Yes</button>
+    </div>
+  </div>
+</div>
 
 <!-- ============================ HUD ============================ -->
 <div id="hud">
@@ -927,15 +969,9 @@ body:not(.plaza-ready) #pointer{visibility:hidden;opacity:0}
     </div>
 
     <div class="namerow" id="camNameRow" style="display:none">
-      <label for="miiName">Name</label>
-      <input id="miiName" maxlength="14" value="New Person" spellcheck="false" autocomplete="off"/>
-    </div>
-
-    <div class="namerow" id="camEmailRow" style="display:none">
-      <label for="miiEmail">Email</label>
-      <input id="miiEmail" type="email" inputmode="email" autocomplete="email"
-             spellcheck="false" placeholder="you@studio.com" maxlength="254"/>
-      <p class="fieldnote" id="camEmailNote" style="display:none"></p>
+      <label for="miiName">Full name</label>
+      <input id="miiName" maxlength="40" value="New Person" spellcheck="false" autocomplete="name"
+             placeholder="Gage Salzano"/>
     </div>
 
     <div class="namerow" id="camLocationRow" style="display:none">
@@ -945,6 +981,13 @@ body:not(.plaza-ready) #pointer{visibility:hidden;opacity:0}
                spellcheck="false" placeholder="City or ZIP" maxlength="80"/>
         <div class="loclist" id="miiLocationList" hidden></div>
       </div>
+    </div>
+
+    <div class="namerow" id="camEmailRow" style="display:none">
+      <label for="miiEmail">Email</label>
+      <input id="miiEmail" type="email" inputmode="email" autocomplete="email"
+             spellcheck="false" placeholder="you@studio.com" maxlength="254"/>
+      <p class="fieldnote" id="camEmailNote" style="display:none"></p>
     </div>
 
     <div id="camProfile" style="display:none">
@@ -961,25 +1004,32 @@ body:not(.plaza-ready) #pointer{visibility:hidden;opacity:0}
     <div class="badgeout" id="camBadge">
       <article class="wallet-pass" id="badgePass" aria-label="Employee badge pass preview">
         <header class="pass-strip">
-          <img class="pass-logo" src="images/study-02-badge.png" alt="CO—WORKING" width="120" height="28"/>
+          <img class="pass-logo" src="images/logo-lockup.png?v=2" alt="CO—WORKING" width="140" height="32"/>
           <p class="pass-kind">employee badge</p>
         </header>
         <div class="pass-body">
-          <div class="pass-field">
-            <span class="pass-label">Full name</span>
-            <p class="pass-value who" id="badgeWho">–</p>
-          </div>
-          <div class="pass-row">
-            <div class="pass-field">
-              <span class="pass-label">City</span>
-              <p class="pass-value place" id="badgePlace"></p>
+          <div class="pass-head">
+            <div class="pass-info">
+              <div class="pass-field">
+                <span class="pass-label">Full name</span>
+                <p class="pass-value who" id="badgeWho">–</p>
+              </div>
+              <div class="pass-row">
+                <div class="pass-field">
+                  <span class="pass-label">City</span>
+                  <p class="pass-value place" id="badgePlace"></p>
+                </div>
+                <div class="pass-field">
+                  <span class="pass-label">Days coworking</span>
+                  <p class="pass-value since" id="badgeSince"></p>
+                </div>
+              </div>
+              <p class="pass-mail" id="badgeEmail"></p>
             </div>
-            <div class="pass-field">
-              <span class="pass-label">Days coworking</span>
-              <p class="pass-value since" id="badgeSince"></p>
+            <div class="pass-qr-wrap">
+              <img class="qr" id="badgeQr" alt="Your badge QR code" width="150" height="150"/>
             </div>
           </div>
-          <p class="pass-mail" id="badgeEmail"></p>
           <div class="pass-miis">
             <div class="pass-mii-slot">
               <img class="mii" id="badgeMii" alt="" width="150" height="150"/>
@@ -990,27 +1040,16 @@ body:not(.plaza-ready) #pointer{visibility:hidden;opacity:0}
               <span class="pass-mii-lbl">Orbit</span>
             </div>
           </div>
-          <div class="pass-qr-wrap">
-            <img class="qr" id="badgeQr" alt="Your badge QR code" width="150" height="150"/>
-          </div>
         </div>
       </article>
-      <a class="awallet" id="badgeAppleWallet" href="#" style="display:none" rel="noopener noreferrer">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3.2" y="4.6" width="17.6" height="14.8" rx="3"/>
-          <path d="M3.2 9.4h17.6"/><path d="M8 4.6c0 2.4 1.8 3.6 4 3.6s4-1.2 4-3.6"/>
-        </svg>
-        <span>Add to Apple Wallet</span>
-      </a>
-      <a class="gwallet" id="badgeWallet" href="#" target="_blank" rel="noopener noreferrer">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="2.6" y="5.6" width="18.8" height="13.4" rx="3.2"/>
-          <path d="M2.6 10.4h18.8"/><path d="M16.4 14.7h2.4"/>
-        </svg>
-        <span>Add to Google Wallet</span>
-      </a>
+      <div class="wallet-badges" id="badgeWalletBadges">
+        <a class="wallet-badge apple disabled" id="badgeAppleWallet" href="#" rel="noopener noreferrer">
+          <img src="images/badge-apple-wallet.svg" alt="Add to Apple Wallet" width="152" height="48"/>
+        </a>
+        <a class="wallet-badge google disabled" id="badgeWallet" href="#" target="_blank" rel="noopener noreferrer">
+          <img src="images/badge-google-wallet.svg" alt="Add to Google Wallet" width="152" height="48"/>
+        </a>
+      </div>
       <p class="tiny" id="badgeNote"></p>
     </div>
 
@@ -1458,7 +1497,31 @@ Sound.fx = {
   hey() { if (Sound.muted || !Sound.ctx) return; const t = Sound.now();
     const base = randi(64, 71);
     Sound.tone({ freq: mtof(base), t, dur: 0.1, type: 'sine', gain: 0.11, rel: 0.06, glide: mtof(base + 5) });
-    Sound.tone({ freq: mtof(base + 4), t: t + 0.1, dur: 0.13, type: 'sine', gain: 0.1, rel: 0.09, glide: mtof(base + 9) }); }
+    Sound.tone({ freq: mtof(base + 4), t: t + 0.1, dur: 0.13, type: 'sine', gain: 0.1, rel: 0.09, glide: mtof(base + 9) }); },
+  lampSwitch(on) { if (Sound.muted || !Sound.ctx) return; const t = Sound.now();
+    Sound.hiss({ t, dur: 0.045, freq: 2400, to: 900, q: 1.4, gain: 0.1 });
+    Sound.tone({ freq: on ? 740 : 420, t, dur: 0.07, type: 'sine', gain: 0.08, rel: 0.05, glide: on ? 980 : 260 }); },
+  brew() { if (Sound.muted || !Sound.ctx) return; const t = Sound.now();
+    Sound.hiss({ t, dur: 1.55, freq: 4800, to: 2200, q: 0.55, gain: 0.07, type: 'highpass' });
+    Sound.hiss({ t: t + 0.08, dur: 1.4, freq: 1600, to: 700, q: 1.1, gain: 0.06, type: 'bandpass' });
+    Sound.tone({ freq: 190, t, dur: 1.5, type: 'triangle', gain: 0.05, atk: 0.08, rel: 0.2,
+                 filter: { type: 'lowpass', freq: 420, to: 140, q: 1.4 } });
+    for (let i = 0; i < 9; i++) {
+      Sound.tone({ freq: 210 + (i % 3) * 18, t: t + 0.18 + i * 0.14, dur: 0.07, type: 'sine',
+                   gain: 0.07, rel: 0.05, filter: { type: 'lowpass', freq: 900, q: 0.8 } });
+    }
+    Sound.tone({ freq: 140, t: t + 1.35, dur: 0.22, type: 'sine', gain: 0.09, rel: 0.12, glide: 90 }); },
+  glug() { if (Sound.muted || !Sound.ctx) return; const t = Sound.now();
+    Sound.hiss({ t, dur: 1.05, freq: 720, to: 340, q: 1.9, gain: 0.12, type: 'bandpass' });
+    for (let i = 0; i < 5; i++) {
+      Sound.tone({ freq: 205 - i * 10, t: t + i * 0.19, dur: 0.17, type: 'sine', gain: 0.17, rel: 0.08,
+                   glide: 88, glideT: 0.15, filter: { type: 'lowpass', freq: 480, to: 160, q: 1.3 } });
+    } },
+  waterCan() { if (Sound.muted || !Sound.ctx) return; const t = Sound.now();
+    Sound.hiss({ t, dur: 0.58, freq: 2800, to: 1300, q: 0.7, gain: 0.12, type: 'highpass' });
+    Sound.hiss({ t: t + 0.1, dur: 0.48, freq: 1700, to: 800, q: 0.85, gain: 0.08, type: 'bandpass' });
+    Sound.tone({ freq: 360, t: t + 0.4, dur: 0.14, type: 'sine', gain: 0.08, glide: 150, rel: 0.1 });
+    Sound.hiss({ t: t + 0.42, dur: 0.2, freq: 1500, to: 480, gain: 0.11 }); }
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -1562,10 +1625,12 @@ function makeStubbleHairMap(hex, skinHex) {
       const y = gy * rowH + (rnd() - 0.5) * 0.18;
       if (x < -2 || y < -2 || x > S + 2 || y > S + 2) continue;
       const yn = y / S;
-      /* Peak density in the join band (~0.22–0.88), soft only near pole. */
-      const join = Math.exp(-Math.pow((yn - 0.52) / 0.42, 2) * 0.92);
-      const pole = Math.pow(Math.max(0, (yn - 0.86) / 0.14), 1.20);
-      const dens = Math.max(0.12, 0.52 + join * 0.52 - pole * 0.62);
+      /* Density rises with height on the sphere — fine at the hem, thicker
+         climbing the sides into the join band under solid tops. */
+      const rise = Math.pow(Math.max(0, (yn - 0.16) / 0.74), 0.48);
+      const join = Math.exp(-Math.pow((yn - 0.54) / 0.44, 2) * 0.88);
+      const pole = Math.pow(Math.max(0, (yn - 0.88) / 0.12), 1.15);
+      const dens = Math.max(0.14, 0.34 + rise * 0.46 + join * 0.42 - pole * 0.58);
       if (dens < 0.10 && rnd() > dens * 4) continue;
       const rad = (0.62 + rnd() * 0.20) * (0.58 + dens * 0.42);
       const a0 = skinHex ? 0.72 : 0.54;
@@ -1705,44 +1770,42 @@ function buzzStubbleHemY(b) {
 function fadeIntoStubble(nx, ny, nz, skull, fade, topAmt) {
   /* Extra-wide smoothstep — rim starts thinning early so the solid
      shell never ends as a hard shelf over the stubble. */
-  const edge = Math.min(1, Math.max(0, (fade - 0.001) / 0.78));
+  const edge = Math.min(1, Math.max(0, (fade - 0.02) / 0.58));
   const smooth = edge * edge * (3 - 2 * edge);
-  /* Minimal top resistance — solid pad yields early into the join. */
+  /* Solid pad resists burial only at the crown core — sides yield into
+     the join band so thickness ramps stubble → mid → top. */
   const topKeep = Math.min(1, Math.max(0, topAmt));
-  const bury = Math.pow(smooth, 0.40) * (1 - topKeep * 0.06);
-  if (bury < 0.006) return { nx, ny, nz, bury: 0, keep: 1 };
-  /* keep = remaining shell thickness (1 full → 0 flush with stubble).
-     Extra linear pull keeps mid-band from holding a shelf. */
-  const keep = Math.pow(1 - bury, 2.05) * (1 - bury * 0.34);
-  /* Mid-band barely proud; fully buried verts hug stubble height. */
-  const lift = 1.0010 + keep * 0.022 + keep * keep * 0.008;
-  ({ nx, ny, nz } = hugToward(nx, ny, nz, Math.min(1, bury * 0.998), skull * lift));
-  ({ nx, ny, nz } = sealSkull(nx, ny, nz, skull, Math.max(1.0010, lift * 0.990)));
+  const bury = Math.pow(smooth, 0.48) * (1 - topKeep * 0.20);
+  if (bury < 0.004) return { nx, ny, nz, bury: 0, keep: 1 };
+  const keep = Math.pow(1 - bury, 1.48) * (1 - bury * 0.12);
+  const lift = 1.0012 + keep * 0.034 + keep * keep * 0.012;
+  ({ nx, ny, nz } = hugToward(nx, ny, nz, Math.min(1, bury * 0.96), skull * lift));
+  ({ nx, ny, nz } = sealSkull(nx, ny, nz, skull, Math.max(1.0012, lift * 0.992)));
   return { nx, ny, nz, bury, keep };
 }
 
 /* Join-band mask for stacked mid shells: sides/back under the solid top
    hem — not the crown core the top owns, not the open face. */
 function stubbleFadeZone(b) {
-  const low = Math.pow(Math.max(0, (0.92 - b.uy) / 0.82), 0.50);
-  const fade = Math.min(1, low * (0.52 + b.side * 1.22 + b.azBack * 1.12));
-  const crownCore = Math.pow(Math.max(0, (b.uy - 0.20) / 0.80), 1.02)
-    * Math.pow(Math.max(0, 0.50 - b.side) / 0.50, 1.32)
-    * (0.50 + (1 - b.azBack) * 0.50);
+  const low = Math.pow(Math.max(0, (0.96 - b.uy) / 0.90), 0.44);
+  const fade = Math.min(1, low * (0.58 + b.side * 1.28 + b.azBack * 1.18));
+  const crownCore = Math.pow(Math.max(0, (b.uy - 0.14) / 0.86), 0.95)
+    * Math.pow(Math.max(0, 0.48 - b.side) / 0.48, 1.22)
+    * (0.48 + (1 - b.azBack) * 0.52);
   const face = Math.pow(Math.max(0, b.azFront - 0.10) / 0.90, 1.12)
     * Math.pow(Math.max(0, (0.60 - b.uy) / 0.52), 1.05)
     * Math.pow(Math.max(0, 1 - b.side / 0.52), 1.35);
-  return Math.max(0, fade * (1 - crownCore * 0.96) * (1 - face * 0.90));
+  return Math.max(0, fade * (1 - crownCore * 0.94) * (1 - face * 0.90));
 }
 
-/* Underlayer shell thickness: full on sides/nape, tapering thin under the
-   solid crown over a tall vertical range so top↔stubble is one fade. */
+/* Underlayer shell thickness: full on sides/nape, tapering thin only under the
+   solid crown core so the join reads stubble → thicker → top pad on top. */
 function stubbleJoinTaper(b) {
-  const crownU = Math.min(1, Math.max(0, (b.uy + 0.10) / 1.00));
-  const crown = (crownU * crownU * (3 - 2 * crownU))
-    * Math.pow(Math.max(0, 0.94 - b.side) / 0.94, 0.48)
-    * (0.42 + (1 - b.azBack) * 0.40 + b.azBack * 0.22);
-  return Math.max(0.035, 1 - crown * 0.995);
+  const crownCore = Math.pow(Math.max(0, (b.uy - 0.16) / 0.84), 1.02)
+    * Math.pow(Math.max(0, (0.56 - b.side) / 0.56), 1.38)
+    * (0.52 + (1 - b.azBack) * 0.38);
+  const taper = crownCore * crownCore * (3 - 2 * crownCore);
+  return Math.max(0.86, 1 - taper * 0.86);
 }
 
 /* Solid-top rim tint: fade opaque hair color toward the light stubble
@@ -1796,9 +1859,9 @@ function applyStubbleRimFade(g, hairHex, skinHex) {
    solid top so the join reads thick → mid → shorter → stubble (not a
    hard cap beside stubble). Shortest mid first (closest to skull). */
 function putStubbleFadeStack(put, mat, extraMats, dna, topGeo, roughness = 0.88) {
-  put(G.buzzCut(1.005), stubbleHairMat(mat, dna.hair.color, extraMats), 0, 0, 0);
+  put(G.buzzCut(1.008), stubbleHairMat(mat, dna.hair.color, extraMats), 0, 0, 0);
   for (let level = 2; level >= 0; level--) {
-    const bandGeo = G.fadeBand(1.010 + (2 - level) * 0.006, level).clone();
+    const bandGeo = G.fadeBand(1.012 + (2 - level) * 0.007, level).clone();
     applyStubbleRimFade(bandGeo, dna.hair.color, dna.skin);
     const bandMat = new THREE.MeshStandardMaterial({
       color: '#ffffff', vertexColors: true,
@@ -1814,8 +1877,11 @@ function putStubbleFadeStack(put, mat, extraMats, dna, topGeo, roughness = 0.88)
     color: '#ffffff', vertexColors: true, roughness, metalness: 0.02,
     side: THREE.DoubleSide
   });
+  topMat.polygonOffset = true;
+  topMat.polygonOffsetFactor = 2;
+  topMat.polygonOffsetUnits = 2;
   if (extraMats) extraMats.push(topMat);
-  put(g, topMat, 0, 0, 0);
+  put(g, topMat, 0, 0, 0, 1.012, 1.012, 1.012);
 }
 
 const TAG_FONT = '800 62px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif';
@@ -1904,7 +1970,7 @@ function addHatCoMark(out, extraMats, crownHex, pose) {
   if (pose.rx) m.rotation.x = pose.rx;
   if (pose.ry) m.rotation.y = pose.ry;
   m.scale.set(pose.sx, pose.sy, 1);
-  m.renderOrder = 3;
+  m.renderOrder = 6;
   out.push(m);
   return m;
 }
@@ -5017,7 +5083,7 @@ function normalizeSocials(raw) {
 }
 function readProfileFromForm() {
   const out = {
-    fullName: String(($('miiFullName') && $('miiFullName').value) || '').trim().slice(0, 40)
+    fullName: String(($('miiName') && $('miiName').value) || ($('miiFullName') && $('miiFullName').value) || '').trim().slice(0, 40)
   };
   /* Website / socials removed from character creation — only write when fields exist. */
   if ($('miiUrl')) out.url = normalizeSiteUrl($('miiUrl').value);
@@ -5032,6 +5098,7 @@ function readProfileFromForm() {
   return out;
 }
 function fillProfileForm(dna) {
+  if ($('miiName') && dna) $('miiName').value = displayName(dna) || '';
   if ($('miiFullName')) $('miiFullName').value = (dna && dna.fullName) || '';
   if ($('miiUrl')) $('miiUrl').value = (dna && dna.url) || '';
   const socials = (dna && dna.socials) || {};
@@ -5051,8 +5118,7 @@ function applyProfile(dna, extra = {}) {
 }
 function formPublicError() {
   const checks = [
-    ['miiName', ($('miiName').value || '').trim()],
-    ['miiFullName', ($('miiFullName') && $('miiFullName').value) || '']
+    ['miiName', ($('miiName').value || '').trim()]
   ];
   for (const [id, val] of checks) {
     const err = publicNameError(val);
@@ -5300,17 +5366,21 @@ const G = {
   hairFront:(r, tl, ts = HAIR_CROWN) => geoCache(`hf${r}_${tl}_${ts}`, () => superball(r, 26, 12, HEAD_N, Math.PI / 2 - (HAIR_GAP + HAIR_OVER) / 2, HAIR_GAP + HAIR_OVER, ts, Math.max(0.12, tl - ts))),
   hairBand: (r) => geoCache(`hbd${r}`, () => superball(r, 26, 10, HEAD_N, Math.PI / 2 + HAIR_GAP / 2, TAU - HAIR_GAP, 1.15, 0.5)),
   dome: (r, tl) => geoCache(`dm${r}_${tl}`, () => superball(r, 36, 24, HEAD_N, 0, TAU, 0, tl)),
-  /* Folded rest-hood pouch for hooded tops. Squashed and flared so it reads
-     as cloth hanging from the collar, not a second skull. `rhoodA` is the
-     top-hood cache key — bump the letter when reshaping. */
-  restHood: () => geoCache('rhoodA', () => {
-    const g = superball(1, 28, 18, 2.2, 0, TAU, 0, 1.18);
+  /* Folded rest-hood pouch for hooded tops. Tight compact fold at the nape,
+     not a torso-sized blob. `rhoodE` — bump when reshaping. */
+  restHood: () => geoCache('rhoodE', () => {
+    const g = superball(1, 24, 14, 1.65, Math.PI * 0.55, Math.PI * 0.90, Math.PI * 0.38, Math.PI * 0.48);
     const p = g.attributes.position;
     const v = new THREE.Vector3();
     for (let i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i);
-      const open = Math.pow(Math.max(0, 1 - Math.max(-0.15, v.y)), 1.2);
-      p.setXYZ(i, v.x * 1.04, v.y * 0.52, v.z * (1.22 + open * 0.28));
+      const tuck = Math.pow(Math.max(0, 0.35 - v.y), 1.4);
+      p.setXYZ(
+        i,
+        v.x * (0.82 + tuck * 0.08),
+        v.y * 0.42 + 0.04,
+        v.z * (0.55 + tuck * 0.10) - 0.06
+      );
     }
     p.needsUpdate = true;
     g.computeVertexNormals();
@@ -5328,8 +5398,8 @@ const G = {
     const uyCtr = [0.52, 0.40, 0.28][lv];
     const uySpan = [0.38, 0.44, 0.50][lv];
     const sideMul = [0.90, 1.02, 1.14][lv];
-    const thick = [0.048, 0.028, 0.014][lv];
-    const hugAmt = [0.22, 0.48, 0.74][lv];
+    const thick = [0.062, 0.038, 0.020][lv];
+    const hugAmt = [0.18, 0.42, 0.68][lv];
     const bandWin = Math.pow(Math.max(0, 1 - Math.abs(b.uy - uyCtr) / uySpan), 0.62)
       * Math.min(1, 0.40 + b.side * sideMul * 0.70 + b.azBack * 0.75);
     const band = zone * bandWin;
@@ -5525,8 +5595,10 @@ const G = {
       * (1 - b.azBack * 0.85);
     const below = Math.max(0, hem - b.uy);
     const edge = Math.pow(Math.min(1, below / 0.10), 1.20);
-    const above = Math.pow(Math.min(1, Math.max(0, (b.uy - hem) / 0.62)), 0.48)
-      * (0.45 + b.side * 0.40 + b.azBack * 0.95);
+    const above = Math.pow(Math.min(1, Math.max(0, (b.uy - hem) / 0.74)), 0.36)
+      * (0.58 + b.side * 0.48 + b.azBack * 1.05);
+    const sideRise = b.side * Math.pow(Math.max(0, (b.uy - hem) / 0.80), 0.40)
+      * Math.pow(Math.max(0, b.side / 0.88), 0.55);
     const occiput = Math.pow(b.azBack, 0.55)
       * Math.pow(Math.min(1, Math.max(0, (b.uy - hem) / 0.70)), 0.40)
       * (1 - Math.pow(Math.min(1, b.side / 1.25), 1.80));
@@ -5538,7 +5610,8 @@ const G = {
     let maxTh = 1.38
       + b.side * 0.22
       + b.azBack * 0.42
-      + above * 0.14
+      + above * 0.18
+      + sideRise * 0.26
       + occiput * 0.18
       + templePad * 0.16
       - brow * 0.28
@@ -5569,9 +5642,8 @@ const G = {
     const feather = Math.pow(Math.min(1, Math.max(0, (hem + 0.06 - b.uy) / 0.14)), 1.15)
       * (0.22 + b.azBack * 0.22 + b.side * 0.28)
       * (1 - occiput * 0.55);
-    /* Full side lift → thin under crown (thickness gradient into solid top). */
-    const lift = 1.0018 + (0.0042 + above * 0.0014 + occiput * 0.0012
-      + templePad * 0.0016 - feather * 0.0004) * joinTaper;
+    const lift = 1.0022 + (0.0056 + above * 0.0022 + sideRise * 0.0018
+      + occiput * 0.0016 + templePad * 0.0018 - feather * 0.0004) * joinTaper;
     ({ nx, ny, nz } = hugToward(nx, ny, nz, 0.988 + (1 - joinTaper) * 0.12,
       skull * lift));
     ({ nx, ny, nz } = sealSkull(nx, ny, nz, skull, 1.0012 + joinTaper * 0.0014));
@@ -5588,46 +5660,46 @@ const G = {
       * Math.exp(-Math.pow((b.uy - 0.06) / 0.22, 2) * 2.0)
       * (0.70 + b.azFront * 0.30);
     const napeLow = b.azBack * Math.pow(Math.max(0, (0.22 - b.uy) / 0.40), 1.00);
-    /* Tall soft fade band — thickness ramps into stubble (rear+sides). */
-    const low = Math.pow(Math.max(0, (0.84 - b.uy) / 0.84), 0.54);
-    const fade = Math.min(1, low * (0.80 + b.side * 1.20 + b.azBack * 1.16)
+    const low = Math.pow(Math.max(0, (0.86 - b.uy) / 0.86), 0.50);
+    const fade = Math.min(1, low * (0.82 + b.side * 1.22 + b.azBack * 1.18)
       + earWin * 0.42 + napeLow * 0.54);
-    const top = Math.pow(Math.max(0, (b.uy - 0.14) / 0.86), 0.88)
-      * Math.pow(Math.max(0, 0.66 - b.side) / 0.66, 1.28)
-      * (1 - fade * 0.90);
-    let maxTh = 1.04
-      + top * 0.16
-      - brow * 0.14
-      - earWin * 0.48
-      - napeLow * 0.62
-      - fade * 0.38
-      - frame.faceOpen * 0.10;
-    if (b.th > maxTh + 0.03 && brow > 0.16 && fade < 0.42) {
+    const top = Math.pow(Math.max(0, (b.uy - 0.06) / 0.90), 0.78)
+      * Math.pow(Math.max(0, (0.72 - b.side) / 0.72), 1.12)
+      * (1 - fade * 0.72);
+    let maxTh = 1.06
+      + top * 0.18
+      - brow * 0.12
+      - earWin * 0.42
+      - napeLow * 0.54
+      - fade * 0.22
+      - frame.faceOpen * 0.08;
+    if (b.th > maxTh + 0.03 && brow > 0.16 && fade < 0.38) {
       return parkAtHairline(b, rr, bangY);
     }
     let { nx, ny, nz, skull } = superFromTheta(b, Math.min(b.th, maxTh), rr);
     let keep = 1;
     {
-      const faded = fadeIntoStubble(nx, ny, nz, skull, fade, top);
+      const fadeTop = Math.max(top, fade * 0.38);
+      const faded = fadeIntoStubble(nx, ny, nz, skull, fade, fadeTop);
       nx = faded.nx; ny = faded.ny; nz = faded.nz;
       keep = faded.keep != null ? faded.keep : (1 - faded.bury);
-      if (faded.bury > 0.90) return { nx, ny, nz };
+      if (faded.bury > 0.94) return { nx, ny, nz };
     }
-    if (brow > 0.10 && ny < bangY && top < 0.30) {
-      const t = Math.min(1, (bangY - ny) / 0.20) * brow * (1 - fade * 0.25) * keep;
+    if (brow > 0.10 && ny < bangY && top < 0.34) {
+      const t = Math.min(1, (bangY - ny) / 0.20) * brow * (1 - fade * 0.22) * keep;
       ny += (bangY - ny) * t;
       ({ nx, ny, nz } = hugToward(nx, ny, nz, t * 0.94, skull * 1.022));
     }
-    const hug = 0.16 + fade * 0.28 + earWin * 0.14 - top * 0.32;
+    const hug = 0.18 + fade * 0.32 + earWin * 0.14 - top * 0.22;
     ({ nx, ny, nz } = hugToward(nx, ny, nz, Math.max(0, hug) * keep,
-      skull * (1.006 + keep * (0.030 + Math.max(0, b.uy) * 0.010))));
+      skull * (1.008 + keep * (0.034 + Math.max(0, b.uy) * 0.012))));
     if (top > 0.04) {
-      ny += top * 0.058 * keep;
+      ny += top * 0.064 * keep;
       const L0 = Math.hypot(nx, ny, nz) || 1;
-      const k = (L0 + top * 0.046 * rr * keep) / L0;
+      const k = (L0 + top * 0.052 * rr * keep) / L0;
       nx *= k; ny *= k; nz *= k;
     }
-    ({ nx, ny, nz } = sealSkull(nx, ny, nz, skull, 1.006 + keep * 0.008));
+    ({ nx, ny, nz } = sealSkull(nx, ny, nz, skull, 1.008 + keep * 0.010));
     return { nx, ny, nz };
   }),
   frenchCrop: (r) => sculptHair(`fcropS${r}`, r, 2.00, 64, 48, (b, tl, rr) => {
@@ -8313,19 +8385,19 @@ const HATS = {
                 script: 'Co-Working', ink: '#141414' },
   knicks:   { crown: '#0d5eab', accent: '#f4842a', flat: true, mark: 'NY' },
   yankees:  { crown: '#132448', accent: '#e8e8ee', mark: 'NY' },
-  /* Khaki fisherman — blank lighter-canvas front patch, no mark. */
-  bucket:   { crown: '#8d8f68', accent: '#6d6f4e', patch: true },
+  /* Khaki fisherman — blank lighter-canvas front patch, no mark. Tint via Hat chip. */
+  bucket:   { crown: null, accent: null, patch: true },
   /* Angora-pile bucket with the house "Co-" stamp up front.
      Colour via Hat chip. Distinct from the cotton `bucket`. */
-  furry:     { crown: '#3c5280', accent: '#2a3a5c', fur: true, co: true },
+  furry:     { crown: null, accent: null, fur: true, co: true },
   cowboy:      { crown: '#8a6236', accent: '#4a3220', cattleman: true },
   /* Same block in shantung straw, which is what most of them actually are. */
   cowboystraw: { crown: '#e0d3ad', accent: '#4f3a29', cattleman: true,
                  straw: true, strawRepeat: [1, 1] },
   beanie:       { crown: null,      accent: null      },
-  /* Jacquard fossil beanie — one black colourway; Hat chip covers tint. Motif
-     is my own fossil rather than the alpine brand's archaeopteryx device. */
-  fossil:      { crown: '#191a1d', accent: '#121316', knit: true, ink: '#9ba3ab' },
+  /* Jacquard fossil beanie — Hat chip covers tint. Motif is my own fossil
+     rather than the alpine brand's archaeopteryx device. */
+  fossil:      { crown: null, accent: null, knit: true, ink: '#9ba3ab' },
   bandana:      { crown: null, paisley: true }   // takes hatColor, like a cap
 };
 const HAT_STYLES = Object.keys(HATS);
@@ -8809,11 +8881,11 @@ function makeApparelTexture(dna) {
       break;
     }
     case 'techvest': {
-      /* techvestB — black sleeveless vest over a fixed blue button-up.
-         Deep V in the visible chest shows shirt colour, collar tips, and
-         a placket; armholes cut clean at the shoulder (no pink-strap look). */
+      /* techvestB — black sleeveless vest over a button-up in the user's
+         shirt colour. Deep V in the visible chest shows shirt colour,
+         collar tips, and a placket; armholes cut clean at the shoulder. */
       const vest = '#1a1b1e';
-      const shirt = '#2f6f9e';
+      const shirt = base;
       g.fillStyle = vest;
       g.fillRect(0, 0, W, H);
       g.globalAlpha = 0.12;
@@ -9394,7 +9466,9 @@ function makeInkTexture(kind) {
 }
 
 function buildHair(dna, mat, extraMats) {
-  const out = [], st = dna.hair.style;
+  const out = [];
+  let hatOut = null;
+  const st = dna.hair.style;
   const add = (g, x, y, z, sx, sy, sz, rx) => {
     const m = new THREE.Mesh(g, mat);
     m.position.set(x, y, z);
@@ -9432,6 +9506,16 @@ function buildHair(dna, mat, extraMats) {
   };
 
   if (HATS[st]) {
+    hatOut = [];
+    const putHat = (g, mtl, x, y, z, sx, sy, sz) => {
+      const m = new THREE.Mesh(g, mtl);
+      m.position.set(x, y, z);
+      m.scale.set(sx ?? 1, sy ?? sx ?? 1, sz ?? sx ?? 1);
+      m.renderOrder = 6;
+      hatOut.push(m);
+      return m;
+    };
+    const put = putHat;
     const H = HATS[st];
     /* Catalog crowns (club caps, cowboy, etc.) keep their colourway.
        Caps, beanies and the bandana take dna.hatColor from the Hat picker. */
@@ -9589,7 +9673,7 @@ function buildHair(dna, mat, extraMats) {
       if (H.co) {
         /* House "Co-" on the furry front — sit proud of the pile; ink
            auto-flips for pale colourways via addHatCoMark. */
-        addHatCoMark(out, extraMats, crownCol, {
+        addHatCoMark(hatOut, extraMats, crownCol, {
           x: 0, y: 0.82, z: 1.28, rx: -0.12, sx: 0.52, sy: 0.34
         });
       }
@@ -9825,8 +9909,8 @@ function buildHair(dna, mat, extraMats) {
         sc.position.set(0, 0.74, 1.00);
         sc.rotation.x = -0.38;
         sc.scale.set(0.88, 0.605, 1);
-        sc.renderOrder = 3;
-        out.push(sc);
+        sc.renderOrder = 6;
+        hatOut.push(sc);
       }
 
       /* Small embroidered patch, front and centre, sitting high on the panel
@@ -9844,8 +9928,8 @@ function buildHair(dna, mat, extraMats) {
         em.position.set(0, 0.60, 1.06);
         em.rotation.x = -0.40;
         em.scale.set(0.44, 0.44, 1);
-        em.renderOrder = 3;
-        out.push(em);
+        em.renderOrder = 6;
+        hatOut.push(em);
       }
 
       /* Dad-hat banana — small, centred on the front panel. */
@@ -9858,8 +9942,8 @@ function buildHair(dna, mat, extraMats) {
         ban.position.set(0, 0.58, 1.08);
         ban.rotation.x = -0.36;
         ban.scale.set(0.38, 0.38, 1);
-        ban.renderOrder = 3;
-        out.push(ban);
+        ban.renderOrder = 6;
+        hatOut.push(ban);
       }
 
       // Abstract monogram, not a team wordmark.
@@ -9872,14 +9956,14 @@ function buildHair(dna, mat, extraMats) {
         logo.position.set(0, 0.52, 1.12);   // just clear of the crown surface
         logo.rotation.x = -0.3;
         logo.scale.set(0.5, 0.38, 1);
-        logo.renderOrder = 2;
-        out.push(logo);
+        logo.renderOrder = 6;
+        hatOut.push(logo);
       }
 
       /* Bold house "Co-" — camo, White & green, etc. White on dark crowns,
          black on pale ones; camo gets a larger light-tan stamp. */
       if (H.co) {
-        addHatCoMark(out, extraMats, crownCol, H.camo ? {
+        addHatCoMark(hatOut, extraMats, crownCol, H.camo ? {
           x: 0, y: 0.56, z: 1.12, rx: -0.30, sx: 0.70, sy: 0.46, ink: '#e8dcc8'
         } : {
           x: 0, y: 0.56, z: 1.12, rx: -0.30, sx: 0.52, sy: 0.34
@@ -10342,7 +10426,7 @@ function buildHair(dna, mat, extraMats) {
       bang.rotation.x = 0.28;
     }
   }
-  return out;
+  return { hair: out, hat: hatOut || [] };
 }
 
 function buildMii(dna) {
@@ -10426,22 +10510,27 @@ function buildMii(dna) {
   nose.position.set(0, dna.nose.y, 0.965);
   headScale.add(nose);
 
-  for (const h of buildHair(dna, hairMat, M.mats)) headScale.add(h);
+  const hairParts = buildHair(dna, hairMat, M.mats);
+  for (const h of hairParts.hair) headScale.add(h);
 
-  /* Glasses / sunglasses after hair: depthTest off so fringe cannot
-     occlude frames; renderOrder above hat decals (3). Same face shell
-     UVs — no Z push, so they stay seated on the brow. */
+  /* Glasses after hair so bangs cannot bury the frames. With a hat, eyewear
+     is inserted before the hat meshes and uses depthTest so the brim/crown
+     occludes frames instead of drawing on top (depthTest off + renderOrder 5
+     always won over hat decals). Without a hat, depthTest stays off. */
+  const wearingHat = hairParts.hat.length > 0;
   const eyewearTex = drawEyewearTex(dna);
   if (eyewearTex) {
     const eyewearMat = new THREE.MeshStandardMaterial({
       map: eyewearTex, transparent: true, alphaTest: 0.03,
-      roughness: 0.90, depthTest: false, depthWrite: false
+      roughness: 0.90,
+      depthTest: !wearingHat, depthWrite: false
     });
     M.mats.push(eyewearMat);
     const eyewear = new THREE.Mesh(G.face(), eyewearMat);
-    eyewear.renderOrder = 5;
+    eyewear.renderOrder = wearingHat ? 4 : 5;
     headScale.add(eyewear);
   }
+  for (const h of hairParts.hat) headScale.add(h);
 
   /* ---- torso ---- */
   const torso = new THREE.Mesh(G.torso(), shirtMat);
@@ -10484,7 +10573,7 @@ function buildMii(dna) {
         })
       : apparel.open
         ? new THREE.MeshStandardMaterial({
-            color: apparel.kind === 'techvest' ? '#2f6f9e' : shade(dna.shirt, -30),
+            color: shade(dna.shirt, -30),
             roughness: 0.7
           })
         : whiteMat;
@@ -10501,9 +10590,8 @@ function buildMii(dna) {
     body.add(collar);
   }
 
-  /* Folded-down rest hood — small pouch on the back top of the shirt,
-     opening at the collar and draping slightly out/down. Shared by Hoodie,
-     Bubble jacket, and Box hoodie. Modest (not worn up, not a cape). */
+  /* Folded-down rest hood — small tight fold at the upper back/neck.
+     Shared by Hoodie, Bubble jacket, and Box hoodie. */
   if (apparel.hood) {
     const fur = apparel.hood === 'fur';
     const shellMat = new THREE.MeshStandardMaterial({
@@ -10529,17 +10617,17 @@ function buildMii(dna) {
       });
       M.mats.push(rimMat);
     }
-    const puff = fur ? 1.08 : 1;
+    const puff = fur ? 1.06 : 1;
     const hood = new THREE.Mesh(G.restHood(), shellMat);
-    hood.scale.set(0.33 * puff, 0.125 * puff, 0.27 * puff);
-    hood.position.set(0, 0.625, -0.37);
-    hood.rotation.x = -1.08;
+    hood.scale.set(0.17 * puff, 0.14 * puff, 0.16 * puff);
+    hood.position.set(0, 0.735, -0.26);
+    hood.rotation.x = -0.22;
     body.add(hood);
-    /* Opening rim — the U-loop silhouette at the nape/collar. */
+    /* Opening rim — tiny U-loop at the nape/collar. */
     const rim = new THREE.Mesh(G.collar(), rimMat);
-    rim.scale.set(fur ? 0.17 : 0.145, fur ? 0.17 : 0.145, fur ? 0.10 : 0.085);
-    rim.rotation.x = Math.PI / 2 - 0.98;
-    rim.position.set(0, 0.698, -0.205);
+    rim.scale.set(fur ? 0.11 : 0.095, fur ? 0.11 : 0.095, fur ? 0.06 : 0.055);
+    rim.rotation.x = Math.PI / 2 - 0.38;
+    rim.position.set(0, 0.728, -0.12);
     body.add(rim);
   }
 
@@ -10812,13 +10900,23 @@ class Mii {
         if (dot > 0) { this.vel.x -= 2 * dot * nx * 0.7; this.vel.z -= 2 * dot * nz * 0.7; }
       }
     }
-    // gentle separation
+    // gentle separation from other Miis
     for (const o of W.miis) {
       if (o === this || o.state === 'held' || this.state === 'held') continue;
       const dx = this.pos.x - o.pos.x, dz = this.pos.z - o.pos.z;
       const d2 = dx * dx + dz * dz;
       if (d2 < 1.25 * 1.25 && d2 > 1e-5) {
         const d = Math.sqrt(d2), push = (1.25 - d) * 2.6 * dt;
+        this.pos.x += (dx / d) * push; this.pos.z += (dz / d) * push;
+      }
+    }
+    // gentle separation from plaza props
+    for (const o of W.obstacles) {
+      const dx = this.pos.x - o.x, dz = this.pos.z - o.z;
+      const d2 = dx * dx + dz * dz;
+      const min = o.r + 0.65;
+      if (d2 < min * min && d2 > 1e-5) {
+        const d = Math.sqrt(d2), push = (min - d) * 2.6 * dt;
         this.pos.x += (dx / d) * push; this.pos.z += (dz / d) * push;
       }
     }
@@ -10849,9 +10947,15 @@ class Mii {
     if (this.timer <= 0) {
       if (chance(0.62)) {
         const here = Math.atan2(this.pos.z, this.pos.x);
-        const a = here + rand(0.7, TAU - 0.7);           // head somewhere else in the plaza
-        const rr = rand(1.6, this.world.bounds * 0.94);
-        this.walkTarget.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
+        let tx = this.pos.x, tz = this.pos.z;
+        for (let i = 0; i < 10; i++) {
+          const a = here + rand(0.7, TAU - 0.7);
+          const rr = rand(1.6, this.world.bounds * 0.94);
+          tx = Math.cos(a) * rr;
+          tz = Math.sin(a) * rr;
+          if (!this.world.pointInObstacle(tx, tz)) break;
+        }
+        this.walkTarget.set(tx, 0, tz);
         this.state = 'walk'; this.timer = rand(3, 8);
       } else {
         this.timer = rand(1.4, 4);
@@ -11114,6 +11218,7 @@ const World = {
   scene, camera, renderer, controls,
   miis: [],
   props: [],
+  obstacles: [],
   // the plaza widens with the crowd instead of capping how many can join
   get bounds() { return Math.min(18, 6.2 + Math.sqrt(this.miis.length) * 0.85); },
   blobTex: makeBlobTexture(),
@@ -11166,6 +11271,33 @@ const World = {
       if (d < bd) { bd = d; best = o; }
     }
     return bd < 16 ? best : null;
+  },
+
+  /** Plaza furniture / plant footprints for Mii avoidance. */
+  rebuildObstacles() {
+    const RAD = {
+      desk: 1.18, arcade: 0.72, kitchenette: 1.38, chair: 0.78,
+      'end-table': 0.52, lamp: 0.42, 'plant-leafy': 0.48, 'plant-aloe': 0.50,
+      'plant-succulent': 0.32, 'plant-cactus': 0.46, 'plant-bamboo': 0.48,
+      'plant-fern': 0.52
+    };
+    this.obstacles = (this.props || []).map((root) => {
+      const id = root.userData.plazaItem?.id || root.userData.plazaProp?.id || '';
+      const sc = root.scale.x || 1;
+      return {
+        x: root.position.x,
+        z: root.position.z,
+        r: (RAD[id] || 0.55) * sc
+      };
+    });
+  },
+
+  pointInObstacle(x, z, pad = 0.65) {
+    for (const o of this.obstacles) {
+      const dx = x - o.x, dz = z - o.z;
+      if (dx * dx + dz * dz < (o.r + pad) ** 2) return true;
+    }
+    return false;
   },
 
   add(dna, opts = {}) {
@@ -11244,6 +11376,7 @@ const World = {
   update(dt, t) {
     for (const m of this.miis) m.update(dt, t);
     this.updateFx(dt);
+    if (typeof PropFx !== 'undefined') PropFx.update(dt);
   }
 };
 World.initFx();
@@ -11281,9 +11414,9 @@ function propShadow(sx = 1.15, sz = 1.15) {
   return m;
 }
 
-function tagProp(root, id, title, interactive = false) {
+function tagProp(root, id, title, interactive = false, href = null) {
   root.name = id;
-  root.userData.plazaItem = { id, title, interactive };
+  root.userData.plazaItem = { id, title, interactive, href: href || null };
   return root;
 }
 
@@ -11330,7 +11463,7 @@ function buildLeafyPlant() {
     addP(g, PG.ball(14), leaf, lx, 0.34 + h * 0.85 + ly * 0.15, lz, 0.11, 0.16, 0.045, tilt * 0.4, Math.atan2(lx, lz), 0.2);
   }
   g.add(propShadow(0.95, 0.95));
-  return tagProp(g, 'plant-leafy', 'Monstera');
+  return tagProp(g, 'plant-leafy', 'Water plants', true);
 }
 
 /** Thick aloe/succulent leaves in a terracotta pot. */
@@ -11348,7 +11481,7 @@ function buildAloePlant() {
     addP(g, PG.cap(0.055, h), leaf, x, 0.42 + h * 0.35, z, 1, 1, 0.72, lean, a, 0);
   }
   g.add(propShadow(0.85, 0.85));
-  return tagProp(g, 'plant-aloe', 'Aloe');
+  return tagProp(g, 'plant-aloe', 'Water plants', true);
 }
 
 /** Low glossy rosette succulent in a round white pot. */
@@ -11370,7 +11503,7 @@ function buildGlossySucculent() {
   }
   addP(g, PG.ball(10), leaf, 0, 0.40, 0, 0.05, 0.04, 0.05);
   g.add(propShadow(0.8, 0.8));
-  return tagProp(g, 'plant-succulent', 'Succulent');
+  return tagProp(g, 'plant-succulent', 'Water plants', true);
 }
 
 /** Columnar cactus with arms + tiny spines, white pot. */
@@ -11391,7 +11524,7 @@ function buildCactus() {
       0.012, 0.04, 0.012, Math.PI / 2, a, 0);
   }
   g.add(propShadow(0.75, 0.75));
-  return tagProp(g, 'plant-cactus', 'Cactus');
+  return tagProp(g, 'plant-cactus', 'Water plants', true);
 }
 
 /** Tall bamboo stalks with lance leaves in a white pot. */
@@ -11420,6 +11553,136 @@ function buildBamboo() {
   return tagProp(g, 'plant-bamboo', 'Bamboo');
 }
 
+/** Arching Boston-style fern — lots of fronds, tiny leaflets. */
+function buildFern() {
+  const g = new THREE.Group();
+  potBowl(g, '#efe8dc', '#c4b49a', 0.26, 0.20);
+  const stem = pMat('#2f6b38', 0.7);
+  const leaf = pMat('#4caf55', 0.52);
+  const leafDk = pMat('#2e8a3c', 0.58);
+  for (let f = 0; f < 14; f++) {
+    const a = (f / 14) * TAU + 0.18;
+    const lean = 0.72 + (f % 3) * 0.16;
+    const len = 0.42 + (f % 5) * 0.07;
+    const sx = Math.cos(a) * 0.04, sz = Math.sin(a) * 0.04;
+    addP(g, PG.cyl(6), stem,
+      sx, 0.30 + len * 0.28, sz,
+      0.012, len, 0.012,
+      lean * Math.cos(a) * 0.35, 0, lean * Math.sin(a) * 0.35);
+    for (let L = 0; L < 8; L++) {
+      const t = (L + 1) / 9;
+      const along = 0.28 + t * len * 0.95;
+      const spread = 0.05 + t * 0.11;
+      const y = 0.30 + along * Math.cos(lean * 0.45);
+      const ox = Math.cos(a) * (0.02 + t * len * 0.55);
+      const oz = Math.sin(a) * (0.02 + t * len * 0.55);
+      const side = (L % 2 ? 1 : -1);
+      const px = ox + Math.cos(a + Math.PI / 2) * spread * side;
+      const pz = oz + Math.sin(a + Math.PI / 2) * spread * side;
+      addP(g, PG.ball(7), L % 3 ? leaf : leafDk,
+        px, y, pz,
+        0.055 - t * 0.02, 0.018, 0.028,
+        0.5, a + side * 0.4, 0.3);
+    }
+  }
+  g.add(propShadow(0.95, 0.95));
+  return tagProp(g, 'plant-fern', 'Water plants', true);
+}
+
+/** World-space point on a prop for particles / SFX. */
+function propWorldPos(root, lx = 0, ly = 0.5, lz = 0) {
+  const v = new THREE.Vector3(lx, ly, lz);
+  root.updateMatrixWorld(true);
+  return root.localToWorld(v);
+}
+
+/** Smoke (coffee) and bubble (water / plants) particles above plaza props. */
+const PropFx = {
+  pool: [],
+  init() {
+    if (this.pool.length) return;
+    const geo = geoCache('pfxquad', () => new THREE.PlaneGeometry(1, 1));
+    for (let i = 0; i < 28; i++) {
+      const mat = new THREE.MeshBasicMaterial({
+        transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.visible = false;
+      mesh.renderOrder = 12;
+      scene.add(mesh);
+      this.pool.push({ mesh, life: 0, dur: 0, kind: '', vy: 0, vx: 0, vz: 0 });
+    }
+  },
+  spawn(kind, x, y, z, count = 10) {
+    for (let i = 0; i < count; i++) {
+      const p = this.pool.find((q) => q.life <= 0 && !q.mesh.visible);
+      if (!p) break;
+      p.kind = kind;
+      p.life = 0;
+      p.dur = kind === 'smoke' ? 1.1 + Math.random() * 0.5 : 0.75 + Math.random() * 0.35;
+      p.vy = kind === 'smoke' ? 0.22 + Math.random() * 0.18 : 0.10 + Math.random() * 0.12;
+      p.vx = rand(-0.04, 0.04);
+      p.vz = rand(-0.04, 0.04);
+      p.mesh.position.set(x + rand(-0.08, 0.08), y + rand(-0.02, 0.06), z + rand(-0.08, 0.08));
+      p.mesh.rotation.set(rand(0, TAU), rand(0, TAU), 0);
+      p.mesh.material.color.setHex(kind === 'smoke' ? 0xb8c4ce : 0xd8f4ff);
+      p.mesh.material.opacity = kind === 'smoke' ? 0.38 : 0.52;
+      p.mesh.scale.setScalar(kind === 'smoke' ? 0.10 : 0.06);
+      p.mesh.visible = true;
+    }
+  },
+  update(dt) {
+    for (const p of this.pool) {
+      if (!p.mesh.visible) continue;
+      p.life += dt;
+      const k = clamp(p.life / p.dur, 0, 1);
+      if (k >= 1) {
+        p.mesh.visible = false;
+        p.mesh.material.opacity = 0;
+        p.life = 0;
+        continue;
+      }
+      p.mesh.position.x += p.vx * dt;
+      p.mesh.position.y += p.vy * dt;
+      p.mesh.position.z += p.vz * dt;
+      const fade = 1 - k * k;
+      p.mesh.material.opacity = (p.kind === 'smoke' ? 0.38 : 0.5) * fade;
+      const s = p.mesh.scale.x * (1 + dt * (p.kind === 'smoke' ? 0.9 : 0.5));
+      p.mesh.scale.setScalar(s);
+    }
+  }
+};
+
+const PlazaPropActions = {
+  lampOn: true,
+  toggleLamp(root) {
+    this.lampOn = !this.lampOn;
+    const glow = root.userData.lampGlow;
+    const bulb = root.userData.lampBulb;
+    if (glow) glow.intensity = this.lampOn ? 0.55 : 0;
+    if (bulb && bulb.material) {
+      bulb.material.emissive.setHex(this.lampOn ? 0xffe8c0 : 0x000000);
+      bulb.material.emissiveIntensity = this.lampOn ? 0.65 : 0;
+    }
+    Sound.fx.lampSwitch(this.lampOn);
+  },
+  brewCoffee(root) {
+    const p = propWorldPos(root, 0, 0.78, 0.14);
+    PropFx.spawn('smoke', p.x, p.y, p.z, 14);
+    Sound.fx.brew();
+  },
+  pourWater(root) {
+    const p = propWorldPos(root, 0, 0.68, 0.08);
+    PropFx.spawn('bubble', p.x, p.y, p.z, 16);
+    Sound.fx.glug();
+  },
+  waterPlant(root) {
+    const p = propWorldPos(root, 0, 0.38, 0);
+    PropFx.spawn('bubble', p.x, p.y, p.z, 8);
+    Sound.fx.waterCan();
+  }
+};
+
 /** Floor lamp — slim stem, soft shade, warm glow disc. */
 function buildTallLamp() {
   const g = new THREE.Group();
@@ -11431,16 +11694,104 @@ function buildTallLamp() {
   addP(g, geoCache('plampshade', () => new THREE.CylinderGeometry(0.18, 0.32, 0.36, 20, 1, true)),
     shadeMat, 0, 1.98, 0);
   addP(g, PG.cyl(16), pMat('#f2ebe0', 0.8), 0, 2.15, 0, 0.17, 0.03, 0.17);
-  addP(g, PG.cyl(16), pMat('#fff6e0', 0.4, 0.05), 0, 1.82, 0, 0.16, 0.04, 0.16);
+  const bulbMat = new THREE.MeshStandardMaterial({
+    color: '#fff8e8', emissive: '#ffe8c0', emissiveIntensity: 0.65, roughness: 0.5
+  });
+  const bulb = addP(g, PG.cyl(16), bulbMat, 0, 1.82, 0, 0.16, 0.04, 0.16);
   const glow = new THREE.PointLight(0xffe0b0, 0.55, 4.5, 2);
   glow.position.set(0, 1.85, 0);
   g.add(glow);
+  g.userData.lampGlow = glow;
+  g.userData.lampBulb = bulb;
   g.add(propShadow(0.9, 0.9));
-  return tagProp(g, 'lamp', 'Desk lamp');
+  return tagProp(g, 'lamp', 'Desk lamp', true);
+}
+
+/** Puffy Wii-style lounge chair — seat faces local +Z. */
+function buildLoungeChair() {
+  const g = new THREE.Group();
+  const fabric = pMat('#d32f2f', 0.82);
+  const piped = pMat('#b71c1c', 0.78);
+  const wood = pMat('#c9a574', 0.82);
+  addP(g, PG.box(), fabric, 0, 0.44, 0.04, 0.70, 0.14, 0.62);
+  addP(g, PG.ball(12), fabric, 0, 0.50, 0.04, 0.36, 0.08, 0.30);
+  addP(g, PG.box(), fabric, 0, 0.86, -0.26, 0.70, 0.70, 0.12);
+  addP(g, PG.ball(10), fabric, 0, 1.16, -0.26, 0.34, 0.10, 0.08);
+  addP(g, PG.box(), piped, -0.38, 0.62, 0.02, 0.12, 0.28, 0.58);
+  addP(g, PG.box(), piped, 0.38, 0.62, 0.02, 0.12, 0.28, 0.58);
+  addP(g, PG.cyl(8), wood, -0.26, 0.16, 0.20, 0.035, 0.32, 0.035);
+  addP(g, PG.cyl(8), wood, 0.26, 0.16, 0.20, 0.035, 0.32, 0.035);
+  addP(g, PG.cyl(8), wood, -0.26, 0.16, -0.20, 0.035, 0.32, 0.035);
+  addP(g, PG.cyl(8), wood, 0.26, 0.16, -0.20, 0.035, 0.32, 0.035);
+  g.add(propShadow(1.15, 1.05));
+  return tagProp(g, 'chair', 'Chair');
+}
+
+/** Round end table with a lower shelf. */
+function buildEndTable() {
+  const g = new THREE.Group();
+  const wood = pMat('#c9a574', 0.82);
+  const top = pMat('#f4f7f9', 0.7);
+  const leg = pMat('#d8c4a4', 0.75);
+  addP(g, PG.cyl(24), top, 0, 0.48, 0, 0.38, 0.05, 0.38);
+  addP(g, PG.cyl(24), wood, 0, 0.45, 0, 0.40, 0.03, 0.40);
+  addP(g, PG.cyl(20), wood, 0, 0.18, 0, 0.30, 0.03, 0.30);
+  for (let i = 0; i < 3; i++) {
+    const a = (i / 3) * TAU + 0.4;
+    addP(g, PG.cyl(8), leg, Math.cos(a) * 0.22, 0.24, Math.sin(a) * 0.22, 0.03, 0.48, 0.03);
+  }
+  g.add(propShadow(0.95, 0.95));
+  return tagProp(g, 'end-table', 'End table');
+}
+
+/** Soft ellipse under the furniture ring. Not in World.props so it never steals clicks. */
+function makePlazaRugTexture() {
+  const S = 512, c = cv(S), g = c.getContext('2d');
+  g.fillStyle = '#f8a088';
+  g.fillRect(0, 0, S, S);
+  for (let y = 0; y < S; y += 3) {
+    for (let x = 0; x < S; x += 3) {
+      const n = Math.sin(x * 0.09 + y * 0.07) * Math.cos(y * 0.11 - x * 0.05);
+      const v = 0.92 + n * 0.10 + (Math.random() - 0.5) * 0.06;
+      const r = Math.floor(252 * v + 2);
+      const gr = Math.floor(148 * v + 10);
+      const b = Math.floor(118 * v + 8);
+      g.fillStyle = `rgb(${r},${gr},${b})`;
+      g.fillRect(x, y, 3, 3);
+    }
+  }
+  for (let i = 0; i < 1800; i++) {
+    const x = Math.random() * S, y = Math.random() * S;
+    const a = 0.03 + Math.random() * 0.09;
+    g.fillStyle = Math.random() > 0.45
+      ? `rgba(255,220,200,${a})` : `rgba(210,100,82,${a * 0.85})`;
+    g.fillRect(x, y, 1 + Math.random() * 2, 2 + Math.random() * 6);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  return t;
+}
+
+function installPlazaRug() {
+  const mat = new THREE.MeshStandardMaterial({
+    map: makePlazaRugTexture(),
+    color: '#f8b098',
+    roughness: 0.98,
+    metalness: 0
+  });
+  const rug = new THREE.Mesh(geoCache('prug', () => new THREE.CircleGeometry(1, 64)), mat);
+  rug.rotation.x = -Math.PI / 2;
+  rug.position.set(-0.6, 0.011, 0.5);
+  rug.scale.set(6.6, 5.4, 1);
+  rug.renderOrder = -1;
+  rug.raycast = () => {};
+  scene.add(rug);
+  return rug;
 }
 
 /** Chunky drip / espresso coffee machine. */
-function buildCoffeeMachine() {
+function buildCoffeeMachine(nested = false) {
   const g = new THREE.Group();
   const body = pMat('#eceff2', 0.62);
   const dark = pMat('#2a3036', 0.55);
@@ -11456,38 +11807,121 @@ function buildCoffeeMachine() {
   addP(g, PG.box(), accent, 0.14, 0.58, 0.18, 0.06, 0.04, 0.04);
   addP(g, PG.cyl(16), pMat('#2a3036', 0.7), -0.02, 0.72, -0.02, 0.12, 0.16, 0.12);
   addP(g, PG.ball(12), pMat('#2a3036', 0.65), -0.02, 0.82, -0.02, 0.11, 0.08, 0.11);
-  g.add(propShadow(0.95, 0.85));
-  return tagProp(g, 'coffee', 'Coffee machine');
+  if (!nested) g.add(propShadow(0.95, 0.85));
+  return tagProp(g, 'coffee', 'Coffee machine', true);
 }
 
-/** Office water cooler with inverted blue jug. */
-function buildWaterCooler() {
+/** Compact countertop water dispenser with inverted jug facing the plaza. */
+function buildCounterWater() {
   const g = new THREE.Group();
-  const cabinet = pMat('#e8ecef', 0.7);
+  const body = pMat('#e8ecef', 0.7);
   const jug = new THREE.MeshStandardMaterial({
     color: '#4aa7e0', roughness: 0.22, metalness: 0.05,
     transparent: true, opacity: 0.72, depthWrite: false
   });
-  addP(g, PG.box(), cabinet, 0, 0.55, 0, 0.42, 1.10, 0.40);
-  // alcove
-  addP(g, PG.box(), pMat('#d5dde3', 0.75), 0, 0.72, 0.18, 0.28, 0.32, 0.08);
-  addP(g, PG.cyl(10), pMat('#f4f6f8', 0.55), -0.07, 0.78, 0.22, 0.025, 0.08, 0.025, 0, 0, 0.6);
-  addP(g, PG.cyl(10), pMat('#f4f6f8', 0.55), 0.07, 0.78, 0.22, 0.025, 0.08, 0.025, 0, 0, -0.6);
-  addP(g, PG.box(), pMat('#3a8fd0', 0.5), -0.07, 0.68, 0.22, 0.05, 0.015, 0.02);
-  addP(g, PG.box(), pMat('#d4543a', 0.5), 0.07, 0.68, 0.22, 0.05, 0.015, 0.02);
-  addP(g, PG.box(), pMat('#cfd6dc', 0.7), 0, 0.55, 0.22, 0.18, 0.03, 0.10);
-  // vents
-  for (let i = 0; i < 6; i++) {
-    addP(g, PG.box(), pMat('#b8c2ca', 0.7), -0.20, 0.85 - i * 0.05, 0.05, 0.02, 0.012, 0.18);
+  addP(g, PG.box(), body, 0, 0.22, 0, 0.32, 0.44, 0.30);
+  addP(g, PG.box(), pMat('#d5dde3', 0.75), 0, 0.28, 0.14, 0.22, 0.20, 0.06);
+  addP(g, PG.cyl(8), pMat('#f4f6f8', 0.55), -0.05, 0.32, 0.17, 0.02, 0.06, 0.02, 0, 0, 0.55);
+  addP(g, PG.cyl(8), pMat('#f4f6f8', 0.55), 0.05, 0.32, 0.17, 0.02, 0.06, 0.02, 0, 0, -0.55);
+  addP(g, PG.box(), pMat('#3a8fd0', 0.5), -0.05, 0.24, 0.17, 0.04, 0.012, 0.016);
+  addP(g, PG.box(), pMat('#d4543a', 0.5), 0.05, 0.24, 0.17, 0.04, 0.012, 0.016);
+  const jugGrp = new THREE.Group();
+  jugGrp.rotation.y = Math.PI;
+  addP(jugGrp, PG.cyl(16), jug, 0, 0.62, 0, 0.14, 0.28, 0.14);
+  addP(jugGrp, PG.ball(14), jug, 0, 0.76, 0, 0.14, 0.11, 0.14);
+  addP(jugGrp, PG.cyl(14), pMat('#3a90c8', 0.35, 0.05), 0, 0.56, 0, 0.145, 0.025, 0.145);
+  addP(jugGrp, PG.cyl(14), pMat('#3a90c8', 0.35, 0.05), 0, 0.66, 0, 0.145, 0.025, 0.145);
+  addP(jugGrp, PG.box(), pMat('#e8f4fc', 0.45), 0, 0.50, 0.12, 0.06, 0.04, 0.05);
+  g.add(jugGrp);
+  return tagProp(g, 'cooler', 'Water cooler', true);
+}
+
+function addFruitBowl(parent, x, y, z) {
+  const bowl = pMat('#f3eee6', 0.62);
+  addP(parent, PG.cyl(18), bowl, x, y + 0.03, z, 0.16, 0.05, 0.16);
+  addP(parent, PG.torus(0.018), pMat('#e4d8c8', 0.6), x, y + 0.055, z, 0.155, 0.155, 0.155, Math.PI / 2, 0, 0);
+  addP(parent, PG.ball(10), pMat('#d4453a', 0.42), x - 0.05, y + 0.10, z + 0.02, 0.055, 0.05, 0.055);
+  addP(parent, PG.ball(10), pMat('#5dad3a', 0.45), x + 0.04, y + 0.10, z - 0.03, 0.05, 0.048, 0.05);
+  addP(parent, PG.ball(10), pMat('#e8892a', 0.4), x + 0.02, y + 0.09, z + 0.05, 0.048, 0.045, 0.048);
+  addP(parent, PG.ball(10), pMat('#e07028', 0.4), x - 0.03, y + 0.11, z - 0.05, 0.045, 0.042, 0.045);
+  const yel = pMat('#f0c93a', 0.5);
+  addP(parent, PG.cap(0.028, 0.14), yel, x + 0.08, y + 0.12, z + 0.01, 1, 1, 0.7, 0.9, 0.6, 0.35);
+  addP(parent, PG.cap(0.026, 0.13), yel, x + 0.10, y + 0.11, z - 0.02, 1, 1, 0.7, 1.05, 0.85, 0.2);
+}
+
+/** Kitchen counter: coffee, water, cupboard, fruit. Front faces local +Z. */
+function buildKitchenette() {
+  const g = new THREE.Group();
+  const body = pMat('#eef2f5', 0.72);
+  const wood = pMat('#c9a574', 0.82);
+  const door = pMat('#f7f9fb', 0.7);
+  const gold = pMat('#c9a14a', 0.4, 0.4);
+  const top = pMat('#f4f7f9', 0.62);
+
+  addP(g, PG.box(), body, 0.15, 0.44, 0, 2.10, 0.88, 0.62);
+  addP(g, PG.box(), top, 0.15, 0.90, 0.01, 2.18, 0.06, 0.68);
+  addP(g, PG.box(), wood, 0.15, 0.90, 0.01, 2.20, 0.02, 0.70);
+  addP(g, PG.box(), wood, 0.15, 0.02, 0, 2.12, 0.04, 0.64);
+
+  const doors = [[-0.55, 0.42], [0.05, 0.42], [0.65, 0.42]];
+  for (const [dx, dy] of doors) {
+    addP(g, PG.box(), door, dx, dy, 0.32, 0.52, 0.62, 0.03);
+    addP(g, PG.box(), gold, dx + 0.18, dy, 0.34, 0.03, 0.08, 0.02);
   }
-  // bottle
-  addP(g, PG.cyl(20), jug, 0, 1.35, 0, 0.20, 0.42, 0.20);
-  addP(g, PG.ball(16), jug, 0, 1.56, 0, 0.20, 0.16, 0.20);
-  addP(g, PG.cyl(16), pMat('#3a90c8', 0.35, 0.05), 0, 1.28, 0, 0.205, 0.03, 0.205);
-  addP(g, PG.cyl(16), pMat('#3a90c8', 0.35, 0.05), 0, 1.38, 0, 0.205, 0.03, 0.205);
-  addP(g, PG.cyl(16), pMat('#3a90c8', 0.35, 0.05), 0, 1.48, 0, 0.205, 0.03, 0.205);
-  g.add(propShadow(1.0, 0.95));
-  return tagProp(g, 'cooler', 'Water cooler');
+
+  addP(g, PG.box(), body, -1.22, 0.92, -0.02, 0.58, 1.84, 0.58);
+  addP(g, PG.box(), wood, -1.22, 1.84, -0.02, 0.62, 0.04, 0.62);
+  addP(g, PG.box(), door, -1.38, 1.15, 0.28, 0.22, 0.70, 0.03);
+  addP(g, PG.box(), door, -1.06, 1.15, 0.28, 0.22, 0.70, 0.03);
+  addP(g, PG.box(), gold, -1.30, 1.15, 0.30, 0.025, 0.08, 0.02);
+  addP(g, PG.box(), gold, -1.14, 1.15, 0.30, 0.025, 0.08, 0.02);
+  addP(g, PG.box(), pMat('#dfe6eb', 0.78), -1.22, 0.42, 0.28, 0.48, 0.55, 0.04);
+  addP(g, PG.box(), wood, -1.22, 0.70, 0.12, 0.46, 0.03, 0.42);
+  addP(g, PG.box(), pMat('#f3eee6', 0.7), -1.34, 0.82, 0.10, 0.08, 0.18, 0.08);
+  addP(g, PG.box(), pMat('#e8dcc8', 0.7), -1.22, 0.80, 0.12, 0.10, 0.14, 0.10);
+  addP(g, PG.cyl(10), pMat('#d4453a', 0.45), -1.10, 0.86, 0.16, 0.04, 0.08, 0.04);
+  addP(g, PG.cyl(10), pMat('#5dad3a', 0.5), -1.10, 0.78, 0.08, 0.035, 0.07, 0.035);
+
+  addP(g, PG.box(), body, 0.15, 1.28, -0.26, 1.40, 0.04, 0.16);
+  addP(g, PG.box(), pMat('#d8e0e6', 0.75), 0.15, 1.48, -0.28, 1.36, 0.36, 0.04);
+  addP(g, PG.cyl(8), pMat('#c45a3a', 0.5), -0.25, 1.38, -0.22, 0.05, 0.12, 0.05);
+  addP(g, PG.cyl(8), pMat('#f4f6f8', 0.55), 0.05, 1.36, -0.22, 0.045, 0.10, 0.045);
+  addP(g, PG.box(), pMat('#e8dcc8', 0.7), 0.40, 1.36, -0.20, 0.14, 0.08, 0.10);
+
+  const coffee = buildCoffeeMachine(true);
+  coffee.position.set(-0.40, 0.93, 0.04);
+  g.add(coffee);
+  const water = buildCounterWater();
+  water.position.set(0.85, 0.93, 0.02);
+  g.add(water);
+  addFruitBowl(g, 0.22, 0.93, 0.14);
+
+  g.add(propShadow(2.55, 1.15));
+  return tagProp(g, 'kitchenette', 'Kitchen');
+}
+
+/** Standing desk frame with the index-photo-bg office still. */
+function buildDeskPhotoFrame() {
+  const g = new THREE.Group();
+  const wood = pMat('#3a281c', 0.78);
+  const gold = pMat('#c9a14a', 0.38, 0.42);
+  const fw = 0.46, fh = 0.32, ft = 0.02;
+  addP(g, PG.box(), wood, 0, fh * 0.5, 0, fw, fh, ft);
+  addP(g, PG.box(), gold, 0, fh * 0.5, ft * 0.45, fw * 0.90, fh * 0.88, 0.006);
+  const photoMat = new THREE.MeshStandardMaterial({
+    color: '#c5cdd3', roughness: 0.62, metalness: 0
+  });
+  addP(g, PG.box(), photoMat, 0, fh * 0.5, ft * 0.85, fw * 0.76, fh * 0.72, 0.005);
+  new THREE.TextureLoader().load('images/bg-office.jpg', (tex) => {
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
+    photoMat.map = tex;
+    photoMat.color.set('#ffffff');
+    photoMat.needsUpdate = true;
+  });
+  addP(g, PG.box(), wood, 0, 0.03, -0.04, 0.05, 0.06, 0.08, 0.55, 0, 0);
+  g.rotation.x = -0.08;
+  return tagProp(g, 'photo-frame', 'See Photo Gallery', true, '/index-photo-bg');
 }
 
 /** Chunky desk with laptop + mug (no chair — keeps walk paths clear). */
@@ -11505,21 +11939,26 @@ function buildDeskLaptop() {
   addP(g, PG.box(), drawer, -0.52, 0.20, 0.18, 0.14, 0.18, 0.36);
   addP(g, PG.box(), gold, -0.44, 0.42, 0.18, 0.02, 0.02, 0.16);
   addP(g, PG.box(), gold, -0.44, 0.20, 0.18, 0.02, 0.02, 0.16);
-  // laptop
+  const computer = new THREE.Group();
   const shell = pMat('#1a1a1b', 0.45);
-  addP(g, PG.box(), shell, 0.18, 0.68, 0.02, 0.42, 0.03, 0.28);
-  addP(g, PG.box(), shell, 0.18, 0.82, -0.11, 0.42, 0.28, 0.03, -0.35, 0, 0);
+  addP(computer, PG.box(), shell, -0.30, 0.68, 0.02, 0.42, 0.03, 0.28);
+  addP(computer, PG.box(), shell, -0.30, 0.82, -0.11, 0.42, 0.28, 0.03, -0.35, 0, 0);
   const screenTex = makeInvaderScreenTexture(true);
   const screenMat = new THREE.MeshStandardMaterial({
     map: screenTex, roughness: 0.55, metalness: 0, emissive: '#1a3040', emissiveIntensity: 0.25
   });
-  addP(g, PG.box(), screenMat, 0.18, 0.82, -0.095, 0.36, 0.22, 0.01, -0.35, 0, 0);
-  // mug + coaster
-  addP(g, PG.box(), pMat('#5a4030', 0.8), -0.35, 0.67, 0.18, 0.12, 0.02, 0.12);
-  addP(g, PG.cyl(14), pMat('#f4f6f8', 0.6), -0.35, 0.74, 0.18, 0.045, 0.10, 0.045);
-  addP(g, PG.torus(0.012), pMat('#f4f6f8', 0.6), -0.30, 0.74, 0.18, 0.04, 0.04, 0.04, 0, 0, Math.PI / 2);
+  addP(computer, PG.box(), screenMat, -0.30, 0.82, -0.095, 0.36, 0.22, 0.01, -0.35, 0, 0);
+  g.add(tagProp(computer, 'computer', 'Use Computer', true, '/index'));
+  const frame = buildDeskPhotoFrame();
+  frame.position.set(0.58, 0.66, -0.30);
+  frame.rotation.y = 0.48;
+  frame.rotation.z = -0.06;
+  g.add(frame);
+  addP(g, PG.box(), pMat('#5a4030', 0.8), 0.08, 0.67, 0.18, 0.12, 0.02, 0.12);
+  addP(g, PG.cyl(14), pMat('#f4f6f8', 0.6), 0.08, 0.74, 0.18, 0.045, 0.10, 0.045);
+  addP(g, PG.torus(0.012), pMat('#f4f6f8', 0.6), 0.13, 0.74, 0.18, 0.04, 0.04, 0.04, 0, 0, Math.PI / 2);
   g.add(propShadow(1.55, 0.95));
-  return tagProp(g, 'desk', 'Desk', true);
+  return tagProp(g, 'desk', 'Desk');
 }
 
 /** Stylized invaders cabinet — silhouette + neon green playfield, no trademark logos. */
@@ -11568,19 +12007,244 @@ function makeInvaderScreenTexture(dashboard = false) {
 }
 
 function makeArcadeMarqueeTexture() {
-  const W = 256, H = 64, c = cv(W, H), g = c.getContext('2d');
-  g.fillStyle = '#0a1020';
-  g.fillRect(0, 0, W, H);
-  g.fillStyle = '#39ff62';
-  for (let i = 0; i < 3; i++) {
-    const x = 18 + i * 28;
-    g.fillRect(x, 18, 16, 10);
-    g.fillRect(x + 3, 28, 4, 6);
-    g.fillRect(x + 9, 28, 4, 6);
+  const W = 256, H = 72, c = cv(W, H), g = c.getContext('2d');
+  const paint = (logo) => {
+    g.fillStyle = '#0a1628';
+    g.fillRect(0, 0, W, H);
+    g.fillStyle = '#1a2848';
+    g.fillRect(0, H - 10, W, 10);
+    for (let i = 0; i < 18; i++) {
+      g.fillStyle = `rgba(255,255,255,${0.04 + (i % 3) * 0.02})`;
+      g.fillRect(8 + i * 14, 6, 2, 2);
+    }
+    g.fillStyle = '#39ff62';
+    for (let i = 0; i < 2; i++) {
+      const ax = 14 + i * 22;
+      g.fillRect(ax, 14, 14, 8);
+      g.fillRect(ax + 3, 22, 4, 5);
+      g.fillRect(ax + 9, 22, 4, 5);
+    }
+    if (logo && logo.width) {
+      const maxW = W * 0.68;
+      const sc = maxW / logo.width;
+      const w = logo.width * sc, h = logo.height * sc;
+      g.drawImage(logo, (W - w) / 2, (H - h) / 2 + 2, w, h);
+    } else {
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      const lines = [
+        { t: 'INBOX', sz: 22, y: H * 0.38 },
+        { t: 'INVADERS', sz: 20, y: H * 0.68 }
+      ];
+      for (const l of lines) {
+        g.font = `900 ${l.sz}px Impact, "Arial Black", sans-serif`;
+        for (let i = 8; i >= 1; i--) {
+          g.fillStyle = i > 4 ? '#8b0000' : '#cc0000';
+          g.fillText(l.t, W / 2 - i * 0.2, l.y + i);
+        }
+        g.lineWidth = 2;
+        g.strokeStyle = '#000';
+        g.strokeText(l.t, W / 2, l.y);
+        g.fillStyle = '#ffe14a';
+        g.fillText(l.t, W / 2, l.y);
+      }
+    }
+  };
+  paint(null);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  const img = new Image();
+  img.onload = () => { paint(img); t.needsUpdate = true; };
+  img.src = 'images/inbox-invaders-logo.png';
+  return t;
+}
+
+/** Pixel invader silhouette for cabinet side art (original, not trademark art). */
+function drawCabinetInvader(g, cx, cy, s, body = '#0a0a12', eye = '#e8fff0') {
+  const R = (x, y, w, h) => g.fillRect(cx + x * s, cy + y * s, w * s, h * s);
+  g.fillStyle = body;
+  R(-4, -7, 8, 2);
+  R(-5, -5, 10, 2);
+  R(-6, -3, 12, 2);
+  R(-7, -1, 14, 4);
+  R(-6, 3, 12, 3);
+  R(-7, 6, 3, 2);
+  R(-1, 6, 3, 2);
+  R(4, 6, 3, 2);
+  g.fillStyle = eye;
+  R(-3, 0, 2, 2);
+  R(1, 0, 2, 2);
+}
+
+/** Tall inbox-monster silhouette — Space Invaders cabinet side-panel style. */
+function makeArcadeSideArtTexture(mirror = false) {
+  const W = 128, H = 360, c = cv(W, H), g = c.getContext('2d');
+  if (mirror) {
+    g.translate(W, 0);
+    g.scale(-1, 1);
   }
+  g.fillStyle = '#0c1830';
+  g.fillRect(0, 0, W, H);
+  for (let y = 0; y < H; y += 10) {
+    g.fillStyle = y % 20 === 0 ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.05)';
+    g.fillRect(0, y, W, 4);
+  }
+  g.fillStyle = 'rgba(20,32,58,0.55)';
+  g.fillRect(0, 0, W, H);
+
+  const glow = (cx, cy, s) => {
+    g.fillStyle = '#d4302a';
+    g.beginPath();
+    g.moveTo(cx - 18 * s, cy + 42 * s);
+    g.lineTo(cx - 22 * s, cy - 8 * s);
+    g.lineTo(cx + 8 * s, cy - 48 * s);
+    g.lineTo(cx + 28 * s, cy - 12 * s);
+    g.lineTo(cx + 20 * s, cy + 44 * s);
+    g.closePath();
+    g.fill();
+  };
+
+  glow(52, 248, 2.2);
+  g.fillStyle = '#0a0a12';
+  g.beginPath();
+  g.moveTo(52, 290);
+  g.lineTo(28, 220);
+  g.lineTo(30, 140);
+  g.lineTo(44, 88);
+  g.lineTo(68, 72);
+  g.lineTo(88, 96);
+  g.lineTo(92, 150);
+  g.lineTo(78, 220);
+  g.lineTo(72, 290);
+  g.closePath();
+  g.fill();
+  g.fillRect(38, 108, 10, 14);
+  g.fillRect(72, 108, 10, 14);
+  g.fillStyle = '#f4fff8';
+  g.fillRect(40, 112, 6, 8);
+  g.fillRect(74, 112, 6, 8);
+  g.fillRect(54, 168, 22, 18);
+  g.fillStyle = '#0a0a12';
+  g.fillRect(50, 186, 28, 6);
+  drawCabinetInvader(g, 96, 118, 2.4, '#0a0a12', '#39ff62');
+  drawCabinetInvader(g, 96, 72, 2.0, '#0a0a12', '#39ff62');
+  drawCabinetInvader(g, 96, 34, 1.7, '#0a0a12', '#39ff62');
+  g.fillStyle = '#0a0a12';
+  g.fillRect(18, 300, 56, 8);
+  g.fillRect(22, 308, 48, 6);
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  return t;
+}
+
+/** Monitor bezel — space sky + lunar surface frame (original art). */
+function makeArcadeBezelTexture() {
+  const W = 256, H = 300, c = cv(W, H), g = c.getContext('2d');
+  g.fillStyle = '#0c1a38';
+  g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 36; i++) {
+    g.fillStyle = `rgba(255,255,255,${0.15 + (i % 4) * 0.08})`;
+    g.fillRect((i * 37 + 11) % W, (i * 19 + 7) % (H * 0.42), 2, 2);
+  }
+  g.fillStyle = '#c9a84a';
+  g.fillRect(0, H * 0.58, W, H * 0.42);
+  g.fillStyle = '#b8923a';
+  for (let i = 0; i < 14; i++) {
+    g.beginPath();
+    g.arc(18 + i * 17, H * 0.72 + (i % 4) * 14, 6 + (i % 5), 0, Math.PI * 2);
+    g.fill();
+  }
+  g.fillStyle = '#39ff62';
+  for (let i = 0; i < 5; i++) {
+    const ax = 12 + i * 14, ay = 28 + (i % 2) * 10;
+    g.fillRect(ax, ay, 10, 6);
+    g.fillRect(ax + 2, ay + 6, 3, 4);
+    g.fillRect(ax + 6, ay + 6, 3, 4);
+  }
+  for (let i = 0; i < 5; i++) {
+    const ax = W - 24 - i * 14, ay = 32 + (i % 2) * 8;
+    g.fillRect(ax, ay, 10, 6);
+    g.fillRect(ax + 2, ay + 6, 3, 4);
+    g.fillRect(ax + 6, ay + 6, 3, 4);
+  }
+  g.fillStyle = '#020408';
+  g.fillRect(46, 52, 164, 118);
+  g.strokeStyle = '#1a2848';
+  g.lineWidth = 6;
+  g.strokeRect(42, 48, 172, 126);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  return t;
+}
+
+/** White kickplate — coin door + invader silhouette (original art). */
+function makeArcadeKickplateTexture() {
+  const W = 128, H = 200, c = cv(W, H), g = c.getContext('2d');
+  g.fillStyle = '#f4f6f8';
+  g.fillRect(0, 0, W, H);
+  g.fillStyle = '#d4302a';
+  g.beginPath();
+  g.moveTo(8, H - 8);
+  g.lineTo(8, 90);
+  g.lineTo(28, 40);
+  g.lineTo(52, 24);
+  g.lineTo(68, 50);
+  g.lineTo(58, H - 8);
+  g.closePath();
+  g.fill();
+  g.fillStyle = '#0a0a12';
+  g.beginPath();
+  g.moveTo(12, H - 12);
+  g.lineTo(12, 92);
+  g.lineTo(30, 44);
+  g.lineTo(50, 30);
+  g.lineTo(64, 52);
+  g.lineTo(54, H - 12);
+  g.closePath();
+  g.fill();
+  g.fillStyle = '#f4fff8';
+  g.fillRect(26, 58, 8, 10);
+  g.fillRect(42, 58, 8, 10);
+  g.fillStyle = '#f4f6f8';
+  g.fillRect(52, 68, 10, 48);
+  for (let i = 0; i < 4; i++) {
+    drawCabinetInvader(g, W - 18, 36 + i * 34, 1.5, '#3a2818', '#f4f6f8');
+  }
+  g.fillStyle = '#1a2030';
+  g.fillRect(W * 0.32, H * 0.38, W * 0.36, H * 0.28);
+  g.fillStyle = '#d4302a';
+  g.fillRect(W * 0.36, H * 0.48, W * 0.08, H * 0.04);
+  g.fillRect(W * 0.56, H * 0.48, W * 0.08, H * 0.04);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  return t;
+}
+
+function makeArcadeControlPanelTexture() {
+  const W = 256, H = 96, c = cv(W, H), g = c.getContext('2d');
+  g.fillStyle = '#141c2a';
+  g.fillRect(0, 0, W, H);
+  g.fillStyle = '#1e2838';
+  g.fillRect(0, H - 8, W, 8);
+  g.fillStyle = '#39ff62';
+  g.font = 'bold 11px IBM Plex Mono, monospace';
+  g.fillText('FIRE', 168, 28);
+  g.fillText('MOVE', 52, 28);
   g.fillStyle = '#ffe14a';
-  g.font = 'bold 22px IBM Plex Mono, monospace';
-  g.fillText('PIXEL RAID', 100, 40);
+  g.fillText('1 CREDIT', 108, 72);
+  for (const [x, col] of [[52, '#f4f6f8'], [168, '#d4302a'], [198, '#d4302a'], [228, '#f0d23a']]) {
+    g.fillStyle = col;
+    g.beginPath();
+    g.arc(x, 48, 14, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = '#0a0a12';
+    g.lineWidth = 2;
+    g.stroke();
+  }
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
@@ -11588,55 +12252,81 @@ function makeArcadeMarqueeTexture() {
 
 function buildArcadeCabinet() {
   const g = new THREE.Group();
-  const navy = pMat('#152038', 0.7);
-  const black = pMat('#0c1018', 0.65);
-  const yellow = pMat('#f0d23a', 0.45, 0.08);
-  const blue = pMat('#2a6fbf', 0.55);
-  // side panels with slight curve suggestion via stacked boxes
-  addP(g, PG.box(), navy, -0.38, 0.95, 0, 0.08, 1.90, 0.70);
-  addP(g, PG.box(), navy, 0.38, 0.95, 0, 0.08, 1.90, 0.70);
-  addP(g, PG.box(), black, 0, 0.55, 0.05, 0.68, 1.10, 0.55);
-  // yellow trim edges
-  addP(g, PG.box(), yellow, -0.42, 0.95, 0, 0.03, 1.92, 0.72);
-  addP(g, PG.box(), yellow, 0.42, 0.95, 0, 0.03, 1.92, 0.72);
-  addP(g, PG.box(), yellow, 0, 1.88, 0.05, 0.86, 0.04, 0.72);
-  // control deck
-  addP(g, PG.box(), blue, 0, 0.95, 0.28, 0.70, 0.08, 0.28, -0.35, 0, 0);
-  addP(g, PG.box(), yellow, 0, 0.95, 0.42, 0.72, 0.03, 0.04);
-  // joystick + buttons
-  addP(g, PG.cyl(10), pMat('#1a1a1a', 0.5), -0.14, 1.02, 0.30, 0.025, 0.10, 0.025);
-  addP(g, PG.ball(10), pMat('#d4302a', 0.4), -0.14, 1.10, 0.30, 0.05, 0.05, 0.05);
-  addP(g, PG.cyl(10), pMat('#f0d23a', 0.4), 0.08, 1.00, 0.32, 0.035, 0.03, 0.035);
-  addP(g, PG.cyl(10), pMat('#d4302a', 0.4), 0.18, 1.00, 0.32, 0.035, 0.03, 0.035);
-  addP(g, PG.cyl(10), pMat('#f0d23a', 0.4), 0.28, 1.00, 0.32, 0.035, 0.03, 0.035);
-  // screen
+  const navy = pMat('#0a1020', 0.72);
+  const navyLight = pMat('#141e34', 0.68);
+  const black = pMat('#060810', 0.65);
+  const white = pMat('#eef2f5', 0.78);
+  const chrome = pMat('#9aa4ad', 0.35, 0.45);
+
+  const sideArtL = new THREE.MeshStandardMaterial({
+    map: makeArcadeSideArtTexture(false), roughness: 0.72, metalness: 0
+  });
+  const sideArtR = new THREE.MeshStandardMaterial({
+    map: makeArcadeSideArtTexture(true), roughness: 0.72, metalness: 0
+  });
+  const kickMat = new THREE.MeshStandardMaterial({
+    map: makeArcadeKickplateTexture(), roughness: 0.82, metalness: 0
+  });
+  const bezelMat = new THREE.MeshStandardMaterial({
+    map: makeArcadeBezelTexture(), roughness: 0.55, metalness: 0
+  });
+  const panelMat = new THREE.MeshStandardMaterial({
+    map: makeArcadeControlPanelTexture(), roughness: 0.62, metalness: 0
+  });
+
+  addP(g, PG.box(), navy, 0, 0.04, 0, 0.76, 0.08, 0.66);
+  addP(g, PG.box(), navy, -0.36, 0.52, -0.02, 0.10, 1.04, 0.62);
+  addP(g, PG.box(), navy, 0.36, 0.52, -0.02, 0.10, 1.04, 0.62);
+  addP(g, PG.box(), navyLight, -0.34, 1.22, 0.02, 0.12, 0.72, 0.66);
+  addP(g, PG.box(), navyLight, 0.34, 1.22, 0.02, 0.12, 0.72, 0.66);
+  addP(g, PG.box(), black, 0, 0.88, 0.04, 0.70, 0.92, 0.54);
+
+  const sideGeo = geoCache('arcside', () => new THREE.PlaneGeometry(0.64, 1.82));
+  const leftSide = new THREE.Mesh(sideGeo, sideArtL);
+  leftSide.position.set(-0.405, 0.92, 0.01);
+  leftSide.rotation.y = -Math.PI / 2;
+  g.add(leftSide);
+  const rightSide = new THREE.Mesh(sideGeo, sideArtR);
+  rightSide.position.set(0.405, 0.92, 0.01);
+  rightSide.rotation.y = Math.PI / 2;
+  g.add(rightSide);
+
+  addP(g, PG.box(), kickMat, 0, 0.30, 0.28, 0.74, 0.56, 0.04);
+  addP(g, PG.box(), white, 0, 0.30, 0.26, 0.76, 0.58, 0.02);
+
+  addP(g, PG.box(), panelMat, 0, 0.92, 0.30, 0.74, 0.04, 0.30, -0.38, 0, 0);
+  addP(g, PG.box(), black, 0, 0.92, 0.44, 0.76, 0.03, 0.04, -0.38, 0, 0);
+  addP(g, PG.cyl(10), pMat('#1a1a1a', 0.5), -0.16, 0.98, 0.34, 0.022, 0.09, 0.022, -0.38, 0, 0);
+  addP(g, PG.ball(10), pMat('#d4302a', 0.42), -0.16, 1.05, 0.34, 0.048, 0.048, 0.048, -0.38, 0, 0);
+  for (const bx of [0.10, 0.22, 0.34, 0.46]) {
+    addP(g, PG.cyl(10), pMat(bx < 0.3 ? '#f4f6f8' : '#d4302a', 0.42),
+      bx, 0.96, 0.36, 0.032, 0.028, 0.032, -0.38, 0, 0);
+  }
+
+  addP(g, PG.box(), black, 0, 1.30, 0.18, 0.58, 0.46, 0.08);
+  addP(g, PG.box(), bezelMat, 0, 1.32, 0.26, 0.66, 0.50, 0.02);
   const screenMat = new THREE.MeshStandardMaterial({
     map: makeInvaderScreenTexture(false),
-    roughness: 0.4, metalness: 0,
-    emissive: '#0a2a12', emissiveIntensity: 0.55
+    roughness: 0.35, metalness: 0,
+    emissive: '#0a2a12', emissiveIntensity: 0.65
   });
-  addP(g, PG.box(), screenMat, 0, 1.35, 0.22, 0.52, 0.42, 0.02, -0.28, 0, 0);
-  // marquee
+  addP(g, PG.box(), screenMat, 0, 1.32, 0.22, 0.48, 0.36, 0.015, -0.12, 0, 0);
+  addP(g, PG.box(), chrome, 0, 1.32, 0.27, 0.52, 0.40, 0.008, -0.12, 0, 0);
+
   const marq = new THREE.MeshStandardMaterial({
-    map: makeArcadeMarqueeTexture(), roughness: 0.5, metalness: 0,
-    emissive: '#1a2a08', emissiveIntensity: 0.4
+    map: makeArcadeMarqueeTexture(), roughness: 0.45, metalness: 0,
+    emissive: '#ffe8a0', emissiveIntensity: 0.55
   });
-  addP(g, PG.box(), marq, 0, 1.78, 0.28, 0.62, 0.16, 0.04);
-  addP(g, PG.box(), yellow, 0, 1.78, 0.30, 0.66, 0.18, 0.02);
-  // coin door
-  addP(g, PG.box(), pMat('#1a2030', 0.6), 0, 0.28, 0.28, 0.35, 0.28, 0.04);
-  addP(g, PG.box(), pMat('#d4302a', 0.45), -0.08, 0.28, 0.31, 0.06, 0.04, 0.02);
-  addP(g, PG.box(), pMat('#d4302a', 0.45), 0.08, 0.28, 0.31, 0.06, 0.04, 0.02);
-  // side art suggestion (simple monster blob, not a licensed mark)
-  const art = pMat('#0a0c10', 0.7);
-  addP(g, PG.ball(10), art, -0.42, 1.05, 0.05, 0.12, 0.18, 0.08);
-  addP(g, PG.ball(8), pMat('#c4302a', 0.5), -0.42, 1.05, 0.12, 0.13, 0.19, 0.02);
+  addP(g, PG.box(), marq, 0, 1.72, 0.30, 0.68, 0.14, 0.05);
+  addP(g, PG.box(), navy, 0, 1.80, 0.28, 0.72, 0.06, 0.08);
+  addP(g, PG.box(), black, 0, 1.84, 0.26, 0.64, 0.04, 0.10);
+
   g.add(propShadow(1.15, 1.0));
-  return tagProp(g, 'arcade', 'Space Invaders', true);
+  return tagProp(g, 'arcade', 'Play Inbox Invaders', true, '/index-invaders');
 }
 
-function placeProp(root, x, z, rotY = 0, scale = 1) {
-  root.position.set(x, 0, z);
+function placeProp(root, x, z, rotY = 0, scale = 1, y = 0) {
+  root.position.set(x, y, z);
   root.rotation.y = rotY;
   if (scale !== 1) root.scale.setScalar(scale);
   scene.add(root);
@@ -11649,23 +12339,36 @@ function installPlazaProps() {
   World.props = [];
   const R = (deg) => (deg * Math.PI) / 180;
   const at = (angDeg, r) => [Math.cos(R(angDeg)) * r, Math.sin(R(angDeg)) * r];
+  const faceIn = (x, z) => Math.atan2(-x, -z);
+  const faceCam = (x, z) => Math.atan2(-x, 15.9 - z);
+
+  installPlazaRug();
 
   let x, z;
-  [x, z] = at(18, 6.9);  placeProp(buildLeafyPlant(), x, z, R(200), 1.05);
-  [x, z] = at(52, 7.1);  placeProp(buildAloePlant(), x, z, R(230), 1.0);
-  [x, z] = at(88, 6.7);  placeProp(buildGlossySucculent(), x, z, R(260), 1.1);
-  [x, z] = at(108, 6.85); placeProp(buildCactus(), x, z, R(280), 1.05);
   [x, z] = at(150, 7.2); placeProp(buildBamboo(), x, z, R(320), 1.0);
-  [x, z] = at(198, 7.3); placeProp(buildTallLamp(), x, z, R(10), 1.0);
-  [x, z] = at(232, 6.9); placeProp(buildCoffeeMachine(), x, z, R(50), 1.05);
-  [x, z] = at(268, 7.15); placeProp(buildWaterCooler(), x, z, R(90), 1.0);
-  [x, z] = at(312, 7.5); placeProp(buildDeskLaptop(), x, z, R(140), 1.0);
-  [x, z] = at(348, 7.6); placeProp(buildArcadeCabinet(), x, z, R(175), 1.0);
-  // second leafy accent opposite the first
-  [x, z] = at(175, 6.6); placeProp(buildLeafyPlant(), x, z, R(0), 0.92);
+  placeProp(buildAloePlant(), -3.15, 1.15, R(215), 1.0);
+  const lampX = -3.93, lampZ = -3.17;
+  const chairX = -4.45, chairZ = -2.35;
+  placeProp(buildLoungeChair(), chairX, chairZ, faceIn(chairX, chairZ), 1.0);
+  const tableX = chairX - 0.95, tableZ = chairZ + 0.72;
+  placeProp(buildEndTable(), tableX, tableZ, R(25), 1.0);
+  placeProp(buildGlossySucculent(), tableX, tableZ, R(40), 0.7, 0.505);
+  placeProp(buildTallLamp(), lampX, lampZ, R(12), 1.0);
+  const kitX = 0.05, kitZ = -3.05;
+  placeProp(buildKitchenette(), kitX, kitZ, faceIn(kitX, kitZ), 0.92);
+  placeProp(buildFern(), -0.85, -1.65, faceIn(-0.85, -1.65), 0.95);
+  placeProp(buildDeskLaptop(), 1.55, 3.55, 0, 1.08);
+  placeProp(buildLeafyPlant(), 0.45, 3.55, R(18), 1.05);
+  const arcadeX = 2.75, arcadeZ = -0.35;
+  placeProp(buildArcadeCabinet(), arcadeX, arcadeZ, faceCam(arcadeX, arcadeZ), 1.0);
+  placeProp(buildCactus(), 2.95, 3.35, R(300), 1.05);
+  placeProp(buildFern(), -2.95, 3.95, R(35), 0.95);
+  placeProp(buildFern(), arcadeX + 0.88, arcadeZ + 0.12, faceCam(arcadeX + 0.88, arcadeZ + 0.12), 0.95);
+  World.rebuildObstacles();
 }
 
 installPlazaProps();
+PropFx.init();
 
 /* Hover / click registry for plaza props. Miis always win the raycast.
    Reads userData.plazaItem (and plazaProp alias) from World.props roots. */
@@ -11686,24 +12389,27 @@ const PlazaProps = {
     const id = String(src.id || root.name || 'prop');
     const title = String(src.title || id);
     const interactive = !!(src.interactive);
-    const payload = { id, title, interactive };
+    const href = src.href || null;
+    const payload = { id, title, interactive, href };
     root.userData.plazaItem = payload;
     root.userData.plazaProp = payload; // alias for future agents
     if (existing) {
-      existing.id = id; existing.title = title; existing.interactive = interactive;
+      existing.id = id; existing.title = title; existing.interactive = interactive; existing.href = href;
       return existing;
     }
-    const entry = { id, title, interactive, root };
+    const entry = { id, title, interactive, href, root };
     this.entries.push(entry);
     return entry;
   },
 
   boot() {
     this.entries = [];
-    for (const root of World.props || []) {
-      const meta = root.userData && (root.userData.plazaItem || root.userData.plazaProp);
-      if (meta) this.register(root, meta);
-    }
+    const visit = (obj) => {
+      const meta = obj.userData && (obj.userData.plazaItem || obj.userData.plazaProp);
+      if (meta) this.register(obj, meta);
+      for (const child of obj.children || []) visit(child);
+    };
+    for (const root of World.props || []) visit(root);
   },
 
   fromObject(obj) {
@@ -11774,6 +12480,27 @@ const PlazaProps = {
     const entry = this.pick();
     if (!entry || !entry.interactive) return false;
     Sound.fx.click();
+    if (entry.href) {
+      location.assign(entry.href);
+      return true;
+    }
+    const root = entry.root;
+    switch (entry.id) {
+      case 'lamp':
+        PlazaPropActions.toggleLamp(root);
+        return true;
+      case 'coffee':
+        PlazaPropActions.brewCoffee(root);
+        return true;
+      case 'cooler':
+        PlazaPropActions.pourWater(root);
+        return true;
+      default:
+        if (entry.id.startsWith('plant-')) {
+          PlazaPropActions.waterPlant(root);
+          return true;
+        }
+    }
     toast(`${entry.title} — coming soon`, 2200);
     return true;
   }
@@ -12612,6 +13339,7 @@ const Preview = {
   },
   start() {
     if (this.raf) return;
+    if (document.hidden) return;
     this.last = performance.now();
     const tick = (now) => {
       this.raf = requestAnimationFrame(tick);
@@ -12678,14 +13406,18 @@ const Preview = {
 
 /* ---------------- colour pickers ---------------- */
 const PICKERS = [
+  { key: 'skin',  label: 'Skin',  list: SKINS,  get: (d) => d.skin,       set: (d, v) => { d.skin = v; } },
   { key: 'hair',  label: 'Hair',  list: HAIRS,  get: (d) => d.hair.color, set: (d, v) => { d.hair.color = v; d.brows.color = shade(v, -22); } },
   { key: 'eyes',  label: 'Eyes',  list: EYECOL, get: (d) => d.eyes.color, set: (d, v) => { d.eyes.color = v; } },
-  { key: 'shirt', label: 'Shirt', list: SHIRTS, get: (d) => d.shirt,      set: (d, v) => { d.shirt = v; } },
-  { key: 'hat', label: 'Hat',
-    list: ['#c62828', '#1565c0', '#2e7d32'].concat(SHIRTS),
+  { key: 'shirt', label: 'Top', trayOnly: true, list: SHIRTS, get: (d) => d.shirt, set: (d, v) => { d.shirt = v; } },
+  { key: 'hat', label: 'Hat', trayOnly: true,
+    list: ['#c62828', '#1565c0', '#2e7d32', '#37474f', '#8d8f68', '#191a1d', '#3c5280'].concat(SHIRTS),
     get: (d) => d.hatColor,
     set: (d, v) => { d.hatColor = v; },
-    when: (d) => d && HATS[d.hair.style] && HATS[d.hair.style].crown == null }
+    when: (d) => {
+      const H = d && HATS[d.hair.style];
+      return H && H.crown == null;
+    } }
 ];
 
 /* ---------------- style tray ----------------
@@ -12715,9 +13447,14 @@ const TRAY = [
         const wasHat = Boolean(HATS[d.hair.style]);
         if (!wasHat) d._hairUnder = d.hair.style;
         d.hair.style = v;
-        /* First time onto a bandana, land on classic red unless they already
-           picked a hat colour (e.g. cycling here from a coloured cap). */
-        if (v === 'bandana' && !wasHat) d.hatColor = '#c62828';
+        /* First time onto a tintable hat, land on a style-appropriate default. */
+        if (!wasHat) {
+          const hatDefaults = {
+            bandana: '#c62828', bucket: '#8d8f68', furry: '#3c5280',
+            fossil: '#191a1d', beanie: '#37474f', flatbrim: '#1a1a1a', dadhat: '#4a4a48'
+          };
+          if (hatDefaults[v]) d.hatColor = hatDefaults[v];
+        }
       } else {
         d.hair.style = d._hairUnder || 'bowl';
       }
@@ -12823,6 +13560,29 @@ function renderTray() {
     b.addEventListener('contextmenu', (e) => { e.preventDefault(); step(); });
     cell.appendChild(b);
 
+    /* Top and hat colours live in the tray pill — circle before the ×. */
+    if (cat.key === 'apparel' || cat.key === 'hat') {
+      const pickerKey = cat.key === 'apparel' ? 'shirt' : 'hat';
+      const picker = PICKERS.find((p) => p.key === pickerKey);
+      let showSwatch = picker && (!picker.when || picker.when(Cam.dna));
+      if (cat.key === 'hat' && isOff) showSwatch = false;
+      if (showSwatch) {
+        const sw = document.createElement('button');
+        sw.type = 'button';
+        sw.className = 'tray-swatch';
+        sw.dataset.key = pickerKey;
+        sw.style.background = picker.get(Cam.dna);
+        sw.title = 'Change ' + picker.label.toLowerCase() + ' color';
+        sw.setAttribute('aria-label', 'Change ' + picker.label.toLowerCase() + ' color');
+        sw.addEventListener('pointerenter', () => Sound.fx.hover());
+        sw.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openPalette(pickerKey);
+        });
+        cell.appendChild(sw);
+      }
+    }
+
     /* × sits in the same pill as the label, not in a second box beside it. */
     if (off && !isOff) {
       const x = document.createElement('button');
@@ -12846,11 +13606,13 @@ function renderTray() {
 
 function renderPickers() {
   const box = $('camPickers'); if (!box) return;
-  const visible = PICKERS.filter((p) => !p.when || p.when(Cam.dna));
+  const visible = PICKERS.filter((p) => !p.trayOnly && (!p.when || p.when(Cam.dna)));
   const pal = $('camPalette');
-  if (pal && pal.classList.contains('open') && pal.dataset.key
-      && !visible.some((p) => p.key === pal.dataset.key)) {
-    closePalette();
+  if (pal && pal.classList.contains('open') && pal.dataset.key) {
+    const openPicker = PICKERS.find((p) => p.key === pal.dataset.key);
+    if (openPicker && !openPicker.trayOnly && !visible.some((p) => p.key === pal.dataset.key)) {
+      closePalette();
+    }
   }
   box.innerHTML = '';
   for (const p of visible) {
@@ -12868,6 +13630,7 @@ function closePalette() {
   const pal = $('camPalette');
   pal.classList.remove('open'); pal.dataset.key = '';
   $('camPickers').querySelectorAll('.pick').forEach((b) => b.classList.remove('on'));
+  document.querySelectorAll('.tray-swatch').forEach((b) => b.classList.remove('on'));
 }
 function openPalette(key, force) {
   const pal = $('camPalette');
@@ -12884,13 +13647,14 @@ function openPalette(key, force) {
     b.addEventListener('click', () => {
       p.set(Cam.dna, c);
       Preview.build(Cam.dna);
-      renderPickers(); openPalette(key, true);
+      renderPickers(); renderTray(); openPalette(key, true);
       Sound.fx.click();
     });
     pal.appendChild(b);
   }
   pal.classList.add('open');
   $('camPickers').querySelectorAll('.pick').forEach((b) => b.classList.toggle('on', b.dataset.key === key));
+  document.querySelectorAll('.tray-swatch').forEach((b) => b.classList.toggle('on', b.dataset.key === key));
 }
 
 /* ---------------- feature rerolls ----------------
@@ -13246,11 +14010,10 @@ const Cam = {
     $('camRowDone').style.display = 'none';
     $('camRowEdit').style.display = 'flex';
     $('camNameRow').style.display = 'flex';
-    $('miiName').value = mii.dna.name || '';
+    $('miiName').value = displayName(mii.dna) || mii.dna.name || '';
     fillLocationInput(this.dna.location);
     $('camLocationRow').style.display = 'flex';
-    fillProfileForm(this.dna);
-    showProfileFields();
+    hideProfileFields();
     const emailOnFile = (Store.session && Store.session.id === mii.recordId && Store.session.email) || '';
     if (emailOnFile) {
       $('miiEmail').value = emailOnFile;
@@ -13268,7 +14031,9 @@ const Cam = {
     const m = this.editing;
     if (!m || !this.dna) return;
     const dna = this.dna;
-    dna.name = ($('miiName').value || '').trim().slice(0, 14) || dna.name || 'New Person';
+    const fullName = ($('miiName').value || '').trim().slice(0, 40) || dna.fullName || dna.name || 'New Person';
+    dna.fullName = fullName;
+    dna.name = fullName.split(/\s+/)[0].slice(0, 14) || dna.name || 'New Person';
     const blocked = formPublicError();
     if (blocked) {
       this.showBanner(blocked.err, 'bad');
@@ -13354,15 +14119,18 @@ const Cam = {
     renderPickers(); renderTray(); closePalette();
 
     $('camNameRow').style.display = 'flex';
+    $('miiName').value = displayName(this.dna) || officeFullNameFor(this.dna.name) || '';
+    $('camEmailRow').style.display = 'flex';
     if (Store.expectsCloud()) {
-      $('camEmailRow').style.display = 'flex';
       $('camEmailNote').textContent = 'We’ll send your badge here. It also shows on your plaza card.';
       $('camEmailNote').style.display = '';
+    } else {
+      $('camEmailNote').style.display = 'none';
+      $('camEmailNote').textContent = '';
     }
     $('camLocationRow').style.display = 'flex';
     fillLocationInput(this.dna && this.dna.location);
-    fillProfileForm(this.dna);
-    showProfileFields();
+    hideProfileFields();
     $('camRowLive').style.display = 'none';
     $('camRowDone').style.display = 'flex';
     $('camTitle').textContent = 'Customize Your Co-Worker';
@@ -13372,7 +14140,8 @@ const Cam = {
   async accept() {
     if (!this.dna || this.saving) return;
 
-    const name = ($('miiName').value || '').trim().slice(0, 14) || 'New Person';
+    const fullName = ($('miiName').value || '').trim().slice(0, 40) || 'New Person';
+    const name = fullName.split(/\s+/)[0].slice(0, 14) || 'New Person';
     const email = ($('miiEmail').value || '').trim();
 
     const blocked = formPublicError();
@@ -13409,6 +14178,7 @@ const Cam = {
 
     const dna = this.dna;
     dna.name = name;
+    dna.fullName = fullName;
     dna.location = loc;
     applyProfile(dna, { email });
 
@@ -13540,17 +14310,19 @@ const Cam = {
     const apple = $('badgeAppleWallet');
     if (rec.appleWalletUrl) {
       apple.href = rec.appleWalletUrl;
-      apple.style.display = '';
+      apple.classList.remove('disabled');
     } else {
-      apple.style.display = 'none';
+      apple.href = '#';
+      apple.classList.add('disabled');
     }
 
     const wallet = $('badgeWallet');
     if (rec.walletUrl) {
       wallet.href = rec.walletUrl;
-      wallet.style.display = '';
+      wallet.classList.remove('disabled');
     } else {
-      wallet.style.display = 'none';
+      wallet.href = '#';
+      wallet.classList.add('disabled');
     }
 
     const notes = [];
@@ -13638,7 +14410,21 @@ function bindButtons() {
       toast('Your Co-Worker isn’t ready yet', 1800);
       return;
     }
+    showDeleteConfirm(m);
+  });
+  $('deleteConfirmNo').addEventListener('click', () => {
+    Sound.fx.click();
+    hideDeleteConfirm();
+  });
+  $('deleteConfirmYes').addEventListener('click', () => {
+    const m = pendingDeleteMii;
+    hideDeleteConfirm();
+    if (!m) return;
+    Sound.fx.click();
     deleteOwnedMii(m);
+  });
+  $('deleteConfirm').addEventListener('pointerdown', (e) => {
+    if (e.target === $('deleteConfirm')) hideDeleteConfirm();
   });
 
   $('btnRecover').addEventListener('click', () => {
@@ -13821,6 +14607,23 @@ document.addEventListener('pointerdown', (e) => {
   $('miiInfo').classList.remove('open');
 });
 
+let pendingDeleteMii = null;
+
+function showDeleteConfirm(m) {
+  pendingDeleteMii = m;
+  const el = $('deleteConfirm');
+  el.hidden = false;
+  el.classList.add('show');
+  Sound.fx.click();
+}
+
+function hideDeleteConfirm() {
+  pendingDeleteMii = null;
+  const el = $('deleteConfirm');
+  el.classList.remove('show');
+  el.hidden = true;
+}
+
 async function deleteOwnedMii(m) {
   if (!m) return;
   hideMiiDock();
@@ -13871,6 +14674,7 @@ const clock = new THREE.Clock();
 let started = false;
 
 renderer.setAnimationLoop(() => {
+  if (document.hidden) return;
   onResize();
   const dt = Math.min(clock.getDelta(), 0.05);
   const t = clock.elapsedTime;
@@ -14165,10 +14969,14 @@ function reportAuthResult() {
 });
 
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) {
+  if (document.hidden) {
+    clock.getDelta();
+    Preview.stop();
+  } else {
     clock.getDelta();
     if (!styleReviewKind(new URLSearchParams(location.search).get('review'))) Sound.resume();
     if (PlazaSync.timer) PlazaSync.pull();
+    if (Preview.mii && $('modal').classList.contains('open')) Preview.start();
   }
 });
 

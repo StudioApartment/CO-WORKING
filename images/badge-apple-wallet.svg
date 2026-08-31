@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="152" height="48" viewBox="0 0 152 48" role="img" aria-label="Add to Apple Wallet">
+  <rect width="152" height="48" rx="8" fill="#000"/>
+  <g transform="translate(12,10)">
+    <rect x="0" y="0" width="28" height="28" rx="6" fill="#fff"/>
+    <rect x="2" y="2" width="24" height="8" fill="#34AADC"/>
+    <rect x="2" y="10" width="24" height="8" fill="#F5A623"/>
+    <rect x="2" y="18" width="24" height="8" fill="#7ED321"/>
+    <rect x="2" y="26" width="24" height="2" fill="#E0E0E0"/>
+  </g>
+  <text x="48" y="30" fill="#fff" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="11" font-weight="600">Add to Apple Wallet</text>
+</svg>

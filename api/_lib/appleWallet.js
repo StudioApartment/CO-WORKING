@@ -13,7 +13,6 @@
 
 import { readFileSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
-import { PKPass } from 'passkit-generator';
 import QRCode from 'qrcode';
 import {
   APPLE_PASS_TYPE_ID, APPLE_TEAM_ID, APPLE_PASS_CERT, APPLE_PASS_KEY,
@@ -135,6 +134,10 @@ export function passFileName(name) {
 export async function buildApplePass(args) {
   if (!hasAppleWallet) return null;
   try {
+    /* passkit-generator (via joi) blocks the event loop on first import, which
+       used to freeze the whole local server as soon as /mii asked /api/miis.
+       Load it only when we actually sign a pass. */
+    const { PKPass } = await import('passkit-generator');
     const thumb = await QRCode.toBuffer(String(args.badgeValue || args.id), {
       type: 'png',
       width: 180,

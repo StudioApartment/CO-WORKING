@@ -1501,7 +1501,7 @@ for (const [page, ids] of required) {
   const hooded = ["id: 'hoodie'", "id: 'bubble'", "id: 'boxhoodie'"]
     .every((s) => src.includes(s));
   const folded = src.includes('Folded-down rest hood')
-    && src.includes("geoCache('rhoodA'")
+    && src.includes("geoCache('rhoodD'")
     && src.includes('G.restHood()')
     && src.includes('Opening rim')
     && !src.includes('little nape bump');
