@@ -83,6 +83,11 @@ const server = createServer(async (req, res) => {
   let pathname = decodeURIComponent(url.pathname);
 
   // ------------------------------------------------------------------ api --
+  if (pathname === '/api/places' || pathname === '/api/places/') {
+    url.searchParams.set('__route', 'places');
+    pathname = '/api/config';
+  }
+
   if (pathname === '/api' || pathname.startsWith('/api/')) {
     const segments = pathname.replace(/^\/api\/?/, '').split('/').filter(Boolean);
     const hit = await resolveApi(segments);

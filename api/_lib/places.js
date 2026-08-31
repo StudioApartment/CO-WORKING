@@ -1,11 +1,11 @@
-/* GET /api/places?q=
+/* Places autocomplete (GET /api/places via /api/config rewrite)?q=
  *
  * City / ZIP autocomplete for the badge form. The browser never talks to
  * geocoders directly (CORS + usage policies). Zippopotam covers US ZIPs;
  * Photon covers typed city names.
  */
 
-import { send, methodNotAllowed, preflight } from './_lib/http.js';
+import { send, methodNotAllowed, preflight } from './http.js';
 
 const UA = 'CO-WORKING plaza locations (https://www.coworking.fyi)';
 const ZIP = /^\d{5}(?:-\d{4})?$/;
