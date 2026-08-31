@@ -4539,10 +4539,10 @@ function drawFace(dna, expr) {
   return t;
 }
 
-/* Eyewear on its own face-shell texture. Same UVs as the face decal, but
-   built after hair with depthTest off + a high renderOrder so bangs lose
-   without floating the frames off the brow. FrontSide + the front-only
-   face geo keep frames from showing through the skull. */
+/* Eyewear on its own face-shell texture. Same UVs as the face decal. Without
+   a hat it stays transparent with depthTest off so bangs cannot bury frames.
+   With a hat, buildMii switches it to the opaque pass so brim/crown render
+   after and on top — transparent eyewear always sorts after opaque hats. */
 function drawEyewearTex(dna) {
   const spec = EYEWEAR_BY_ID.get(dna.glasses);
   if (!spec || !spec.id) return null;
@@ -9511,7 +9511,7 @@ function buildHair(dna, mat, extraMats) {
       const m = new THREE.Mesh(g, mtl);
       m.position.set(x, y, z);
       m.scale.set(sx ?? 1, sy ?? sx ?? 1, sz ?? sx ?? 1);
-      m.renderOrder = 6;
+      m.renderOrder = 8;
       hatOut.push(m);
       return m;
     };
@@ -10513,24 +10513,33 @@ function buildMii(dna) {
   const hairParts = buildHair(dna, hairMat, M.mats);
   for (const h of hairParts.hair) headScale.add(h);
 
-  /* Glasses after hair so bangs cannot bury the frames. With a hat, eyewear
-     is inserted before the hat meshes and uses depthTest so the brim/crown
-     occludes frames instead of drawing on top (depthTest off + renderOrder 5
-     always won over hat decals). Without a hat, depthTest stays off. */
+  /* Glasses after hair so bangs cannot bury the frames. Transparent eyewear
+     always renders in the transparent pass — after every opaque hat — so
+     depthTest/renderOrder cannot put the brim on top. With a hat, keep
+     eyewear in the opaque pass (alphaTest, transparent:false) and insert
+     it before hat meshes so brims/crowns paint over the frames. */
   const wearingHat = hairParts.hat.length > 0;
   const eyewearTex = drawEyewearTex(dna);
   if (eyewearTex) {
     const eyewearMat = new THREE.MeshStandardMaterial({
-      map: eyewearTex, transparent: true, alphaTest: 0.03,
+      map: eyewearTex, transparent: !wearingHat, alphaTest: 0.03,
       roughness: 0.90,
-      depthTest: !wearingHat, depthWrite: false
+      depthTest: true,
+      depthWrite: wearingHat
     });
     M.mats.push(eyewearMat);
     const eyewear = new THREE.Mesh(G.face(), eyewearMat);
     eyewear.renderOrder = wearingHat ? 4 : 5;
+    if (!wearingHat) {
+      eyewearMat.depthTest = false;
+      eyewearMat.depthWrite = false;
+    }
     headScale.add(eyewear);
   }
-  for (const h of hairParts.hat) headScale.add(h);
+  for (const h of hairParts.hat) {
+    h.renderOrder = Math.max(h.renderOrder || 0, 8);
+    headScale.add(h);
+  }
 
   /* ---- torso ---- */
   const torso = new THREE.Mesh(G.torso(), shirtMat);
