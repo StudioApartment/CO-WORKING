@@ -3190,9 +3190,11 @@ function drawEyewear(g, U, dna) {
   const sp = dna.eyes.spacing, ey = dna.eyes.y;
   const gw = spec.w, gh = spec.h;
   const isMetal = Boolean(spec.metal);
-  // Clear frames pin their own colour: taking the wearer's frame colour would
-  // make transparent plastic render as solid.
-  const frame = spec.frameColor || spec.metal || (spec.shades ? '#1b1c22' : dna.glassCol);
+  const tintable = eyewearTintable(spec);
+  const frameCol = dna.glassCol || '#3c4a55';
+  const frame = tintable
+    ? frameCol
+    : (spec.frameColor || spec.metal || (spec.shades ? '#1b1c22' : frameCol));
 
   /* One continuous shield, not two lenses. These have to read as Pit Viper /
      Oakley-style wraps: a flat chunky brow, angular cheeks that flare
@@ -3402,10 +3404,11 @@ function drawEyewear(g, U, dna) {
   const strokeStyleFor = (lh) => {
     if (tortoise) return tortoise;
     if (!isMetal) return frame;
+    const metalCol = tintable ? frameCol : spec.metal;
     const grd = g.createLinearGradient(0, -lh / 2, 0, lh / 2);
-    grd.addColorStop(0, shade(spec.metal, 46));
-    grd.addColorStop(0.45, spec.metal);
-    grd.addColorStop(1, shade(spec.metal, -34));
+    grd.addColorStop(0, shade(metalCol, 46));
+    grd.addColorStop(0.45, metalCol);
+    grd.addColorStop(1, shade(metalCol, -34));
     return grd;
   };
 
@@ -4730,6 +4733,21 @@ const EYEWEAR = [
     mirrorTop: '#d8f0ff', mirrorMid: '#1e68c0', mirrorBot: '#040c20' }
 ];
 const EYEWEAR_BY_ID = new Map(EYEWEAR.map((e) => [e.id, e]));
+
+/** Frames the wearer can recolor via glassCol (fixed fashion/metal/wrap styles stay pinned). */
+function eyewearTintable(spec) {
+  if (!spec || !spec.id) return false;
+  if (spec.frameColor || spec.tortoise || spec.jelly || spec.clear || spec.rim2) return false;
+  if (spec.frame === 'wrap') return false;
+  if (spec.metal && (spec.tint || spec.lens)) return false;
+  return true;
+}
+
+const GLASS_FRAMES = [
+  '#3c4a55', '#7a4a2a', '#2f6f9e', '#111111', '#1a1a1a',
+  '#37474f', '#8b4513', '#c62828', '#1565c0', '#2e7d32',
+  '#f4f6f8', '#d4af37', '#6d4c41', '#191a1d'
+];
 
 /* ---- facial hair ---- */
 const FACIAL_HAIR = [
@@ -11959,9 +11977,10 @@ function buildDeskLaptop() {
   addP(computer, PG.box(), screenMat, -0.30, 0.82, -0.095, 0.36, 0.22, 0.01, -0.35, 0, 0);
   g.add(tagProp(computer, 'computer', 'Use Computer', true, '/index'));
   const frame = buildDeskPhotoFrame();
-  frame.position.set(0.58, 0.66, -0.30);
-  frame.rotation.y = 0.48;
-  frame.rotation.z = -0.06;
+  frame.position.set(0.46, 0.66, -0.04);
+  frame.rotation.y = -0.28;
+  frame.rotation.x = 0.05;
+  frame.rotation.z = 0.04;
   g.add(frame);
   addP(g, PG.box(), pMat('#5a4030', 0.8), 0.08, 0.67, 0.18, 0.12, 0.02, 0.12);
   addP(g, PG.cyl(14), pMat('#f4f6f8', 0.6), 0.08, 0.74, 0.18, 0.045, 0.10, 0.045);
@@ -13426,7 +13445,12 @@ const PICKERS = [
     when: (d) => {
       const H = d && HATS[d.hair.style];
       return H && H.crown == null;
-    } }
+    } },
+  { key: 'glasses', label: 'Frames', trayOnly: true,
+    list: GLASS_FRAMES,
+    get: (d) => d.glassCol,
+    set: (d, v) => { d.glassCol = v; },
+    when: (d) => eyewearTintable(EYEWEAR_BY_ID.get(d.glasses)) }
 ];
 
 /* ---------------- style tray ----------------
@@ -13473,7 +13497,14 @@ const TRAY = [
     key: 'eyewear', label: 'Eyewear',
     options: () => EYEWEAR.map((e) => ({ v: e.id, label: e.label, group: e.group })),
     get: (d) => d.glasses,
-    set: (d, v) => { d.glasses = v; }
+    set: (d, v) => {
+      const prev = EYEWEAR_BY_ID.get(d.glasses);
+      d.glasses = v;
+      const spec = EYEWEAR_BY_ID.get(v);
+      if (eyewearTintable(spec) && !eyewearTintable(prev)) {
+        d.glassCol = d.glassCol || '#3c4a55';
+      }
+    }
   },
   {
     key: 'facialHair', label: 'Facial hair',
@@ -13569,12 +13600,13 @@ function renderTray() {
     b.addEventListener('contextmenu', (e) => { e.preventDefault(); step(); });
     cell.appendChild(b);
 
-    /* Top and hat colours live in the tray pill — circle before the ×. */
-    if (cat.key === 'apparel' || cat.key === 'hat') {
-      const pickerKey = cat.key === 'apparel' ? 'shirt' : 'hat';
+    /* Top, hat, and frame colours live in the tray pill — circle before the ×. */
+    if (cat.key === 'apparel' || cat.key === 'hat' || cat.key === 'eyewear') {
+      const pickerKey = cat.key === 'apparel' ? 'shirt' : cat.key === 'hat' ? 'hat' : 'glasses';
       const picker = PICKERS.find((p) => p.key === pickerKey);
       let showSwatch = picker && (!picker.when || picker.when(Cam.dna));
       if (cat.key === 'hat' && isOff) showSwatch = false;
+      if (cat.key === 'eyewear' && (isOff || !current)) showSwatch = false;
       if (showSwatch) {
         const sw = document.createElement('button');
         sw.type = 'button';
