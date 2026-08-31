@@ -16,7 +16,7 @@ if (location.hostname === 'coworking.fyi') {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
-<!-- plaza-client: 482 -->
+<!-- plaza-client: 484 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -11330,7 +11330,7 @@ function buildLeafyPlant() {
     addP(g, PG.ball(14), leaf, lx, 0.34 + h * 0.85 + ly * 0.15, lz, 0.11, 0.16, 0.045, tilt * 0.4, Math.atan2(lx, lz), 0.2);
   }
   g.add(propShadow(0.95, 0.95));
-  return tagProp(g, 'plant-leafy', 'Leafy plant');
+  return tagProp(g, 'plant-leafy', 'Monstera');
 }
 
 /** Thick aloe/succulent leaves in a terracotta pot. */
@@ -11436,7 +11436,7 @@ function buildTallLamp() {
   glow.position.set(0, 1.85, 0);
   g.add(glow);
   g.add(propShadow(0.9, 0.9));
-  return tagProp(g, 'lamp', 'Tall lamp');
+  return tagProp(g, 'lamp', 'Desk lamp');
 }
 
 /** Chunky drip / espresso coffee machine. */
@@ -11632,7 +11632,7 @@ function buildArcadeCabinet() {
   addP(g, PG.ball(10), art, -0.42, 1.05, 0.05, 0.12, 0.18, 0.08);
   addP(g, PG.ball(8), pMat('#c4302a', 0.5), -0.42, 1.05, 0.12, 0.13, 0.19, 0.02);
   g.add(propShadow(1.15, 1.0));
-  return tagProp(g, 'arcade', 'Pixel Raid', true);
+  return tagProp(g, 'arcade', 'Space Invaders', true);
 }
 
 function placeProp(root, x, z, rotY = 0, scale = 1) {
@@ -11666,6 +11666,119 @@ function installPlazaProps() {
 }
 
 installPlazaProps();
+
+/* Hover / click registry for plaza props. Miis always win the raycast.
+   Reads userData.plazaItem (and plazaProp alias) from World.props roots. */
+const PlazaProps = {
+  entries: [],
+  hovered: null,
+  tipEl: null,
+
+  tip() {
+    if (!this.tipEl) this.tipEl = document.getElementById('plazaTip');
+    return this.tipEl;
+  },
+
+  register(root, meta = {}) {
+    if (!root) return null;
+    const existing = this.entries.find((e) => e.root === root);
+    const src = meta.id ? meta : (root.userData.plazaItem || root.userData.plazaProp || {});
+    const id = String(src.id || root.name || 'prop');
+    const title = String(src.title || id);
+    const interactive = !!(src.interactive);
+    const payload = { id, title, interactive };
+    root.userData.plazaItem = payload;
+    root.userData.plazaProp = payload; // alias for future agents
+    if (existing) {
+      existing.id = id; existing.title = title; existing.interactive = interactive;
+      return existing;
+    }
+    const entry = { id, title, interactive, root };
+    this.entries.push(entry);
+    return entry;
+  },
+
+  boot() {
+    this.entries = [];
+    for (const root of World.props || []) {
+      const meta = root.userData && (root.userData.plazaItem || root.userData.plazaProp);
+      if (meta) this.register(root, meta);
+    }
+  },
+
+  fromObject(obj) {
+    let o = obj;
+    while (o) {
+      if (o.userData && (o.userData.plazaItem || o.userData.plazaProp)) {
+        return this.entries.find((e) => e.root === o)
+          || this.register(o, o.userData.plazaItem || o.userData.plazaProp);
+      }
+      o = o.parent;
+    }
+    return null;
+  },
+
+  pick() {
+    const roots = World.props;
+    if (!roots || !roots.length) return null;
+    ray.setFromCamera(ndc, camera);
+    const hits = ray.intersectObjects(roots, true);
+    for (const h of hits) {
+      const entry = this.fromObject(h.object);
+      if (entry) return entry;
+    }
+    return null;
+  },
+
+  pointerOverPlaza() {
+    const el = document.elementFromPoint(P.x, P.y);
+    if (!el) return true;
+    if (el === canvasEl || el.id === 'stage' || el.id === 'pointer') return true;
+    if (el.closest && el.closest('#stage')) return true;
+    return false;
+  },
+
+  setHover(entry) {
+    const tip = this.tip();
+    if (!tip) { this.hovered = entry; return; }
+    if (entry === this.hovered) return;
+    const prev = this.hovered;
+    this.hovered = entry;
+    if (entry) {
+      tip.textContent = entry.title;
+      tip.classList.toggle('interactive', !!entry.interactive);
+      tip.classList.add('show');
+      tip.setAttribute('aria-hidden', 'false');
+      if (!prev) Sound.fx.hover();
+    } else {
+      tip.classList.remove('show', 'interactive');
+      tip.setAttribute('aria-hidden', 'true');
+    }
+  },
+
+  syncTip(entry, x, y) {
+    if (!entry || held || !this.pointerOverPlaza()) {
+      this.setHover(null);
+      return;
+    }
+    this.setHover(entry);
+    const tip = this.tip();
+    if (!tip) return;
+    tip.style.left = `${(x + 22).toFixed(1)}px`;
+    tip.style.top = `${(y + 28).toFixed(1)}px`;
+  },
+
+  tryActivate() {
+    if (held) return false;
+    if (!this.pointerOverPlaza()) return false;
+    const entry = this.pick();
+    if (!entry || !entry.interactive) return false;
+    Sound.fx.click();
+    toast(`${entry.title} — coming soon`, 2200);
+    return true;
+  }
+};
+PlazaProps.boot();
 
 /* ══════════════════════════════════════════════════════════════
    8b · CONFIG
@@ -13420,22 +13533,6 @@ const Cam = {
       face.style.display = 'none';
     }
 
-    const side = $('badgeMiiSide');
-    parkPreviewCanvas('badgeOrbitHost');
-    if (liveDna) {
-      if (!Preview.mii || (Preview.mii.dna !== liveDna)) Preview.build(liveDna);
-      else Preview.start();
-      if (side) side.style.display = 'none';
-    } else if (sideShot && side) {
-      side.src = sideShot;
-      side.alt = (name || 'Your') + ' Mii side view';
-      side.style.display = '';
-      Preview.stop();
-    } else {
-      if (side) { side.removeAttribute('src'); side.style.display = 'none'; }
-      Preview.stop();
-    }
-
     fillBadgeQr(rec || {}, email);
 
     const apple = $('badgeAppleWallet');
@@ -13463,8 +13560,25 @@ const Cam = {
     if (!rec.emailed) notes.push('We could not email it just now, so screenshot this.');
     $('badgeNote').textContent = notes.join(' ');
 
+    // Show the pass before mounting the orbit canvas so WebGL gets a real size.
     $('camBadge').classList.add('show');
     $('camRowBadge').style.display = 'flex';
+
+    const side = $('badgeMiiSide');
+    parkPreviewCanvas('badgeOrbitHost');
+    if (liveDna) {
+      if (!Preview.mii || (Preview.mii.dna !== liveDna)) Preview.build(liveDna);
+      else Preview.start();
+      if (side) side.style.display = 'none';
+    } else if (sideShot && side) {
+      side.src = sideShot;
+      side.alt = (name || 'Your') + ' Mii side view';
+      side.style.display = '';
+      Preview.stop();
+    } else {
+      if (side) { side.removeAttribute('src'); side.style.display = 'none'; }
+      Preview.stop();
+    }
   }
 };
 
