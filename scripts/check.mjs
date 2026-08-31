@@ -1594,6 +1594,22 @@ for (const [page, ids] of required) {
   }
 }
 
+{
+  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const wired = ['const PlazaProps', 'PlazaProps.boot()', 'PlazaProps.syncTip',
+                 'PlazaProps.tryActivate', 'id="plazaTip"',
+                 "tagProp(g, 'plant-leafy', 'Monstera')",
+                 "tagProp(g, 'lamp', 'Desk lamp')",
+                 "tagProp(g, 'arcade', 'Space Invaders', true)"]
+    .every((s) => src.includes(s));
+  if (!wired) {
+    note('✗', 'mii.html — plaza props need hover titles via PlazaProps + #plazaTip');
+    failures++;
+  } else {
+    note('✓', 'mii.html shows hover titles on plaza props without blocking Miis');
+  }
+}
+
 console.log(
   failures ? `\n${failures} problem(s) found\n` : '\nAll clear\n'
 );

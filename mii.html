@@ -16,7 +16,7 @@ if (location.hostname === 'coworking.fyi') {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
-<!-- plaza-client: 484 -->
+<!-- plaza-client: 486 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -12298,13 +12298,15 @@ canvasEl.addEventListener('pointerdown', (e) => {
 }, { capture: true });
 
 window.addEventListener('pointerup', () => {
+  const quick = performance.now() - P.downT < 260 && P.moved < 8;
   if (held) {
-    const quick = performance.now() - P.downT < 260 && P.moved < 8;
     if (quick) { held.state = 'fall'; held.greet(); }
     else { held.release(); Sound.fx.drop(); }
     held = null;
     pointerEl.classList.remove('grab');
     setTimeout(() => { controls.enabled = true; }, 0);
+  } else if (quick) {
+    PlazaProps.tryActivate();
   }
   P.down = false;
 });
@@ -13893,6 +13895,11 @@ renderer.setAnimationLoop(() => {
       pointerEl.classList.toggle('active', !!hit);
     }
     for (const m of World.miis) m.hover = damp(m.hover, m === hit ? 1 : 0, 14, dt);
+
+    // Inanimate prop titles — only when not over a Mii (Miis keep grab + 3D tags).
+    const propHit = (!hit && !held) ? PlazaProps.pick() : null;
+    PlazaProps.syncTip(propHit, coarse ? P.x : px, coarse ? P.y : py);
+    if (!hit) pointerEl.classList.toggle('active', !!(propHit && propHit.interactive));
 
     // info dock for others only; own Mii uses the corner chip (Badge / edit / delete)
     const tipHit = (hit && hit.mine !== true
