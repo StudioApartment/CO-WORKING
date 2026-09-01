@@ -14510,8 +14510,8 @@ function buildEndTable() {
   // Snacks on the tabletop (replaces the succulent plant)
   const dcM = new THREE.MeshStandardMaterial({ map: makeDietCokeTex(),  roughness: 0.42, metalness: 0.28 });
   const czM = new THREE.MeshStandardMaterial({ map: makeCheezItTex(), roughness: 0.92 });
-  addP(g, PG.cyl(18), dcM,  0.10, 0.565, 0.04,  0.055, 0.150, 0.055);  // Diet Coke can (bigger)
-  addP(g, PG.box(),   czM, -0.10, 0.582, -0.02, 0.108, 0.156, 0.054,  0, 0, -0.10);  // Cheez-It bag (bigger)
+  addP(g, PG.cyl(18), dcM,  0.12, 0.622, 0.04,  0.082, 0.225, 0.082);  // Diet Coke can
+  addP(g, PG.box(),   czM, -0.12, 0.638, -0.02, 0.162, 0.235, 0.080,  0, 0, -0.10);  // Cheez-It bag
   g.add(propShadow(0.95, 0.95));
   return tagProp(g, 'end-table', 'End table');
 }
@@ -14697,27 +14697,50 @@ function addFruitBowl(parent, x, y, z) {
 /* ── Snack textures & counter display ─────────────────────────────────────── */
 
 function makeDietCokeTex() {
-  const W = 256, H = 128, c = cv(W, H), g = c.getContext('2d');
-  // Silver body
+  const W = 256, H = 512, c = cv(W, H), g = c.getContext('2d');
+  // Metallic silver body
   const sg = g.createLinearGradient(0, 0, W, 0);
-  sg.addColorStop(0, '#c8cdd0'); sg.addColorStop(0.5, '#e8ecee'); sg.addColorStop(1, '#c8cdd0');
+  sg.addColorStop(0,   '#7a8a90'); sg.addColorStop(0.18, '#d8e2e8');
+  sg.addColorStop(0.50, '#f2f6f8'); sg.addColorStop(0.82, '#d8e2e8');
+  sg.addColorStop(1,   '#7a8a90');
   g.fillStyle = sg; g.fillRect(0, 0, W, H);
-  // Red band
-  const rb = 20, rh = H - 38;
-  const rg = g.createLinearGradient(0, rb, 0, rb + rh);
-  rg.addColorStop(0, '#e30613'); rg.addColorStop(0.5, '#f0191e'); rg.addColorStop(1, '#c70010');
+  // Red band: runs from ~18% to ~82% of can height
+  const rb = H * 0.18, rh = H * 0.64;
+  const rg = g.createLinearGradient(0, 0, W, 0);
+  rg.addColorStop(0,   '#9e0010'); rg.addColorStop(0.2, '#e30613');
+  rg.addColorStop(0.5, '#f52020'); rg.addColorStop(0.8, '#e30613');
+  rg.addColorStop(1,   '#9e0010');
   g.fillStyle = rg; g.fillRect(0, rb, W, rh);
-  // White cursive-style "Diet Coke" – two lines
-  g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.font = 'italic bold 30px "Times New Roman",Georgia,serif';
-  g.fillText('Diet', W / 2, rb + rh * 0.32);
-  g.font = 'italic bold 44px "Times New Roman",Georgia,serif';
-  g.fillText('Coke', W / 2, rb + rh * 0.68);
-  // Silver swish
-  g.strokeStyle = 'rgba(255,255,255,0.4)'; g.lineWidth = 3;
-  g.beginPath(); g.moveTo(20, rb + 4); g.bezierCurveTo(80, rb - 6, 176, rb + 12, W - 20, rb + 2); g.stroke();
-  // Thin silver top/bottom
-  g.fillStyle = '#b0b8bc'; g.fillRect(0, 0, W, rb); g.fillRect(0, H - 18, W, 18);
+  // Wavy silver stripe separating silver from red at top
+  g.fillStyle = '#cdd6dc';
+  g.beginPath(); g.moveTo(0, rb);
+  g.bezierCurveTo(W*.25, rb-14, W*.6, rb+10, W, rb-4);
+  g.lineTo(W, rb+22); g.bezierCurveTo(W*.6, rb+32, W*.25, rb+8, 0, rb+22);
+  g.closePath(); g.fill();
+  // Wavy silver stripe at bottom of red band
+  g.beginPath(); g.moveTo(0, rb+rh);
+  g.bezierCurveTo(W*.3, rb+rh-10, W*.7, rb+rh+14, W, rb+rh+2);
+  g.lineTo(W, rb+rh-22); g.bezierCurveTo(W*.7, rb+rh-6, W*.3, rb+rh-26, 0, rb+rh-22);
+  g.closePath(); g.fill();
+  // "diet" small italic white text
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = 'italic 500 36px "Times New Roman",Georgia,serif';
+  g.fillText('diet', W/2, rb + rh*0.26);
+  // "Coke" large italic serif
+  g.font = 'italic bold 88px "Times New Roman",Georgia,serif';
+  g.fillText('Coke', W/2, rb + rh*0.58);
+  // Coca-Cola style swoosh under "Coke"
+  g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = 3; g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(W*0.12, rb+rh*0.76); g.bezierCurveTo(W*0.38, rb+rh*0.70, W*0.62, rb+rh*0.82, W*0.88, rb+rh*0.76);
+  g.stroke();
+  // Repaint silver top cap
+  const tg = g.createLinearGradient(0, 0, W, 0);
+  tg.addColorStop(0, '#6e7c82'); tg.addColorStop(0.5, '#aab6bc'); tg.addColorStop(1, '#6e7c82');
+  g.fillStyle = tg; g.fillRect(0, 0, W, rb); g.fillRect(0, rb+rh, W, H-(rb+rh));
+  // Shine highlight on silver top
+  g.fillStyle = 'rgba(255,255,255,0.18)';
+  g.fillRect(W*0.30, 0, W*0.22, rb);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4; t.userData.own = true; return t;
 }
@@ -14843,22 +14866,16 @@ function addKitchenSnacks(parent) {
 
   // Diet Coke cans — 3 in a row at the front of the counter
   for (let i = 0; i < 3; i++) {
-    addP(parent, PG.cyl(18), dcMat, 0.48 + i * 0.14, 1.018, 0.08, 0.058, 0.155, 0.058);
+    addP(parent, PG.cyl(18), dcMat, 0.36 + i * 0.18, 1.055, 0.08, 0.086, 0.230, 0.086);
   }
-  // NY diner coffee cups — 2 cups at back
+  // NY diner coffee cups — 3 cups at back
   const cupGeo = geoCache('nycp', () => new THREE.CylinderGeometry(0.92, 1, 1, 14));
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 3; i++) {
     const m = new THREE.Mesh(cupGeo, cofMat);
-    m.position.set(0.14 + i * 0.18, 1.022, -0.08);
-    m.scale.set(0.065, 0.185, 0.065);
+    m.position.set(0.10 + i * 0.22, 1.068, -0.08);
+    m.scale.set(0.096, 0.275, 0.096);
     parent.add(m);
   }
-  // Cheez-It bags — standing up, front-facing so logo shows
-  addP(parent, PG.box(), czMat,  0.08, 1.028, -0.06, 0.120, 0.172, 0.058,  0, 0,  0.06);
-  addP(parent, PG.box(), czMat,  0.24, 1.028, -0.06, 0.120, 0.172, 0.058,  0, 0, -0.05);
-  // KIND bars — lying flat with logo visible from top
-  addP(parent, PG.box(), kindMat, 0.50, 0.968, 0.10, 0.200, 0.036, 0.068,  0,  0.12, 0);
-  addP(parent, PG.box(), kindMat, 0.72, 0.968, 0.10, 0.200, 0.036, 0.068,  0, -0.10, 0);
 }
 
 /** Kitchen counter: coffee, water, cupboard, fruit. Front faces local +Z. */
@@ -14945,6 +14962,74 @@ function buildFridge() {
   fridgeArtMat = artMat;
   addP(g, PG.cyl(8), pMat('#d4453a', 0.45), -0.18, 1.52, 0.412, 0.025, 0.018, 0.025, Math.PI / 2, 0, 0);
   addP(g, PG.cyl(8), pMat('#3a8fd0', 0.45), 0.10, 1.24, 0.412, 0.022, 0.016, 0.022, Math.PI / 2, 0, 0);
+
+  // ── Papers + city magnets ─────────────────────────────────────────────────
+  // Fanned stack of papers on the lower door
+  const paperMat = pMat('#f8f6f0', 0.88);
+  const paperDefs = [
+    { x: -0.22, y: 0.52, rz: -0.18, w: 0.26, h: 0.32 },
+    { x: -0.18, y: 0.48, rz:  0.06, w: 0.24, h: 0.30 },
+    { x: -0.26, y: 0.44, rz:  0.22, w: 0.22, h: 0.28 },
+    { x: -0.20, y: 0.56, rz: -0.30, w: 0.20, h: 0.26 },
+    { x:  0.22, y: 0.38, rz:  0.14, w: 0.24, h: 0.32 },
+    { x:  0.26, y: 0.34, rz: -0.10, w: 0.22, h: 0.30 },
+    { x:  0.30, y: 0.42, rz:  0.28, w: 0.20, h: 0.28 },
+  ];
+  for (const p of paperDefs) {
+    addP(g, PG.box(), paperMat, p.x, p.y, 0.385 + Math.random() * 0.004, p.w, p.h, 0.003, 0, 0, p.rz);
+  }
+
+  // City magnets — small flat ovals/rects with colored canvas labels
+  function cityMagTex(label, bg, fg, shape) {
+    const W = 128, H = shape === 'oval' ? 80 : 64, c = cv(W, H), ctx = c.getContext('2d');
+    ctx.fillStyle = bg;
+    if (shape === 'oval') {
+      ctx.beginPath(); ctx.ellipse(W/2, H/2, W/2-2, H/2-2, 0, 0, TAU); ctx.fill();
+    } else {
+      const r = 10;
+      ctx.beginPath(); ctx.roundRect(2, 2, W-4, H-4, r); ctx.fill();
+    }
+    ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const lines = label.split('\n');
+    if (lines.length === 1) {
+      ctx.font = `bold ${H * 0.42}px Arial,sans-serif`;
+      ctx.fillText(label, W/2, H/2);
+    } else {
+      ctx.font = `bold ${H * 0.30}px Arial,sans-serif`;
+      ctx.fillText(lines[0], W/2, H * 0.34);
+      ctx.font = `${H * 0.24}px Arial,sans-serif`;
+      ctx.fillText(lines[1], W/2, H * 0.66);
+    }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.userData.own = true; return t;
+  }
+  const cityMags = [
+    { x: -0.34, y: 0.62, label: 'NYC',       bg: '#c5282d', fg: '#fff',    shape: 'oval' },
+    { x:  0.30, y: 0.58, label: 'CHICAGO',    bg: '#003f8a', fg: '#fff',    shape: 'rect' },
+    { x: -0.08, y: 0.36, label: 'LA',         bg: '#f5a623', fg: '#1a1a1a', shape: 'oval' },
+    { x:  0.14, y: 0.66, label: 'MIAMI',      bg: '#e9408c', fg: '#fff',    shape: 'rect' },
+    { x: -0.36, y: 0.38, label: 'PORTLAND',   bg: '#3a8a3a', fg: '#fff',    shape: 'oval' },
+    { x:  0.38, y: 0.30, label: 'AUSTIN',     bg: '#6c3cbf', fg: '#fff',    shape: 'rect' },
+    { x: -0.10, y: 0.58, label: 'DENVER',     bg: '#2e6cb0', fg: '#fff',    shape: 'oval' },
+    { x:  0.02, y: 0.44, label: 'BOSTON',     bg: '#c5282d', fg: '#fff',    shape: 'rect' },
+    { x: -0.30, y: 0.28, label: 'SF',         bg: '#f5a623', fg: '#1a1a1a', shape: 'oval' },
+    { x:  0.22, y: 0.24, label: 'NASHVILLE',  bg: '#3a3a3a', fg: '#f5d030', shape: 'rect' },
+  ];
+  for (const cm of cityMags) {
+    const mat = new THREE.MeshStandardMaterial({ map: cityMagTex(cm.label, cm.bg, cm.fg, cm.shape), roughness: 0.6 });
+    const iW = cm.shape === 'oval' ? 0.075 : 0.072, iH = cm.shape === 'oval' ? 0.048 : 0.040;
+    addP(g, PG.box(), mat, cm.x, cm.y, 0.407, iW, iH, 0.008);
+  }
+  // Classic letter magnets on lower door
+  const letterColors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#e67e22'];
+  let lx = -0.32, ly = 0.22;
+  for (const ch of ['H','E','L','L','O','!']) {
+    const mat2 = new THREE.MeshStandardMaterial({
+      map: cityMagTex(ch, letterColors[(lx*10+3.2|0) % letterColors.length], '#fff', 'rect'),
+      roughness: 0.55
+    });
+    addP(g, PG.box(), mat2, lx, ly, 0.406, 0.040, 0.040, 0.007);
+    lx += 0.055;
+  }
 
   g.add(propShadow(1.38, 0.95));
   return tagProp(g, 'fridge', 'View Breakroom Art', true, '/fridge-paint');
