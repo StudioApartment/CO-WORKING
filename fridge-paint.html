@@ -541,10 +541,11 @@
         body: blob
       });
       if (!res.ok) throw new Error('save failed');
+      const data = await res.json().catch(() => ({}));
       dirty = false;
       setSaveState('saved');
       docTitle.textContent = 'fridge-art - Paint';
-      notifyParent();
+      notifyParent(data.updated);
     } catch {
       setSaveState('error');
     } finally {
@@ -552,10 +553,10 @@
     }
   }
 
-  function notifyParent() {
+  function notifyParent(updated) {
     try {
       if (window.parent && window.parent !== window) {
-        parent.postMessage({ type: 'coworking:fridge-art-updated' }, location.origin);
+        parent.postMessage({ type: 'coworking:fridge-art-updated', updated }, location.origin);
       }
     } catch { /* ignore */ }
   }

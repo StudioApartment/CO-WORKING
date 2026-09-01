@@ -91,6 +91,10 @@ const server = createServer(async (req, res) => {
     url.searchParams.set('__route', 'fridge-art');
     pathname = '/api/config';
   }
+  if (pathname === '/api/office-sync' || pathname === '/api/office-sync/') {
+    url.searchParams.set('__route', 'office-sync');
+    pathname = '/api/config';
+  }
 
   if (pathname === '/api' || pathname.startsWith('/api/')) {
     const segments = pathname.replace(/^\/api\/?/, '').split('/').filter(Boolean);

@@ -148,6 +148,10 @@
     {
       "source": "/api/fridge-art",
       "destination": "/api/config?__route=fridge-art"
+    },
+    {
+      "source": "/api/office-sync",
+      "destination": "/api/config?__route=office-sync"
     }
   ]
 }

@@ -13720,7 +13720,7 @@ const PG = {
 /* ══════════════════════════════════════════════════════════════
    8a½ · OFFICE DOG — Roscoe, the plaza pup
    Low-poly wanderer with a Co-Worker-style name tag. Tap to rename
-   (first name only); stored per browser in localStorage.
+   (first name only); shared office-wide via /api/office-sync.
    ══════════════════════════════════════════════════════════════ */
 const DOG_NAME_KEY = 'office-dog-name';
 const DOG_DEFAULT_NAME = 'Roscoe';
@@ -15428,6 +15428,7 @@ const FridgeArt = {
   blank: null,
   loadGen: 0,
   pending: false,
+  lastUpdated: 0,
 
   blankTex() {
     if (this.blank) return this.blank;
@@ -15516,7 +15517,9 @@ const InteriorOverlay = {
       if (ev.origin !== location.origin) return;
       if (!ev.data || !ev.data.type) return;
       if (ev.data.type === this.MSG) this.close();
-      if (ev.data.type === 'coworking:fridge-art-updated') FridgeArt.refresh();
+      if (ev.data.type === 'coworking:fridge-art-updated') {
+        OfficeSync.onFridgeSaved(ev.data.updated);
+      }
     });
 
     window.addEventListener('popstate', () => {
@@ -15957,6 +15960,7 @@ const Realtime = {
 
       this.channel = this.client
         .channel('plaza')
+        .on('broadcast', { event: 'office-sync' }, ({ payload }) => OfficeSync.onPush(payload))
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'miis' },
           (p) => this.onInsert(p.new))
         .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'miis' },
@@ -16118,6 +16122,106 @@ const PlazaSync = {
     } finally {
       this.inflight = false;
     }
+  }
+};
+
+/* Poll (and Realtime-broadcast) shared office props — fridge magnet art and
+   the plaza dog's name — so saves from one browser show up for everyone. */
+const OfficeSync = {
+  timer: null,
+  inflight: false,
+  fridgeUpdated: 0,
+  dogUpdated: 0,
+
+  start() {
+    if (this.timer) return;
+    this.timer = setInterval(() => this.pull(), 4000);
+    this.pull();
+  },
+
+  pause() {
+    if (!this.timer) return;
+    clearInterval(this.timer);
+    this.timer = null;
+  },
+
+  resume() {
+    if (this.timer) return;
+    this.timer = setInterval(() => this.pull(), 4000);
+    if (!document.hidden) this.pull();
+  },
+
+  onPush(payload) {
+    if (!payload || typeof payload !== 'object') return;
+    this.apply(payload);
+  },
+
+  onFridgeSaved(updated) {
+    const ts = Number(updated) || Date.now();
+    if (ts <= this.fridgeUpdated) {
+      FridgeArt.refresh();
+      return;
+    }
+    this.fridgeUpdated = ts;
+    FridgeArt.lastUpdated = ts;
+    FridgeArt.refresh();
+    this.broadcast({ fridgeUpdated: ts, dogUpdated: this.dogUpdated, dogName: World.dog && World.dog.name });
+  },
+
+  apply(row) {
+    if (!row || typeof row !== 'object') return;
+    const fridgeTs = Number(row.fridgeUpdated) || 0;
+    const dogTs = Number(row.dogUpdated) || 0;
+    if (fridgeTs > this.fridgeUpdated) {
+      this.fridgeUpdated = fridgeTs;
+      FridgeArt.lastUpdated = fridgeTs;
+      FridgeArt.refresh();
+    }
+    const dog = World.dog;
+    const name = row.dogName && String(row.dogName).trim().split(/\s+/)[0].slice(0, 14);
+    if (dog && name && dogTs >= this.dogUpdated && (dogTs > this.dogUpdated || name !== dog.name)) {
+      this.dogUpdated = dogTs;
+      if (dog.name !== name) {
+        dog.setName(name);
+        saveDogName(name);
+      }
+    }
+  },
+
+  broadcast(payload) {
+    if (!Realtime.channel || !Realtime.ready || !payload) return;
+    try {
+      Realtime.channel.send({ type: 'broadcast', event: 'office-sync', payload });
+    } catch { /* socket may be reconnecting */ }
+  },
+
+  async pull() {
+    if (document.hidden || this.inflight) return;
+    if (styleReviewKind(new URLSearchParams(location.search).get('review'))) return;
+    this.inflight = true;
+    try {
+      const r = await fetch('/api/office-sync', { cache: 'no-store' });
+      if (!r.ok) return;
+      this.apply(await r.json());
+    } catch { /* offline — retry on next tick */ }
+    finally { this.inflight = false; }
+  },
+
+  async saveDogName(name) {
+    const r = await fetch('/api/office-sync', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ dogName: name })
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'Could not save the dog name');
+    this.dogUpdated = Number(data.dogUpdated) || Date.now();
+    this.broadcast({
+      dogName: data.dogName || name,
+      dogUpdated: this.dogUpdated,
+      fridgeUpdated: this.fridgeUpdated
+    });
+    return data;
   }
 };
 
@@ -17916,6 +18020,9 @@ function commitDogRename() {
   dog.setName(first);
   saveDogName(first);
   Sound.fx.chime();
+  OfficeSync.saveDogName(first).catch((e) => {
+    toast(String(e.message || e), 3200);
+  });
 }
 
 function showDeleteConfirm(m) {
@@ -18313,6 +18420,7 @@ function waitForPaint(ms = 250) {
 
   const live = await Realtime.connect();
   PlazaSync.start();
+  OfficeSync.start();
   console.log(
     '[Co-Working Office] storage:', Store.mode,
     '· backend:', Config.storage,
@@ -18330,6 +18438,7 @@ document.addEventListener('visibilitychange', () => {
     clock.getDelta();
     Sound.pauseMusic();
     PlazaSync.pause();
+    OfficeSync.pause();
     Preview.stop();
     FridgeArt.deferRefresh();
   } else {
@@ -18340,6 +18449,7 @@ document.addEventListener('visibilitychange', () => {
       else Sound.resume();
     }
     PlazaSync.resume();
+    OfficeSync.resume();
     if (FridgeArt.pending) FridgeArt.refresh();
     if (Preview.mii && $('modal').classList.contains('open')) Preview.start();
   }
@@ -18348,7 +18458,7 @@ document.addEventListener('visibilitychange', () => {
 // expose a little for tinkering in the console — and for the style contact
 // sheets in scripts/style-shots.mjs, which drive the real builder
 window.MiiPlaza = {
-  World, Sound, Store, Preview, randomDNA, normalizeDNA, buildMii, Mii, Cam, Config, Realtime,
+  World, Sound, Store, Preview, randomDNA, normalizeDNA, buildMii, Mii, Cam, Config, Realtime, OfficeSync,
   THREE, styleLabel, locationLabel, Places, InteriorOverlay,
   catalog: {
     EYEWEAR, FACIAL_HAIR, PIERCINGS, TATTOOS, APPAREL,

@@ -17,6 +17,7 @@ import { hasRealtime, hasGoogleWallet, hasAppleWallet, hasResend, hasSessions, h
 import { usingSupabase } from './_lib/store.js';
 import placesHandler from './_lib/places.js';
 import fridgeArtHandler from './_lib/fridge-art.js';
+import officeSyncHandler from './_lib/office-sync.js';
 
 export default async function handler(req, res) {
   if (preflight(req, res)) return;
@@ -27,6 +28,10 @@ export default async function handler(req, res) {
 
   if (req.query && req.query.__route === 'fridge-art') {
     return fridgeArtHandler(req, res);
+  }
+
+  if (req.query && req.query.__route === 'office-sync') {
+    return officeSyncHandler(req, res);
   }
 
   if (req.method !== 'GET') return methodNotAllowed(res, ['GET']);
