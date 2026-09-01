@@ -13912,6 +13912,12 @@ class OfficeDog {
     this.tagShow = 0;
     this.name = loadDogName();
     this.t = rand(0, TAU);
+    // physics
+    this.y = 0; this.vy = 0;
+    this.vel = new THREE.Vector3();
+    this.grabPos = new THREE.Vector3();
+    this.grabTarget = new THREE.Vector3();
+    this.grabVel = new THREE.Vector3();
 
     const plate = makeNameTexture(this.name);
     this.nameTex = plate.tex;
@@ -13951,17 +13957,29 @@ class OfficeDog {
     showDogRename(this);
   }
 
-  dragTo(pt) {
-    this.pos.x = pt.x;
-    this.pos.z = pt.z;
+  grab(point) {
+    this.state = 'held';
+    this.grabTarget.copy(point);
+    this.grabPos.copy(point);
+    this.grabVel.set(0, 0, 0);
+    this.vel.set(0, 0, 0);
+    this.speed = 0;
   }
+
+  dragTo(point) { this.grabTarget.copy(point); }
 
   release() {
-    this.state = 'idle';
-    this.timer = rand(0.5, 1.5);
+    this.state = 'fall';
+    this.vel.set(clamp(this.grabVel.x, -14, 14), 0, clamp(this.grabVel.z, -14, 14));
+    this.vy = clamp(this.grabVel.y * 0.55, -9, 9);
   }
 
-  greet() { /* no-op for pet */ }
+  greet() {
+    if (this.state === 'held') return;
+    this.state = 'fall';
+    this.vy = 3.4;
+    this.vel.set(0, 0, 0);
+  }
 
   switchType(type) {
     if (type === this.petType) return;
@@ -14051,10 +14069,40 @@ class OfficeDog {
           this.walkPhase += dt * this.speed * 10.5;
         }
         break;
-      case 'held':
-        this.speed = damp(this.speed, 0, 12, dt);
-        this.walkPhase += dt * 2.0;
+      case 'held': {
+        const prev = _v1.copy(this.grabPos);
+        this.grabPos.lerp(this.grabTarget, 1 - Math.exp(-22 * dt));
+        _v2.copy(this.grabPos).sub(prev).divideScalar(Math.max(dt, 1e-4));
+        this.grabVel.lerp(_v2, 0.4);
+        this.pos.x = this.grabPos.x; this.pos.z = this.grabPos.z;
+        this.y = Math.max(0, this.grabPos.y - this.height * 0.5);
+        this.speed = 0;
+        this.walkPhase += dt * 2.5;
+        // face the camera while lifted
+        this.targetFacing = Math.atan2(
+          W.camera.position.x - this.pos.x, W.camera.position.z - this.pos.z
+        );
         break;
+      }
+      case 'fall': {
+        this.vy -= 22 * dt;
+        this.y += this.vy * dt;
+        this.pos.x += this.vel.x * dt;
+        this.pos.z += this.vel.z * dt;
+        this.vel.multiplyScalar(Math.exp(-1.3 * dt));
+        this.walkPhase += dt * 6 * Math.hypot(this.vel.x, this.vel.z);
+        if (this.y <= 0) {
+          this.y = 0;
+          const impact = Math.abs(this.vy);
+          this.vy = -this.vy * 0.44;
+          if (Math.abs(this.vy) < 0.55) {
+            this.vy = 0;
+            this.state = 'idle';
+            this.timer = rand(0.5, 1.5);
+          }
+        }
+        break;
+      }
     }
 
     const r = Math.hypot(this.pos.x, this.pos.z), R = W.bounds;
@@ -14063,22 +14111,24 @@ class OfficeDog {
       this.pos.x = nx * R; this.pos.z = nz * R;
     }
 
-    for (const o of W.miis) {
-      const dx = this.pos.x - o.pos.x, dz = this.pos.z - o.pos.z;
-      const d2 = dx * dx + dz * dz;
-      if (d2 < 1.05 * 1.05 && d2 > 1e-5) {
-        const d = Math.sqrt(d2), push = (1.05 - d) * 2.2 * dt;
-        this.pos.x += (dx / d) * push; this.pos.z += (dz / d) * push;
+    if (this.y <= 0.01) {
+      for (const o of W.miis) {
+        const dx = this.pos.x - o.pos.x, dz = this.pos.z - o.pos.z;
+        const d2 = dx * dx + dz * dz;
+        if (d2 < 1.05 * 1.05 && d2 > 1e-5) {
+          const d = Math.sqrt(d2), push = (1.05 - d) * 2.2 * dt;
+          this.pos.x += (dx / d) * push; this.pos.z += (dz / d) * push;
+        }
       }
-    }
-    for (const o of W.obstacles) {
-      if (W._dogObsIdx != null && o === W.obstacles[W._dogObsIdx]) continue;
-      const dx = this.pos.x - o.x, dz = this.pos.z - o.z;
-      const d2 = dx * dx + dz * dz;
-      const min = o.r + 0.38;
-      if (d2 < min * min && d2 > 1e-5) {
-        const d = Math.sqrt(d2), push = (min - d) * 2.4 * dt;
-        this.pos.x += (dx / d) * push; this.pos.z += (dz / d) * push;
+      for (const o of W.obstacles) {
+        if (W._dogObsIdx != null && o === W.obstacles[W._dogObsIdx]) continue;
+        const dx = this.pos.x - o.x, dz = this.pos.z - o.z;
+        const d2 = dx * dx + dz * dz;
+        const min = o.r + 0.38;
+        if (d2 < min * min && d2 > 1e-5) {
+          const d = Math.sqrt(d2), push = (min - d) * 2.4 * dt;
+          this.pos.x += (dx / d) * push; this.pos.z += (dz / d) * push;
+        }
       }
     }
 
@@ -14107,7 +14157,7 @@ class OfficeDog {
   }
 
   sync(dt = 0) {
-    this.root.position.set(this.pos.x, 0, this.pos.z);
+    this.root.position.set(this.pos.x, this.y, this.pos.z);
     this.root.rotation.y = this.facing;
 
     this.shadow.position.set(this.pos.x, 0.014, this.pos.z);
@@ -16964,6 +17014,12 @@ window.addEventListener('pointermove', (e) => {
   }
 }, { passive: true });
 
+canvasEl.addEventListener('dblclick', (e) => {
+  setNDC(e);
+  const dog = pickDog();
+  if (dog) { dog.promptRename(); e.preventDefault(); }
+});
+
 canvasEl.addEventListener('pointerdown', (e) => {
   if (e.button !== undefined && e.button !== 0) return;
   setNDC(e);
@@ -16984,10 +17040,9 @@ canvasEl.addEventListener('pointerdown', (e) => {
       controls.enabled = false;
       held = dog;
       const camDir = camera.getWorldDirection(_v1).clone();
-      const anchor = _v2.set(dog.pos.x, dog.height * 0.5, dog.pos.z);
+      const anchor = _v2.set(dog.pos.x, dog.y + dog.height * 0.5, dog.pos.z);
       dragPlane.setFromNormalAndCoplanarPoint(camDir, anchor);
-      dog.state = 'held';
-      dog.speed = 0;
+      dog.grab(anchor);
       pointerEl.classList.add('grab');
       Sound.fx.pickup();
     }
@@ -16998,9 +17053,8 @@ window.addEventListener('pointerup', () => {
   const quick = performance.now() - P.downT < 260 && P.moved < 8;
   if (held) {
     if (held === World.dog) {
-      held.release();
-      if (quick) held.promptRename();
-      else Sound.fx.drop();
+      if (quick) { held.greet(); }
+      else { held.release(); Sound.fx.drop(); }
     } else if (quick) {
       held.state = 'fall'; held.greet();
     } else {
