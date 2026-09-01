@@ -311,12 +311,12 @@ body.native-cursor #pointer{display:none}
 }
 /* Info bubble: tight ring around a fixed-size “i” (bubble sized per-frame). */
 #btnMiiInfo{
-  width:var(--info-bubble,13px);height:var(--info-bubble,13px);
+  width:var(--info-bubble,10px);height:var(--info-bubble,10px);
   color:var(--blue-dk);
   background:linear-gradient(#fff,#e0eaf0);
   box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(90,115,135,.18),0 0 0 1px #fff,0 0 0 1.5px #d2dde4;
 }
-#btnMiiInfo svg{width:var(--info-icon,11px);height:var(--info-icon,11px);flex-shrink:0}
+#btnMiiInfo svg{width:var(--info-icon,8px);height:var(--info-icon,8px);flex-shrink:0}
 #btnMiiInfo:hover,#btnMiiInfo:focus-visible{
   transform:scale(1.08);
   box-shadow:inset 0 1px 0 #fff,0 2px 5px rgba(70,100,125,.2),0 0 0 1px #fff,0 0 0 1.5px #9fd3ef;
@@ -18723,7 +18723,7 @@ function placeMiiDock(m) {
   const plate = nameTagPlateMetrics(m);
   const tagPxW = tagPx * (m.tagAspect || plate.W / plate.H);
   const chipPx = Math.round(tagPx * (plate.h / plate.H));
-  const iconPx = Math.round(chipPx * 0.52);
+  const iconPx = Math.round(chipPx * 0.40);
   const bubblePx = iconPx + 2;
   dock.style.setProperty('--info-icon', iconPx + 'px');
   dock.style.setProperty('--info-bubble', bubblePx + 'px');
