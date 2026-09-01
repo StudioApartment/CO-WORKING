@@ -13500,7 +13500,7 @@ const World = {
       desk: 1.18, arcade: 0.72, kitchenette: 1.38, fridge: 0.78, chair: 0.78,
       'end-table': 0.52, lamp: 0.42, 'plant-leafy': 0.48, 'plant-aloe': 0.50,
       'plant-succulent': 0.32, 'plant-cactus': 0.46, 'plant-bamboo': 0.48,
-      'plant-fern': 0.52
+      'plant-fern': 0.52, 'bike-rack': 0.92
     };
     this.obstacles = (this.props || []).map((root) => {
       const id = root.userData.plazaItem?.id || root.userData.plazaProp?.id || '';
@@ -15127,6 +15127,143 @@ function makeArcadeControlPanelTexture() {
   return t;
 }
 
+  return t;
+}
+
+/** Small "citi bike" panel for frame + basket (NYC bike-share homage). */
+function makeCitibikeMarkTexture() {
+  const W = 128, H = 48, c = cv(W, H), g = c.getContext('2d');
+  g.fillStyle = '#0067b1';
+  g.fillRect(0, 0, W, H);
+  g.fillStyle = '#ffffff';
+  g.font = '800 26px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif';
+  g.fillText('citi', 10, 32);
+  g.font = '800 20px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif';
+  g.fillText('bike', 58, 32);
+  g.fillStyle = '#e31837';
+  g.beginPath();
+  g.arc(52, 13, 5.5, 0, TAU);
+  g.fill();
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  t.userData.own = true;
+  return t;
+}
+
+function addBikeWheel(parent, x, y, z, r = 0.19) {
+  const tire = pMat('#17181a', 0.92);
+  const rim = pMat('#c4ccd4', 0.42, 0.35);
+  const hub = pMat('#727983', 0.55, 0.28);
+  const w = new THREE.Group();
+  w.position.set(x, y, z);
+  addP(w, PG.cyl(18), tire, 0, 0, 0, r, 0.042, r, Math.PI / 2, 0, 0);
+  addP(w, PG.cyl(18), rim, 0, 0, 0, r * 0.80, 0.020, r * 0.80, Math.PI / 2, 0, 0);
+  addP(w, PG.cyl(10), hub, 0, 0, 0, 0.028, 0.035, 0.028, Math.PI / 2, 0, 0);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * TAU;
+    addP(w, PG.box(), rim, Math.cos(a) * r * 0.38, 0, Math.sin(a) * r * 0.38, 0.008, 0.014, r * 0.34, Math.PI / 2, a, 0);
+  }
+  parent.add(w);
+  return w;
+}
+
+function buildPersonalBike() {
+  const g = new THREE.Group();
+  const frame = pMat('#3d454f', 0.62, 0.12);
+  const accent = pMat('#7a8f9c', 0.55, 0.22);
+  const grip = pMat('#1a1c20', 0.88);
+  const seat = pMat('#111214', 0.82);
+  const wr = 0.19;
+  addBikeWheel(g, 0, wr, 0.52, wr);
+  addBikeWheel(g, 0, wr, -0.52, wr);
+  addP(g, PG.cyl(10), frame, 0.02, 0.48, 0.16, 0.022, 0.34, 0.022, 0.72, 0, 0);
+  addP(g, PG.cyl(10), frame, -0.02, 0.46, -0.18, 0.022, 0.42, 0.022, -0.58, 0, 0);
+  addP(g, PG.cyl(10), frame, 0, 0.52, -0.02, 0.020, 0.36, 0.020, 0.22, 0, 0);
+  addP(g, PG.cyl(10), accent, 0, 0.72, 0.04, 0.018, 0.18, 0.018, -0.42, 0, 0);
+  addP(g, PG.cyl(8), frame, 0, 0.88, 0.10, 0.016, 0.22, 0.016, -0.35, 0, 0);
+  addP(g, PG.cyl(8), frame, 0, 0.96, 0.38, 0.016, 0.24, 0.016, 0.38, 0, 0);
+  const bar = new THREE.Group();
+  bar.position.set(0, 0.98, 0.38);
+  bar.rotation.z = -0.22;
+  addP(bar, PG.cyl(8), frame, 0, 0, 0, 0.014, 0.38, 0.014, Math.PI / 2, 0, 0);
+  addP(bar, PG.cyl(8), grip, -0.19, 0, 0, 0.026, 0.11, 0.026, 0, 0, Math.PI / 2);
+  addP(bar, PG.cyl(8), grip, 0.19, 0, 0, 0.026, 0.11, 0.026, 0, 0, Math.PI / 2);
+  g.add(bar);
+  addP(g, PG.box(), seat, 0, 0.92, -0.06, 0.16, 0.05, 0.11);
+  addP(g, PG.cyl(8), frame, 0, 0.84, -0.06, 0.014, 0.18, 0.014);
+  addP(g, PG.cyl(8), accent, 0.06, 0.24, 0.08, 0.038, 0.014, 0.014, Math.PI / 2, 0.15, 0);
+  addP(g, PG.box(), pMat('#222428', 0.9), 0.06, 0.24, 0.08, 0.11, 0.04, 0.05);
+  return g;
+}
+
+function buildCitibike() {
+  const g = new THREE.Group();
+  const blue = pMat('#0067b1', 0.68, 0.08);
+  const blueDk = pMat('#004f8a', 0.72);
+  const black = pMat('#14161a', 0.88);
+  const mark = new THREE.MeshStandardMaterial({
+    map: makeCitibikeMarkTexture(), roughness: 0.78, metalness: 0
+  });
+  const wr = 0.20;
+  addBikeWheel(g, 0, wr, 0.54, wr);
+  addBikeWheel(g, 0, wr, -0.54, wr);
+  addP(g, PG.cyl(12), blue, -0.04, 0.42, 0.08, 0.034, 0.22, 0.034, 0.55, 0, 0);
+  addP(g, PG.cyl(12), blue, 0.04, 0.42, -0.12, 0.034, 0.24, 0.034, -0.48, 0, 0);
+  addP(g, PG.cyl(10), blue, 0, 0.38, 0.18, 0.028, 0.52, 0.028, 0.08, 0, 0);
+  addP(g, PG.cyl(10), blue, 0, 0.38, -0.28, 0.028, 0.46, 0.028, -0.08, 0, 0);
+  addP(g, PG.box(), blue, 0, 0.50, -0.05, 0.22, 0.05, 0.08);
+  addP(g, PG.box(), mark, 0.02, 0.46, 0.02, 0.18, 0.10, 0.04, 0.12, -0.08, 0);
+  addP(g, PG.cyl(10), blueDk, 0, 0.58, -0.34, 0.038, 0.12, 0.038, Math.PI / 2, 0, 0);
+  addP(g, PG.box(), mark, 0, 0.66, -0.50, 0.22, 0.16, 0.05);
+  const basket = new THREE.Group();
+  basket.position.set(0, 0.82, 0.54);
+  addP(basket, PG.box(), black, 0, 0.04, 0.04, 0.26, 0.16, 0.18);
+  addP(basket, PG.box(), mark, 0, 0.02, 0.14, 0.22, 0.12, 0.02);
+  addP(basket, PG.cyl(8), black, -0.10, -0.04, -0.02, 0.012, 0.22, 0.012, 0.35, 0, 0);
+  addP(basket, PG.cyl(8), black, 0.10, -0.04, -0.02, 0.012, 0.22, 0.012, 0.35, 0, 0);
+  g.add(basket);
+  const bar = new THREE.Group();
+  bar.position.set(0, 0.94, 0.36);
+  bar.rotation.z = -0.08;
+  bar.rotation.x = -0.12;
+  addP(bar, PG.cyl(8), black, 0, 0, 0, 0.016, 0.42, 0.016, Math.PI / 2, 0, 0);
+  addP(bar, PG.cyl(8), black, -0.22, 0.02, 0, 0.028, 0.12, 0.028, 0, 0, Math.PI / 2);
+  addP(bar, PG.cyl(8), black, 0.22, 0.02, 0, 0.028, 0.12, 0.028, 0, 0, Math.PI / 2);
+  g.add(bar);
+  addP(g, PG.box(), black, 0, 0.90, -0.08, 0.20, 0.06, 0.12);
+  addP(g, PG.cyl(8), blue, 0, 0.82, -0.08, 0.014, 0.20, 0.014);
+  addP(g, PG.box(), blueDk, 0.05, 0.26, 0.02, 0.14, 0.05, 0.06);
+  addP(g, PG.cyl(8), black, 0.08, 0.04, 0.06, 0.012, 0.16, 0.012, 0.55, 0, 0);
+  return g;
+}
+
+/** Staple rack with a commuter bike + NYC-style Citi Bike docked on the rug. */
+function buildBikeParking() {
+  const g = new THREE.Group();
+  const steel = pMat('#9aa3ab', 0.58, 0.38);
+  const steelDk = pMat('#727b84', 0.62, 0.32);
+  addP(g, PG.box(), steelDk, 0, 0.028, 0, 1.45, 0.055, 0.10);
+  for (const x of [-0.40, 0.40]) {
+    addP(g, PG.torus(0.020), steel, x, 0.36, 0, 0.27, 0.27, 0.27, Math.PI / 2, 0, Math.PI);
+    addP(g, PG.cyl(10), steel, x, 0.18, 0, 0.024, 0.36, 0.024);
+  }
+  addP(g, PG.box(), steel, 0, 0.58, 0, 0.92, 0.032, 0.032);
+
+  const left = buildPersonalBike();
+  left.position.set(-0.40, 0, 0.04);
+  left.rotation.y = 0.10;
+  g.add(left);
+
+  const citi = buildCitibike();
+  citi.position.set(0.40, 0, 0.04);
+  citi.rotation.y = -0.10;
+  g.add(citi);
+
+  g.add(propShadow(1.55, 0.62));
+  return tagProp(g, 'bike-rack', 'Bike parking');
+}
+
 function buildArcadeCabinet() {
   const g = new THREE.Group();
   const navy = pMat('#0a1020', 0.72);
@@ -15224,6 +15361,8 @@ function installPlazaProps() {
   let x, z;
   [x, z] = at(150, 7.2); placeProp(buildBamboo(), x, z, R(320), 1.0);
   placeProp(buildAloePlant(), -3.15, 1.15, R(215), 1.0);
+  const bikeX = -5.05, bikeZ = 1.85;
+  placeProp(buildBikeParking(), bikeX, bikeZ, faceIn(bikeX, bikeZ), 1.0);
   const lampX = -3.93, lampZ = -3.17;
   const chairX = -4.45, chairZ = -2.35;
   placeProp(buildLoungeChair(), chairX, chairZ, faceIn(chairX, chairZ), 1.0);
@@ -15242,7 +15381,7 @@ function installPlazaProps() {
   const arcadeX = 3.35, arcadeZ = -0.35;
   placeProp(buildArcadeCabinet(), arcadeX, arcadeZ, faceCam(arcadeX, arcadeZ), 1.0);
   placeProp(buildCactus(), 4.85, 3.35, R(300), 1.05);
-  placeProp(buildFern(), -2.95, 5.05, R(35), 0.95);
+  placeProp(buildFern(), -4.15, 5.05, R(35), 0.95);
   placeProp(buildFern(), arcadeX + 0.88, arcadeZ + 0.12, faceCam(arcadeX + 0.88, arcadeZ + 0.12), 0.95);
   World.rebuildObstacles();
 }
