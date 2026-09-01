@@ -144,6 +144,10 @@
     {
       "source": "/api/places",
       "destination": "/api/config?__route=places"
+    },
+    {
+      "source": "/api/fridge-art",
+      "destination": "/api/config?__route=fridge-art"
     }
   ]
 }

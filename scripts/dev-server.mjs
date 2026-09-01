@@ -87,6 +87,10 @@ const server = createServer(async (req, res) => {
     url.searchParams.set('__route', 'places');
     pathname = '/api/config';
   }
+  if (pathname === '/api/fridge-art' || pathname === '/api/fridge-art/') {
+    url.searchParams.set('__route', 'fridge-art');
+    pathname = '/api/config';
+  }
 
   if (pathname === '/api' || pathname.startsWith('/api/')) {
     const segments = pathname.replace(/^\/api\/?/, '').split('/').filter(Boolean);
@@ -142,7 +146,7 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\n  Co-Working Office dev server`);
-  console.log(`  http://localhost:${PORT}/`);
+  console.log(`\n  Mii Plaza dev server`);
+  console.log(`  http://localhost:${PORT}/mii`);
   console.log(`  http://localhost:${PORT}/admin\n`);
 });

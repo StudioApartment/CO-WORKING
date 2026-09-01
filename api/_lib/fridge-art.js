@@ -1,11 +1,14 @@
 /* GET  /api/fridge-art  -> shared fridge magnet PNG (404 if never saved)
  * PUT  /api/fridge-art  -> save raw image/png body (collaborative canvas)
  * POST /api/fridge-art  -> save { image: "data:image/png;base64,..." }
+ *
+ * Routed through /api/config?__route=fridge-art on Vercel to stay within the
+ * Hobby plan's 12 serverless-function limit.
  */
 
-import { preflight, methodNotAllowed, clientIp } from './_lib/http.js';
-import { allowWrite } from './_store.js';
-import { getFridgeArt, putFridgeArt, MAX_BYTES } from './_lib/fridge-art-store.js';
+import { preflight, methodNotAllowed, clientIp } from './http.js';
+import { allowWrite } from '../_store.js';
+import { getFridgeArt, putFridgeArt, MAX_BYTES } from './fridge-art-store.js';
 
 const DATA_URL_RE = /^data:image\/png;base64,([A-Za-z0-9+/=\s]+)$/i;
 
