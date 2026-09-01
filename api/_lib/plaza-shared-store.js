@@ -42,8 +42,8 @@ function writeDogTsFile(ts) {
 }
 
 function normalizeDogName(raw) {
-  const first = String(raw || '').trim().split(/\s+/)[0].slice(0, 14);
-  return first || DOG_DEFAULT_NAME;
+  const name = String(raw || '').trim().slice(0, 28);
+  return name || DOG_DEFAULT_NAME;
 }
 
 /** @returns {Promise<{ name: string, updated: number }>} */

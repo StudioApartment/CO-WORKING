@@ -14688,6 +14688,174 @@ function addFruitBowl(parent, x, y, z) {
   addP(parent, PG.cap(0.026, 0.13), yel, x + 0.10, y + 0.11, z - 0.02, 1, 1, 0.7, 1.05, 0.85, 0.2);
 }
 
+
+/* ── Snack textures & counter display ─────────────────────────────────────── */
+
+function makeDietCokeTex() {
+  const W = 256, H = 128, c = cv(W, H), g = c.getContext('2d');
+  // Silver body
+  const sg = g.createLinearGradient(0, 0, W, 0);
+  sg.addColorStop(0, '#c8cdd0'); sg.addColorStop(0.5, '#e8ecee'); sg.addColorStop(1, '#c8cdd0');
+  g.fillStyle = sg; g.fillRect(0, 0, W, H);
+  // Red band
+  const rb = 20, rh = H - 38;
+  const rg = g.createLinearGradient(0, rb, 0, rb + rh);
+  rg.addColorStop(0, '#e30613'); rg.addColorStop(0.5, '#f0191e'); rg.addColorStop(1, '#c70010');
+  g.fillStyle = rg; g.fillRect(0, rb, W, rh);
+  // White cursive-style "Diet Coke" – two lines
+  g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = 'italic bold 30px "Times New Roman",Georgia,serif';
+  g.fillText('Diet', W / 2, rb + rh * 0.32);
+  g.font = 'italic bold 44px "Times New Roman",Georgia,serif';
+  g.fillText('Coke', W / 2, rb + rh * 0.68);
+  // Silver swish
+  g.strokeStyle = 'rgba(255,255,255,0.4)'; g.lineWidth = 3;
+  g.beginPath(); g.moveTo(20, rb + 4); g.bezierCurveTo(80, rb - 6, 176, rb + 12, W - 20, rb + 2); g.stroke();
+  // Thin silver top/bottom
+  g.fillStyle = '#b0b8bc'; g.fillRect(0, 0, W, rb); g.fillRect(0, H - 18, W, 18);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4; t.userData.own = true; return t;
+}
+
+function makeNyDinerCupTex() {
+  const W = 256, H = 256, c = cv(W, H), g = c.getContext('2d');
+  // Blue body
+  g.fillStyle = '#1a4fa0'; g.fillRect(0, 0, W, H);
+  // White Greek-key border — top
+  const bH = 36;
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, bH);
+  g.fillStyle = '#1a4fa0';
+  for (let x = 4; x < W; x += 20) {
+    g.fillRect(x, 4, 10, 6); g.fillRect(x + 10, 4, 6, 16); g.fillRect(x, 16, 10, 6);
+  }
+  // Bottom border
+  g.fillStyle = '#ffffff'; g.fillRect(0, H - bH, W, bH);
+  g.fillStyle = '#1a4fa0';
+  for (let x = 4; x < W; x += 20) {
+    g.fillRect(x, H - bH + 4, 10, 6); g.fillRect(x + 10, H - bH + 4, 6, 16); g.fillRect(x, H - bH + 16, 10, 6);
+  }
+  // White shield emblem
+  g.fillStyle = '#ffffff';
+  const mx = W / 2, my = H / 2 - 12;
+  g.beginPath(); g.moveTo(mx - 56, my - 50); g.lineTo(mx + 56, my - 50);
+  g.lineTo(mx + 56, my + 30); g.lineTo(mx, my + 64); g.lineTo(mx - 56, my + 30); g.closePath(); g.fill();
+  // "WE ARE HAPPY" text
+  g.fillStyle = '#a05020'; g.font = 'bold 20px Arial,sans-serif'; g.textAlign = 'center';
+  g.fillText('WE ARE HAPPY', mx, my - 14);
+  g.fillText('TO SERVE YOU', mx, my + 10);
+  // Three mini coffee cup icons
+  for (let i = -1; i <= 1; i++) {
+    const cx = mx + i * 24, cy = my + 36;
+    g.fillStyle = '#a05020';
+    g.fillRect(cx - 7, cy - 8, 14, 10); // cup
+    g.beginPath(); g.arc(cx, cy - 8, 7, Math.PI, 0); g.fill();
+    g.strokeStyle = '#a05020'; g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(cx - 2, cy - 14); g.bezierCurveTo(cx + 3, cy - 20, cx - 3, cy - 26, cx + 2, cy - 30); g.stroke();
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4; t.userData.own = true; return t;
+}
+
+function makeCheezItTex() {
+  const W = 256, H = 256, c = cv(W, H), g = c.getContext('2d');
+  // Red body with ribbed look
+  const rg = g.createLinearGradient(0, 0, W, 0);
+  rg.addColorStop(0, '#c01010'); rg.addColorStop(0.15, '#e81818'); rg.addColorStop(0.85, '#e81818'); rg.addColorStop(1, '#c01010');
+  g.fillStyle = rg; g.fillRect(0, 0, W, H);
+  // Vertical ribs
+  g.strokeStyle = 'rgba(200,10,10,0.6)'; g.lineWidth = 4;
+  for (let x = 8; x < W; x += 14) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
+  // Yellow header band
+  g.fillStyle = '#f5c020'; g.fillRect(0, H * 0.08, W, H * 0.06);
+  // White "CHEEZ-IT"
+  g.fillStyle = '#ffffff'; g.font = 'bold 46px "Arial Black",Arial,sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('CHEEZ-IT', W / 2, H * 0.20);
+  // Dot between Z and I
+  g.fillStyle = '#f5c020'; g.beginPath();
+  g.arc(W / 2, H * 0.36, 8, 0, TAU); g.fill();
+  // "baked snack crackers"
+  g.fillStyle = '#f5c020'; g.font = 'bold 16px Arial,sans-serif';
+  g.fillText('baked snack crackers', W / 2, H * 0.29);
+  // "Original" red label
+  g.fillStyle = '#d01010'; g.fillRect(W * 0.1, H * 0.4, W * 0.8, H * 0.14);
+  g.fillStyle = '#ffffff'; g.font = 'italic bold 30px Arial,sans-serif';
+  g.fillText('Original', W / 2, H * 0.47);
+  // Simple cracker illustration
+  for (let i = 0; i < 3; i++) {
+    const cx = W * 0.2 + i * W * 0.28, cy = H * 0.72;
+    g.fillStyle = '#d4a030'; g.fillRect(cx - 20, cy - 18, 40, 36);
+    g.strokeStyle = '#b88020'; g.lineWidth = 2;
+    g.strokeRect(cx - 20, cy - 18, 40, 36);
+    g.fillStyle = '#b88020'; g.beginPath(); g.arc(cx, cy, 3, 0, TAU); g.fill();
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4; t.userData.own = true; return t;
+}
+
+function makeKindBarTex() {
+  const W = 512, H = 128, c = cv(W, H), g = c.getContext('2d');
+  // Teal end caps
+  const teal = '#1a8a96';
+  g.fillStyle = teal; g.fillRect(0, 0, 100, H); g.fillRect(W - 100, 0, 100, H);
+  // Brown nut-texture center
+  const bg = g.createLinearGradient(100, 0, W - 100, 0);
+  bg.addColorStop(0, '#3a2010'); bg.addColorStop(0.5, '#4a2c14'); bg.addColorStop(1, '#3a2010');
+  g.fillStyle = bg; g.fillRect(100, 0, W - 200, H);
+  // Nut/oat dots
+  for (let i = 0; i < 40; i++) {
+    const nx = 110 + Math.random() * (W - 220), ny = 8 + Math.random() * (H - 16);
+    const nr = 3 + Math.random() * 7;
+    g.fillStyle = i % 3 === 0 ? '#8a6030' : (i % 3 === 1 ? '#c8a060' : '#f0d898');
+    g.beginPath(); g.ellipse(nx, ny, nr, nr * 0.7, Math.random() * Math.PI, 0, TAU); g.fill();
+  }
+  // Dark choc stripe
+  g.fillStyle = '#1a0c04'; g.fillRect(100, H * 0.12, W - 200, H * 0.12);
+  // "KIND" logo on left teal
+  g.fillStyle = '#ffffff'; g.font = 'bold 34px "Helvetica Neue",Helvetica,Arial,sans-serif';
+  g.textBaseline = 'middle'; g.textAlign = 'center'; g.fillText('KIND', 50, H * 0.38);
+  // Four colored squares (brand mark)
+  const sc = [[H*0.6,'#e51b23'],[H*0.6+14,'#f5a020'],[H*0.6+28,'#4caf50'],[H*0.6+42,'#1565c0']];
+  for (const [y, col] of sc) { g.fillStyle = col; g.fillRect(14, y, 11, 11); }
+  // "DARK CHOCOLATE" text
+  g.fillStyle = '#ffffff'; g.font = 'bold 16px Arial,sans-serif'; g.textAlign = 'left';
+  g.fillText('DARK CHOCOLATE', 106, H * 0.36);
+  g.fillStyle = 'rgba(255,255,255,0.75)'; g.font = '13px Arial,sans-serif';
+  g.fillText('NUTS & SEA SALT', 106, H * 0.58);
+  // Teal end text
+  g.fillStyle = '#ffffff'; g.font = 'bold 11px Arial,sans-serif'; g.textAlign = 'center';
+  g.fillText('GLUTEN', W - 50, H * 0.36); g.fillText('FREE', W - 50, H * 0.54);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4; t.userData.own = true; return t;
+}
+
+/** Branded snacks placed on the kitchenette counter. */
+function addKitchenSnacks(parent) {
+  const dcMat  = new THREE.MeshStandardMaterial({ map: makeDietCokeTex(),   roughness: 0.42, metalness: 0.28 });
+  const cofMat = new THREE.MeshStandardMaterial({ map: makeNyDinerCupTex(), roughness: 0.62 });
+  const czMat  = new THREE.MeshStandardMaterial({ map: makeCheezItTex(),    roughness: 0.92 });
+  const kindMat= new THREE.MeshStandardMaterial({ map: makeKindBarTex(),    roughness: 0.86 });
+
+  // Diet Coke cans — 3 in a row, back-right counter area
+  for (let i = 0; i < 3; i++) {
+    addP(parent, PG.cyl(18), dcMat, 0.50 + i * 0.082, 0.988, -0.18, 0.033, 0.094, 0.033);
+  }
+  // NY diner coffee cups — 2 cups, tapered (wider at top)
+  const cupGeo = geoCache('nycp', () => new THREE.CylinderGeometry(0.96, 1, 1, 14));
+  for (let i = 0; i < 2; i++) {
+    const m = new THREE.Mesh(cupGeo, cofMat);
+    m.position.set(0.26 + i * 0.09, 0.990, -0.17);
+    m.scale.set(0.033, 0.11, 0.033);
+    parent.add(m);
+  }
+  // Cheez-It bags — 2 slightly angled, standing up
+  addP(parent, PG.box(), czMat,  0.08, 1.002, -0.17, 0.070, 0.098, 0.034,  0, 0,  0.07);
+  addP(parent, PG.box(), czMat,  0.17, 1.002, -0.17, 0.070, 0.098, 0.034,  0, 0, -0.05);
+  // KIND bars — lying flat, slight rotation
+  addP(parent, PG.box(), kindMat, 0.44, 0.958, -0.10, 0.120, 0.022, 0.038,  0,  0.12, 0);
+  addP(parent, PG.box(), kindMat, 0.57, 0.958, -0.10, 0.120, 0.022, 0.038,  0, -0.10, 0);
+}
+
 /** Kitchen counter: coffee, water, cupboard, fruit. Front faces local +Z. */
 function buildKitchenette() {
   const g = new THREE.Group();
@@ -14735,6 +14903,7 @@ function buildKitchenette() {
   g.add(water);
   addFruitBowl(g, 0.22, 0.93, 0.14);
 
+  addKitchenSnacks(g);
   g.add(propShadow(2.55, 1.15));
   return tagProp(g, 'kitchenette', 'Kitchen');
 }
@@ -15262,52 +15431,106 @@ function buildPersonalBike() {
 }
 
 /** NYC-style Citi Bike — same low-poly wheel treatment, step-through blue frame. */
+/** NYC Citi Bike — redesigned with larger wheels, proper saddle, connected stem/fork,
+ * rear battery box and light-grey basket. */
 function buildCitibike() {
   const g = new THREE.Group();
-  const blue = pMat('#0067b1', 0.68, 0.08);
+  const blue   = pMat('#0067b1', 0.68, 0.08);
   const blueDk = pMat('#004f8a', 0.72);
-  const black = pMat('#14161a', 0.88);
+  const black  = pMat('#14161a', 0.88);
+  const grey   = pMat('#c8d2d6', 0.78);         // light-grey basket
+  const elec   = pMat('#1a2a38', 0.70);          // electronics box top
+  const ledGrn = pMat('#22ee44', 0.50, 0.20);
   const mark = new THREE.MeshStandardMaterial({
     map: makeCitibikeMarkTexture(), roughness: 0.78, metalness: 0
   });
-  const wr = 0.20;
-  const fz = 0.54, rz = -0.54;
 
+  // Geometry key points — wr=0.27 for bigger wheels
+  const wr = 0.27;
+  const fz = 0.58, rz = -0.58;
+  // Frame landmarks
+  const BB  = [0, 0.34, 0.02];          // bottom bracket
+  const HTB = [0, 0.44, 0.32];          // head tube bottom
+  const HTT = [0, 0.76, 0.38];          // head tube top
+  const STT = [0, 0.86, -0.14];         // seat tube top (saddle base)
+
+  // ── Wheels ───────────────────────────────────────────────────────────────
   addBikeWheel(g, 0, wr, fz, wr);
   addBikeWheel(g, 0, wr, rz, wr);
 
-  addBikeTube(g, blue, 0, 0.64, 0.36, 0, 0.36, 0.10, 0.030);
-  addBikeTube(g, blue, 0, 0.36, 0.10, 0, 0.32, -0.18, 0.030);
-  addBikeTube(g, blue, 0, 0.32, -0.18, 0, wr, rz, 0.022);
-  addBikeTube(g, blue, 0, 0.34, 0.06, 0, wr, fz, 0.020);
-  addP(g, PG.box(), blue, 0, 0.50, -0.04, 0.26, 0.06, 0.12);
-  addP(g, PG.box(), mark, 0.03, 0.44, 0.02, 0.17, 0.10, 0.03, 0.12, -0.08, 0);
+  // ── Step-through frame ───────────────────────────────────────────────────
+  addBikeTube(g, blue, HTT[0], HTT[1], HTT[2], STT[0], STT[1], STT[2], 0.030);  // top bar
+  addBikeTube(g, blue, HTB[0], HTB[1], HTB[2], BB[0],  BB[1],  BB[2],  0.030);  // down tube
+  // Seat tube: BB up through frame to saddle
+  addBikeTube(g, blue, BB[0],  BB[1],  BB[2],  STT[0], STT[1], STT[2], 0.026);
+  // Chainstay: BB to rear axle
+  addBikeTube(g, blue, BB[0], BB[1], BB[2], 0, wr, rz, 0.020);
+  // Seatstay: seat tube top to rear axle
+  addBikeTube(g, blue, STT[0], STT[1] - 0.10, STT[2], 0, wr + 0.04, rz, 0.016);
+  // Head tube
+  addBikeTube(g, blue, HTB[0], HTB[1], HTB[2], HTT[0], HTT[1], HTT[2], 0.026);
 
-  addP(g, PG.box(), blueDk, 0, wr + 0.14, -0.36, 0.26, 0.09, 0.44);
-  addP(g, PG.box(), mark, 0, wr + 0.20, -0.46, 0.21, 0.15, 0.045);
+  // Logo panel on the down tube
+  addP(g, PG.box(), mark, 0.03, 0.55, 0.20, 0.16, 0.10, 0.032, 0.10, -0.06, 0);
 
-  addBikeTube(g, blue, 0, 0.60, 0.34, 0, wr, fz, 0.022);
-
-  const basket = new THREE.Group();
-  basket.position.set(0, 0.80, 0.50);
-  addP(basket, PG.box(), black, 0, 0.05, 0.04, 0.28, 0.17, 0.20);
-  addP(basket, PG.box(), mark, 0, 0.02, 0.14, 0.24, 0.13, 0.02);
-  for (const sx of [-0.11, 0.11]) {
-    addP(basket, PG.cyl(8), black, sx, -0.06, -0.02, 0.013, 0.24, 0.013, 0.42, 0, 0);
+  // ── Fork: crown + two legs, connected directly from HTB down to wheel ────
+  const fCrownY = HTB[1] - 0.04, fCrownZ = HTB[2] + 0.02;
+  // Crown crossbar
+  addBikeTube(g, blue, -0.048, fCrownY, fCrownZ, 0.048, fCrownY, fCrownZ, 0.014);
+  for (const sx of [-0.048, 0.048]) {
+    addBikeTube(g, blue, sx, fCrownY, fCrownZ, sx, wr, fz, 0.014);
   }
-  g.add(basket);
 
-  const bar = new THREE.Group();
-  bar.position.set(0, 0.90, 0.34);
-  bar.rotation.x = -0.14;
-  addP(bar, PG.cyl(8), black, 0, 0, 0, 0.016, 0.42, 0.016, Math.PI / 2, 0, 0);
-  addP(bar, PG.cyl(8), black, -0.23, 0.02, 0, 0.029, 0.12, 0.029, 0, 0, Math.PI / 2);
-  addP(bar, PG.cyl(8), black, 0.23, 0.02, 0, 0.029, 0.12, 0.029, 0, 0, Math.PI / 2);
-  g.add(bar);
+  // ── Stem + handlebar as one connected piece from HTT ─────────────────────
+  const stemTopY = HTT[1] + 0.14, stemTopZ = HTT[2] - 0.02;
+  addBikeTube(g, blue, HTT[0], HTT[1], HTT[2], 0, stemTopY, stemTopZ, 0.016);
+  // Handlebar crossbar
+  addBikeTube(g, black, -0.22, stemTopY, stemTopZ,  0.22, stemTopY, stemTopZ, 0.014);
+  // Swept-back grips angling toward rider
+  addBikeTube(g, black, -0.22, stemTopY, stemTopZ, -0.24, stemTopY - 0.015, stemTopZ - 0.06, 0.018);
+  addBikeTube(g, black,  0.22, stemTopY, stemTopZ,  0.24, stemTopY - 0.015, stemTopZ - 0.06, 0.018);
 
-  addP(g, PG.cyl(8), blue, 0, 0.78, -0.14, 0.014, 0.22, 0.014);
-  addP(g, PG.box(), black, 0, 0.90, -0.16, 0.22, 0.06, 0.13);
-  addP(g, PG.cyl(8), black, 0.07, 0.12, -0.04, 0.011, 0.24, 0.011, 0.58, 0, 0);
+  // ── Traditional Citi Bike saddle: wide rear + narrow nose + under-rail ───
+  addP(g, PG.cyl(8), blue, STT[0], STT[1] - 0.10, STT[2], 0.013, 0.20, 0.013);  // seat post
+  // Rear body (wide)
+  addP(g, PG.box(), black, STT[0], STT[1] + 0.008, STT[2] - 0.010, 0.16, 0.026, 0.058, -0.08, 0, 0);
+  // Nose (narrow, forward)
+  addP(g, PG.box(), black, STT[0], STT[1] + 0.016, STT[2] + 0.048, 0.050, 0.018, 0.062, -0.05, 0, 0);
+  // Under-rails
+  addP(g, PG.box(), grey, STT[0], STT[1] - 0.008, STT[2] + 0.016, 0.046, 0.006, 0.14);
+
+  // ── Rear carrier: bottom = structural, top = battery/electronics box ─────
+  const cY = wr + 0.04, cZ = -0.38, cW = 0.26, cD = 0.42;
+  // Structural carrier (lower half, blue)
+  addP(g, PG.box(), blueDk, 0, cY + 0.055, cZ, cW, 0.055, cD);
+  // Two side stays connecting carrier to frame
+  for (const sx of [-cW * 0.4, cW * 0.4]) {
+    addBikeTube(g, blue, sx, cY, cZ + 0.18, sx, STT[1] - 0.12, STT[2], 0.010);
+  }
+  // Electronics / battery box (top half — covers rear 50%)
+  addP(g, PG.box(), elec, 0, cY + 0.135, cZ - 0.02, cW - 0.02, 0.072, cD * 0.52);
+  // Logo on the battery box front face
+  addP(g, PG.box(), mark, 0, cY + 0.135, cZ + cD * 0.26, cW - 0.04, 0.060, 0.022);
+  // Small green LED indicator row
+  for (let i = -1; i <= 1; i++) {
+    addP(g, PG.ball(6), ledGrn, i * 0.05, cY + 0.165, cZ + cD * 0.26 + 0.012, 0.008, 0.006, 0.006);
+  }
+  // Small screen / display nub
+  addP(g, PG.box(), pMat('#0a0f14', 0.4), 0, cY + 0.160, cZ - cD * 0.10, cW * 0.38, 0.028, 0.032);
+
+  // ── Front basket — light grey wire-frame look ────────────────────────────
+  const bZ = 0.52;
+  addP(g, PG.box(), grey, 0, 0.86, bZ, 0.30, 0.18, 0.22);        // body
+  // Wire-look ribs (thin darker strips)
+  for (let i = -0.08; i <= 0.09; i += 0.08) {
+    addP(g, PG.box(), pMat('#a0aab0', 0.82), i, 0.86, bZ, 0.012, 0.18, 0.22);
+  }
+  // Basket mounting stays to handlebar
+  for (const sx of [-0.10, 0.10]) {
+    addBikeTube(g, black, sx, 0.80, bZ - 0.02, sx, stemTopY - 0.04, stemTopZ + 0.02, 0.009);
+  }
+  // Citi mark on basket front
+  addP(g, PG.box(), mark, 0, 0.86, bZ + 0.12, 0.22, 0.12, 0.018);
 
   return g;
 }
