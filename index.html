@@ -3863,7 +3863,7 @@ function makePaperCrownTexture(base) {
   }
   g.globalAlpha = 1;
 
-  const nPeaks = 7;
+  const nPeaks = 8;
   /* Soft printed peak outlines in darker gold ink (no red rays — those
      read as raised rubies instead of cardboard print). */
   for (let k = 0; k < nPeaks; k++) {
@@ -9892,13 +9892,15 @@ const G = {
   }),
   /* Cardboard paper crown: full 360° brow circlet whose top edge rises into
      ornamental rounded peaks (front peak tallest). Bottom sits at y=0. */
-  paperCrown: () => geoCache('pcrown7', () => {
+  paperCrown: () => geoCache('pcrown8', () => {
     /* Soft rounded peaks with a mild fleur waist — closer to BK cardboard
        die-cuts than sharp triangular spikes. Radius follows the skull at
-       each azimuth so the band wraps the whole head, not a front arc. */
-    const SEGS = 168, ROWS = 28, NPEAKS = 7;
+       each azimuth so the band wraps the whole head, not a front arc.
+       8 peaks: k=0 front (+Z), k=4 exactly at the back (180°) so the
+       crown reads as a continuous band from any camera angle. */
+    const SEGS = 168, ROWS = 28, NPEAKS = 8;
     const BAND = 0.28, PEAK = 0.46;
-    const VALLEY = 0.42; /* minimum scallop so the band reads 360°, not front arcs */
+    const VALLEY = 0.62; /* high floor keeps the band solid between peaks */
     const SEAT_Y = 0.34; /* brow hem — must match buildHair BASE_Y */
     const headHorizR = (ny, az) => {
       const ux = Math.sin(az), uz = Math.cos(az);
@@ -9916,19 +9918,18 @@ const G = {
       const u = y + 0.5;
       let peakAmt = 0;
       for (let k = 0; k < NPEAKS; k++) {
-        /* k=0 on +Z (face); peaks tile evenly around the full circumference. */
+        /* k=0 on +Z (face); k=4 on -Z (back). Peaks tile evenly 360°. */
         const peakAng = (k / NPEAKS) * TAU;
         let d = Math.abs(ang - peakAng);
         if (d > Math.PI) d = TAU - d;
-        const halfW = (Math.PI / NPEAKS) * 1.05;
+        const halfW = (Math.PI / NPEAKS) * 1.30;
         if (d >= halfW) continue;
         const t = 1 - d / halfW;
         /* Smoothstep base + mid bulge + tip soften = rounded fleur. */
         const s = t * t * (3 - 2 * t);
         const waist = 1 + 0.22 * Math.sin(s * Math.PI);
         const tipSoft = Math.pow(s, 0.82) * (1 - 0.22 * Math.pow(s, 3.2));
-        const tall = 1.0;
-        peakAmt = Math.max(peakAmt, Math.min(1.14, tipSoft * waist * tall));
+        peakAmt = Math.max(peakAmt, Math.min(1.14, tipSoft * waist));
       }
       peakAmt = Math.max(peakAmt, VALLEY);
       const h = BAND + PEAK * peakAmt;
