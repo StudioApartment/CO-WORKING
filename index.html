@@ -14498,15 +14498,20 @@ function buildLoungeChair() {
 function buildEndTable() {
   const g = new THREE.Group();
   const wood = pMat('#c9a574', 0.82);
-  const top = pMat('#f4f7f9', 0.7);
-  const leg = pMat('#d8c4a4', 0.75);
-  addP(g, PG.cyl(24), top, 0, 0.48, 0, 0.38, 0.05, 0.38);
-  addP(g, PG.cyl(24), wood, 0, 0.45, 0, 0.40, 0.03, 0.40);
-  addP(g, PG.cyl(20), wood, 0, 0.18, 0, 0.30, 0.03, 0.30);
+  const top  = pMat('#f4f7f9', 0.7);
+  const leg  = pMat('#d8c4a4', 0.75);
+  addP(g, PG.cyl(24), top,  0, 0.48, 0,    0.38, 0.05, 0.38);
+  addP(g, PG.cyl(24), wood, 0, 0.45, 0,    0.40, 0.03, 0.40);
+  addP(g, PG.cyl(20), wood, 0, 0.18, 0,    0.30, 0.03, 0.30);
   for (let i = 0; i < 3; i++) {
     const a = (i / 3) * TAU + 0.4;
     addP(g, PG.cyl(8), leg, Math.cos(a) * 0.22, 0.24, Math.sin(a) * 0.22, 0.03, 0.48, 0.03);
   }
+  // Snacks on the tabletop (replaces the succulent plant)
+  const dcM = new THREE.MeshStandardMaterial({ map: makeDietCokeTex(),  roughness: 0.42, metalness: 0.28 });
+  const czM = new THREE.MeshStandardMaterial({ map: makeCheezItTex(), roughness: 0.92 });
+  addP(g, PG.cyl(18), dcM,  0.09, 0.555, 0.04,  0.042, 0.118, 0.042);  // Diet Coke can
+  addP(g, PG.box(),   czM, -0.08, 0.572, -0.02, 0.088, 0.125, 0.042,  0, 0, -0.10);  // Cheez-It bag
   g.add(propShadow(0.95, 0.95));
   return tagProp(g, 'end-table', 'End table');
 }
@@ -14836,24 +14841,24 @@ function addKitchenSnacks(parent) {
   const czMat  = new THREE.MeshStandardMaterial({ map: makeCheezItTex(),    roughness: 0.92 });
   const kindMat= new THREE.MeshStandardMaterial({ map: makeKindBarTex(),    roughness: 0.86 });
 
-  // Diet Coke cans — 3 in a row, back-right counter area
+  // Diet Coke cans — 3 in a row, back counter area (larger so you can read them)
   for (let i = 0; i < 3; i++) {
-    addP(parent, PG.cyl(18), dcMat, 0.50 + i * 0.082, 0.988, -0.18, 0.033, 0.094, 0.033);
+    addP(parent, PG.cyl(18), dcMat, 0.50 + i * 0.11, 1.002, -0.18, 0.045, 0.125, 0.045);
   }
   // NY diner coffee cups — 2 cups, tapered (wider at top)
-  const cupGeo = geoCache('nycp', () => new THREE.CylinderGeometry(0.96, 1, 1, 14));
+  const cupGeo = geoCache('nycp', () => new THREE.CylinderGeometry(0.92, 1, 1, 14));
   for (let i = 0; i < 2; i++) {
     const m = new THREE.Mesh(cupGeo, cofMat);
-    m.position.set(0.26 + i * 0.09, 0.990, -0.17);
-    m.scale.set(0.033, 0.11, 0.033);
+    m.position.set(0.24 + i * 0.12, 1.005, -0.17);
+    m.scale.set(0.048, 0.145, 0.048);
     parent.add(m);
   }
-  // Cheez-It bags — 2 slightly angled, standing up
-  addP(parent, PG.box(), czMat,  0.08, 1.002, -0.17, 0.070, 0.098, 0.034,  0, 0,  0.07);
-  addP(parent, PG.box(), czMat,  0.17, 1.002, -0.17, 0.070, 0.098, 0.034,  0, 0, -0.05);
-  // KIND bars — lying flat, slight rotation
-  addP(parent, PG.box(), kindMat, 0.44, 0.958, -0.10, 0.120, 0.022, 0.038,  0,  0.12, 0);
-  addP(parent, PG.box(), kindMat, 0.57, 0.958, -0.10, 0.120, 0.022, 0.038,  0, -0.10, 0);
+  // Cheez-It bags — standing up, bigger
+  addP(parent, PG.box(), czMat,  0.05, 1.014, -0.16, 0.095, 0.132, 0.046,  0, 0,  0.07);
+  addP(parent, PG.box(), czMat,  0.17, 1.014, -0.16, 0.095, 0.132, 0.046,  0, 0, -0.06);
+  // KIND bars — lying flat
+  addP(parent, PG.box(), kindMat, 0.44, 0.964, -0.10, 0.165, 0.030, 0.055,  0,  0.12, 0);
+  addP(parent, PG.box(), kindMat, 0.62, 0.964, -0.10, 0.165, 0.030, 0.055,  0, -0.10, 0);
 }
 
 /** Kitchen counter: coffee, water, cupboard, fruit. Front faces local +Z. */
@@ -15125,63 +15130,53 @@ function drawCabinetInvader(g, cx, cy, s, body = '#0a0a12', eye = '#e8fff0') {
 /** Tall inbox-monster silhouette — Space Invaders cabinet side-panel style. */
 function makeArcadeSideArtTexture(mirror = false) {
   const W = 128, H = 360, c = cv(W, H), g = c.getContext('2d');
-  if (mirror) {
-    g.translate(W, 0);
-    g.scale(-1, 1);
-  }
-  g.fillStyle = '#0c1830';
-  g.fillRect(0, 0, W, H);
+  if (mirror) { g.translate(W, 0); g.scale(-1, 1); }
+
+  // Dark base
+  g.fillStyle = '#0c1830'; g.fillRect(0, 0, W, H);
+  // Horizontal scan lines
   for (let y = 0; y < H; y += 10) {
-    g.fillStyle = y % 20 === 0 ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.05)';
+    g.fillStyle = y % 20 === 0 ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)';
     g.fillRect(0, y, W, 4);
   }
-  g.fillStyle = 'rgba(20,32,58,0.55)';
-  g.fillRect(0, 0, W, H);
 
-  const glow = (cx, cy, s) => {
-    g.fillStyle = '#d4302a';
-    g.beginPath();
-    g.moveTo(cx - 18 * s, cy + 42 * s);
-    g.lineTo(cx - 22 * s, cy - 8 * s);
-    g.lineTo(cx + 8 * s, cy - 48 * s);
-    g.lineTo(cx + 28 * s, cy - 12 * s);
-    g.lineTo(cx + 20 * s, cy + 44 * s);
-    g.closePath();
-    g.fill();
-  };
-
-  glow(52, 248, 2.2);
-  g.fillStyle = '#0a0a12';
+  // Bold yellow lightning bolt stripe — classic arcade side graphic
+  g.fillStyle = '#f5c800';
   g.beginPath();
-  g.moveTo(52, 290);
-  g.lineTo(28, 220);
-  g.lineTo(30, 140);
-  g.lineTo(44, 88);
-  g.lineTo(68, 72);
-  g.lineTo(88, 96);
-  g.lineTo(92, 150);
-  g.lineTo(78, 220);
-  g.lineTo(72, 290);
-  g.closePath();
-  g.fill();
-  g.fillRect(38, 108, 10, 14);
-  g.fillRect(72, 108, 10, 14);
-  g.fillStyle = '#f4fff8';
-  g.fillRect(40, 112, 6, 8);
-  g.fillRect(74, 112, 6, 8);
-  g.fillRect(54, 168, 22, 18);
-  g.fillStyle = '#0a0a12';
-  g.fillRect(50, 186, 28, 6);
-  drawCabinetInvader(g, 96, 118, 2.4, '#0a0a12', '#39ff62');
-  drawCabinetInvader(g, 96, 72, 2.0, '#0a0a12', '#39ff62');
-  drawCabinetInvader(g, 96, 34, 1.7, '#0a0a12', '#39ff62');
-  g.fillStyle = '#0a0a12';
-  g.fillRect(18, 300, 56, 8);
-  g.fillRect(22, 308, 48, 6);
+  g.moveTo(W * 0.10, 0);
+  g.lineTo(W * 0.52, 0);
+  g.lineTo(W * 0.28, H * 0.46);
+  g.lineTo(W * 0.62, H * 0.46);
+  g.lineTo(W * 0.20, H);
+  g.lineTo(W * 0.00, H);
+  g.lineTo(W * 0.36, H * 0.50);
+  g.lineTo(W * 0.00, H * 0.50);
+  g.closePath(); g.fill();
+
+  // White border stripes flanking the bolt
+  g.fillStyle = '#ffffff';
+  g.fillRect(W * 0.52, 0, 6, H * 0.46);
+  g.fillRect(W * 0.62, H * 0.46, 6, H * 0.54);
+  g.fillRect(W * 0.00, H * 0.48, W * 0.38, 6);
+
+  // Dark overlay over right panel
+  g.fillStyle = 'rgba(10,16,32,0.72)';
+  g.fillRect(W * 0.60, 0, W * 0.40, H);
+
+  // Big invader in right panel
+  drawCabinetInvader(g, 96, 90,  2.8, '#0a0a12', '#39ff62');
+  drawCabinetInvader(g, 96, 170, 2.4, '#0a0a12', '#f5c800');
+  drawCabinetInvader(g, 96, 240, 2.0, '#0a0a12', '#ffffff');
+
+  // "INBOX INVADERS" text down the right edge
+  g.save(); g.translate(W - 10, H * 0.72); g.rotate(-Math.PI / 2);
+  g.fillStyle = '#ffffff'; g.font = 'bold 11px Arial,sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('INBOX INVADERS', 0, 0);
+  g.restore();
 
   const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 4;
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   return t;
 }
 
@@ -15336,26 +15331,29 @@ function makeCitibikeMarkTexture() {
 
 const _bikeY = new THREE.Vector3(0, 1, 0);
 
-/** Wheel — disc in Y-Z plane (axle along X), thin cylinder spokes for see-through look. */
-function addBikeWheel(parent, x, y, z, r = 0.22) {
+/** Wheel — open torus RING tire so you can see through to the spokes.
+ * The ring lies in the Y-Z plane (axle along X) by rotating the torus rz=π/2.
+ * A Y-axis cylinder rotated rx=a radiates at angle a in that same plane. */
+function addBikeWheel(parent, x, y, z, r = 0.27) {
   const tire  = pMat('#111214', 0.94);
-  const rim   = pMat('#b8c2ca', 0.46, 0.34);
+  const rim   = pMat('#c8d2d6', 0.44, 0.50);
   const hub   = pMat('#8a939c', 0.52, 0.32);
-  const spoke = pMat('#d0d8de', 0.36, 0.48);
+  const spoke = pMat('#d4dce2', 0.34, 0.52);
   const w = new THREE.Group();
   w.position.set(x, y, z);
-  // rz = π/2 makes the cylinder height axis run along X, so disc is in Y-Z plane
-  addP(w, PG.cyl(20), tire, 0, 0, 0, r,       0.048, r,       0, 0, Math.PI / 2);
-  addP(w, PG.cyl(20), rim,  0, 0, 0, r * 0.82, 0.022, r * 0.82, 0, 0, Math.PI / 2);
-  addP(w, PG.cyl(8),  hub,  0, 0, 0, 0.032, 0.050, 0.032,      0, 0, Math.PI / 2);
-  // 14 thin cylinder spokes radiating in the Y-Z plane.
-  // A Y-axis cylinder rotated rx=a points at (0, cos(a), sin(a)).
+  // Outer torus ring = the rubber tire (hollow, see-through centre)
+  addP(w, PG.torus(0.11), tire, 0, 0, 0, r, r, r, 0, 0, Math.PI / 2);
+  // Inner rim ring (thinner tube, chrome)
+  addP(w, PG.torus(0.04), rim,  0, 0, 0, r * 0.84, r * 0.84, r * 0.84, 0, 0, Math.PI / 2);
+  // Hub cylinder (axle) — axis along X
+  addP(w, PG.cyl(10), hub, 0, 0, 0, 0.030, 0.052, 0.030, 0, 0, Math.PI / 2);
+  // 14 thin spokes radiating hub→rim in Y-Z plane
+  const spokeL = r * 0.78;
   for (let i = 0; i < 14; i++) {
     const a = (i / 14) * TAU;
     addP(w, PG.cyl(4), spoke,
-      0, Math.cos(a) * r * 0.42, Math.sin(a) * r * 0.42,
-      0.0032, r * 0.84, 0.0032,
-      a, 0, 0);
+      0, Math.cos(a) * r * 0.44, Math.sin(a) * r * 0.44,
+      0.003, spokeL, 0.003, a, 0, 0);
   }
   parent.add(w);
   return w;
@@ -15532,6 +15530,16 @@ function buildCitibike() {
   // Citi mark on basket front
   addP(g, PG.box(), mark, 0, 0.86, bZ + 0.12, 0.22, 0.12, 0.018);
 
+  // ── Rear wheel cover (fender) — blue panel over upper portion of rear wheel ──
+  const coverH = wr * 1.05;
+  const coverW = wr * 2.05;
+  // Blue panel flush with the wheel disc (same Y-Z plane)
+  addP(g, PG.box(), blue, 0, wr * 2 - coverH * 0.5, rz, 0.018, coverH, coverW);
+  // Big Citi logo across the fender face
+  addP(g, PG.box(), mark, 0.012, wr * 2 - coverH * 0.5, rz, 0.007, coverH * 0.72, coverW * 0.86);
+  // Make basket logo much more visible — replace the end with a bold mark panel
+  addP(g, PG.box(), mark, 0.018, 0.862, bZ + 0.115, 0.009, 0.148, 0.248);
+
   return g;
 }
 
@@ -15632,8 +15640,12 @@ function buildArcadeCabinet() {
     emissive: '#ffe8a0', emissiveIntensity: 0.55
   });
   addP(g, PG.box(), marq, 0, 1.72, 0.30, 0.68, 0.14, 0.05);
-  addP(g, PG.box(), navy, 0, 1.80, 0.28, 0.72, 0.06, 0.08);
-  addP(g, PG.box(), black, 0, 1.84, 0.26, 0.64, 0.04, 0.10);
+  // Filled top — yellow band over the marquee, then solid navy cap
+  addP(g, PG.box(), pMat('#f5c800', 0.72), 0, 1.80, 0.28, 0.72, 0.06, 0.10);
+  addP(g, PG.box(), navy, 0, 1.86, 0.26, 0.74, 0.06, 0.10);
+  addP(g, PG.box(), navy, 0, 1.92, 0.22, 0.72, 0.06, 0.10);
+  // Completely solid top surface
+  addP(g, PG.box(), navy, 0, 1.96, 0.16, 0.74, 0.06, 0.16);
 
   g.add(propShadow(1.15, 1.0));
   return tagProp(g, 'arcade', 'Play Inbox Invaders', true, '/index-invaders');
@@ -15668,7 +15680,7 @@ function installPlazaProps() {
   placeProp(buildLoungeChair(), chairX, chairZ, faceIn(chairX, chairZ), 1.0);
   const tableX = chairX - 0.95, tableZ = chairZ + 0.72;
   placeProp(buildEndTable(), tableX, tableZ, R(25), 1.0);
-  placeProp(buildGlossySucculent(), tableX, tableZ, R(40), 0.7, 0.505);
+  // succulent removed — snacks are now part of buildEndTable
   placeProp(buildTallLamp(), lampX, lampZ, R(12), 1.0);
   const kitX = 0.05, kitZ = -3.05;
   placeProp(buildKitchenette(), kitX, kitZ, faceIn(kitX, kitZ), 0.92);
