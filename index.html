@@ -309,17 +309,17 @@ body.native-cursor #pointer{display:none}
   box-shadow:inset 0 1px 0 #fff,0 3px 6px rgba(70,100,125,.3),0 0 0 2px #fff,0 0 0 3.5px #ccd8e0;
   transition:transform .13s cubic-bezier(.34,1.7,.5,1),box-shadow .18s,color .18s;
 }
-/* Info chip matches the name pill body (not the tail below it). Size set per-frame. */
+/* Info bubble: tight ring around a fixed-size “i” (bubble sized per-frame). */
 #btnMiiInfo{
-  width:var(--info-chip,21px);height:var(--info-chip,21px);
+  width:var(--info-bubble,13px);height:var(--info-bubble,13px);
   color:var(--blue-dk);
   background:linear-gradient(#fff,#e0eaf0);
-  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(90,115,135,.2),0 0 0 1.5px #fff,0 0 0 2.5px #d2dde4;
+  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(90,115,135,.18),0 0 0 1px #fff,0 0 0 1.5px #d2dde4;
 }
-#btnMiiInfo svg{width:calc(var(--info-chip,21px)*0.52);height:calc(var(--info-chip,21px)*0.52)}
+#btnMiiInfo svg{width:var(--info-icon,11px);height:var(--info-icon,11px);flex-shrink:0}
 #btnMiiInfo:hover,#btnMiiInfo:focus-visible{
   transform:scale(1.08);
-  box-shadow:inset 0 1px 0 #fff,0 2px 6px rgba(70,100,125,.22),0 0 0 1.5px #fff,0 0 0 2.5px #9fd3ef;
+  box-shadow:inset 0 1px 0 #fff,0 2px 5px rgba(70,100,125,.2),0 0 0 1px #fff,0 0 0 1.5px #9fd3ef;
   outline:0;
 }
 #miiDock .tool:hover,#miiDock .tool:focus-visible{
@@ -15148,52 +15148,89 @@ function makeCitibikeMarkTexture() {
   return t;
 }
 
-function addBikeWheel(parent, x, y, z, r = 0.19) {
-  const tire = pMat('#17181a', 0.92);
-  const rim = pMat('#c4ccd4', 0.42, 0.35);
-  const hub = pMat('#727983', 0.55, 0.28);
+const _bikeY = new THREE.Vector3(0, 1, 0);
+
+/** Low-poly wheel — chunky faceted tire, silver spokes (glassofcoins-style MTB). */
+function addBikeWheel(parent, x, y, z, r = 0.22) {
+  const tire = pMat('#111214', 0.94);
+  const rim = pMat('#b8c2ca', 0.46, 0.34);
+  const hub = pMat('#8a939c', 0.52, 0.32);
+  const spoke = pMat('#c8d0d8', 0.54, 0.38);
   const w = new THREE.Group();
   w.position.set(x, y, z);
-  addP(w, PG.cyl(18), tire, 0, 0, 0, r, 0.042, r, Math.PI / 2, 0, 0);
-  addP(w, PG.cyl(18), rim, 0, 0, 0, r * 0.80, 0.020, r * 0.80, Math.PI / 2, 0, 0);
-  addP(w, PG.cyl(10), hub, 0, 0, 0, 0.028, 0.035, 0.028, Math.PI / 2, 0, 0);
-  for (let i = 0; i < 6; i++) {
-    const a = (i / 6) * TAU;
-    addP(w, PG.box(), rim, Math.cos(a) * r * 0.38, 0, Math.sin(a) * r * 0.38, 0.008, 0.014, r * 0.34, Math.PI / 2, a, 0);
+  addP(w, PG.cyl(8), tire, 0, 0, 0, r, 0.058, r, Math.PI / 2, 0, 0);
+  addP(w, PG.cyl(8), rim, 0, 0, 0.002, r * 0.74, 0.014, r * 0.74, Math.PI / 2, 0, 0);
+  addP(w, PG.cyl(8), hub, 0, 0, 0, 0.034, 0.042, 0.034, Math.PI / 2, 0, 0);
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * TAU;
+    addP(w, PG.box(), spoke, Math.cos(a) * r * 0.36, 0, Math.sin(a) * r * 0.36,
+      0.006, 0.011, r * 0.35, Math.PI / 2, a, 0);
   }
   parent.add(w);
   return w;
 }
 
+function addBikeTube(parent, mat, ax, ay, az, bx, by, bz, rad) {
+  const dx = bx - ax, dy = by - ay, dz = bz - az;
+  const len = Math.hypot(dx, dy, dz);
+  if (len < 1e-5) return null;
+  const m = new THREE.Mesh(PG.cyl(8), mat);
+  m.position.set((ax + bx) * 0.5, (ay + by) * 0.5, (az + bz) * 0.5);
+  m.scale.set(rad, len, rad);
+  _v2.set(dx / len, dy / len, dz / len);
+  m.quaternion.setFromUnitVectors(_bikeY, _v2);
+  parent.add(m);
+  return m;
+}
+
+/** Orange low-poly mountain bike (personal ride on the rack). */
 function buildPersonalBike() {
   const g = new THREE.Group();
-  const frame = pMat('#3d454f', 0.62, 0.12);
-  const accent = pMat('#7a8f9c', 0.55, 0.22);
-  const grip = pMat('#1a1c20', 0.88);
-  const seat = pMat('#111214', 0.82);
-  const wr = 0.19;
-  addBikeWheel(g, 0, wr, 0.52, wr);
-  addBikeWheel(g, 0, wr, -0.52, wr);
-  addP(g, PG.cyl(10), frame, 0.02, 0.48, 0.16, 0.022, 0.34, 0.022, 0.72, 0, 0);
-  addP(g, PG.cyl(10), frame, -0.02, 0.46, -0.18, 0.022, 0.42, 0.022, -0.58, 0, 0);
-  addP(g, PG.cyl(10), frame, 0, 0.52, -0.02, 0.020, 0.36, 0.020, 0.22, 0, 0);
-  addP(g, PG.cyl(10), accent, 0, 0.72, 0.04, 0.018, 0.18, 0.018, -0.42, 0, 0);
-  addP(g, PG.cyl(8), frame, 0, 0.88, 0.10, 0.016, 0.22, 0.016, -0.35, 0, 0);
-  addP(g, PG.cyl(8), frame, 0, 0.96, 0.38, 0.016, 0.24, 0.016, 0.38, 0, 0);
+  const orange = pMat('#e96328', 0.70, 0.06);
+  const silver = pMat('#adb8c0', 0.46, 0.44);
+  const black = pMat('#121416', 0.90);
+  const wr = 0.22;
+  const fz = 0.58, rz = -0.58;
+  const bb = [0, 0.30, 0.02];
+  const head = [0, 0.66, 0.40];
+  const seat = [0, 0.80, -0.16];
+
+  addBikeWheel(g, 0, wr, fz, wr);
+  addBikeWheel(g, 0, wr, rz, wr);
+
+  addBikeTube(g, orange, head[0], head[1], head[2], seat[0], seat[1], seat[2], 0.020);
+  addBikeTube(g, orange, head[0], head[1] - 0.10, head[2], bb[0], bb[1], bb[2], 0.022);
+  addBikeTube(g, orange, bb[0], bb[1], bb[2], seat[0], seat[1], seat[2], 0.020);
+  addBikeTube(g, orange, bb[0], bb[1], bb[2], 0, wr, rz, 0.016);
+  addBikeTube(g, orange, seat[0], seat[1] - 0.05, seat[2], 0, wr + 0.02, rz, 0.014);
+
+  const forkTop = [0, 0.58, 0.38];
+  addP(g, PG.box(), silver, 0, 0.60, 0.37, 0.12, 0.045, 0.06);
+  for (const sx of [-0.045, 0.045]) {
+    addBikeTube(g, silver, sx, forkTop[1], forkTop[2], sx, wr + 0.10, fz, 0.013);
+    addBikeTube(g, orange, sx, wr + 0.10, fz, sx, wr, fz, 0.017);
+  }
+
   const bar = new THREE.Group();
-  bar.position.set(0, 0.98, 0.38);
-  bar.rotation.z = -0.22;
-  addP(bar, PG.cyl(8), frame, 0, 0, 0, 0.014, 0.38, 0.014, Math.PI / 2, 0, 0);
-  addP(bar, PG.cyl(8), grip, -0.19, 0, 0, 0.026, 0.11, 0.026, 0, 0, Math.PI / 2);
-  addP(bar, PG.cyl(8), grip, 0.19, 0, 0, 0.026, 0.11, 0.026, 0, 0, Math.PI / 2);
+  bar.position.set(head[0], head[1] + 0.02, head[2]);
+  addP(bar, PG.cyl(8), silver, 0, 0.06, 0, 0.012, 0.14, 0.012);
+  addP(bar, PG.cyl(8), black, 0, 0.14, 0, 0.014, 0.38, 0.014, 0, 0, Math.PI / 2);
+  addP(bar, PG.cyl(8), black, -0.21, 0.20, 0, 0.019, 0.11, 0.019, 0.38, 0, Math.PI / 2);
+  addP(bar, PG.cyl(8), black, 0.21, 0.20, 0, 0.019, 0.11, 0.019, -0.38, 0, Math.PI / 2);
   g.add(bar);
-  addP(g, PG.box(), seat, 0, 0.92, -0.06, 0.16, 0.05, 0.11);
-  addP(g, PG.cyl(8), frame, 0, 0.84, -0.06, 0.014, 0.18, 0.014);
-  addP(g, PG.cyl(8), accent, 0.06, 0.24, 0.08, 0.038, 0.014, 0.014, Math.PI / 2, 0.15, 0);
-  addP(g, PG.box(), pMat('#222428', 0.9), 0.06, 0.24, 0.08, 0.11, 0.04, 0.05);
+
+  addP(g, PG.cyl(8), silver, seat[0], seat[1] - 0.12, seat[2], 0.011, 0.20, 0.011);
+  addP(g, PG.box(), black, seat[0], seat[1] + 0.01, seat[2] - 0.02, 0.15, 0.042, 0.09, -0.14, 0, 0);
+
+  addP(g, PG.cyl(8), silver, bb[0], bb[1], bb[2], 0.058, 0.013, 0.058, Math.PI / 2, 0, 0);
+  addP(g, PG.box(), silver, bb[0] + 0.10, bb[1] - 0.02, bb[2] + 0.05, 0.11, 0.017, 0.024, 0, 0.18, 0);
+  addP(g, PG.box(), black, bb[0] + 0.16, bb[1] - 0.09, bb[2] + 0.07, 0.065, 0.020, 0.045, 0, 0.18, 0);
+  addP(g, PG.box(), silver, 0, wr + 0.05, rz - 0.02, 0.05, 0.09, 0.06);
+
   return g;
 }
 
+/** NYC-style Citi Bike — same low-poly wheel treatment, step-through blue frame. */
 function buildCitibike() {
   const g = new THREE.Group();
   const blue = pMat('#0067b1', 0.68, 0.08);
@@ -15203,39 +15240,48 @@ function buildCitibike() {
     map: makeCitibikeMarkTexture(), roughness: 0.78, metalness: 0
   });
   const wr = 0.20;
-  addBikeWheel(g, 0, wr, 0.54, wr);
-  addBikeWheel(g, 0, wr, -0.54, wr);
-  addP(g, PG.cyl(12), blue, -0.04, 0.42, 0.08, 0.034, 0.22, 0.034, 0.55, 0, 0);
-  addP(g, PG.cyl(12), blue, 0.04, 0.42, -0.12, 0.034, 0.24, 0.034, -0.48, 0, 0);
-  addP(g, PG.cyl(10), blue, 0, 0.38, 0.18, 0.028, 0.52, 0.028, 0.08, 0, 0);
-  addP(g, PG.cyl(10), blue, 0, 0.38, -0.28, 0.028, 0.46, 0.028, -0.08, 0, 0);
-  addP(g, PG.box(), blue, 0, 0.50, -0.05, 0.22, 0.05, 0.08);
-  addP(g, PG.box(), mark, 0.02, 0.46, 0.02, 0.18, 0.10, 0.04, 0.12, -0.08, 0);
-  addP(g, PG.cyl(10), blueDk, 0, 0.58, -0.34, 0.038, 0.12, 0.038, Math.PI / 2, 0, 0);
-  addP(g, PG.box(), mark, 0, 0.66, -0.50, 0.22, 0.16, 0.05);
+  const fz = 0.54, rz = -0.54;
+
+  addBikeWheel(g, 0, wr, fz, wr);
+  addBikeWheel(g, 0, wr, rz, wr);
+
+  addBikeTube(g, blue, 0, 0.64, 0.36, 0, 0.36, 0.10, 0.030);
+  addBikeTube(g, blue, 0, 0.36, 0.10, 0, 0.32, -0.18, 0.030);
+  addBikeTube(g, blue, 0, 0.32, -0.18, 0, wr, rz, 0.022);
+  addBikeTube(g, blue, 0, 0.34, 0.06, 0, wr, fz, 0.020);
+  addP(g, PG.box(), blue, 0, 0.50, -0.04, 0.26, 0.06, 0.12);
+  addP(g, PG.box(), mark, 0.03, 0.44, 0.02, 0.17, 0.10, 0.03, 0.12, -0.08, 0);
+
+  addP(g, PG.box(), blueDk, 0, wr + 0.14, -0.36, 0.26, 0.09, 0.44);
+  addP(g, PG.box(), mark, 0, wr + 0.20, -0.46, 0.21, 0.15, 0.045);
+
+  addBikeTube(g, blue, 0, 0.60, 0.34, 0, wr, fz, 0.022);
+
   const basket = new THREE.Group();
-  basket.position.set(0, 0.82, 0.54);
-  addP(basket, PG.box(), black, 0, 0.04, 0.04, 0.26, 0.16, 0.18);
-  addP(basket, PG.box(), mark, 0, 0.02, 0.14, 0.22, 0.12, 0.02);
-  addP(basket, PG.cyl(8), black, -0.10, -0.04, -0.02, 0.012, 0.22, 0.012, 0.35, 0, 0);
-  addP(basket, PG.cyl(8), black, 0.10, -0.04, -0.02, 0.012, 0.22, 0.012, 0.35, 0, 0);
+  basket.position.set(0, 0.80, 0.50);
+  addP(basket, PG.box(), black, 0, 0.05, 0.04, 0.28, 0.17, 0.20);
+  addP(basket, PG.box(), mark, 0, 0.02, 0.14, 0.24, 0.13, 0.02);
+  for (const sx of [-0.11, 0.11]) {
+    addP(basket, PG.cyl(8), black, sx, -0.06, -0.02, 0.013, 0.24, 0.013, 0.42, 0, 0);
+  }
   g.add(basket);
+
   const bar = new THREE.Group();
-  bar.position.set(0, 0.94, 0.36);
-  bar.rotation.z = -0.08;
-  bar.rotation.x = -0.12;
+  bar.position.set(0, 0.90, 0.34);
+  bar.rotation.x = -0.14;
   addP(bar, PG.cyl(8), black, 0, 0, 0, 0.016, 0.42, 0.016, Math.PI / 2, 0, 0);
-  addP(bar, PG.cyl(8), black, -0.22, 0.02, 0, 0.028, 0.12, 0.028, 0, 0, Math.PI / 2);
-  addP(bar, PG.cyl(8), black, 0.22, 0.02, 0, 0.028, 0.12, 0.028, 0, 0, Math.PI / 2);
+  addP(bar, PG.cyl(8), black, -0.23, 0.02, 0, 0.029, 0.12, 0.029, 0, 0, Math.PI / 2);
+  addP(bar, PG.cyl(8), black, 0.23, 0.02, 0, 0.029, 0.12, 0.029, 0, 0, Math.PI / 2);
   g.add(bar);
-  addP(g, PG.box(), black, 0, 0.90, -0.08, 0.20, 0.06, 0.12);
-  addP(g, PG.cyl(8), blue, 0, 0.82, -0.08, 0.014, 0.20, 0.014);
-  addP(g, PG.box(), blueDk, 0.05, 0.26, 0.02, 0.14, 0.05, 0.06);
-  addP(g, PG.cyl(8), black, 0.08, 0.04, 0.06, 0.012, 0.16, 0.012, 0.55, 0, 0);
+
+  addP(g, PG.cyl(8), blue, 0, 0.78, -0.14, 0.014, 0.22, 0.014);
+  addP(g, PG.box(), black, 0, 0.90, -0.16, 0.22, 0.06, 0.13);
+  addP(g, PG.cyl(8), black, 0.07, 0.12, -0.04, 0.011, 0.24, 0.011, 0.58, 0, 0);
+
   return g;
 }
 
-/** Staple rack with a commuter bike + NYC-style Citi Bike docked on the rug. */
+/** Staple rack with a mountain bike + NYC-style Citi Bike docked on the rug. */
 function buildBikeParking() {
   const g = new THREE.Group();
   const steel = pMat('#9aa3ab', 0.58, 0.38);
@@ -18088,7 +18134,10 @@ function placeMiiDock(m) {
   const plate = nameTagPlateMetrics(m);
   const tagPxW = tagPx * (m.tagAspect || plate.W / plate.H);
   const chipPx = Math.round(tagPx * (plate.h / plate.H));
-  dock.style.setProperty('--info-chip', chipPx + 'px');
+  const iconPx = Math.round(chipPx * 0.52);
+  const bubblePx = iconPx + 2;
+  dock.style.setProperty('--info-icon', iconPx + 'px');
+  dock.style.setProperty('--info-bubble', bubblePx + 'px');
   m.tag.getWorldPosition(_vt);
   _vt.project(camera);
   const r = canvasEl.getBoundingClientRect();
