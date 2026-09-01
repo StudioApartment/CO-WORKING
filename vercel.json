@@ -93,40 +93,6 @@
       ]
     },
     {
-      "source": "/mii",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "private, no-store, no-cache, must-revalidate, max-age=0"
-        },
-        {
-          "key": "CDN-Cache-Control",
-          "value": "no-store"
-        },
-        {
-          "key": "Vercel-CDN-Cache-Control",
-          "value": "no-store"
-        }
-      ]
-    },
-    {
-      "source": "/mii.html",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "private, no-store, no-cache, must-revalidate, max-age=0"
-        },
-        {
-          "key": "CDN-Cache-Control",
-          "value": "no-store"
-        },
-        {
-          "key": "Vercel-CDN-Cache-Control",
-          "value": "no-store"
-        }
-      ]
-    },
-    {
       "source": "/",
       "headers": [
         {
