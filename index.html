@@ -402,6 +402,9 @@ body.native-cursor #pointer{display:none}
   box-shadow:inset 0 2px 4px rgba(110,140,160,.22),0 0 0 2px #fff,0 0 0 3.5px #d3dee5;
 }
 .dog-rename input:focus{box-shadow:inset 0 2px 4px rgba(110,140,160,.22),0 0 0 2px #fff,0 0 0 3.5px var(--blue)}
+.pet-toggle{display:flex;gap:6px;margin:0 0 12px;justify-content:center}
+.pet-btn{background:rgba(255,255,255,.55);border:1.5px solid rgba(130,160,180,.35);border-radius:20px;padding:5px 20px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);transition:background .15s,box-shadow .15s}
+.pet-btn.active{background:#fff;box-shadow:0 2px 8px rgba(40,80,110,.18),0 0 0 2px #fff,0 0 0 3.5px var(--blue);color:var(--blue-dk)}
 
 /* ============================================================
    MODAL (camera)
@@ -946,7 +949,11 @@ body.interior-open{cursor:auto;touch-action:auto}
 
 <div id="dogRename" class="delete-confirm dog-rename" role="dialog" aria-modal="true" aria-labelledby="dogRenameTitle" hidden>
   <div class="delete-confirm-card">
-    <p id="dogRenameTitle">Name this good boy</p>
+    <p id="dogRenameTitle">Name this cutie</p>
+    <div class="pet-toggle">
+      <button type="button" class="pet-btn" id="btnPetDog">Dog</button>
+      <button type="button" class="pet-btn" id="btnPetCat">Cat</button>
+    </div>
     <input id="dogRenameInput" type="text" maxlength="28" autocomplete="off" spellcheck="false" />
     <div class="delete-confirm-actions">
       <button type="button" class="wbtn" id="dogRenameCancel">Cancel</button>
@@ -13723,8 +13730,15 @@ const PG = {
    (first name only); shared office-wide via /api/office-sync.
    ══════════════════════════════════════════════════════════════ */
 const DOG_NAME_KEY = 'office-dog-name';
+const PET_TYPE_KEY = 'office-pet-type';
 const DOG_DEFAULT_NAME = 'Roscoe';
 const DOG_HEAD_TOP = 0.51;
+
+function loadPetType() {
+  try { const v = localStorage.getItem(PET_TYPE_KEY); if (v === 'cat' || v === 'dog') return v; } catch {}
+  return 'dog';
+}
+function savePetType(t) { try { localStorage.setItem(PET_TYPE_KEY, t); } catch {} }
 
 function loadDogName() {
   try {
@@ -13794,10 +13808,83 @@ function buildOfficeDogMesh() {
   return { root, pivot, head, legs, tailPivot, hit, height: 0.52 };
 }
 
+function buildOfficeCatMesh() {
+  const root = new THREE.Group();
+  const fur   = pMat(0x888898, 0.80);   // grey tabby
+  const belly = pMat(0xd0c8be, 0.88);
+  const dark  = pMat(0x3a3848, 0.72);
+  const nose  = pMat(0xd46080, 0.55);
+  const eyeW  = pMat(0xf5f0ea, 0.9);
+  const eyeGn = pMat(0x40c050, 0.5, 0.1);
+
+  const pivot = new THREE.Group();
+  root.add(pivot);
+
+  // Compact body
+  addP(pivot, PG.box(), fur,   0, 0.20, 0,     0.26, 0.18, 0.40);
+  addP(pivot, PG.box(), belly, 0, 0.17, 0.07,  0.14, 0.10, 0.18);
+
+  const head = new THREE.Group();
+  head.position.set(0, 0.33, 0.18);
+  pivot.add(head);
+  // Round head (no snout)
+  addP(head, PG.ball(14), fur,   0, 0,     0,    0.15, 0.14, 0.14);
+  addP(head, PG.ball(10), belly, 0, -0.03, 0.10, 0.07, 0.05, 0.06);
+  addP(head, PG.ball(8),  nose,  0, -0.01, 0.13, 0.025, 0.018, 0.022);
+  // Pointy ears — angled box triangles
+  for (const sx of [-1, 1]) {
+    addP(head, PG.box(), fur,  sx * 0.08, 0.12, -0.04, 0.045, 0.07, 0.018, sx * 0.26, 0, sx * 0.10);
+    addP(head, PG.box(), belly, sx * 0.08, 0.11, -0.03, 0.022, 0.048, 0.010, sx * 0.26, 0, sx * 0.10);
+  }
+  // Green cat eyes
+  for (const sx of [-1, 1]) {
+    addP(head, PG.ball(8), eyeW, sx * 0.055, 0.02, 0.12, 0.030, 0.030, 0.025);
+    addP(head, PG.ball(8), eyeGn, sx * 0.055, 0.02, 0.126, 0.016, 0.016, 0.012);
+    addP(head, PG.ball(8), dark,  sx * 0.055, 0.02, 0.131, 0.008, 0.012, 0.008);
+  }
+  // Whiskers (thin cylinders)
+  for (const sx of [-1, 1]) {
+    addP(head, PG.cyl(4), belly, sx * 0.10, -0.01, 0.11, 0.004, 0.07, 0.004, 0, 0, sx * (Math.PI/2 + 0.15));
+    addP(head, PG.cyl(4), belly, sx * 0.11, -0.03, 0.11, 0.004, 0.07, 0.004, 0, 0, sx * (Math.PI/2 + 0.05));
+  }
+
+  // Legs — dainty
+  const legs = [];
+  const legPos = [[-0.09, 0.10, 0.12], [0.09, 0.10, 0.12], [-0.09, 0.10, -0.10], [0.09, 0.10, -0.10]];
+  for (let i = 0; i < 4; i++) {
+    const hip = new THREE.Group();
+    hip.position.set(...legPos[i]);
+    pivot.add(hip);
+    addP(hip, PG.cyl(10), dark, 0, -0.044, 0, 0.038, 0.09, 0.038);
+    addP(hip, PG.box(),   dark, 0, -0.095, 0.02, 0.055, 0.022, 0.06);
+    legs.push(hip);
+  }
+
+  // Long curvy tail (two segments arching up)
+  const tailPivot = new THREE.Group();
+  tailPivot.position.set(0, 0.24, -0.20);
+  pivot.add(tailPivot);
+  addP(tailPivot, PG.cyl(10), fur, 0,     0.10, -0.05,  0.030, 0.12, 0.030, -0.90, 0, 0);
+  addP(tailPivot, PG.cyl(10), fur, 0,     0.22, -0.08,  0.024, 0.12, 0.024, -0.50, 0, 0);
+  addP(tailPivot, PG.ball(8), fur, 0,     0.32, -0.06,  0.030, 0.030, 0.030);
+
+  const hit = new THREE.Mesh(
+    geoCache('dogHit', () => new THREE.BoxGeometry(1, 1, 1)),
+    new THREE.MeshBasicMaterial({ visible: false })
+  );
+  hit.scale.set(0.50, 0.44, 0.65);
+  hit.position.y = 0.20;
+  root.add(hit);
+
+  return { root, pivot, head, legs, tailPivot, hit, height: 0.50 };
+}
+
 class OfficeDog {
   constructor(world) {
     this.world = world;
-    Object.assign(this, buildOfficeDogMesh());
+    this.petType = loadPetType();
+    const mesh = this.petType === 'cat' ? buildOfficeCatMesh() : buildOfficeDogMesh();
+    Object.assign(this, mesh);
     this.obstacleR = 0.32;
     this.pos = new THREE.Vector3();
     this.facing = rand(0, TAU);
@@ -13848,6 +13935,48 @@ class OfficeDog {
 
   promptRename() {
     showDogRename(this);
+  }
+
+  dragTo(pt) {
+    this.pos.x = pt.x;
+    this.pos.z = pt.z;
+  }
+
+  release() {
+    this.state = 'idle';
+    this.timer = rand(0.5, 1.5);
+  }
+
+  greet() { /* no-op for pet */ }
+
+  switchType(type) {
+    if (type === this.petType) return;
+    // Tear down old mesh
+    this.world.scene.remove(this.root);
+    this.world.scene.remove(this.shadow);
+    // Build new mesh
+    const mesh = type === 'cat' ? buildOfficeCatMesh() : buildOfficeDogMesh();
+    Object.assign(this, mesh);
+    this.hit.userData.dog = this;
+    // Re-attach name tag
+    const tagH = TAG_H * (this.tagTall ? 1.22 : 1);
+    this.tag.scale.set(tagH * this.tagAspect, tagH, 1);
+    this.tag.position.y = DOG_HEAD_TOP + tagH * 0.5 + 0.10;
+    this.root.add(this.tag);
+    // Rebuild shadow
+    this.shadow = new THREE.Mesh(
+      geoCache('quad', () => new THREE.PlaneGeometry(1, 1)),
+      new THREE.MeshBasicMaterial({ map: this.world.blobTex, transparent: true, opacity: 0.42, depthWrite: false })
+    );
+    this.shadow.rotation.x = -Math.PI / 2;
+    this.shadow.renderOrder = 1;
+    this.shadowBase = 0.62;
+    // Put back in scene
+    this.world.scene.add(this.root);
+    this.world.scene.add(this.shadow);
+    savePetType(type);
+    this.petType = type;
+    this.sync();
   }
 
   spawnAt(x, z) {
@@ -13907,6 +14036,10 @@ class OfficeDog {
           this.pos.z += Math.cos(this.facing) * this.speed * dt;
           this.walkPhase += dt * this.speed * 10.5;
         }
+        break;
+      case 'held':
+        this.speed = damp(this.speed, 0, 12, dt);
+        this.walkPhase += dt * 2.0;
         break;
     }
 
@@ -16831,21 +16964,37 @@ canvasEl.addEventListener('pointerdown', (e) => {
     m.grab(anchor);
     pointerEl.classList.add('grab');
     Sound.fx.pickup();
+  } else {
+    const dog = pickDog();
+    if (dog) {
+      controls.enabled = false;
+      held = dog;
+      dragPlane.copy(groundPlane);
+      dog.state = 'held';
+      dog.speed = 0;
+      pointerEl.classList.add('grab');
+      Sound.fx.pickup();
+    }
   }
 }, { capture: true });
 
 window.addEventListener('pointerup', () => {
   const quick = performance.now() - P.downT < 260 && P.moved < 8;
   if (held) {
-    if (quick) { held.state = 'fall'; held.greet(); }
-    else { held.release(); Sound.fx.drop(); }
+    if (held === World.dog) {
+      held.release();
+      if (quick) held.promptRename();
+      else Sound.fx.drop();
+    } else if (quick) {
+      held.state = 'fall'; held.greet();
+    } else {
+      held.release(); Sound.fx.drop();
+    }
     held = null;
     pointerEl.classList.remove('grab');
     setTimeout(() => { controls.enabled = true; }, 0);
   } else if (quick) {
-    const dog = pickDog();
-    if (dog) dog.promptRename();
-    else PlazaProps.tryActivate();
+    PlazaProps.tryActivate();
   }
   P.down = false;
 });
@@ -18311,6 +18460,20 @@ function bindButtons() {
     Sound.fx.click();
     commitDogRename();
   });
+  $('btnPetDog').addEventListener('click', () => {
+    if (!pendingDogRename) return;
+    Sound.fx.click();
+    pendingDogRename.switchType('dog');
+    $('btnPetDog').classList.add('active');
+    $('btnPetCat').classList.remove('active');
+  });
+  $('btnPetCat').addEventListener('click', () => {
+    if (!pendingDogRename) return;
+    Sound.fx.click();
+    pendingDogRename.switchType('cat');
+    $('btnPetCat').classList.add('active');
+    $('btnPetDog').classList.remove('active');
+  });
   $('dogRenameInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); commitDogRename(); }
     else if (e.key === 'Escape') { e.preventDefault(); hideDogRename(); }
@@ -18533,6 +18696,8 @@ function showDogRename(dog) {
   pendingDogRename = dog;
   const el = $('dogRename');
   $('dogRenameInput').value = dog.name;
+  $('btnPetDog').classList.toggle('active', dog.petType !== 'cat');
+  $('btnPetCat').classList.toggle('active', dog.petType === 'cat');
   el.hidden = false;
   el.classList.add('show');
   Sound.fx.click();
