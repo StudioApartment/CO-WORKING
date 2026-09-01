@@ -15331,29 +15331,30 @@ function makeCitibikeMarkTexture() {
 
 const _bikeY = new THREE.Vector3(0, 1, 0);
 
-/** Wheel — open torus RING tire so you can see through to the spokes.
- * The ring lies in the Y-Z plane (axle along X) by rotating the torus rz=π/2.
- * A Y-axis cylinder rotated rx=a radiates at angle a in that same plane. */
+/** Wheel — torus ring tire (hollow centre) with visible spokes.
+ * Disc in Y-Z plane (axle along X). The rack is positioned so the camera
+ * sees the axle at 90°, giving a true side profile.
+ * rz=π/2 on each torus rotates the ring from default X-Z plane → Y-Z plane. */
 function addBikeWheel(parent, x, y, z, r = 0.27) {
   const tire  = pMat('#111214', 0.94);
-  const rim   = pMat('#c8d2d6', 0.44, 0.50);
-  const hub   = pMat('#8a939c', 0.52, 0.32);
-  const spoke = pMat('#d4dce2', 0.34, 0.52);
+  const rim   = pMat('#c8d2d6', 0.46, 0.55);
+  const hub   = pMat('#9aa3ab', 0.50, 0.40);
+  const spoke = pMat('#d8e0e6', 0.32, 0.60);
   const w = new THREE.Group();
   w.position.set(x, y, z);
-  // Outer torus ring = the rubber tire (hollow, see-through centre)
-  addP(w, PG.torus(0.11), tire, 0, 0, 0, r, r, r, 0, 0, Math.PI / 2);
-  // Inner rim ring (thinner tube, chrome)
-  addP(w, PG.torus(0.04), rim,  0, 0, 0, r * 0.84, r * 0.84, r * 0.84, 0, 0, Math.PI / 2);
-  // Hub cylinder (axle) — axis along X
-  addP(w, PG.cyl(10), hub, 0, 0, 0, 0.030, 0.052, 0.030, 0, 0, Math.PI / 2);
-  // 14 thin spokes radiating hub→rim in Y-Z plane
-  const spokeL = r * 0.78;
-  for (let i = 0; i < 14; i++) {
-    const a = (i / 14) * TAU;
+  // Fat torus tire — tube=0.18 gives a chunky tyre that reads clearly from any angle
+  addP(w, PG.torus(0.18), tire, 0, 0, 0, r, r, r, 0, 0, Math.PI / 2);
+  // Chrome rim — thinner torus just inside the tyre
+  addP(w, PG.torus(0.055), rim, 0, 0, 0, r * 0.80, r * 0.80, r * 0.80, 0, 0, Math.PI / 2);
+  // Hub — short cylinder, axis along X
+  addP(w, PG.cyl(10), hub, 0, 0, 0, 0.032, 0.058, 0.032, 0, 0, Math.PI / 2);
+  // 16 spokes in Y-Z plane — Y-cylinder rotated rx=a points at (0,cos(a),sin(a))
+  const spokeR = r * 0.72;
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * TAU;
     addP(w, PG.cyl(4), spoke,
-      0, Math.cos(a) * r * 0.44, Math.sin(a) * r * 0.44,
-      0.003, spokeL, 0.003, a, 0, 0);
+      0, Math.cos(a) * r * 0.40, Math.sin(a) * r * 0.40,
+      0.005, spokeR, 0.005, a, 0, 0);
   }
   parent.add(w);
   return w;
@@ -15674,8 +15675,9 @@ function installPlazaProps() {
   [x, z] = at(150, 7.2); placeProp(buildBamboo(), x, z, R(320), 1.0);
   placeProp(buildAloePlant(), -3.15, 1.15, R(215), 1.0);
   const bikeX = -8.0, bikeZ = 1.6;
-  // rotated 90° from faceIn so bikes show as side silhouettes
-  placeProp(buildBikeParking(), bikeX, bikeZ, faceIn(bikeX, bikeZ) + Math.PI * 0.5, 1.0);
+  // θ=0.51 rad places the axle exactly perpendicular to the camera direction,
+  // giving a true side profile with the wheel disc visible as an ellipse
+  placeProp(buildBikeParking(), bikeX, bikeZ, 0.51, 1.0);
   const lampX = -3.93, lampZ = -3.17;
   const chairX = -4.45, chairZ = -2.35;
   placeProp(buildLoungeChair(), chairX, chairZ, faceIn(chairX, chairZ), 1.0);
