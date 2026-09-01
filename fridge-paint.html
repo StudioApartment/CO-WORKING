@@ -407,8 +407,17 @@
     setSaveState('pending');
     docTitle.textContent = '* untitled - Paint';
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(saveCanvas, 900);
+    saveTimer = setTimeout(saveCanvas, 600);
   }
+
+  /* Flush pending save immediately when the tab or iframe is hidden —
+     covers closing the overlay without clicking the in-app back button. */
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && dirty) {
+      clearTimeout(saveTimer);
+      saveCanvas();
+    }
+  });
 
   function strokeLine(x0, y0, x1, y1, color, width) {
     ctx.strokeStyle = color;
