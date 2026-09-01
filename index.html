@@ -5821,13 +5821,18 @@ function drawFace(dna, expr) {
   const P = (u, v) => { g.setTransform(1, 0, 0, 1, u * U, v * U); };
   paintFaceLight(g, U, dna.skin);
 
-  // blush
+  // blush — sit on the cheek, below eyewear when glasses are worn
   if (dna.blush) {
+    const gwSpec = EYEWEAR_BY_ID.get(dna.glasses);
+    const hasGlasses = gwSpec && gwSpec.id;
     for (const sx of [-1, 1]) {
-      const x = (50 + sx * 24) * U, y = 57 * U;
-      const grd = g.createRadialGradient(x, y, 1, x, y, 11 * U);
+      const cheekOff = hasGlasses ? Math.max(26, dna.eyes.spacing + (gwSpec.w || 18) * 0.38) : 24;
+      const yU = hasGlasses ? Math.max(60, dna.eyes.y + (gwSpec.h || 16) * 0.62 + 7) : 57;
+      const rU = hasGlasses ? 8 : 11;
+      const x = (50 + sx * cheekOff) * U, y = yU * U;
+      const grd = g.createRadialGradient(x, y, 1, x, y, rU * U);
       grd.addColorStop(0, deepSkin(dna.skin) ? 'rgba(255,150,150,.62)' : 'rgba(248,120,120,.42)'); grd.addColorStop(1, 'rgba(248,120,120,0)');
-      g.fillStyle = grd; g.beginPath(); g.arc(x, y, 11 * U, 0, TAU); g.fill();
+      g.fillStyle = grd; g.beginPath(); g.arc(x, y, rU * U, 0, TAU); g.fill();
     }
   }
   // freckles
@@ -12648,12 +12653,15 @@ function buildMii(dna) {
       map: eyewearTex, transparent: clearLens, alphaTest: 0.03,
       roughness: 0.90,
       depthTest: true,
-      depthWrite: !clearLens
+      depthWrite: !clearLens,
+      /* Face decal uses negative polygon offset; bias frames outward so blush
+         on the face texture cannot paint over the rims. */
+      polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -4
     });
     M.mats.push(eyewearMat);
     const eyewear = new THREE.Mesh(G.face(), eyewearMat);
-    eyewear.renderOrder = wearingHat ? 4 : (faceCoverHair ? 3 : 5);
-    if (!wearingHat && !faceCoverHair) eyewear.scale.setScalar(1.05);
+    eyewear.renderOrder = wearingHat ? 6 : (faceCoverHair ? 3 : 5);
+    if (!faceCoverHair) eyewear.scale.setScalar(wearingHat ? 1.04 : 1.05);
     headScale.add(eyewear);
   }
   for (const h of hairParts.hat) {
