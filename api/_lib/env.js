@@ -29,7 +29,7 @@ export const SUPABASE_ANON_KEY = pick('SUPABASE_ANON_KEY', 'NEXT_PUBLIC_SUPABASE
 export const SUPABASE_SERVICE_ROLE_KEY = pick('SUPABASE_SERVICE_ROLE_KEY');
 
 export const RESEND_API_KEY = pick('RESEND_API_KEY');
-export const RESEND_FROM = pick('RESEND_FROM') || 'CO—WORKING <badges@coworking.fyi>';
+export const RESEND_FROM = pick('RESEND_FROM') || 'CO-WORKING <badges@coworking.fyi>';
 
 export const GOOGLE_ISSUER_ID = pick('GOOGLE_ISSUER_ID');
 export const GOOGLE_SERVICE_ACCOUNT_EMAIL = pick('GOOGLE_SERVICE_ACCOUNT_EMAIL');
