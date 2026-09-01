@@ -9839,30 +9839,27 @@ const G = {
   hatDomeFront: (r, tl, halfAz = 0.95) => geoCache(`hdf${r}_${tl}_${halfAz}`, () =>
     superball(r, 64, 32, HEAD_N, Math.PI / 2 - halfAz, halfAz * 2, 0, tl)),
   /* Kangol 504 / ivy flat-cap crown. A plain dome reads as a beanie; the
-     504 side silhouette is a wedge — low at the front, rising diagonally
-     to a taller rear with a sharper vertical drop. The brow hem stays
-     near the original dome rim so the skull stays covered. */
-  flatCap: () => geoCache('flatcap8', () => {
+     worn silhouette is a forward peak that tapers down toward the nape.
+     The brow hem stays near the original dome rim so the skull stays covered. */
+  flatCap: () => geoCache('flatcap9', () => {
     const g = superball(1, 128, 44, HEAD_N, 0, TAU, 0, 1.42);
     const p = g.attributes.position;
     for (let i = 0; i < p.count; i++) {
       let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-      /* 0 at face (+z), 1 at nape (−z). */
-      const fb = clamp(0.5 - z * 0.58, 0, 1);
+      /* 0 at nape (−z), 1 at face (+z). */
+      const front = clamp(0.5 + z * 0.58, 0, 1);
       /* Only reshape the upper crown — lower rim keeps skull coverage. */
       const upper = Math.pow(clamp((y - 0.16) / 0.84, 0, 1), 0.95);
-      /* Pink-line envelope: squash front peak hard, lift rear peak. */
-      const yMul = 1 + upper * (-0.42 * (1 - fb) + 0.58 * Math.pow(fb, 0.78));
+      /* Pink-line envelope: lift the front peak, taper the rear low. */
+      const yMul = 1 + upper * (0.58 * Math.pow(front, 0.78) - 0.42 * (1 - front));
       y *= yMul;
-      /* Tip the peak aft without lifting the brow hem. */
-      z -= upper * y * 0.40;
-      /* Sharper rear drop: push mid-rear wall forward so the top overhangs
-         and the back reads more vertical than a round dome. */
+      /* Tip the peak forward over the short brim. */
+      z += upper * y * 0.36;
+      /* Flatten the nape so the crown reads tapered aft, not a second hump. */
       if (z < 0) {
         const back = clamp(-z, 0, 1.05);
-        const mid = Math.exp(-Math.pow((y - 0.38) / 0.34, 2));
-        z += back * mid * upper * 0.24;
-        y += back * upper * Math.pow(Math.max(0, y), 0.85) * 0.18;
+        y -= back * upper * Math.pow(Math.max(0, y), 0.85) * 0.16;
+        z += back * upper * 0.10;
       }
       /* Slightly wider oval — flat caps are broader than ball-cap domes. */
       x *= 1.06;
@@ -10320,8 +10317,8 @@ const HATS = {
   /* Pale-gold cardboard Burger King–style paper crown. Fixed colourway;
      stylized bun logo up front (playful plaza fan/parody prop). */
   papercrown:  { crown: '#edd48a', accent: '#b09048', paper: true },
-  /* Kangol-style 504 Ventair flat/ivy cap — low beret-like crown, short
-     flush brim, fine mesh knit. Tint via Hat chip; black default. */
+  /* Kangol-style 504 Ventair flat/ivy cap — forward peak tapering to the
+     nape, short flush brim, fine mesh knit. Tint via Hat chip; black default. */
   kangol:      { crown: null, accent: null, kangol: true },
   bandana:      { crown: null, paisley: true }   // takes hatColor, like a cap
 };
@@ -11877,15 +11874,15 @@ function buildHair(dna, mat, extraMats) {
         hatOut.push(patch);
       }
     } else if (H.kangol) {
-      /* Kangol-style 504 Ventair: mesh crown with the classic low-front /
-         tall-back ivy silhouette, tiny flush brim, kangaroo mark on the
+      /* Kangol-style 504 Ventair: mesh crown with a forward peak that
+         tapers toward the nape, tiny flush brim, kangaroo mark on the
          front panel. Tint via Hat chip. */
       hatMat.map = makeVentairTexture(crownCol);
       hatMat.color.set('#ffffff');
       hatMat.roughness = 0.90;
       hatMat.metalness = 0;
 
-      /* Unit flatCap is already wedged (front low → rear tall); scale keeps
+      /* Unit flatCap is already wedged (front tall → rear low); scale keeps
          skull cover and the soft Ventair width. Slight forward nudge so the
          crown overhangs the short brim the way a worn 504 does. */
       put(G.flatCap(), hatMat, 0, 0.02, 0.05, 1.14, 1.10, 1.14);
