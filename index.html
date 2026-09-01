@@ -3868,7 +3868,7 @@ function makePaperCrownTexture(base) {
      read as raised rubies instead of cardboard print). */
   for (let k = 0; k < nPeaks; k++) {
     const x = (k / nPeaks) * W;
-    const tipY = k === 0 ? 18 : 36;
+    const tipY = 27;
     g.strokeStyle = shade(base, -40);
     g.lineWidth = 1.6;
     g.globalAlpha = 0.5;
@@ -3986,8 +3986,8 @@ function makePaperCrownTexture(base) {
     const x = (k / nPeaks) * W;
     /* Well below the tip: cylinder UVs pinch at peaks and turn tip
        discs into crescent “lips”. Face jewels stay round. */
-    const y = k === 0 ? 58 : 72;
-    const rx = k === 0 ? 11 : 7.5, ry = k === 0 ? 9.5 : 6.5;
+    const y = 65;
+    const rx = 9, ry = 8;
     paintRuby(x, y, rx, ry);
     if (k === 0) paintRuby(W, y, rx, ry);
   }
@@ -9898,7 +9898,7 @@ const G = {
        each azimuth so the band wraps the whole head, not a front arc. */
     const SEGS = 168, ROWS = 28, NPEAKS = 7;
     const BAND = 0.28, PEAK = 0.46;
-    const VALLEY = 0.20; /* minimum scallop so the band reads 360°, not front arcs */
+    const VALLEY = 0.42; /* minimum scallop so the band reads 360°, not front arcs */
     const SEAT_Y = 0.34; /* brow hem — must match buildHair BASE_Y */
     const headHorizR = (ny, az) => {
       const ux = Math.sin(az), uz = Math.cos(az);
@@ -9927,7 +9927,7 @@ const G = {
         const s = t * t * (3 - 2 * t);
         const waist = 1 + 0.22 * Math.sin(s * Math.PI);
         const tipSoft = Math.pow(s, 0.82) * (1 - 0.22 * Math.pow(s, 3.2));
-        const tall = (k === 0) ? 1.12 : 0.92;
+        const tall = 1.0;
         peakAmt = Math.max(peakAmt, Math.min(1.14, tipSoft * waist * tall));
       }
       peakAmt = Math.max(peakAmt, VALLEY);
@@ -11911,9 +11911,10 @@ function buildHair(dna, mat, extraMats) {
       put(G.tube(), hatMat, 0, 0.28, 0.04, 1.22, 0.12, 1.18);
 
       /* Short brim tucked under the front — flush with the crown, not a
-         protruding ball-cap bill. */
-      const brim = put(G.hatVisor(), hatMat, 0, 0.24, 1.16, 0.52, 0.036, 0.14);
-      brim.rotation.x = -0.08;
+         protruding ball-cap bill. Raised y and steeper tilt keep the back
+         edge clear of the forehead. */
+      const brim = put(G.hatVisor(), hatMat, 0, 0.32, 1.20, 0.52, 0.036, 0.14);
+      brim.rotation.x = -0.22;
 
       const markMat = new THREE.MeshBasicMaterial({
         map: makeKangarooMark(coMarkInk(crownCol)),

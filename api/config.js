@@ -19,6 +19,8 @@ import placesHandler from './_lib/places.js';
 import fridgeArtHandler from './_lib/fridge-art.js';
 import officeSyncHandler from './_lib/office-sync.js';
 
+export const config = { api: { bodyParser: false } };
+
 export default async function handler(req, res) {
   if (preflight(req, res)) return;
 
