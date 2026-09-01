@@ -19,6 +19,27 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
 ));
 
+function resendReason(error) {
+  if (!error) return 'resend_error';
+  if (typeof error === 'string') return error;
+  if (error.message) return error.message;
+  try { return JSON.stringify(error); } catch { return 'resend_error'; }
+}
+
+/** Map Resend failures to something actionable in the UI / logs. */
+export function emailSendError(reason) {
+  const r = String(reason || '').toLowerCase();
+  if (r.includes('domain') && (r.includes('verify') || r.includes('not verified')))
+    return 'The coworking.fyi domain is not verified in Resend yet — add the DNS records in your Resend dashboard.';
+  if (r.includes('only send') || r.includes('testing') || r.includes('verified email'))
+    return 'Resend is still in test mode — verify coworking.fyi, or use the email address on your Resend account.';
+  if (r.includes('invalid') && (r.includes('from') || r.includes('sender')))
+    return 'The sender address is not allowed — set RESEND_FROM to a verified address like badges@coworking.fyi.';
+  if (r.includes('api key') || r.includes('unauthorized') || r.includes('401'))
+    return 'The Resend API key was rejected — check RESEND_API_KEY in Vercel.';
+  return 'Could not send that email just now. Try again in a minute.';
+}
+
 const INK = '#3d4d58';
 const MUTED = '#7d8f9c';
 const BLUE = '#3fa9e0';
@@ -163,7 +184,7 @@ export async function sendBadgeEmail({
       text,
       ...(attachments.length ? { attachments } : {})
     });
-    if (error) return { sent: false, reason: error.message || 'resend_error' };
+    if (error) return { sent: false, reason: resendReason(error) };
     return { sent: true, id: data?.id || null };
   } catch (e) {
     return { sent: false, reason: String((e && e.message) || e) };
@@ -220,7 +241,7 @@ export async function sendMagicLinkEmail({ to, name, link, minutes, origin }) {
       html,
       text
     });
-    if (error) return { sent: false, reason: error.message || 'resend_error' };
+    if (error) return { sent: false, reason: resendReason(error) };
     return { sent: true, id: data?.id || null };
   } catch (e) {
     return { sent: false, reason: String((e && e.message) || e) };

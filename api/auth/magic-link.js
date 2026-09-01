@@ -13,7 +13,7 @@ import { limitMagic, tooMany } from '../_lib/ratelimit.js';
 import * as store from '../_lib/store.js';
 import { supabaseAdmin } from '../_lib/supabase.js';
 import { makeMagicToken, hashMagicToken, MAGIC_LINK_TTL_SECONDS } from '../_lib/session.js';
-import { sendMagicLinkEmail } from '../_lib/email.js';
+import { sendMagicLinkEmail, emailSendError } from '../_lib/email.js';
 import { originFrom, hasResend, hasSessions } from '../_lib/env.js';
 import { usingSupabase } from '../_lib/store.js';
 
@@ -76,8 +76,9 @@ export default async function handler(req, res) {
       origin
     });
     if (!sent.sent) {
+      console.error('[magic-link] resend failed:', sent.reason);
       return send(res, 502, {
-        error: 'Could not send that email just now.',
+        error: emailSendError(sent.reason),
         code: 'email_send_failed'
       });
     }
