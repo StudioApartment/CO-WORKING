@@ -288,16 +288,16 @@ body.native-cursor #pointer{display:none}
    NAME BUBBLE / TOASTS
    ============================================================ */
 #miiDock{
-  position:absolute;left:0;top:0;display:none;gap:5px;z-index:90;
-  transform:translate(0,-54%);
+  position:absolute;left:0;top:0;display:none;gap:4px;z-index:90;
+  transform:translate(0,-50%);
   pointer-events:auto;   /* #hud disables events for its children by default */
   align-items:center;
   isolation:isolate;
 }
 #miiDock.show{display:flex;animation:toolsIn .28s cubic-bezier(.2,1.5,.4,1) both}
 @keyframes toolsIn{
-  from{opacity:0;transform:translate(0,-54%) translateX(-4px) scale(.88)}
-  to{opacity:1;transform:translate(0,-54%)}
+  from{opacity:0;transform:translate(0,-50%) translateX(-4px) scale(.88)}
+  to{opacity:1;transform:translate(0,-50%)}
 }
 #miiInfo{position:relative;z-index:2}
 #miiTools{display:none;gap:6px;align-items:center;z-index:1}
@@ -309,14 +309,14 @@ body.native-cursor #pointer{display:none}
   box-shadow:inset 0 1px 0 #fff,0 3px 6px rgba(70,100,125,.3),0 0 0 2px #fff,0 0 0 3.5px #ccd8e0;
   transition:transform .13s cubic-bezier(.34,1.7,.5,1),box-shadow .18s,color .18s;
 }
-/* Info "i" — same scale as the lost ? chip, tucked beside the name */
+/* Info chip matches the 3D name bubble screen height (LABEL_SCREEN_PX). */
 #btnMiiInfo{
-  width:18px;height:18px;
+  width:34px;height:34px;
   color:var(--blue-dk);
   background:linear-gradient(#fff,#e0eaf0);
   box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(90,115,135,.2),0 0 0 1.5px #fff,0 0 0 2.5px #d2dde4;
 }
-#btnMiiInfo svg{width:10px;height:10px}
+#btnMiiInfo svg{width:16px;height:16px}
 #btnMiiInfo:hover,#btnMiiInfo:focus-visible{
   transform:scale(1.08);
   box-shadow:inset 0 1px 0 #fff,0 2px 6px rgba(70,100,125,.22),0 0 0 1.5px #fff,0 0 0 2.5px #9fd3ef;
@@ -10261,7 +10261,8 @@ const G = {
    6 · MII MESH BUILDER
    ══════════════════════════════════════════════════════════════ */
 const HANG = 1.92;      // grab point = just above the top of the head
-const TAG_H = 0.55;     // world height of a name plate
+const TAG_H = 0.55;     // base world height reference (screen size applied per frame)
+const LABEL_SCREEN_PX = 34; /* name bubble + info chip — constant on-screen size */
 const HEAD_Y = 1.20;
 const HEAD_R = 0.62;
 /* Plaza avatars only — editor / badge / snapshot Miis stay at dna.height (1×). */
@@ -13294,11 +13295,6 @@ class Mii {
     this.tagShow = damp(this.tagShow, want, 9, dt || 0.016);
     this.nameMat.opacity = this.tagShow;
     this.tag.visible = this.tagShow > 0.01;
-    const th = TAG_H * (this.tagTall ? 1.22 : 1);
-    const k = 0.72 + 0.28 * this.tagShow;
-    const tagHalf = th * k * 0.5;
-    this.tag.position.y = HANG * S + tagHalf + 0.14 + (1 - this.tagShow) * -0.10;
-    this.tag.scale.set(th * this.tagAspect * k, th * k, 1);
   }
 
   dispose() {
@@ -13337,6 +13333,42 @@ controls.rotateSpeed = 0.42; controls.zoomSpeed = 0.7;
 controls.minDistance = 5.5; controls.maxDistance = 42;
 controls.minPolarAngle = 0.62; controls.maxPolarAngle = 1.47;
 controls.update();
+
+/* Screen-stable hover labels — scale inversely with camera distance so they
+   stay readable and sit above heads instead of shrinking on the far wall. */
+function worldUnitsPerPixel(at) {
+  const dist = camera.position.distanceTo(at);
+  const h = canvasEl.clientHeight || window.innerHeight || 1;
+  return (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * dist) / h;
+}
+
+function layoutMiiNameTag(m) {
+  if (!m.tag || m.tagShow <= 0.01) return;
+  const S = m.dna.height;
+  const k = 0.72 + 0.28 * m.tagShow;
+  m.tag.position.y = HANG * S;
+  m.tag.updateMatrixWorld(true);
+  m.tag.getWorldPosition(_v3);
+  const th = (LABEL_SCREEN_PX * k * worldUnitsPerPixel(_v3)) / (m.plazaScale || 1);
+  m.tag.scale.set(th * m.tagAspect, th, 1);
+  m.tag.position.y = HANG * S + th * 0.58;
+}
+
+function layoutDogNameTag(dog) {
+  if (!dog.tag || dog.tagShow <= 0.01) return;
+  const k = 0.72 + 0.28 * dog.tagShow;
+  dog.tag.position.y = DOG_HEAD_TOP;
+  dog.tag.updateMatrixWorld(true);
+  dog.tag.getWorldPosition(_v3);
+  const th = (LABEL_SCREEN_PX * k * worldUnitsPerPixel(_v3));
+  dog.tag.scale.set(th * dog.tagAspect, th, 1);
+  dog.tag.position.y = DOG_HEAD_TOP + th * 0.58;
+}
+
+function refreshHoverLabels() {
+  for (const m of World.miis) layoutMiiNameTag(m);
+  if (World.dog) layoutDogNameTag(World.dog);
+}
 
 /* Desktop plaza framing. Narrow / portrait viewports pull the camera back
    (and nudge FOV) so more of the room / rug / props stay in frame — same
@@ -13926,12 +13958,6 @@ class OfficeDog {
     this.tagShow = damp(this.tagShow, want, 9, dt || 0.016);
     this.nameMat.opacity = this.tagShow;
     this.tag.visible = this.tagShow > 0.01;
-
-    const th = TAG_H * (this.tagTall ? 1.22 : 1);
-    const k = 0.72 + 0.28 * this.tagShow;
-    const tagHalf = th * k * 0.5;
-    this.tag.scale.set(th * this.tagAspect * k, th * k, 1);
-    this.tag.position.y = DOG_HEAD_TOP + tagHalf + 0.10 + Math.sin(this.t * 2.4) * 0.012;
 
     if (this.world._dogObsIdx != null) {
       const o = this.world.obstacles[this.world._dogObsIdx];
@@ -14700,7 +14726,7 @@ function buildKitchenette() {
   return tagProp(g, 'kitchenette', 'Kitchen');
 }
 
-/** Tall fridge with a magnet/print of the office still on the door. */
+/** Tall fridge with a collaborative paint magnet on the door. */
 let fridgeArtMat = null;
 function buildFridge() {
   const g = new THREE.Group();
@@ -15381,14 +15407,26 @@ const PlazaProps = {
 };
 PlazaProps.boot();
 
-/* Shared fridge magnet art — texture loads from /api/fridge-art, falls back
-   to the office still until someone saves from the paint page. */
+/* Shared fridge magnet art — texture loads from /api/fridge-art; blank until
+   someone saves from the paint page. */
 const FridgeArt = {
   mat: null,
   tex: null,
-  fallback: null,
+  blank: null,
   loadGen: 0,
   pending: false,
+
+  blankTex() {
+    if (this.blank) return this.blank;
+    const c = cv(4, 4);
+    const g = c.getContext('2d');
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, 4, 4);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    this.blank = t;
+    return t;
+  },
 
   bind(mat) {
     this.mat = mat;
@@ -15397,7 +15435,7 @@ const FridgeArt = {
 
   applyTex(tex, gen) {
     if (!this.mat || (gen != null && gen !== this.loadGen)) {
-      if (tex && tex !== this.fallback) tex.dispose();
+      if (tex && tex !== this.blank) tex.dispose();
       return;
     }
     const prev = this.tex;
@@ -15407,7 +15445,7 @@ const FridgeArt = {
     this.mat.map = tex;
     this.mat.color.set('#ffffff');
     this.mat.needsUpdate = true;
-    if (prev && prev !== this.fallback && prev !== tex) prev.dispose();
+    if (prev && prev !== this.blank && prev !== tex) prev.dispose();
   },
 
   deferRefresh() {
@@ -15429,15 +15467,7 @@ const FridgeArt = {
       undefined,
       () => {
         if (gen !== this.loadGen) return;
-        if (this.fallback) {
-          this.applyTex(this.fallback, gen);
-          return;
-        }
-        new THREE.TextureLoader().load('images/bg-office.jpg', (tex) => {
-          if (gen !== this.loadGen) { tex.dispose(); return; }
-          this.fallback = tex;
-          this.applyTex(tex, gen);
-        });
+        this.applyTex(this.blankTex(), gen);
       }
     );
   }
@@ -17787,23 +17817,17 @@ function fillMiiCard(m) {
 function placeMiiDock(m) {
   const dock = $('miiDock');
   if (!dock || !m || !m.tag) return;
-  /* Sit the info chip just past the first-name text on the 3D nameplate. */
-  m.tag.getWorldPosition(_vt);
+  layoutMiiNameTag(m);
   const k = 0.72 + 0.28 * (m.tagShow > 0.01 ? m.tagShow : 1);
-  const th = TAG_H * (m.tagTall ? 1.22 : 1);
-  const spriteW = th * (m.tagAspect || 1) * k;
-  if (!_measure) _measure = cv(8, 8).getContext('2d');
-  _measure.font = TAG_FONT;
-  const nameW = _measure.measureText(firstName(m.dna)).width;
-  const texW = (m.tagAspect || 1) * (m.tagTall ? 186 : 160);
-  const textFrac = Math.min(0.78, (nameW + 36) / texW);
-  _v1.setFromMatrixColumn(camera.matrixWorld, 0).normalize();
-  _vt.addScaledVector(_v1, spriteW * textFrac * 0.5 + 0.05);
-  _vt.y += th * k * 0.08;
+  const tagPx = LABEL_SCREEN_PX * k;
+  const tagPxW = tagPx * (m.tagAspect || 1);
+  m.tag.getWorldPosition(_vt);
   _vt.project(camera);
   const r = canvasEl.getBoundingClientRect();
-  dock.style.left = (r.left + (_vt.x * 0.5 + 0.5) * r.width).toFixed(1) + 'px';
-  dock.style.top = (r.top + (-_vt.y * 0.5 + 0.5) * r.height).toFixed(1) + 'px';
+  const cx = r.left + (_vt.x * 0.5 + 0.5) * r.width;
+  const cy = r.top + (-_vt.y * 0.5 + 0.5) * r.height;
+  dock.style.left = (cx + tagPxW * 0.46 + 3) + 'px';
+  dock.style.top = cy + 'px';
   dock.classList.toggle('mine', m.mine === true);
   dock.classList.add('show');
   const card = $('miiCard');
@@ -17989,7 +18013,6 @@ function plazaLoop() {
         $('miiDock').dataset.for = String(dockFor.recordId || dockFor.dna && dockFor.dna.name || '');
         $('miiInfo').classList.remove('open');
       }
-      placeMiiDock(dockFor);
     } else if ($('miiDock').classList.contains('show')) {
       hideMiiDock();
     }
@@ -18003,6 +18026,10 @@ function plazaLoop() {
   }
 
   controls.update();
+  refreshHoverLabels();
+  if (dockFor && World.miis.includes(dockFor) && dockFor.state !== 'held') {
+    placeMiiDock(dockFor);
+  }
   renderer.render(scene, camera);
 }
 

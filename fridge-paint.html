@@ -323,7 +323,6 @@
   'use strict';
 
   const W = 584, H = 400;
-  const SEED = '/images/bg-office.jpg';
   const API = '/api/fridge-art';
 
   const PALETTE = [
@@ -505,25 +504,9 @@
   canvas.addEventListener('touchmove', (e) => { e.preventDefault(); pointerMove(e.changedTouches[0]); }, { passive: false });
   canvas.addEventListener('touchend', pointerUp);
 
-  function seedCanvas(img) {
-    ctx.fillStyle = '#f5f0e6';
+  function blankCanvas() {
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, W, H);
-    if (!img) return;
-    const ir = img.width / img.height;
-    const cr = W / H;
-    let sw, sh, sx, sy;
-    if (ir > cr) {
-      sh = img.height;
-      sw = sh * cr;
-      sx = (img.width - sw) / 2;
-      sy = 0;
-    } else {
-      sw = img.width;
-      sh = sw / cr;
-      sx = 0;
-      sy = (img.height - sh) / 2;
-    }
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
   }
 
   async function loadCanvas() {
@@ -538,15 +521,9 @@
         docTitle.textContent = 'fridge-art - Paint';
         return;
       }
-    } catch { /* fall through to seed */ }
+    } catch { /* fall through to blank doc */ }
 
-    await new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => { seedCanvas(img); resolve(); };
-      img.onerror = () => { seedCanvas(null); resolve(); };
-      img.src = SEED;
-    });
+    blankCanvas();
     dirty = false;
     setSaveState('');
     docTitle.textContent = 'untitled - Paint';
@@ -585,8 +562,7 @@
 
   function clearCanvas() {
     if (!confirm('Clear the whole canvas?')) return;
-    ctx.fillStyle = '#f5f0e6';
-    ctx.fillRect(0, 0, W, H);
+    blankCanvas();
     markDirty();
   }
 
