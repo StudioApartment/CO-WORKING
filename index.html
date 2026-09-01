@@ -3975,6 +3975,7 @@ function makePaperCrownTexture(base) {
   t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = THREE.RepeatWrapping;
   t.wrapT = THREE.ClampToEdgeWrapping;
+  t.repeat.set(1, 1);
   t.anisotropy = 8;
   t.userData.own = true;
   return t;
@@ -9873,12 +9874,13 @@ const G = {
   }),
   /* Cardboard paper crown: full 360° brow circlet whose top edge rises into
      ornamental rounded peaks (front peak tallest). Bottom sits at y=0. */
-  paperCrown: () => geoCache('pcrown6', () => {
+  paperCrown: () => geoCache('pcrown7', () => {
     /* Soft rounded peaks with a mild fleur waist — closer to BK cardboard
        die-cuts than sharp triangular spikes. Radius follows the skull at
        each azimuth so the band wraps the whole head, not a front arc. */
     const SEGS = 168, ROWS = 28, NPEAKS = 7;
     const BAND = 0.28, PEAK = 0.46;
+    const VALLEY = 0.20; /* minimum scallop so the band reads 360°, not front arcs */
     const SEAT_Y = 0.34; /* brow hem — must match buildHair BASE_Y */
     const headHorizR = (ny, az) => {
       const ux = Math.sin(az), uz = Math.cos(az);
@@ -9910,11 +9912,12 @@ const G = {
         const tall = (k === 0) ? 1.12 : 0.92;
         peakAmt = Math.max(peakAmt, Math.min(1.14, tipSoft * waist * tall));
       }
+      peakAmt = Math.max(peakAmt, VALLEY);
       const h = BAND + PEAK * peakAmt;
       const newY = u * h;
-      const flare = 1 + u * peakAmt * 0.028;
+      const flare = 1 + u * peakAmt * 0.032;
       const ny = SEAT_Y + newY;
-      const clr = 1.036 + peakAmt * 0.014;
+      const clr = 1.068 + peakAmt * 0.018;
       const r = headHorizR(ny, ang) * clr * flare;
       p.setXYZ(i, Math.sin(ang) * r, newY, Math.cos(ang) * r);
     }
@@ -11501,7 +11504,7 @@ function buildHair(dna, mat, extraMats) {
        Open-top visors leave the crown free, so the under-shell gets a little
        more volume — otherwise the open ring reads as a bald strip. */
     if (H.visor) cap(1.05, 1.48, 1.22);
-    else if (H.paper) cap(1.04, 1.12, 1.12); /* open circlet — top hair only; no side shells over the band */
+    else if (H.paper) cap(1.02, 0.50, 0.50); /* top-only hair — crown band stays exposed 360° */
     else cap(1.034, 1.32, 1.02);
 
     if (st === 'tophat') {
@@ -11759,6 +11762,7 @@ function buildHair(dna, mat, extraMats) {
          rounded fleur peaks, printed gems/studs (texture only — no 3D
          ruby balls), and a stylized circular bun logo up front. */
       hatMat.map = makePaperCrownTexture(crownCol);
+      hatMat.map.repeat.set(1, 1);
       hatMat.color.set('#ffffff');
       hatMat.roughness = 0.96;
       hatMat.metalness = 0;
