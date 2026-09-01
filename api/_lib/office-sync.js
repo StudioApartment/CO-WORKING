@@ -49,7 +49,7 @@ export default async function handler(req, res) {
       return sendJson(res, 429, { error: 'too many saves — try again later' });
     }
     const body = await readJsonBody(req);
-    const candidate = String(body && body.dogName != null ? body.dogName : '').trim().split(/\s+/)[0].slice(0, 14);
+    const candidate = String(body && body.dogName != null ? body.dogName : '').trim().slice(0, 28);
     if (!candidate) return sendJson(res, 400, { error: 'name required' });
     const err = publicNameError(candidate);
     if (err) return sendJson(res, 400, { error: err });

@@ -946,8 +946,8 @@ body.interior-open{cursor:auto;touch-action:auto}
 
 <div id="dogRename" class="delete-confirm dog-rename" role="dialog" aria-modal="true" aria-labelledby="dogRenameTitle" hidden>
   <div class="delete-confirm-card">
-    <p id="dogRenameTitle">Name this good boy (first name only)</p>
-    <input id="dogRenameInput" type="text" maxlength="14" autocomplete="off" spellcheck="false" />
+    <p id="dogRenameTitle">Name this good boy</p>
+    <input id="dogRenameInput" type="text" maxlength="28" autocomplete="off" spellcheck="false" />
     <div class="delete-confirm-actions">
       <button type="button" class="wbtn" id="dogRenameCancel">Cancel</button>
       <button type="button" class="wbtn primary" id="dogRenameOk"><span class="lbl">OK</span></button>
@@ -15127,20 +15127,37 @@ function makeArcadeControlPanelTexture() {
   return t;
 }
 
-/** Small "citi bike" panel for frame + basket (NYC bike-share homage). */
+/** Citi Bike wordmark panel: blue bg, white "citi" with red arc over final i, "bike" sub. */
 function makeCitibikeMarkTexture() {
-  const W = 128, H = 48, c = cv(W, H), g = c.getContext('2d');
+  const W = 256, H = 96, c = cv(W, H), g = c.getContext('2d');
   g.fillStyle = '#0067b1';
   g.fillRect(0, 0, W, H);
+
+  // "citi" — wide bold letters
   g.fillStyle = '#ffffff';
-  g.font = '800 26px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif';
-  g.fillText('citi', 10, 32);
-  g.font = '800 20px "Avenir Next Rounded","Trebuchet MS",system-ui,sans-serif';
-  g.fillText('bike', 58, 32);
-  g.fillStyle = '#e31837';
+  g.font = 'bold 52px "Helvetica Neue",Helvetica,Arial,sans-serif';
+  g.textBaseline = 'alphabetic';
+  g.fillText('citi', 12, 64);
+
+  // measure where the final "i" dot sits so we can place the arc precisely
+  const citiW = g.measureText('cit').width;    // start of the last i
+  const iW    = g.measureText('i').width;
+  const dotCx = 12 + citiW + iW * 0.47;        // centre of the i dot
+  const dotCy = 16;                             // near top of cap height
+
+  // red arc — Citi logo signature curve above the last i
+  g.strokeStyle = '#e31837';
+  g.lineWidth = 6;
+  g.lineCap = 'round';
   g.beginPath();
-  g.arc(52, 13, 5.5, 0, TAU);
-  g.fill();
+  g.arc(dotCx, dotCy + 8, 13, Math.PI * 1.18, Math.PI * 1.82);
+  g.stroke();
+
+  // "bike" in smaller white below
+  g.fillStyle = 'rgba(255,255,255,0.85)';
+  g.font = 'bold 26px "Helvetica Neue",Helvetica,Arial,sans-serif';
+  g.fillText('bike', 16, 86);
+
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
@@ -15158,13 +15175,16 @@ function addBikeWheel(parent, x, y, z, r = 0.22) {
   const spoke = pMat('#c8d0d8', 0.54, 0.38);
   const w = new THREE.Group();
   w.position.set(x, y, z);
-  addP(w, PG.cyl(8), tire, 0, 0, 0, r, 0.058, r, Math.PI / 2, 0, 0);
-  addP(w, PG.cyl(8), rim, 0, 0, 0.002, r * 0.74, 0.014, r * 0.74, Math.PI / 2, 0, 0);
-  addP(w, PG.cyl(8), hub, 0, 0, 0, 0.034, 0.042, 0.034, Math.PI / 2, 0, 0);
+  // rz = Math.PI/2 rotates the cylinder from its default Y-axis to lie along X,
+  // so the wheel disc sits in the Y-Z plane and the axle runs left-right.
+  addP(w, PG.cyl(16), tire, 0, 0, 0, r, 0.058, r, 0, 0, Math.PI / 2);
+  addP(w, PG.cyl(16), rim,  0, 0, 0, r * 0.74, 0.014, r * 0.74, 0, 0, Math.PI / 2);
+  addP(w, PG.cyl(8),  hub,  0, 0, 0, 0.034, 0.042, 0.034, 0, 0, Math.PI / 2);
   for (let i = 0; i < 10; i++) {
     const a = (i / 10) * TAU;
-    addP(w, PG.box(), spoke, Math.cos(a) * r * 0.36, 0, Math.sin(a) * r * 0.36,
-      0.006, 0.011, r * 0.35, Math.PI / 2, a, 0);
+    // Spokes radiate in the Y-Z plane; box long axis (Z) points radially after Rx(a-π/2)
+    addP(w, PG.box(), spoke, 0, Math.cos(a) * r * 0.36, Math.sin(a) * r * 0.36,
+      0.006, r * 0.35, 0.011, a - Math.PI / 2, 0, 0);
   }
   parent.add(w);
   return w;
@@ -15404,7 +15424,7 @@ function installPlazaProps() {
   let x, z;
   [x, z] = at(150, 7.2); placeProp(buildBamboo(), x, z, R(320), 1.0);
   placeProp(buildAloePlant(), -3.15, 1.15, R(215), 1.0);
-  const bikeX = -5.05, bikeZ = 1.85;
+  const bikeX = -8.0, bikeZ = 1.6;
   placeProp(buildBikeParking(), bikeX, bikeZ, faceIn(bikeX, bikeZ), 1.0);
   const lampX = -3.93, lampZ = -3.17;
   const chairX = -4.45, chairZ = -2.35;
@@ -16360,7 +16380,7 @@ const OfficeSync = {
       FridgeArt.refresh();
     }
     const dog = World.dog;
-    const name = row.dogName && String(row.dogName).trim().split(/\s+/)[0].slice(0, 14);
+    const name = row.dogName && String(row.dogName).trim().slice(0, 28);
     if (dog && name && dogTs >= this.dogUpdated && (dogTs > this.dogUpdated || name !== dog.name)) {
       this.dogUpdated = dogTs;
       if (dog.name !== name) {
