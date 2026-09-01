@@ -309,14 +309,14 @@ body.native-cursor #pointer{display:none}
   box-shadow:inset 0 1px 0 #fff,0 3px 6px rgba(70,100,125,.3),0 0 0 2px #fff,0 0 0 3.5px #ccd8e0;
   transition:transform .13s cubic-bezier(.34,1.7,.5,1),box-shadow .18s,color .18s;
 }
-/* Info chip matches the 3D name bubble screen height (LABEL_SCREEN_PX). */
+/* Info chip matches the name pill body (not the tail below it). Size set per-frame. */
 #btnMiiInfo{
-  width:34px;height:34px;
+  width:var(--info-chip,21px);height:var(--info-chip,21px);
   color:var(--blue-dk);
   background:linear-gradient(#fff,#e0eaf0);
   box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(90,115,135,.2),0 0 0 1.5px #fff,0 0 0 2.5px #d2dde4;
 }
-#btnMiiInfo svg{width:16px;height:16px}
+#btnMiiInfo svg{width:calc(var(--info-chip,21px)*0.52);height:calc(var(--info-chip,21px)*0.52)}
 #btnMiiInfo:hover,#btnMiiInfo:focus-visible{
   transform:scale(1.08);
   box-shadow:inset 0 1px 0 #fff,0 2px 6px rgba(70,100,125,.22),0 0 0 1.5px #fff,0 0 0 2.5px #9fd3ef;
@@ -10262,7 +10262,11 @@ const G = {
    ══════════════════════════════════════════════════════════════ */
 const HANG = 1.92;      // grab point = just above the top of the head
 const TAG_H = 0.55;     // base world height reference (screen size applied per frame)
-const LABEL_SCREEN_PX = 34; /* name bubble + info chip — constant on-screen size */
+const LABEL_SCREEN_PX = 34; /* name plate sprite — constant on-screen height */
+/* Canvas layout from makeNameTexture — pill body vs tail/margins. */
+const NAME_TAG_M = 26, NAME_TAG_PAD = 36;
+const NAME_TAG_PILL = 98, NAME_TAG_TOTAL = 160;
+const NAME_TAG_PILL_T = 124, NAME_TAG_TOTAL_T = 186;
 const HEAD_Y = 1.20;
 const HEAD_R = 0.62;
 /* Plaza avatars only — editor / badge / snapshot Miis stay at dna.height (1×). */
@@ -17814,20 +17818,37 @@ function fillMiiCard(m) {
     soc.style.display = soc.childElementCount ? 'flex' : 'none';
   }
 }
+function nameTagPlateMetrics(m) {
+  const tall = !!m.tagTall;
+  const h = tall ? NAME_TAG_PILL_T : NAME_TAG_PILL;
+  const H = tall ? NAME_TAG_TOTAL_T : NAME_TAG_TOTAL;
+  if (!_measure) _measure = cv(8, 8).getContext('2d');
+  _measure.font = TAG_FONT;
+  const nameW = Math.ceil(_measure.measureText(firstName(m.dna)).width);
+  const w = Math.max(150, nameW + NAME_TAG_PAD * 2);
+  const W = w + NAME_TAG_M * 2;
+  return { w, W, h, H, pillRight: NAME_TAG_M + w, pillCy: NAME_TAG_M + h / 2, spriteCy: H / 2 };
+}
+
 function placeMiiDock(m) {
   const dock = $('miiDock');
   if (!dock || !m || !m.tag) return;
   layoutMiiNameTag(m);
   const k = 0.72 + 0.28 * (m.tagShow > 0.01 ? m.tagShow : 1);
   const tagPx = LABEL_SCREEN_PX * k;
-  const tagPxW = tagPx * (m.tagAspect || 1);
+  const plate = nameTagPlateMetrics(m);
+  const tagPxW = tagPx * (m.tagAspect || plate.W / plate.H);
+  const chipPx = Math.round(tagPx * (plate.h / plate.H));
+  dock.style.setProperty('--info-chip', chipPx + 'px');
   m.tag.getWorldPosition(_vt);
   _vt.project(camera);
   const r = canvasEl.getBoundingClientRect();
   const cx = r.left + (_vt.x * 0.5 + 0.5) * r.width;
   const cy = r.top + (-_vt.y * 0.5 + 0.5) * r.height;
-  dock.style.left = (cx + tagPxW * 0.46 + 3) + 'px';
-  dock.style.top = cy + 'px';
+  const pillRightPx = tagPxW * ((plate.pillRight - plate.W / 2) / plate.W);
+  const pillCyOffset = tagPx * ((plate.spriteCy - plate.pillCy) / plate.H);
+  dock.style.left = (cx + pillRightPx + 4) + 'px';
+  dock.style.top = (cy - pillCyOffset) + 'px';
   dock.classList.toggle('mine', m.mine === true);
   dock.classList.add('show');
   const card = $('miiCard');
