@@ -1,4 +1,4 @@
-/* GET  /api/miis  -> the plaza, without emails
+/* GET  /api/miis  -> The Office, without emails
  * POST /api/miis  -> claim a badge: one per email, sets an HTTP-only session
  *                    cookie, mails the pass
  */
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
       return send(res, 409, {
         error: 'An account with this email already exists.',
         code: 'email_taken',
-        manageUrl: `${originFrom(req)}/mii`
+        manageUrl: `${originFrom(req)}/`
       });
     }
 
@@ -97,7 +97,7 @@ export default async function handler(req, res) {
       walletUrl,
       appleWalletUrl,
       applePass,
-      manageUrl: `${origin}/mii`,
+      manageUrl: `${origin}/`,
       origin
     });
 

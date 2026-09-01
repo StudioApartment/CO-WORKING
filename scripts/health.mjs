@@ -1,4 +1,4 @@
-/* Plaza health gate — static checks + API smoke.
+/* Office health gate — static checks + API smoke.
  *
  * Run before deploy or on a schedule:
  *   npm run health
@@ -32,7 +32,7 @@ console.log('\nCo-Working health check\n');
 
 const strict = process.argv.includes('--strict');
 if (strict) {
-  run('node', ['scripts/check.mjs'], 'static check (mii.html + API routes)');
+  run('node', ['scripts/check.mjs'], 'static check (index.html + API routes)');
 } else {
   note('·', 'skipping full check (use npm run health:strict for style regressions)');
 }
@@ -40,26 +40,26 @@ if (strict) {
 run('node', ['scripts/smoke.mjs'], 'API smoke (degraded path)');
 
 {
-  const miiPath = join(ROOT, 'mii.html');
+  const miiPath = join(ROOT, 'index.html');
   const bytes = statSync(miiPath).size;
   const kb = Math.round(bytes / 1024);
   if (bytes > 750 * 1024) {
-    note('✗', `mii.html is ${kb}KB — consider splitting assets or lazy-loading review mode`);
+    note('✗', `index.html is ${kb}KB — consider splitting assets or lazy-loading review mode`);
     failures++;
   } else {
-    note('✓', `mii.html size ${kb}KB (under 750KB budget)`);
+    note('✓', `index.html size ${kb}KB (under 750KB budget)`);
   }
 }
 
 {
-  const src = readFileSync(join(ROOT, 'mii.html'), 'utf8');
+  const src = readFileSync(join(ROOT, 'index.html'), 'utf8');
   const hasPause = src.includes('if (document.hidden) return;')
     && src.includes('renderer.setAnimationLoop');
   if (!hasPause) {
-    note('✗', 'mii.html — animation loop should pause when tab is hidden');
+    note('✗', 'index.html — animation loop should pause when tab is hidden');
     failures++;
   } else {
-    note('✓', 'mii.html pauses the render loop when the tab is hidden');
+    note('✓', 'index.html pauses the render loop when the tab is hidden');
   }
 }
 

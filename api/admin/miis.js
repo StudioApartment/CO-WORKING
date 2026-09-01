@@ -1,4 +1,4 @@
-/* GET    /api/admin/miis        -> every Mii, emails included
+/* GET    /api/admin/miis        -> every Co-Worker, emails included
  * DELETE /api/admin/miis?id=... -> remove one
  *
  * Gated on ADMIN_SECRET_KEY presented per request. Deleting here also fires the

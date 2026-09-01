@@ -1,10 +1,10 @@
-/* Storage + capability tokens for Mii Plaza.
+/* Storage + capability tokens for The Office.
  *
  * Uses Upstash Redis over its REST API when configured (no npm dependency —
  * it is plain fetch), and falls back to a local JSON file so `node server.js`
  * works with nothing provisioned.
  *
- * Ownership is a capability, not an identity: creating a Mii returns a random
+ * Ownership is a capability, not an identity: creating a Co-Worker returns a random
  * token exactly once, and only the SHA-256 of it is ever stored. Editing or
  * deleting requires presenting the token. Nothing in any response reveals it,
  * so it cannot be lifted from the network tab the way an owner id could.

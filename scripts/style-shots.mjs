@@ -118,7 +118,7 @@ window.__styleSheet = async function (opts) {
   g.fillText(title, 18, HEAD / 2);
 
   for (let i = 0; i < values.length; i++) {
-    const dna = window.MiiPlaza.randomDNA(Object.assign({ name: 'Mii' }, base.opts || {}));
+    const dna = window.MiiPlaza.randomDNA(Object.assign({ name: 'Co-Worker' }, base.opts || {}));
     Object.assign(dna, base.dna || {});
     // field may be dotted, e.g. hair.style
     const parts = field.split('.');

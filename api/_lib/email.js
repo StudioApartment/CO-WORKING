@@ -1,7 +1,7 @@
 /* Transactional email via Resend.
  *
  * Sending is always best-effort: a badge is already saved and visible in the
- * plaza before we try to email it, so a Resend outage must not fail the
+ * The Office before we try to email it, so a Resend outage must not fail the
  * create request. Callers log the outcome and move on.
  */
 
@@ -68,7 +68,7 @@ export async function sendBadgeEmail({
   if (!api) return { sent: false, reason: 'resend_not_configured' };
 
   const site = (origin || PUBLIC_ORIGIN).replace(/\/$/, '');
-  const manage = manageUrl || `${site}/mii`;
+  const manage = manageUrl || `${site}/`;
 
   const heading = isUpdate ? 'Your badge has been updated' : 'Your Coworking Badge is ready!';
   const intro = isUpdate
@@ -91,7 +91,7 @@ export async function sendBadgeEmail({
     ${previewUrl ? `
     <tr>
       <td align="center" style="padding:22px 32px 0;">
-        <img src="${esc(previewUrl)}" width="200" alt="${esc(name)}'s Mii" style="display:block;width:200px;max-width:60%;height:auto;border:0;border-radius:14px;background:#f3f8fa;">
+        <img src="${esc(previewUrl)}" width="200" alt="${esc(name)}'s Co-Worker" style="display:block;width:200px;max-width:60%;height:auto;border:0;border-radius:14px;background:#f3f8fa;">
       </td>
     </tr>` : ''}
     <tr>
@@ -124,8 +124,8 @@ export async function sendBadgeEmail({
         <hr style="border:0;border-top:1px solid #e9eff3;margin:0 0 16px;">
         <p style="margin:0;font-size:12px;line-height:1.7;color:${MUTED};">
           Need to change your character or take it down?
-          <a href="${esc(manage)}" style="color:${BLUE_DK};font-weight:700;text-decoration:none;">Manage your Mii</a>.
-          On a new device, use <strong>Load my Mii</strong> there and we will email you a sign-in link.
+          <a href="${esc(manage)}" style="color:${BLUE_DK};font-weight:700;text-decoration:none;">Manage your Co-Worker</a>.
+          On a new device, use <strong>Load my Co-Worker</strong> there and we will email you a sign-in link.
         </p>
         <p style="margin:10px 0 0;font-size:11px;color:#a4b6c2;">Badge ID ${esc(String(miiId).slice(0, 8))}</p>
       </td>
@@ -142,7 +142,7 @@ export async function sendBadgeEmail({
     walletUrl ? `Add to Google Wallet: ${walletUrl}` : '',
     qrUrl ? `Badge QR: ${qrUrl}` : '',
     '',
-    `Manage your Mii: ${manage}`
+    `Manage your Co-Worker: ${manage}`
   ].filter(Boolean).join('\n');
 
   const attachments = [];
@@ -181,7 +181,7 @@ export async function sendMagicLinkEmail({ to, name, link, minutes, origin }) {
     <tr>
       <td style="padding:30px 32px 8px;">
         <p style="margin:0 0 6px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${MUTED};font-weight:700;">CO—WORKING</p>
-        <h1 style="margin:0;font-size:23px;line-height:1.25;color:${INK};">Load your Mii</h1>
+        <h1 style="margin:0;font-size:23px;line-height:1.25;color:${INK};">Load your Co-Worker</h1>
         <p style="margin:12px 0 0;font-size:14px;line-height:1.65;color:${MUTED};">
           ${name ? `Welcome back, ${esc(name)}. ` : ''}Tap the button to reconnect this browser to your character. The link works once and expires in ${esc(String(minutes))} minutes.
         </p>
@@ -189,7 +189,7 @@ export async function sendMagicLinkEmail({ to, name, link, minutes, origin }) {
     </tr>
     <tr>
       <td align="center" style="padding:26px 32px 4px;">
-        ${button(link, 'Load my Mii')}
+        ${button(link, 'Load my Co-Worker')}
       </td>
     </tr>
     <tr>
@@ -206,7 +206,7 @@ export async function sendMagicLinkEmail({ to, name, link, minutes, origin }) {
   `);
 
   const text = [
-    'Load your Mii',
+    'Load your Co-Worker',
     '',
     `Open this link to reconnect your browser (expires in ${minutes} minutes, single use):`,
     link
@@ -216,7 +216,7 @@ export async function sendMagicLinkEmail({ to, name, link, minutes, origin }) {
     const { data, error } = await api.emails.send({
       from: RESEND_FROM,
       to: [to],
-      subject: 'Load your Mii',
+      subject: 'Load your Co-Worker',
       html,
       text
     });

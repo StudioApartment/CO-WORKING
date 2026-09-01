@@ -19,7 +19,7 @@ const pick = (...names) => {
  * to the browser for Realtime. A URL copied from the project's API settings
  * often already ends in /rest/v1, which doubles the path: every query comes
  * back PGRST125 "Invalid path specified in request URL", the routes 502, and
- * the plaza quietly falls back to per-device storage — so a character made on
+ * the office quietly falls back to per-device storage — so a character made on
  * one device never reaches another. Accept either spelling. */
 export const projectBase = (raw) =>
   String(raw || '').replace(/\/+$/, '').replace(/\/(rest|auth|realtime|storage)\/v1$/, '');
@@ -56,7 +56,7 @@ export const PUBLIC_ORIGIN =
   'https://coworking.fyi';
 
 /* Feature flags — every integration degrades on its own rather than taking
- * the page down with it. An unprovisioned deploy still renders a plaza. */
+ * the page down with it. An unprovisioned deploy still renders The Office. */
 export const hasSupabase = Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
 export const hasRealtime = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 export const hasResend = Boolean(RESEND_API_KEY);

@@ -7,7 +7,7 @@
 
 import { send, methodNotAllowed, preflight } from './http.js';
 
-const UA = 'CO-WORKING plaza locations (https://www.coworking.fyi)';
+const UA = 'CO-WORKING office locations (https://www.coworking.fyi)';
 const ZIP = /^\d{5}(?:-\d{4})?$/;
 const PLACE_KIND = new Set([
   'city', 'town', 'village', 'hamlet', 'suburb', 'municipality',

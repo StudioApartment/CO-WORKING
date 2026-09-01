@@ -1,0 +1,151 @@
+/* Wii-style back control for interior index pages */
+.wii-back {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 40;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #5f7280;
+  text-decoration: none;
+  cursor: pointer;
+  background: linear-gradient(180deg, #ffffff 0%, #f0f5f8 48%, #dbe5eb 100%);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -3px 5px rgba(120, 145, 163, 0.16),
+    0 3px 5px rgba(90, 115, 135, 0.22),
+    0 0 0 2px #fff,
+    0 0 0 3.5px #ccd8e0;
+  transition: transform 0.14s cubic-bezier(0.34, 1.7, 0.5, 1), box-shadow 0.2s ease;
+}
+
+.wii-back:hover,
+.wii-back:focus-visible {
+  transform: translateY(-3px) scale(1.06);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -3px 5px rgba(120, 145, 163, 0.16),
+    0 8px 14px rgba(70, 100, 125, 0.26),
+    0 0 0 2px #fff,
+    0 0 0 3.5px #9fd3ef,
+    0 0 20px rgba(63, 169, 224, 0.5);
+  color: #3d4d58;
+  outline: none;
+}
+
+.wii-back svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+/* Office-style pill tooltip (matches plaza / lost-tip chrome) */
+.wii-back::after {
+  content: attr(data-tip, "Back to the Office");
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.94);
+  padding: 7px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #3d4d58;
+  background: linear-gradient(#fff, #eef4f8);
+  box-shadow:
+    0 4px 14px rgba(70, 100, 125, 0.25),
+    0 0 0 2px #fff,
+    0 0 0 3.5px #d0dbe3;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.16s ease,
+    visibility 0.16s ease,
+    transform 0.16s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+.wii-back:hover::after,
+.wii-back:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) scale(1);
+}
+
+@media (max-width: 600px) {
+  .wii-back {
+    top: 14px;
+    left: 14px;
+  }
+}
+
+/* Wii-style sound toggle — bottom-left on interior pages (matches credits / info button) */
+.wii-sound-dock {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 60;
+}
+
+.wii-sound {
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #5f7280;
+  cursor: pointer;
+  background: linear-gradient(180deg, #ffffff 0%, #f0f5f8 48%, #dbe5eb 100%);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -3px 5px rgba(120, 145, 163, 0.16),
+    0 3px 5px rgba(90, 115, 135, 0.22),
+    0 0 0 2px #fff,
+    0 0 0 3.5px #ccd8e0;
+  transition: transform 0.14s cubic-bezier(0.34, 1.7, 0.5, 1), box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.wii-sound:hover,
+.wii-sound:focus-visible {
+  transform: translateY(-3px) scale(1.06);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -3px 5px rgba(120, 145, 163, 0.16),
+    0 8px 14px rgba(70, 100, 125, 0.26),
+    0 0 0 2px #fff,
+    0 0 0 3.5px #9fd3ef,
+    0 0 20px rgba(63, 169, 224, 0.5);
+  color: #3d4d58;
+  outline: none;
+}
+
+.wii-sound svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.wii-sound.off .on-ic {
+  display: none;
+}
+
+.wii-sound:not(.off) .off-ic {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .wii-sound-dock {
+    left: 14px;
+    bottom: 14px;
+  }
+}

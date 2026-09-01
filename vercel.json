@@ -12,6 +12,26 @@
       ],
       "destination": "https://www.coworking.fyi/:path*",
       "permanent": true
+    },
+    {
+      "source": "/mii",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/mii.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/index-carousel",
+      "destination": "/index-computer",
+      "permanent": true
+    },
+    {
+      "source": "/index-carousel.html",
+      "destination": "/index-computer",
+      "permanent": true
     }
   ],
   "headers": [
@@ -91,6 +111,40 @@
     },
     {
       "source": "/mii.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, no-cache, must-revalidate, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, no-cache, must-revalidate, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/index.html",
       "headers": [
         {
           "key": "Cache-Control",

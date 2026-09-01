@@ -16,6 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/lib/interior-ui.css">
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -373,6 +374,12 @@
   </style>
 </head>
 <body>
+  <a class="wii-back" href="/" aria-label="Back to the Office" data-tip="Back to the Office">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 6l-6 6 6 6"/>
+    </svg>
+  </a>
+
   <div class="sticker-container">
     <div class="sticker" id="sticker">
       <video id="flagVid" autoplay loop muted playsinline disablepictureinpicture>
@@ -382,69 +389,10 @@
   </div>
 
   <!-- Logo Overlay -->
-  <a href="index-carousel.html" class="logo-overlay">
+  <a href="/" class="logo-overlay">
     <p class="logo-we-are">we are</p>
     <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
   </a>
-
-  <!-- Page Nav -->
-  <div class="page-nav">
-    <button class="page-nav-btn" onclick="goToPrevPage()">‹</button>
-    <button class="page-nav-btn" onclick="goToNextPage()">›</button>
-  </div>
-
-  <!-- Site Nav -->
-  <nav class="site-nav">
-    <a href="/events.html" style="display: none;">Panel Discussions</a>
-    <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
-  </nav>
-  <script>
-    const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html', 'index-photo-bg.html', 'index-invaders.html'];
-    const currentIndex = 1;
-    function goToPrevPage() {
-      const prev = (currentIndex - 1 + pages.length) % pages.length;
-      window.location.href = pages[prev];
-    }
-    function goToNextPage() {
-      const next = (currentIndex + 1) % pages.length;
-      window.location.href = pages[next];
-    }
-    // Mark as loaded so carousel loader doesn't replay
-    sessionStorage.setItem('co-working-loaded', 'true');
-  </script>
-
-  <!-- Spacer to enable footer scroll -->
-  <div class="scroll-spacer">
-    <!-- Mobile-only scrollable content -->
-    <div class="scroll-content">
-      <a href="index-carousel.html" style="text-decoration: none; color: inherit;">
-        <p class="logo-we-are">we are</p>
-        <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
-      </a>
-      <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
-    </div>
-  </div>
-
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <p class="footer-position">Productivity Through Atmosphere.</p>
-      </div>
-      <div class="footer-team">
-        <p class="footer-label">Department Heads</p>
-        <ul>
-          <li><strong>Sky Bruno</strong> — Internal Systems</li>
-          <li><strong>Ty Allen</strong> — Spatial Operations</li>
-          <li><strong>Gage Salzano</strong> — Culture</li>
-        </ul>
-      </div>
-      <div class="footer-meta">
-        <p>CO—WORKING © 2026</p>
-        <p>NEW YORK, NY</p>
-        <a href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">EMPLOYEE PORTAL →</a>
-      </div>
-    </div>
-  </footer>
 
   <script>
     (function() {
@@ -657,5 +605,6 @@
       });
     })();
   </script>
+<script src="/lib/interior-ui.js"></script>
 </body>
 </html>

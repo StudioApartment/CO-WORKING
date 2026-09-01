@@ -5,3 +5,7 @@ node_modules/
 !.env.example
 miis.json
 miis.json.tmp
+fridge-art.png
+fridge-art.png.meta.json
+fridge-art.png.tmp
+fridge-art.png.meta.json.tmp

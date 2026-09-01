@@ -3,7 +3,7 @@
  * Supabase is the primary store. When it is not configured the routes fall
  * back to the original capability-token store (Upstash REST or a JSON file) so
  * a fresh clone, a local `vercel dev`, or a deploy whose env vars have not
- * landed yet still serves a working plaza instead of a 500.
+ * landed yet still serves a working office instead of a 500.
  *
  * Degraded mode is deliberately narrower: no email uniqueness, no magic links,
  * no Realtime. Callers check `usingSupabase` before promising those.
@@ -59,7 +59,7 @@ export { StoreError };
 /* --------------------------------------------------------------- reading -- */
 
 /**
- * The plaza as the browser sees it. `viewer` decides which rows come back
+ * The Office as the browser sees it. `viewer` decides which rows come back
  * flagged as theirs — either the id named by a session cookie, or the hash of
  * a capability token — so the client never has to keep its own list of what it
  * owns. Emails are never included either way.

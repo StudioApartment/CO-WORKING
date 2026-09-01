@@ -6,7 +6,7 @@ export const MAX_BODY_BYTES = 2 * 1024 * 1024; // previews arrive as data URLs
 
 /* Apex ↔ www is a cross-origin redirect, and a GET that carries x-token or
  * Content-Type: application/json is not a "simple" request — the browser
- * OPTIONS first. A 405 there aborts the real call, the plaza falls back to
+ * OPTIONS first. A 405 there aborts the real call, The Office falls back to
  * localStorage, and you get "Office is offline — this one stays on this
  * device". Echo the asking origin when we know it. */
 const LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i;

@@ -1,7 +1,7 @@
 /* End-to-end smoke test against the route handlers.
  *
  * Runs with no Supabase, Resend or Wallet credentials, which is the degraded
- * path a fresh clone hits — so it proves the plaza still works before anything
+ * path a fresh clone hits — so it proves The Office still works before anything
  * is provisioned, and that validation, rate limiting, ownership and the
  * one-badge-per-email rule hold on their own.
  *
@@ -224,7 +224,7 @@ console.log('\nlisting');
   const list = res.json();
   const ours = Array.isArray(list) ? list.find((m) => m.id === createdId) : null;
 
-  check('lists the plaza', Array.isArray(list) && list.length >= 1, JSON.stringify(list));
+  check('lists The Office', Array.isArray(list) && list.length >= 1, JSON.stringify(list));
   check('includes our row', Boolean(ours));
   check('marks our own row as mine', ours && ours.mine === true);
   check('marks other rows as not mine',
@@ -411,7 +411,7 @@ console.log('\nSupabase project URL');
   const base = 'https://abc.supabase.co';
   /* A URL pasted from the API settings page carries /rest/v1. supabase-js
      appends that itself, and the doubled path 404s every query — which the
-     plaza hides by falling back to per-device storage. */
+     The Office hides by falling back to per-device storage. */
   check('strips a trailing /rest/v1', projectBase(base + '/rest/v1') === base);
   check('strips /rest/v1 with a trailing slash', projectBase(base + '/rest/v1/') === base);
   check('strips other service paths', projectBase(base + '/auth/v1') === base);

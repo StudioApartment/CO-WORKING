@@ -1,7 +1,7 @@
 /* GET /api/auth/verify?token=...
  *
  * Landing point for a magic link. Burns the token, sets the session cookie and
- * bounces to the plaza, so the user's next paint already shows their Mii as
+ * bounces to The Office, so the user's next paint already shows their Co-Worker as
  * editable.
  */
 
@@ -13,7 +13,7 @@ import { originFrom, hasSessions } from '../_lib/env.js';
 import { usingSupabase } from '../_lib/store.js';
 
 const bounce = (req, res, status) =>
-  redirect(res, `${originFrom(req)}/mii?auth=${status}`);
+  redirect(res, `${originFrom(req)}/?auth=${status}`);
 
 export default async function handler(req, res) {
   try {

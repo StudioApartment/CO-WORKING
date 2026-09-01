@@ -1,6 +1,6 @@
 /* Accountless sessions.
  *
- * A session is a signed statement that the bearer owns one Mii row. It lives
+ * A session is a signed statement that the bearer owns one Co-Worker row. It lives
  * in an HTTP-only cookie, so page scripts cannot read or forge it, and it
  * carries no privileges beyond that single id. Losing the cookie is recovered
  * by email (see api/auth/magic-link.js), never by a password.
@@ -73,7 +73,7 @@ export function isAdmin(req) {
 
 export function requireAdmin(req, res, send) {
   if (isAdmin(req)) return true;
-  res.setHeader('www-authenticate', 'Basic realm="Mii Plaza admin", charset="UTF-8"');
+  res.setHeader('www-authenticate', 'Basic realm="Co-Working Office admin", charset="UTF-8"');
   send(res, 401, { error: 'admin key required' });
   return false;
 }

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Mii Plaza · Admin</title>
+<title>Co-Working Office · Admin</title>
 <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
 <style>
   :root{
@@ -97,14 +97,14 @@
   <!-- ───────────────────────── gate ───────────────────────── -->
   <section class="card pad" id="gate">
     <p class="eyebrow">CO—WORKING</p>
-    <h1>Plaza admin</h1>
+    <h1>Office admin</h1>
     <p>Enter the admin key to manage registered coworkers. The key is held in this tab only and sent per request.</p>
     <form id="gateForm" autocomplete="off">
       <label for="key">Admin key</label>
       <input id="key" type="password" placeholder="ADMIN_SECRET_KEY" autocomplete="current-password" required>
       <div style="display:flex;gap:10px;margin-top:16px">
         <button class="btn" type="submit" id="gateGo">Unlock</button>
-        <a class="btn ghost" href="/mii" style="text-decoration:none;display:inline-flex;align-items:center">Back to plaza</a>
+        <a class="btn ghost" href="/" style="text-decoration:none;display:inline-flex;align-items:center">Back to The Office</a>
       </div>
       <p id="gateErr" class="err" style="display:none;padding:12px 0 0;text-align:left"></p>
     </form>
@@ -115,7 +115,7 @@
     <header class="bar">
       <div>
         <p class="eyebrow">CO—WORKING</p>
-        <h1>Plaza admin</h1>
+        <h1>Office admin</h1>
       </div>
       <div class="spacer"></div>
       <span class="pill" id="storagePill">…</span>
@@ -140,7 +140,7 @@
         <table>
           <thead>
             <tr>
-              <th style="width:64px">Mii</th>
+              <th style="width:64px">Co-Worker</th>
               <th>Name</th>
               <th>Email</th>
               <th>Created</th>
@@ -155,7 +155,7 @@
 
     <p class="note">
       Deleting removes the row, its stored preview, and — with Supabase Realtime on — animates the
-      character out of every open plaza immediately.
+      character out of every open office immediately.
     </p>
   </main>
 </div>
@@ -354,7 +354,7 @@
 
   async function remove(m, btn) {
     const label = m.name || m.email || 'this character';
-    if (!confirm('Delete ' + label + '? This removes them from the database and every open plaza.')) return;
+    if (!confirm('Delete ' + label + '? This removes them from the database and every open office.')) return;
 
     btn.disabled = true;
     btn.textContent = '…';

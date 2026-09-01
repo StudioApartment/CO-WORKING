@@ -1,5 +1,5 @@
 /* GET    /api/me  -> who this browser is, according to its cookie
- * DELETE /api/me  -> forget this browser (keeps the Mii, drops the cookie)
+ * DELETE /api/me  -> forget this browser (keeps the Co-Worker, drops the cookie)
  *
  * The session cookie is HTTP-only, so page scripts cannot inspect it. This is
  * how the client discovers on load that it already owns a character.

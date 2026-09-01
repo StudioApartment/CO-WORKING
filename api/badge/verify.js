@@ -47,14 +47,14 @@ function page({ ok, name, since, previewUrl, reason }) {
     <div class="mark">${ok ? '&check;' : '&times;'}</div>
     ${ok ? `
       <h1>Badge verified</h1>
-      ${previewUrl ? `<img src="${esc(previewUrl)}" alt="${esc(name)}'s Mii">` : ''}
+      ${previewUrl ? `<img src="${esc(previewUrl)}" alt="${esc(name)}'s Co-Worker">` : ''}
       <p class="name">${esc(name)}</p>
       <p>Coworker${since ? ` · since ${esc(since)}` : ''}</p>
     ` : `
       <h1>Badge not valid</h1>
       <p>${esc(reason || 'We could not verify this badge.')}</p>
     `}
-    <a href="/mii">Go to the plaza &rarr;</a>
+    <a href="/">Go to The Office &rarr;</a>
   </div>
 </body></html>`;
 }

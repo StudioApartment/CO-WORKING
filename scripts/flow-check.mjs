@@ -515,7 +515,7 @@ try {
   await evaluate("document.getElementById('btnAccept').click()");
   await sleep(2500);
 
-  check('character joined the plaza',
+  check('character joined The Office',
     await evaluate(`MiiPlaza.World.miis.length === ${beforeClaim + 1}`));
   check('session established', await evaluate('!!MiiPlaza.Store.session'));
   check('badge panel shown',
@@ -526,7 +526,7 @@ try {
     await evaluate("document.getElementById('badgeEmail').textContent === " + JSON.stringify(EMAIL)));
   check('badge shows days at CO—WORKING',
     await evaluate("/CO—WORKING/.test(document.getElementById('badgeSince').textContent)"));
-  check('badge shows the Mii next to the QR',
+  check('badge shows the Co-Worker next to the QR',
     await evaluate(`(() => {
       const mii = document.getElementById('badgeMii');
       const qr = document.getElementById('badgeQr');
@@ -632,7 +632,7 @@ try {
     await evaluate("document.getElementById('badgeWho').textContent === 'Local'"));
   check('local badge shows days at CO—WORKING',
     await evaluate("/CO—WORKING/.test(document.getElementById('badgeSince').textContent)"));
-  check('local badge shows the Mii',
+  check('local badge shows the Co-Worker',
     await evaluate(`(() => {
       const mii = document.getElementById('badgeMii');
       return !!(mii.getAttribute('src') && getComputedStyle(mii).display !== 'none');

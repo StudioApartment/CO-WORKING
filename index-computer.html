@@ -26,6 +26,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/lib/interior-ui.css">
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -310,9 +311,10 @@
     }
 
     .logo-overlay {
-      position: absolute;
-      top: calc(2rem + 6px);
+      position: fixed;
+      top: 50%;
       left: 2rem;
+      transform: translateY(-50%);
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -643,9 +645,15 @@
         grid-template-columns: 1fr;
       }
     }
+
   </style>
 </head>
 <body>
+  <a class="wii-back" href="/" aria-label="Back to the Office" data-tip="Back to the Office">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 6l-6 6 6 6"/>
+    </svg>
+  </a>
   <!-- Loading Screen -->
   <div class="loader" id="loader">
     <div class="loader-content">
@@ -1036,7 +1044,7 @@
     </div>
 
     <!-- Logo Overlay -->
-    <a href="index-carousel.html" class="logo-overlay" id="logo-link">
+    <a href="/" class="logo-overlay" id="logo-link">
       <p class="logo-we-are">we are</p>
       <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
     </a>
@@ -1044,63 +1052,103 @@
     <!-- Channel Indicator -->
     <div class="channel-indicator">FIG. 01</div>
 
-    <!-- Site Nav -->
-    <nav class="site-nav">
-      <a href="/events.html" style="display: none;">Panel Discussions</a>
-      <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
-    </nav>
+    <div class="wii-sound-dock">
+      <button type="button" class="wii-sound" id="btn-mute" title="Sound on (M)" aria-label="Toggle sound">
+        <svg class="on-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 9.5h3.2L12 5.5v13L7.2 14.5H4z" fill="currentColor" stroke-linejoin="round"/>
+          <path d="M15.6 9.2a4 4 0 0 1 0 5.6M18.2 6.6a7.6 7.6 0 0 1 0 10.8"/>
+        </svg>
+        <svg class="off-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 9.5h3.2L12 5.5v13L7.2 14.5H4z" fill="currentColor" stroke-linejoin="round"/>
+          <path d="M16 9.5l5 5M21 9.5l-5 5"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
-  <!-- Page Nav (outside tv-container for mobile tap) -->
-  <div class="page-nav">
-    <button class="page-nav-btn" onclick="goToPrevPage()">‹</button>
-    <button class="page-nav-btn" onclick="goToNextPage()">›</button>
-  </div>
   <script>
-    const pages = ['index-carousel.html', 'index-sticker.html', 'index-video-bg.html', 'index-photo-bg.html', 'index-invaders.html'];
-    const currentIndex = 0;
-    function goToPrevPage() {
-      const prev = (currentIndex - 1 + pages.length) % pages.length;
-      window.location.href = pages[prev];
-    }
-    function goToNextPage() {
-      const next = (currentIndex + 1) % pages.length;
-      window.location.href = pages[next];
-    }
-  </script>
+    /* 80s synth BGM (MP3) */
+    (function () {
+      'use strict';
 
-  <!-- Spacer to enable footer scroll -->
-  <div class="scroll-spacer">
-    <!-- Mobile-only scrollable content -->
-    <div class="scroll-content">
-      <a href="index-carousel.html" style="text-decoration: none; color: inherit;">
-        <p class="logo-we-are">we are</p>
-        <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
-      </a>
-      <a class="nav-cta" href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">Get your badge →</a>
-    </div>
-  </div>
-  
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <p class="footer-position">Productivity Through Atmosphere.</p>
-      </div>
-      <div class="footer-team">
-        <p class="footer-label">Department Heads</p>
-        <ul>
-          <li><strong>Sky Bruno</strong> — Internal Systems</li>
-          <li><strong>Ty Allen</strong> — Spatial Operations</li>
-          <li><strong>Gage Salzano</strong> — Culture</li>
-        </ul>
-      </div>
-      <div class="footer-meta">
-        <p>CO—WORKING © 2026</p>
-        <p>NEW YORK, NY</p>
-        <a href="https://co-badge.netlify.app" target="_blank" rel="noopener noreferrer">EMPLOYEE PORTAL →</a>
-      </div>
-    </div>
-  </footer>
+      const STORAGE_KEY = 'co_working_computer_mute';
+      const track = new Audio('images/computer-bgm.mp3');
+      track.loop = true;
+      track.preload = 'auto';
+      track.volume = 0.42;
+
+      let muted = localStorage.getItem(STORAGE_KEY) === '1';
+      let playing = false;
+
+      function syncPlay() {
+        if (muted || !playing) {
+          track.pause();
+          return;
+        }
+        if (track.paused) track.play().catch(() => {});
+      }
+
+      function start() {
+        if (muted) return;
+        playing = true;
+        const p = track.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      }
+
+      function stop() {
+        playing = false;
+        track.pause();
+        try { track.currentTime = 0; } catch (_) {}
+      }
+
+      function setMuted(m) {
+        muted = m;
+        localStorage.setItem(STORAGE_KEY, m ? '1' : '0');
+        syncPlay();
+        updateMuteBtn();
+      }
+
+      function toggle() {
+        setMuted(!muted);
+        if (!muted && !playing) start();
+      }
+
+      const muteBtn = document.getElementById('btn-mute');
+      function updateMuteBtn() {
+        if (!muteBtn) return;
+        muteBtn.classList.toggle('off', muted);
+        muteBtn.title = muted ? 'Sound off (M)' : 'Sound on (M)';
+      }
+
+      updateMuteBtn();
+      if (muteBtn) muteBtn.addEventListener('click', () => toggle());
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'KeyM' && !e.repeat) toggle();
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) track.pause();
+        else syncPlay();
+      });
+
+      window.ComputerBGM = { start, stop, toggle, setMuted };
+      window.stopInteriorAudio = stop;
+      window.startInteriorAudio = start;
+
+      function armAudio() {
+        start();
+      }
+      const isEmbed = new URLSearchParams(location.search).get('embed') === '1';
+      if (!muted && !isEmbed) armAudio();
+      for (const e of ['pointerdown', 'keydown', 'wheel', 'touchstart']) {
+        window.addEventListener(e, armAudio, { once: true, capture: true, passive: true });
+      }
+      if (!muted && isEmbed) {
+        /* Parent posts start after prop click; retry once scripts in iframe are live. */
+        requestAnimationFrame(() => start());
+        setTimeout(() => start(), 200);
+      }
+    })();
+  </script>
 
   <script>
     (function() {
@@ -1113,6 +1161,7 @@
       
       // Check if we've already shown the loader this session
       const hasLoadedBefore = sessionStorage.getItem('co-working-loaded');
+      const isEmbed = new URLSearchParams(location.search).get('embed') === '1';
       
       // Loading status messages
       const loadingMessages = [
@@ -1212,6 +1261,7 @@
             playPromise.then(() => {
               // Autoplay worked, play all videos
               unlockVideos();
+              if (window.ComputerBGM) window.ComputerBGM.start();
             }).catch(() => {
               // Autoplay blocked (low power mode), show tap-to-start
               tapToStart.classList.remove('is-hidden');
@@ -1219,6 +1269,7 @@
           }
         } else {
           unlockVideos();
+          if (window.ComputerBGM) window.ComputerBGM.start();
         }
       }
       
@@ -1226,6 +1277,7 @@
       function handleTapToStart() {
         tapToStart.classList.add('is-hidden');
         unlockVideos();
+        if (window.ComputerBGM) window.ComputerBGM.start();
       }
       
       tapToStart.addEventListener('click', handleTapToStart);
@@ -1341,8 +1393,8 @@
 
       // Load all assets, show progress, then start
       async function loadChannels() {
-        // If we've loaded before, skip the loading animation
-        if (hasLoadedBefore) {
+        // Embed from The Office: skip loader, start TV + BGM immediately.
+        if (isEmbed || hasLoadedBefore) {
           loader.classList.add('is-hidden');
           tvContainer.classList.add('is-loaded');
           
@@ -1357,6 +1409,7 @@
           unlockVideos();
           isRunning = true;
           flipChannel();
+          if (window.ComputerBGM) window.ComputerBGM.start();
           return;
         }
         
@@ -1402,5 +1455,6 @@
       });
     })();
   </script>
+<script src="/lib/interior-ui.js"></script>
 </body>
 </html>

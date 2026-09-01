@@ -74,7 +74,7 @@ function genericObject({ id, name, email, previewUrl, qrUrl, badgeValue, origin 
     ],
     linksModuleData: {
       uris: [
-        { uri: `${site}/mii`, description: 'Manage my Mii', id: 'manage' },
+        { uri: `${site}/`, description: 'Manage my Co-Worker', id: 'manage' },
         { uri: 'https://coworking.fyi', description: 'coworking.fyi', id: 'site' }
       ]
     }
@@ -85,12 +85,12 @@ function genericObject({ id, name, email, previewUrl, qrUrl, badgeValue, origin 
       id: 'mii_preview',
       mainImage: {
         sourceUri: { uri: previewUrl },
-        contentDescription: { defaultValue: { language: 'en-US', value: `${name}'s Mii` } }
+        contentDescription: { defaultValue: { language: 'en-US', value: `${name}'s Co-Worker` } }
       }
     }];
     obj.heroImage = {
       sourceUri: { uri: previewUrl },
-      contentDescription: { defaultValue: { language: 'en-US', value: `${name}'s Mii` } }
+      contentDescription: { defaultValue: { language: 'en-US', value: `${name}'s Co-Worker` } }
     };
   }
 

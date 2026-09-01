@@ -1,7 +1,7 @@
-# Mii Plaza — badge ecosystem
+# Co-Worker / The Office — badge ecosystem
 
 An accountless badge system living at `coworking.fyi/mii`. Someone points a
-camera at their face, gets a character in a shared 3D plaza, and receives a
+camera at their face, gets a character in the shared 3D office, and receives a
 scannable badge by email — QR plus an Apple Wallet pass attached as `.pkpass`,
 and a Google Wallet save link when that issuer is configured. There is no
 sign-up, no password, and no session to manage.
@@ -44,7 +44,7 @@ accept the legacy `x-token` header when a cookie is absent.
 browser (mii.html, static)
   │
   ├── GET  /api/config          publishable keys + feature flags
-  ├── GET  /api/miis            the plaza, no emails
+  ├── GET  /api/miis            The Office, no emails
   ├── POST /api/miis            claim a badge → sets cookie, sends email
   ├── GET  /api/me              who this browser is
   ├── PUT/DELETE /api/miis/:id  edit or remove your own
@@ -61,7 +61,7 @@ inlined at compile time.
 
 | Path | Role |
 |---|---|
-| `mii.html` | The plaza: Three.js world, character builder, badge modal |
+| `mii.html` | The Office: Three.js world, character builder, badge modal |
 | `admin.html` | Operator console at `/admin` |
 | `supabase/schema.sql` | Tables, RLS, column grants, Realtime publication |
 | `api/_lib/env.js` | Environment access and feature detection |
@@ -86,7 +86,7 @@ idempotent, so re-running is safe.
 The schema does three things worth knowing about:
 
 **Column grants, not just RLS.** RLS filters rows, not columns. A policy that
-lets anyone read the plaza would also expose `email`. So the anon role is
+lets anyone read The Office would also expose `email`. So the anon role is
 granted `SELECT` on `(id, name, mii_data, created_at, updated_at)` only —
 `email` is never granted, and a crafted query for it fails.
 
@@ -103,8 +103,8 @@ allow the request.
 Copy `.env.example` to `.env.local` for local work, and add the same keys in
 Vercel → Settings → Environment Variables for deploys.
 
-Every integration degrades independently. Nothing here is required to render a
-plaza:
+Every integration degrades independently. Nothing here is required to render
+The Office:
 
 | Missing | Effect |
 |---|---|
@@ -123,7 +123,7 @@ client appends `/rest/v1` itself, so a value copied from the API settings page
 with that suffix already on it produces `/rest/v1/rest/v1/...`, and every query
 comes back `PGRST125 Invalid path specified in request URL`. `env.js` trims the
 suffix, but the bare form is what belongs in the dashboard. When the store is
-unreachable the plaza keeps working against `localStorage` and says so in a
+unreachable The Office keeps working against `localStorage` and says so in a
 toast — a character made in that state lives on one device only.
 
 ### 3. Google Wallet
@@ -163,7 +163,7 @@ routinely strip data URIs.
 ```bash
 npm install
 
-# static only — no API, plaza runs on localStorage
+# static only — no API, The Office runs on localStorage
 npm run dev
 
 # full stack, including the /api routes
@@ -344,7 +344,7 @@ URL near 80 characters — a version 5–6 symbol — while still being unforgea
 without the secret. There is no expiry, because a badge should work as long as
 the row exists; revocation is deleting the row.
 
-**Badge artwork is rendered on the client.** The plaza already draws a
+**Badge artwork is rendered on the client.** The Office already draws a
 turntable preview of the character, so the browser captures that canvas and
 uploads it. A function has no WebGL, and standing up a render service for a
 badge thumbnail is not worth it.
@@ -352,7 +352,7 @@ badge thumbnail is not worth it.
 **Unrenderable characters are skipped, not thrown.** `mii_data` is stored
 opaquely so the art can evolve without a migration. That means a row written
 by an older schema can be missing a field the builder expects, so builds are
-wrapped and failures logged — one bad row must not empty the plaza.
+wrapped and failures logged — one bad row must not empty The Office.
 
 **Magic links are consumed before the session is issued.** A double-click on
 the email link cannot mint two sessions.

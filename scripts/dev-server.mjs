@@ -142,7 +142,7 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\n  Mii Plaza dev server`);
-  console.log(`  http://localhost:${PORT}/mii`);
+  console.log(`\n  Co-Working Office dev server`);
+  console.log(`  http://localhost:${PORT}/`);
   console.log(`  http://localhost:${PORT}/admin\n`);
 });

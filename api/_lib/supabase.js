@@ -1,7 +1,7 @@
 /* Supabase clients.
  *
  * Every write goes through the service-role client, which bypasses RLS. The
- * browser never gets that key: it reads the plaza with the anon key under the
+ * browser never gets that key: it reads The Office with the anon key under the
  * public-select policy, and column grants keep `email` out of reach.
  */
 
@@ -51,7 +51,7 @@ export const clientConfig = () => ({
 
 const DATA_URL_RE = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=\s]+)$/;
 
-/* The plaza already renders a turntable preview of the Mii in the badge modal,
+/* The Office already renders a turntable preview of the Co-Worker in the badge modal,
  * so the client hands us that canvas as a data URL rather than us trying to
  * run WebGL in a function. Failure is non-fatal: the badge simply ships
  * without artwork. */

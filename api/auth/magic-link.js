@@ -19,7 +19,7 @@ import { usingSupabase } from '../_lib/store.js';
 
 const VAGUE_OK = {
   ok: true,
-  message: 'If that email has a Mii, a sign-in link is on its way.'
+  message: 'If that email has a Co-Worker, a sign-in link is on its way.'
 };
 
 export default async function handler(req, res) {
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
 
     if (!hasSessions || !usingSupabase) {
       return send(res, 503, {
-        error: 'Mii recovery is not switched on for this deployment yet.',
+        error: 'Co-Worker recovery is not switched on for this deployment yet.',
         code: 'not_configured'
       });
     }
@@ -68,13 +68,19 @@ export default async function handler(req, res) {
     if (error) return send(res, 502, { error: 'Could not create a link just now.' });
 
     const origin = originFrom(req);
-    await sendMagicLinkEmail({
+    const sent = await sendMagicLinkEmail({
       to: record.email,
       name: record.name,
       link: `${origin}/api/auth/verify?token=${encodeURIComponent(token)}`,
       minutes: Math.round(MAGIC_LINK_TTL_SECONDS / 60),
       origin
     });
+    if (!sent.sent) {
+      return send(res, 502, {
+        error: 'Could not send that email just now.',
+        code: 'email_send_failed'
+      });
+    }
 
     return send(res, 200, VAGUE_OK);
   } catch (e) {

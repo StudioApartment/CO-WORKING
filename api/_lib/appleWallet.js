@@ -5,7 +5,7 @@
  * Safari follows the link and offers Add to Wallet.
  *
  * Signing needs a Pass Type ID cert from Apple Developer. Without it this
- * module returns null and the plaza still emails the QR. The WWDR
+ * module returns null and The Office still emails the QR. The WWDR
  * intermediate is vendored so operators only paste their own signer.
  *
  * https://developer.apple.com/documentation/walletpasses
@@ -77,7 +77,7 @@ const LOGO = pngFill(320, 50, BRAND);
 export function passPayload({ id, name, email, badgeValue, origin }) {
   const site = String(origin || PUBLIC_ORIGIN).replace(/\/$/, '');
   const who = String(name || 'Coworker').slice(0, 40);
-  const qr = String(badgeValue || `${site}/mii`);
+  const qr = String(badgeValue || `${site}/`);
   return {
     formatVersion: 1,
     passTypeIdentifier: APPLE_PASS_TYPE_ID,
@@ -94,7 +94,7 @@ export function passPayload({ id, name, email, badgeValue, origin }) {
       secondaryFields: [{ key: 'role', label: 'Role', value: 'Coworker' }],
       backFields: [
         ...(email ? [{ key: 'email', label: 'Email', value: String(email) }] : []),
-        { key: 'manage', label: 'Manage your Mii', value: `${site}/mii` },
+        { key: 'manage', label: 'Manage your Co-Worker', value: `${site}/` },
         { key: 'id', label: 'Badge ID', value: String(id).slice(0, 8) }
       ]
     },
