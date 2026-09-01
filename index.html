@@ -14510,8 +14510,8 @@ function buildEndTable() {
   // Snacks on the tabletop (replaces the succulent plant)
   const dcM = new THREE.MeshStandardMaterial({ map: makeDietCokeTex(),  roughness: 0.42, metalness: 0.28 });
   const czM = new THREE.MeshStandardMaterial({ map: makeCheezItTex(), roughness: 0.92 });
-  addP(g, PG.cyl(18), dcM,  0.09, 0.555, 0.04,  0.042, 0.118, 0.042);  // Diet Coke can
-  addP(g, PG.box(),   czM, -0.08, 0.572, -0.02, 0.088, 0.125, 0.042,  0, 0, -0.10);  // Cheez-It bag
+  addP(g, PG.cyl(18), dcM,  0.10, 0.565, 0.04,  0.055, 0.150, 0.055);  // Diet Coke can (bigger)
+  addP(g, PG.box(),   czM, -0.10, 0.582, -0.02, 0.108, 0.156, 0.054,  0, 0, -0.10);  // Cheez-It bag (bigger)
   g.add(propShadow(0.95, 0.95));
   return tagProp(g, 'end-table', 'End table');
 }
@@ -14841,24 +14841,24 @@ function addKitchenSnacks(parent) {
   const czMat  = new THREE.MeshStandardMaterial({ map: makeCheezItTex(),    roughness: 0.92 });
   const kindMat= new THREE.MeshStandardMaterial({ map: makeKindBarTex(),    roughness: 0.86 });
 
-  // Diet Coke cans — 3 in a row, back counter area (larger so you can read them)
+  // Diet Coke cans — 3 in a row at the front of the counter
   for (let i = 0; i < 3; i++) {
-    addP(parent, PG.cyl(18), dcMat, 0.50 + i * 0.11, 1.002, -0.18, 0.045, 0.125, 0.045);
+    addP(parent, PG.cyl(18), dcMat, 0.48 + i * 0.14, 1.018, 0.08, 0.058, 0.155, 0.058);
   }
-  // NY diner coffee cups — 2 cups, tapered (wider at top)
+  // NY diner coffee cups — 2 cups at back
   const cupGeo = geoCache('nycp', () => new THREE.CylinderGeometry(0.92, 1, 1, 14));
   for (let i = 0; i < 2; i++) {
     const m = new THREE.Mesh(cupGeo, cofMat);
-    m.position.set(0.24 + i * 0.12, 1.005, -0.17);
-    m.scale.set(0.048, 0.145, 0.048);
+    m.position.set(0.14 + i * 0.18, 1.022, -0.08);
+    m.scale.set(0.065, 0.185, 0.065);
     parent.add(m);
   }
-  // Cheez-It bags — standing up, bigger
-  addP(parent, PG.box(), czMat,  0.05, 1.014, -0.16, 0.095, 0.132, 0.046,  0, 0,  0.07);
-  addP(parent, PG.box(), czMat,  0.17, 1.014, -0.16, 0.095, 0.132, 0.046,  0, 0, -0.06);
-  // KIND bars — lying flat
-  addP(parent, PG.box(), kindMat, 0.44, 0.964, -0.10, 0.165, 0.030, 0.055,  0,  0.12, 0);
-  addP(parent, PG.box(), kindMat, 0.62, 0.964, -0.10, 0.165, 0.030, 0.055,  0, -0.10, 0);
+  // Cheez-It bags — standing up, front-facing so logo shows
+  addP(parent, PG.box(), czMat,  0.08, 1.028, -0.06, 0.120, 0.172, 0.058,  0, 0,  0.06);
+  addP(parent, PG.box(), czMat,  0.24, 1.028, -0.06, 0.120, 0.172, 0.058,  0, 0, -0.05);
+  // KIND bars — lying flat with logo visible from top
+  addP(parent, PG.box(), kindMat, 0.50, 0.968, 0.10, 0.200, 0.036, 0.068,  0,  0.12, 0);
+  addP(parent, PG.box(), kindMat, 0.72, 0.968, 0.10, 0.200, 0.036, 0.068,  0, -0.10, 0);
 }
 
 /** Kitchen counter: coffee, water, cupboard, fruit. Front faces local +Z. */
@@ -14906,7 +14906,7 @@ function buildKitchenette() {
   const water = buildCounterWater();
   water.position.set(0.85, 0.93, 0.02);
   g.add(water);
-  addFruitBowl(g, 0.22, 0.93, 0.14);
+  // fruit bowl removed — more counter space for snacks
 
   addKitchenSnacks(g);
   g.add(propShadow(2.55, 1.15));
@@ -15674,7 +15674,8 @@ function installPlazaProps() {
   [x, z] = at(150, 7.2); placeProp(buildBamboo(), x, z, R(320), 1.0);
   placeProp(buildAloePlant(), -3.15, 1.15, R(215), 1.0);
   const bikeX = -8.0, bikeZ = 1.6;
-  placeProp(buildBikeParking(), bikeX, bikeZ, faceIn(bikeX, bikeZ), 1.0);
+  // rotated 90° from faceIn so bikes show as side silhouettes
+  placeProp(buildBikeParking(), bikeX, bikeZ, faceIn(bikeX, bikeZ) + Math.PI * 0.5, 1.0);
   const lampX = -3.93, lampZ = -3.17;
   const chairX = -4.45, chairZ = -2.35;
   placeProp(buildLoungeChair(), chairX, chairZ, faceIn(chairX, chairZ), 1.0);
