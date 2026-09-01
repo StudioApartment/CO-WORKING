@@ -543,19 +543,23 @@
     saving = true;
     setSaveState('pending');
     try {
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      const image = canvas.toDataURL('image/png');
       const res = await fetch(API, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'image/png' },
-        body: blob
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image })
       });
-      if (!res.ok) throw new Error('save failed');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'save failed ' + res.status);
+      }
       const data = await res.json().catch(() => ({}));
       dirty = false;
       setSaveState('saved');
       docTitle.textContent = 'fridge-art - Paint';
       notifyParent(data.updated);
-    } catch {
+    } catch (e) {
+      console.error('[fridge-paint] save error:', e);
       setSaveState('error');
     } finally {
       saving = false;
