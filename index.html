@@ -15343,9 +15343,9 @@ function addBikeWheel(parent, x, y, z, r = 0.27) {
   const w = new THREE.Group();
   w.position.set(x, y, z);
   // Fat torus tire — tube=0.18 gives a chunky tyre that reads clearly from any angle
-  addP(w, PG.torus(0.18), tire, 0, 0, 0, r, r, r, 0, 0, Math.PI / 2);
+  addP(w, PG.torus(0.18), tire, 0, 0, 0, r, r, r, 0, Math.PI / 2, 0);
   // Chrome rim — thinner torus just inside the tyre
-  addP(w, PG.torus(0.055), rim, 0, 0, 0, r * 0.80, r * 0.80, r * 0.80, 0, 0, Math.PI / 2);
+  addP(w, PG.torus(0.055), rim, 0, 0, 0, r * 0.80, r * 0.80, r * 0.80, 0, Math.PI / 2, 0);
   // Hub — short cylinder, axis along X
   addP(w, PG.cyl(10), hub, 0, 0, 0, 0.032, 0.058, 0.032, 0, 0, Math.PI / 2);
   // 16 spokes in Y-Z plane — Y-cylinder rotated rx=a points at (0,cos(a),sin(a))
