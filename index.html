@@ -309,18 +309,16 @@ body.native-cursor #pointer{display:none}
   box-shadow:inset 0 1px 0 #fff,0 3px 6px rgba(70,100,125,.3),0 0 0 2px #fff,0 0 0 3.5px #ccd8e0;
   transition:transform .13s cubic-bezier(.34,1.7,.5,1),box-shadow .18s,color .18s;
 }
-/* Info bubble: tight ring around a fixed-size “i” (bubble sized per-frame). */
+/* Info icon: naked “i” glyph next to the name tag — no circle. */
 #btnMiiInfo{
-  width:var(--info-bubble,10px);height:var(--info-bubble,10px);
-  color:var(--blue-dk);
-  background:linear-gradient(#fff,#e0eaf0);
-  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(90,115,135,.18),0 0 0 1px #fff,0 0 0 1.5px #d2dde4;
+  width:auto;height:auto;padding:2px;
+  color:var(--blue-dk);opacity:0.65;
+  background:none;box-shadow:none;border-radius:0;
 }
-#btnMiiInfo svg{width:var(--info-icon,8px);height:var(--info-icon,8px);flex-shrink:0}
+#btnMiiInfo svg{width:var(--info-icon,9px);height:var(--info-icon,9px);flex-shrink:0}
 #btnMiiInfo:hover,#btnMiiInfo:focus-visible{
-  transform:scale(1.08);
-  box-shadow:inset 0 1px 0 #fff,0 2px 5px rgba(70,100,125,.2),0 0 0 1px #fff,0 0 0 1.5px #9fd3ef;
-  outline:0;
+  transform:scale(1.2);opacity:1;
+  box-shadow:none;outline:0;
 }
 #miiDock .tool:hover,#miiDock .tool:focus-visible{
   transform:translateY(-3px) scale(1.1);
@@ -13981,6 +13979,7 @@ class OfficeDog {
     this.state = 'fall';
     this.vy = 3.4;
     this.vel.set(0, 0, 0);
+    Sound.fx.bounce(rand(0.85, 1.2));
   }
 
   switchType(type) {
@@ -16370,13 +16369,21 @@ const InteriorOverlay = {
     document.body.classList.remove('interior-open');
     /* Stop iframe BGM before navigation; about:blank alone can lag on Web Audio. */
     this.stopFrameAudio();
-    /* Replace (don't assign) so closing does not push joint history. */
-    this.navigateFrame('about:blank');
     try { clock.getDelta(); } catch { /* clock may not exist yet */ }
 
-    if (wasFridge) FridgeArt.refresh();
+    if (wasFridge) {
+      /* Ask the frame to flush any pending paint save, then tear it down after
+         enough time for the fetch to complete (saves typically land in <400 ms). */
+      try { this.frame.contentWindow?.postMessage({ type: 'coworking:fridge-save-sync' }, location.origin); } catch {}
+      const self = this;
+      setTimeout(() => { self.navigateFrame('about:blank'); self.closing = false; }, 1200);
+      FridgeArt.refresh();
+    } else {
+      this.navigateFrame('about:blank');
+      this.closing = false;
+    }
+
     if (!fromPopstate && hadState) history.back();
-    this.closing = false;
   }
 };
 InteriorOverlay.boot();
@@ -17055,7 +17062,7 @@ window.addEventListener('pointerup', () => {
   const quick = performance.now() - P.downT < 260 && P.moved < 8;
   if (held) {
     if (held === World.dog) {
-      if (quick) { held.greet(); }
+      if (quick) { held.state = 'fall'; held.greet(); }
       else { held.release(); Sound.fx.drop(); }
     } else if (quick) {
       held.state = 'fall'; held.greet();
@@ -18723,10 +18730,8 @@ function placeMiiDock(m) {
   const plate = nameTagPlateMetrics(m);
   const tagPxW = tagPx * (m.tagAspect || plate.W / plate.H);
   const chipPx = Math.round(tagPx * (plate.h / plate.H));
-  const iconPx = Math.round(chipPx * 0.40);
-  const bubblePx = iconPx + 2;
+  const iconPx = Math.round(chipPx * 0.50);
   dock.style.setProperty('--info-icon', iconPx + 'px');
-  dock.style.setProperty('--info-bubble', bubblePx + 'px');
   m.tag.getWorldPosition(_vt);
   _vt.project(camera);
   const r = canvasEl.getBoundingClientRect();
@@ -18734,7 +18739,7 @@ function placeMiiDock(m) {
   const cy = r.top + (-_vt.y * 0.5 + 0.5) * r.height;
   const pillRightPx = tagPxW * ((plate.pillRight - plate.W / 2) / plate.W);
   const pillCyOffset = tagPx * ((plate.spriteCy - plate.pillCy) / plate.H);
-  dock.style.left = (cx + pillRightPx + 4) + 'px';
+  dock.style.left = (cx + pillRightPx + 2) + 'px';
   dock.style.top = (cy - pillCyOffset) + 'px';
   dock.classList.toggle('mine', m.mine === true);
   dock.classList.add('show');

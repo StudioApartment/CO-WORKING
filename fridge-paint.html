@@ -419,6 +419,15 @@
     }
   });
 
+  /* Parent asks us to save before tearing down the frame. */
+  window.addEventListener('message', (ev) => {
+    if (ev.origin !== location.origin) return;
+    if (ev.data?.type === 'coworking:fridge-save-sync' && dirty) {
+      clearTimeout(saveTimer);
+      saveCanvas();
+    }
+  });
+
   function strokeLine(x0, y0, x1, y1, color, width) {
     ctx.strokeStyle = color;
     ctx.lineWidth = width;
