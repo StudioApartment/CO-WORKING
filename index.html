@@ -13729,7 +13729,7 @@ const DOG_HEAD_TOP = 0.51;
 function loadDogName() {
   try {
     const raw = localStorage.getItem(DOG_NAME_KEY);
-    if (raw && raw.trim()) return raw.trim().split(/\s+/)[0].slice(0, 14);
+    if (raw && raw.trim()) return raw.trim().slice(0, 28);
   } catch {}
   return DOG_DEFAULT_NAME;
 }
@@ -15167,24 +15167,26 @@ function makeCitibikeMarkTexture() {
 
 const _bikeY = new THREE.Vector3(0, 1, 0);
 
-/** Low-poly wheel — chunky faceted tire, silver spokes (glassofcoins-style MTB). */
+/** Wheel — disc in Y-Z plane (axle along X), thin cylinder spokes for see-through look. */
 function addBikeWheel(parent, x, y, z, r = 0.22) {
-  const tire = pMat('#111214', 0.94);
-  const rim = pMat('#b8c2ca', 0.46, 0.34);
-  const hub = pMat('#8a939c', 0.52, 0.32);
-  const spoke = pMat('#c8d0d8', 0.54, 0.38);
+  const tire  = pMat('#111214', 0.94);
+  const rim   = pMat('#b8c2ca', 0.46, 0.34);
+  const hub   = pMat('#8a939c', 0.52, 0.32);
+  const spoke = pMat('#d0d8de', 0.36, 0.48);
   const w = new THREE.Group();
   w.position.set(x, y, z);
-  // rz = Math.PI/2 rotates the cylinder from its default Y-axis to lie along X,
-  // so the wheel disc sits in the Y-Z plane and the axle runs left-right.
-  addP(w, PG.cyl(16), tire, 0, 0, 0, r, 0.058, r, 0, 0, Math.PI / 2);
-  addP(w, PG.cyl(16), rim,  0, 0, 0, r * 0.74, 0.014, r * 0.74, 0, 0, Math.PI / 2);
-  addP(w, PG.cyl(8),  hub,  0, 0, 0, 0.034, 0.042, 0.034, 0, 0, Math.PI / 2);
-  for (let i = 0; i < 10; i++) {
-    const a = (i / 10) * TAU;
-    // Spokes radiate in the Y-Z plane; box long axis (Z) points radially after Rx(a-π/2)
-    addP(w, PG.box(), spoke, 0, Math.cos(a) * r * 0.36, Math.sin(a) * r * 0.36,
-      0.006, r * 0.35, 0.011, a - Math.PI / 2, 0, 0);
+  // rz = π/2 makes the cylinder height axis run along X, so disc is in Y-Z plane
+  addP(w, PG.cyl(20), tire, 0, 0, 0, r,       0.048, r,       0, 0, Math.PI / 2);
+  addP(w, PG.cyl(20), rim,  0, 0, 0, r * 0.82, 0.022, r * 0.82, 0, 0, Math.PI / 2);
+  addP(w, PG.cyl(8),  hub,  0, 0, 0, 0.032, 0.050, 0.032,      0, 0, Math.PI / 2);
+  // 14 thin cylinder spokes radiating in the Y-Z plane.
+  // A Y-axis cylinder rotated rx=a points at (0, cos(a), sin(a)).
+  for (let i = 0; i < 14; i++) {
+    const a = (i / 14) * TAU;
+    addP(w, PG.cyl(4), spoke,
+      0, Math.cos(a) * r * 0.42, Math.sin(a) * r * 0.42,
+      0.0032, r * 0.84, 0.0032,
+      a, 0, 0);
   }
   parent.add(w);
   return w;
@@ -15208,43 +15210,52 @@ function buildPersonalBike() {
   const g = new THREE.Group();
   const orange = pMat('#e96328', 0.70, 0.06);
   const silver = pMat('#adb8c0', 0.46, 0.44);
-  const black = pMat('#121416', 0.90);
+  const black  = pMat('#121416', 0.90);
   const wr = 0.22;
   const fz = 0.58, rz = -0.58;
-  const bb = [0, 0.30, 0.02];
+  const bb   = [0, 0.30, 0.02];
   const head = [0, 0.66, 0.40];
   const seat = [0, 0.80, -0.16];
 
   addBikeWheel(g, 0, wr, fz, wr);
   addBikeWheel(g, 0, wr, rz, wr);
 
+  // Main frame triangles
   addBikeTube(g, orange, head[0], head[1], head[2], seat[0], seat[1], seat[2], 0.020);
   addBikeTube(g, orange, head[0], head[1] - 0.10, head[2], bb[0], bb[1], bb[2], 0.022);
   addBikeTube(g, orange, bb[0], bb[1], bb[2], seat[0], seat[1], seat[2], 0.020);
   addBikeTube(g, orange, bb[0], bb[1], bb[2], 0, wr, rz, 0.016);
   addBikeTube(g, orange, seat[0], seat[1] - 0.05, seat[2], 0, wr + 0.02, rz, 0.014);
 
-  const forkTop = [0, 0.58, 0.38];
-  addP(g, PG.box(), silver, 0, 0.60, 0.37, 0.12, 0.045, 0.06);
-  for (const sx of [-0.045, 0.045]) {
-    addBikeTube(g, silver, sx, forkTop[1], forkTop[2], sx, wr + 0.10, fz, 0.013);
-    addBikeTube(g, orange, sx, wr + 0.10, fz, sx, wr, fz, 0.017);
+  // ── Fork + stem + handlebar as one continuous piece ──────────────────
+  // Two fork legs running from crown down to wheel axle
+  const crownY = 0.60, crownZ = head[2] - 0.02;
+  for (const sx of [-0.048, 0.048]) {
+    addBikeTube(g, silver, sx, crownY, crownZ, sx, wr, fz, 0.013);
   }
+  // Fork crown — flat bridge connecting the two legs at the top
+  addBikeTube(g, silver, -0.048, crownY, crownZ, 0.048, crownY, crownZ, 0.013);
+  // Stem: single tube from crown straight up and slightly back to handlebar
+  const stemTopY = head[1] + 0.14, stemTopZ = head[2] - 0.02;
+  addBikeTube(g, silver, 0, crownY, crownZ, 0, stemTopY, stemTopZ, 0.013);
+  // Handlebar: single cross-tube at stem top, swept slightly up at the ends
+  addBikeTube(g, black, -0.19, stemTopY,        stemTopZ, 0.19, stemTopY,        stemTopZ, 0.013);
+  addBikeTube(g, black, -0.19, stemTopY,        stemTopZ, -0.21, stemTopY + 0.03, stemTopZ + 0.02, 0.016);
+  addBikeTube(g, black,  0.19, stemTopY,        stemTopZ,  0.21, stemTopY + 0.03, stemTopZ + 0.02, 0.016);
 
-  const bar = new THREE.Group();
-  bar.position.set(head[0], head[1] + 0.02, head[2]);
-  addP(bar, PG.cyl(8), silver, 0, 0.06, 0, 0.012, 0.14, 0.012);
-  addP(bar, PG.cyl(8), black, 0, 0.14, 0, 0.014, 0.38, 0.014, 0, 0, Math.PI / 2);
-  addP(bar, PG.cyl(8), black, -0.21, 0.20, 0, 0.019, 0.11, 0.019, 0.38, 0, Math.PI / 2);
-  addP(bar, PG.cyl(8), black, 0.21, 0.20, 0, 0.019, 0.11, 0.019, -0.38, 0, Math.PI / 2);
-  g.add(bar);
-
+  // Seat post + traditional saddle (wide rear, narrow nose)
   addP(g, PG.cyl(8), silver, seat[0], seat[1] - 0.12, seat[2], 0.011, 0.20, 0.011);
-  addP(g, PG.box(), black, seat[0], seat[1] + 0.01, seat[2] - 0.02, 0.15, 0.042, 0.09, -0.14, 0, 0);
+  // Rear saddle body — wide, slightly angled back
+  addP(g, PG.box(), black, seat[0], seat[1] + 0.008, seat[2] - 0.01,  0.14, 0.028, 0.055, -0.10, 0, 0);
+  // Nose — narrower, extending forward, slightly raised
+  addP(g, PG.box(), black, seat[0], seat[1] + 0.016, seat[2] + 0.044, 0.046, 0.020, 0.058, -0.06, 0, 0);
+  // Under-rails
+  addP(g, PG.box(), silver, seat[0], seat[1] - 0.010, seat[2] + 0.018, 0.048, 0.008, 0.14);
 
+  // Bottom bracket + pedal cranks
   addP(g, PG.cyl(8), silver, bb[0], bb[1], bb[2], 0.058, 0.013, 0.058, Math.PI / 2, 0, 0);
   addP(g, PG.box(), silver, bb[0] + 0.10, bb[1] - 0.02, bb[2] + 0.05, 0.11, 0.017, 0.024, 0, 0.18, 0);
-  addP(g, PG.box(), black, bb[0] + 0.16, bb[1] - 0.09, bb[2] + 0.07, 0.065, 0.020, 0.045, 0, 0.18, 0);
+  addP(g, PG.box(), black,  bb[0] + 0.16, bb[1] - 0.09, bb[2] + 0.07, 0.065, 0.020, 0.045, 0, 0.18, 0);
   addP(g, PG.box(), silver, 0, wr + 0.05, rz - 0.02, 0.05, 0.09, 0.06);
 
   return g;
@@ -15301,17 +15312,20 @@ function buildCitibike() {
   return g;
 }
 
-/** Staple rack with a mountain bike + NYC-style Citi Bike docked on the rug. */
+/** Staple rack (vertical bar style) with a mountain bike + Citi Bike. */
 function buildBikeParking() {
   const g = new THREE.Group();
-  const steel = pMat('#9aa3ab', 0.58, 0.38);
+  const steel   = pMat('#9aa3ab', 0.58, 0.38);
   const steelDk = pMat('#727b84', 0.62, 0.32);
+  // Base plate
   addP(g, PG.box(), steelDk, 0, 0.028, 0, 1.45, 0.055, 0.10);
+  // Two inverted-U staple racks — no arcs, just straight vertical + top bars
   for (const x of [-0.40, 0.40]) {
-    addP(g, PG.torus(0.020), steel, x, 0.36, 0, 0.27, 0.27, 0.27, Math.PI / 2, 0, Math.PI);
-    addP(g, PG.cyl(10), steel, x, 0.18, 0, 0.024, 0.36, 0.024);
+    const lw = 0.22;  // half-width of each staple
+    addBikeTube(g, steel, x - lw, 0.05, 0, x - lw, 0.55, 0, 0.022);  // left leg
+    addBikeTube(g, steel, x + lw, 0.05, 0, x + lw, 0.55, 0, 0.022);  // right leg
+    addBikeTube(g, steel, x - lw, 0.55, 0, x + lw, 0.55, 0, 0.022);  // top bar
   }
-  addP(g, PG.box(), steel, 0, 0.58, 0, 0.92, 0.032, 0.032);
 
   const left = buildPersonalBike();
   left.position.set(-0.40, 0, 0.04);
@@ -18216,16 +18230,16 @@ function hideDogRename() {
 function commitDogRename() {
   const dog = pendingDogRename;
   if (!dog) return;
-  const first = ($('dogRenameInput').value || '').trim().split(/\s+/)[0].slice(0, 14);
-  if (!first) { hideDogRename(); return; }
-  const err = publicNameError(first);
+  const dogName = ($('dogRenameInput').value || '').trim().slice(0, 28);
+  if (!dogName) { hideDogRename(); return; }
+  const err = publicNameError(dogName);
   if (err) { toast(err, 3200); return; }
   hideDogRename();
-  if (first === dog.name) return;
-  dog.setName(first);
-  saveDogName(first);
+  if (dogName === dog.name) return;
+  dog.setName(dogName);
+  saveDogName(dogName);
   Sound.fx.chime();
-  OfficeSync.saveDogName(first).catch((e) => {
+  OfficeSync.saveDogName(dogName).catch((e) => {
     toast(String(e.message || e), 3200);
   });
 }
