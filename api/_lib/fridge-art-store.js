@@ -47,13 +47,17 @@ function writeTsFile(ts) {
 /** @returns {Promise<{ bytes: Buffer, updated: number } | null>} */
 export async function getFridgeArt() {
   if (usingRedis) {
-    const b64 = await redis('GET', REDIS_KEY);
-    if (!b64 || typeof b64 !== 'string') return null;
-    const bytes = Buffer.from(b64, 'base64');
-    if (!bytes.length) return null;
-    const tsRaw = await redis('GET', REDIS_TS_KEY);
-    const updated = Number(tsRaw) || 0;
-    return { bytes, updated };
+    try {
+      const b64 = await redis('GET', REDIS_KEY);
+      if (b64 && typeof b64 === 'string') {
+        const bytes = Buffer.from(b64, 'base64');
+        if (bytes.length) {
+          const tsRaw = await redis('GET', REDIS_TS_KEY);
+          return { bytes, updated: Number(tsRaw) || 0 };
+        }
+      }
+      return null;
+    } catch { /* Redis unavailable — fall through to file */ }
   }
   try {
     const bytes = fs.readFileSync(FILE);
@@ -73,9 +77,11 @@ export async function putFridgeArt(bytes) {
   }
   const updated = Date.now();
   if (usingRedis) {
-    await redis('SET', REDIS_KEY, bytes.toString('base64'));
-    await redis('SET', REDIS_TS_KEY, String(updated));
-    return updated;
+    try {
+      await redis('SET', REDIS_KEY, bytes.toString('base64'));
+      await redis('SET', REDIS_TS_KEY, String(updated));
+      return updated;
+    } catch { /* Redis unavailable — fall through to file */ }
   }
   const tmp = FILE + '.tmp';
   fs.writeFileSync(tmp, bytes);

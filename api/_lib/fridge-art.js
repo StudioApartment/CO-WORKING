@@ -72,9 +72,13 @@ export default async function handler(req, res) {
   if (preflight(req, res)) return;
 
   if (req.method === 'GET') {
-    const row = await getFridgeArt();
-    if (!row) return sendJson(res, 404, { error: 'no artwork yet' });
-    return sendPng(res, 200, row.bytes, row.updated);
+    try {
+      const row = await getFridgeArt();
+      if (!row) return sendJson(res, 404, { error: 'no artwork yet' });
+      return sendPng(res, 200, row.bytes, row.updated);
+    } catch (e) {
+      return sendJson(res, 500, { error: String(e.message || e) });
+    }
   }
 
   if (req.method !== 'PUT' && req.method !== 'POST') {
