@@ -9890,7 +9890,7 @@ const G = {
   }),
   /* Cardboard paper crown: full 360° brow circlet whose top edge rises into
      ornamental rounded peaks (front peak tallest). Bottom sits at y=0. */
-  paperCrown: () => geoCache('pcrown10', () => {
+  paperCrown: () => geoCache('pcrown11', () => {
     /* Soft rounded peaks with a mild fleur waist — closer to BK cardboard
        die-cuts than sharp triangular spikes. Radius follows the skull at
        each azimuth so the band wraps the whole head, not a front arc.
@@ -9934,7 +9934,7 @@ const G = {
       const newY = u * h;
       const flare = 1 + u * peakAmt * 0.032;
       const ny = SEAT_Y + newY;
-      const clr = 1.068 + peakAmt * 0.018;
+      const clr = 1.13 + peakAmt * 0.025;
       const r = headHorizR(ny, ang) * clr * flare;
       p.setXYZ(i, Math.sin(ang) * r, newY, Math.cos(ang) * r);
     }
@@ -14717,7 +14717,7 @@ function buildEndTable() {
 /** Interlocking pill bands — pale yellow on soft cream plush pile. */
 function makePlazaRugTexture() {
   const S = 1024, TILE = 512;
-  const CREAM = '#f2ebd4', PALE_YELLOW = '#f5dc7a';
+  const CREAM = '#f2ebd4', PALE_YELLOW = '#f5a07c';
   const BAND = TILE * 0.168, R = BAND * 0.5;
   const c = cv(S), g = c.getContext('2d');
 
@@ -14774,7 +14774,7 @@ function makePlazaRugTexture() {
       for (let x = 0; x < S; x++) {
         const i = (y * S + x) * 4;
         const r = d[i], gr = d[i + 1], b = d[i + 2];
-        const band = gr > 200 && r > 225 && b > 90 && b < 175;
+        const band = r > b + 80;
         const wave = Math.sin(x * 0.17 + y * 0.12) * Math.cos(y * 0.15 - x * 0.09);
         const pile = wave * 0.05 + ((x / S - 0.28) * 0.035 + (y / S - 0.22) * 0.028);
         const speck = (rnd() - 0.5) * 0.07;
@@ -14796,8 +14796,8 @@ function makePlazaRugTexture() {
       const len = 2 + rnd() * 7;
       const ang = -0.75 + rnd() * 0.35;
       ctx.strokeStyle = rnd() > 0.52
-        ? `rgba(212,184,74,${0.018 + rnd() * 0.055})`
-        : `rgba(200,190,150,${0.016 + rnd() * 0.048})`;
+        ? `rgba(210,130,90,${0.018 + rnd() * 0.055})`
+        : `rgba(200,175,155,${0.016 + rnd() * 0.048})`;
       ctx.lineWidth = 0.7 + rnd() * 1.1;
       ctx.beginPath();
       ctx.moveTo(x, y);
@@ -16406,8 +16406,9 @@ const InteriorOverlay = {
       /* Ask the frame to flush any pending paint save, then tear it down after
          enough time for the fetch to complete (saves typically land in <400 ms). */
       try { this.frame.contentWindow?.postMessage({ type: 'coworking:fridge-save-sync' }, location.origin); } catch {}
+      this.closing = false;
       const self = this;
-      setTimeout(() => { self.navigateFrame('about:blank'); self.closing = false; }, 1200);
+      setTimeout(() => { self.navigateFrame('about:blank'); }, 1200);
       FridgeArt.refresh();
     } else {
       this.navigateFrame('about:blank');
@@ -17093,7 +17094,9 @@ window.addEventListener('pointerup', () => {
   const quick = performance.now() - P.downT < 260 && P.moved < 8;
   if (held) {
     if (held === World.dog) {
-      if (quick) { held.state = 'fall'; held.greet(); }
+      const longPress = (performance.now() - P.downT) > 500 && P.moved < 8;
+      if (longPress) { held.release(); held.promptRename(); }
+      else if (quick) { held.state = 'fall'; held.greet(); }
       else { held.release(); Sound.fx.drop(); }
     } else if (quick) {
       held.state = 'fall'; held.greet();
