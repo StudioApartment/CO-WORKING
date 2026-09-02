@@ -1006,6 +1006,7 @@
     if (state !== 'ENTER_INITIALS') return;
     if (e.key === 'Enter') {
       e.preventDefault();
+      e.stopPropagation(); // prevent window.keydown from seeing this and immediately restarting
       submitInitialsEntry();
     }
   });

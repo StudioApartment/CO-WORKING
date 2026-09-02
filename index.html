@@ -2653,173 +2653,93 @@ function makeTruckerPatch() {
   return t;
 }
 
-/* Camo-cap front: hunter-orange embroidered gothic wordmark in a hollow
-   pill frame. Thread only — no fill patch — so the camo fabric reads
-   through between the border and the letters. Made-up brand, not a
-   trademarked script. Letterforms are drawn as paths so the blackletter
-   read does not depend on Old English being installed. */
-function makeCamoGothicPatch(text, ink = '#ff5a00') {
-  const W = 420, H = 210, c = cv(W, H), g = c.getContext('2d');
+/* Von Dutch style oval embroidered patch for the camo cap.
+   Orange oval border + cursive "Von Dutch" script — transparent background
+   so the camo fabric reads through the patch interior. */
+function makeCamoGothicPatch(text, ink = '#e87722') {
+  const W = 320, H = 200, c = cv(W, H), g = c.getContext('2d');
   g.clearRect(0, 0, W, H);
   g.lineJoin = 'round';
   g.lineCap = 'round';
 
-  /* Soft under-stroke then the thread itself — same chain-stitch cue the
-     club-cap script uses, just in neon orange. */
-  const stitch = (draw, shadowW, inkW) => {
-    g.strokeStyle = 'rgba(60,12,0,.32)';
-    g.lineWidth = shadowW;
-    draw('stroke');
-    g.strokeStyle = ink;
-    g.fillStyle = ink;
-    g.lineWidth = inkW;
-    draw('both');
-  };
+  const cx = W / 2, cy = H / 2;
+  const rx = 146, ry = 84;   // oval radii
 
-  /* Horizontal pill outline. Stroke only — interior stays transparent. */
-  const px = 22, py = 26, pw = W - 44, ph = H - 52, pr = ph * 0.48;
-  stitch((mode) => {
-    g.beginPath();
-    if (typeof g.roundRect === 'function') g.roundRect(px, py, pw, ph, pr);
-    else {
-      g.moveTo(px + pr, py);
-      g.lineTo(px + pw - pr, py);
-      g.arcTo(px + pw, py, px + pw, py + pr, pr);
-      g.lineTo(px + pw, py + ph - pr);
-      g.arcTo(px + pw, py + ph, px + pw - pr, py + ph, pr);
-      g.lineTo(px + pr, py + ph);
-      g.arcTo(px, py + ph, px, py + ph - pr, pr);
-      g.lineTo(px, py + pr);
-      g.arcTo(px, py, px + pr, py, pr);
-      g.closePath();
-    }
-    g.stroke();
-  }, 14, 9);
+  /* Soft drop shadow under oval for depth. */
+  g.fillStyle = 'rgba(30,10,0,0.35)';
+  g.beginPath();
+  g.ellipse(cx + 3, cy + 4, rx, ry, 0, 0, Math.PI * 2);
+  g.fill();
 
-  /* Path-drawn blackletter "Lobby" — diamond terminals, broken bows, tall
-     verticals. Scaled as a unit so it sits centred in the pill. */
-  const tx = W / 2, ty = H * 0.42;
-  const paintLobby = () => {
-    const s = 1.15;
-    g.save();
-    g.translate(tx, ty);
-    g.scale(s, s);
+  /* Outer border stroke — dark under-thread for chain-stitch depth. */
+  g.strokeStyle = 'rgba(60,20,0,0.45)';
+  g.lineWidth = 13;
+  g.beginPath();
+  g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  g.stroke();
 
-    /* L — tall stem + angled foot, diamond head. */
-    g.beginPath();
-    g.moveTo(-118, -42);
-    g.lineTo(-108, -52);
-    g.lineTo(-98, -42);
-    g.lineTo(-102, -38);
-    g.lineTo(-102, 28);
-    g.lineTo(-118, 42);
-    g.lineTo(-70, 42);
-    g.lineTo(-66, 30);
-    g.lineTo(-92, 30);
-    g.lineTo(-92, -34);
-    g.closePath();
-    g.fill();
-
-    /* o — pointed oval with interior counter (blackletter eye). */
-    g.beginPath();
-    g.moveTo(-48, 0);
-    g.quadraticCurveTo(-48, -36, -22, -40);
-    g.quadraticCurveTo(4, -36, 4, 0);
-    g.quadraticCurveTo(4, 36, -22, 40);
-    g.quadraticCurveTo(-48, 36, -48, 0);
-    g.closePath();
-    g.moveTo(-38, 0);
-    g.quadraticCurveTo(-38, -22, -22, -26);
-    g.quadraticCurveTo(-6, -22, -6, 0);
-    g.quadraticCurveTo(-6, 22, -22, 26);
-    g.quadraticCurveTo(-38, 22, -38, 0);
-    g.closePath();
-    g.fill('evenodd');
-
-    /* First b — tall ascender, broken bowl. */
-    g.beginPath();
-    g.moveTo(10, -52);
-    g.lineTo(20, -58);
-    g.lineTo(28, -48);
-    g.lineTo(24, -44);
-    g.lineTo(24, 40);
-    g.lineTo(12, 40);
-    g.lineTo(12, 8);
-    g.quadraticCurveTo(12, -8, 34, -12);
-    g.quadraticCurveTo(56, -8, 56, 14);
-    g.quadraticCurveTo(56, 36, 34, 40);
-    g.lineTo(28, 28);
-    g.quadraticCurveTo(42, 26, 42, 14);
-    g.quadraticCurveTo(42, 2, 28, 0);
-    g.lineTo(24, 0);
-    g.closePath();
-    g.fill();
-
-    /* Second b — same form, tighter spacing. */
-    g.beginPath();
-    g.moveTo(66, -52);
-    g.lineTo(76, -58);
-    g.lineTo(84, -48);
-    g.lineTo(80, -44);
-    g.lineTo(80, 40);
-    g.lineTo(68, 40);
-    g.lineTo(68, 8);
-    g.quadraticCurveTo(68, -8, 90, -12);
-    g.quadraticCurveTo(112, -8, 112, 14);
-    g.quadraticCurveTo(112, 36, 90, 40);
-    g.lineTo(84, 28);
-    g.quadraticCurveTo(98, 26, 98, 14);
-    g.quadraticCurveTo(98, 2, 84, 0);
-    g.lineTo(80, 0);
-    g.closePath();
-    g.fill();
-
-    /* y — short bowl + long diamond descender that feeds the swoop. */
-    g.beginPath();
-    g.moveTo(122, -8);
-    g.quadraticCurveTo(122, -32, 140, -36);
-    g.quadraticCurveTo(158, -32, 158, -4);
-    g.lineTo(152, 8);
-    g.lineTo(146, 22);
-    g.lineTo(152, 48);
-    g.lineTo(138, 56);
-    g.lineTo(132, 28);
-    g.lineTo(126, 12);
-    g.quadraticCurveTo(126, -16, 140, -20);
-    g.quadraticCurveTo(148, -16, 148, -6);
-    g.quadraticCurveTo(148, 2, 140, 4);
-    g.lineTo(134, 4);
-    g.quadraticCurveTo(128, 0, 128, -6);
-    g.closePath();
-    g.fill();
-
-    g.restore();
-  };
-
-  /* Shadow pass then ink fill for an embroidered lift. */
-  g.save();
-  g.translate(2.2, 2.2);
-  g.fillStyle = 'rgba(60,12,0,.32)';
-  paintLobby();
-  g.restore();
-  g.fillStyle = ink;
-  paintLobby();
-
-  /* Underline swoop: thick flourish under the word, hooked from the
-     trailing letter back toward the start — the ref's signature loop. */
-  const swoop = () => {
-    g.beginPath();
-    g.moveTo(tx + 118, ty + 38);
-    g.quadraticCurveTo(tx + 40, ty + 58, tx - 20, ty + 44);
-    g.quadraticCurveTo(tx - 90, ty + 28, tx - 122, ty + 40);
-    g.stroke();
-  };
-  g.strokeStyle = 'rgba(60,12,0,.32)';
-  g.lineWidth = 11;
-  swoop();
+  /* Main orange oval border. */
   g.strokeStyle = ink;
-  g.lineWidth = 6.5;
-  swoop();
+  g.lineWidth = 9;
+  g.beginPath();
+  g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  g.stroke();
+
+  /* Inner stitch ring — tighter oval, lower opacity for embroidery feel. */
+  g.strokeStyle = ink.replace(')', ',0.45)').replace('rgb', 'rgba');
+  g.lineWidth = 3;
+  g.beginPath();
+  g.ellipse(cx, cy, rx - 8, ry - 8, 0, 0, Math.PI * 2);
+  g.stroke();
+
+  /* Clip text to oval interior so it doesn't bleed over the border. */
+  g.save();
+  g.beginPath();
+  g.ellipse(cx, cy, rx - 4, ry - 4, 0, 0, Math.PI * 2);
+  g.clip();
+
+  /* "Von Dutch" in Brush Script — shadow pass + fill for raised thread look. */
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.font = 'italic bold 68px "Brush Script MT","Segoe Script","Apple Chancery","Palatino Linotype",Georgia,serif';
+
+  g.shadowColor = 'rgba(60,15,0,0.55)';
+  g.shadowBlur = 6;
+  g.shadowOffsetX = 3;
+  g.shadowOffsetY = 3;
+
+  g.strokeStyle = 'rgba(60,15,0,0.35)';
+  g.lineWidth = 7;
+  g.lineJoin = 'round';
+  g.strokeText('Von Dutch', cx, cy - 1);
+
+  g.shadowBlur = 0; g.shadowOffsetX = 0; g.shadowOffsetY = 0;
+  g.fillStyle = ink;
+  g.fillText('Von Dutch', cx, cy - 1);
+
+  /* Underline swoop beneath the script — signature flourish. */
+  g.strokeStyle = 'rgba(60,15,0,0.3)';
+  g.lineWidth = 7;
+  g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(cx - 105, cy + 38);
+  g.bezierCurveTo(cx - 40, cy + 52, cx + 40, cy + 44, cx + 110, cy + 36);
+  g.stroke();
+  g.strokeStyle = ink;
+  g.lineWidth = 4.5;
+  g.beginPath();
+  g.moveTo(cx - 105, cy + 38);
+  g.bezierCurveTo(cx - 40, cy + 52, cx + 40, cy + 44, cx + 110, cy + 36);
+  g.stroke();
+
+  g.restore();
+
+  /* TM mark — top right of oval. */
+  g.fillStyle = ink;
+  g.font = 'bold 14px Arial,sans-serif';
+  g.textAlign = 'left';
+  g.textBaseline = 'top';
+  g.fillText('™', cx + rx - 22, cy - ry + 10);
 
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -9889,14 +9809,14 @@ const G = {
   }),
   /* Cardboard paper crown: full 360° brow circlet whose top edge rises into
      ornamental rounded peaks (front peak tallest). Bottom sits at y=0. */
-  paperCrown: () => geoCache('pcrown11', () => {
+  paperCrown: () => geoCache('pcrown12', () => {
     /* Soft rounded peaks with a mild fleur waist — closer to BK cardboard
        die-cuts than sharp triangular spikes. Radius follows the skull at
        each azimuth so the band wraps the whole head, not a front arc.
        8 peaks: k=0 front (+Z), k=4 exactly at the back (180°) so the
        crown reads as a continuous band from any camera angle. */
     const SEGS = 168, ROWS = 28, NPEAKS = 8;
-    const BAND = 0.44, PEAK = 0.36;  /* tall band = solid ring; short extra peak = clear tips */
+    const BAND = 0.50, PEAK = 0.36;  /* taller band = solid ring more visible from all angles */
     const VALLEY = 0.40; /* valleys still visible but band height ensures full wrap */
     const SEAT_Y = 0.34; /* brow hem — must match buildHair BASE_Y */
     const headHorizR = (ny, az) => {
@@ -9933,7 +9853,7 @@ const G = {
       const newY = u * h;
       const flare = 1 + u * peakAmt * 0.032;
       const ny = SEAT_Y + newY;
-      const clr = 1.13 + peakAmt * 0.025;
+      const clr = 1.22 + peakAmt * 0.025;
       const r = headHorizR(ny, ang) * clr * flare;
       p.setXYZ(i, Math.sin(ang) * r, newY, Math.cos(ang) * r);
     }
@@ -10304,7 +10224,7 @@ const HATS = {
   /* Woodland camo flat brim — same ball-cap shape, printed camo map.
      Hollow orange gothic "Lobby" embroidery on the front panel. */
   camocap:  { crown: '#5c6b3a', accent: '#3a4528', flat: true, camo: true,
-              gothic: 'Lobby', gothicInk: '#ff5a00' },
+              gothic: 'Von Dutch', gothicInk: '#e87722' },
   /* Soft dad hat — small yellow banana on the front panel, not the house mark. */
   dadhat:   { crown: null,      accent: null,     soft: true, banana: true },
   /* Two-tone club cap: white crown, saturated green bill/button/sweatband,
@@ -12035,12 +11955,12 @@ function buildHair(dna, mat, extraMats) {
         if (extraMats) extraMats.push(logoMat);
         const logo = new THREE.Mesh(geoCache('quad', () => new THREE.PlaneGeometry(1, 1)), logoMat);
         if (yankeesMark || knicksMark) {
-          logo.position.set(0, 0.55, 1.12);
-          logo.rotation.x = -0.32;
+          logo.position.set(0, 0.63, 1.10);
+          logo.rotation.x = -0.38;
           logo.scale.set(0.48, 0.52, 1);
         } else {
-          logo.position.set(0, 0.52, 1.12);   // just clear of the crown surface
-          logo.rotation.x = -0.3;
+          logo.position.set(0, 0.60, 1.10);
+          logo.rotation.x = -0.36;
           logo.scale.set(0.5, 0.38, 1);
         }
         logo.renderOrder = 6;
@@ -12055,10 +11975,10 @@ function buildHair(dna, mat, extraMats) {
         });
         if (extraMats) extraMats.push(gothMat);
         const goth = new THREE.Mesh(geoCache('quad', () => new THREE.PlaneGeometry(1, 1)), gothMat);
-        /* Wide horizontal pill, centred on the front panel above the brim. */
-        goth.position.set(0, 0.58, 1.10);
-        goth.rotation.x = -0.32;
-        goth.scale.set(0.92, 0.46, 1);
+        /* Oval Von Dutch patch, front-centre panel sitting against the cap fabric. */
+        goth.position.set(0, 0.62, 1.09);
+        goth.rotation.x = -0.38;
+        goth.scale.set(0.54, 0.44, 1);
         goth.renderOrder = 6;
         hatOut.push(goth);
       }
@@ -14901,49 +14821,81 @@ function addFruitBowl(parent, x, y, z) {
 
 function makeDietCokeTex() {
   const W = 256, H = 512, c = cv(W, H), g = c.getContext('2d');
-  // Metallic silver body
+
+  // Full silver/aluminum body — dark edges, bright center
   const sg = g.createLinearGradient(0, 0, W, 0);
-  sg.addColorStop(0,   '#7a8a90'); sg.addColorStop(0.18, '#d8e2e8');
-  sg.addColorStop(0.50, '#f2f6f8'); sg.addColorStop(0.82, '#d8e2e8');
-  sg.addColorStop(1,   '#7a8a90');
+  sg.addColorStop(0,    '#4a5c62');
+  sg.addColorStop(0.12, '#b0c2c8');
+  sg.addColorStop(0.38, '#e8f2f6');
+  sg.addColorStop(0.52, '#f4fafc');
+  sg.addColorStop(0.72, '#dce8ec');
+  sg.addColorStop(0.90, '#a8bac0');
+  sg.addColorStop(1,    '#4a5c62');
   g.fillStyle = sg; g.fillRect(0, 0, W, H);
-  // Red band: runs from ~18% to ~82% of can height
-  const rb = H * 0.18, rh = H * 0.64;
-  const rg = g.createLinearGradient(0, 0, W, 0);
-  rg.addColorStop(0,   '#9e0010'); rg.addColorStop(0.2, '#e30613');
-  rg.addColorStop(0.5, '#f52020'); rg.addColorStop(0.8, '#e30613');
-  rg.addColorStop(1,   '#9e0010');
-  g.fillStyle = rg; g.fillRect(0, rb, W, rh);
-  // Wavy silver stripe separating silver from red at top
-  g.fillStyle = '#cdd6dc';
-  g.beginPath(); g.moveTo(0, rb);
-  g.bezierCurveTo(W*.25, rb-14, W*.6, rb+10, W, rb-4);
-  g.lineTo(W, rb+22); g.bezierCurveTo(W*.6, rb+32, W*.25, rb+8, 0, rb+22);
-  g.closePath(); g.fill();
-  // Wavy silver stripe at bottom of red band
-  g.beginPath(); g.moveTo(0, rb+rh);
-  g.bezierCurveTo(W*.3, rb+rh-10, W*.7, rb+rh+14, W, rb+rh+2);
-  g.lineTo(W, rb+rh-22); g.bezierCurveTo(W*.7, rb+rh-6, W*.3, rb+rh-26, 0, rb+rh-22);
-  g.closePath(); g.fill();
-  // "diet" small italic white text
-  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.font = 'italic 500 36px "Times New Roman",Georgia,serif';
-  g.fillText('diet', W/2, rb + rh*0.26);
-  // "Coke" large italic serif
-  g.font = 'italic bold 88px "Times New Roman",Georgia,serif';
-  g.fillText('Coke', W/2, rb + rh*0.58);
-  // Coca-Cola style swoosh under "Coke"
-  g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = 3; g.lineCap = 'round';
+
+  // Curved vertical highlight stripe (left-center)
+  const hg = g.createLinearGradient(W*0.22, 0, W*0.46, 0);
+  hg.addColorStop(0, 'rgba(255,255,255,0)');
+  hg.addColorStop(0.5, 'rgba(255,255,255,0.28)');
+  hg.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = hg; g.fillRect(0, H*0.08, W, H*0.78);
+
+  // Thin red accent band at top-body join
+  g.fillStyle = '#cc0a14';
+  g.fillRect(0, H*0.08, W, H*0.018);
+
+  // "diet" — small black italic (real can has dark grey/black "diet" text)
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = 'italic 600 36px "Times New Roman",Georgia,serif';
+  g.fillStyle = '#181818';
+  g.fillText('diet', W / 2, H * 0.30);
+
+  // "Coke" — large red Coca-Cola-style Spencerian script
+  g.font = 'italic bold 104px "Brush Script MT","Segoe Script","Apple Chancery","Palatino Linotype",Georgia,serif';
+  // Shadow pass
+  g.strokeStyle = 'rgba(100,0,10,0.28)';
+  g.lineWidth = 7;
+  g.lineJoin = 'round';
+  g.strokeText('Coke', W/2 + 2, H*0.52 + 2);
+  // Fill
+  g.fillStyle = '#cc0a14';
+  g.fillText('Coke', W / 2, H * 0.52);
+
+  // White dynamic highlight ribbon on "Coke" for depth
+  g.save();
+  g.globalCompositeOperation = 'screen';
+  g.fillStyle = 'rgba(255,255,255,0.12)';
+  g.fillRect(W*0.12, H*0.40, W*0.38, H*0.18);
+  g.restore();
+
+  // Swoosh / underline flourish below "Coke" (Coca-Cola style wave)
+  g.strokeStyle = 'rgba(180,0,20,0.50)'; g.lineWidth = 3.5; g.lineCap = 'round';
   g.beginPath();
-  g.moveTo(W*0.12, rb+rh*0.76); g.bezierCurveTo(W*0.38, rb+rh*0.70, W*0.62, rb+rh*0.82, W*0.88, rb+rh*0.76);
+  g.moveTo(W*0.08, H*0.63);
+  g.bezierCurveTo(W*0.30, H*0.606, W*0.62, H*0.652, W*0.92, H*0.626);
   g.stroke();
-  // Repaint silver top cap
-  const tg = g.createLinearGradient(0, 0, W, 0);
-  tg.addColorStop(0, '#6e7c82'); tg.addColorStop(0.5, '#aab6bc'); tg.addColorStop(1, '#6e7c82');
-  g.fillStyle = tg; g.fillRect(0, 0, W, rb); g.fillRect(0, rb+rh, W, H-(rb+rh));
-  // Shine highlight on silver top
-  g.fillStyle = 'rgba(255,255,255,0.18)';
-  g.fillRect(W*0.30, 0, W*0.22, rb);
+
+  // Red bottom stripe
+  g.fillStyle = '#cc0a14';
+  g.fillRect(0, H * 0.78, W, H * 0.08);
+
+  // White bottom cap with "0 CALORIES PER CAN"
+  g.fillStyle = sg; g.fillRect(0, H * 0.86, W, H * 0.14);
+  g.fillStyle = '#222222';
+  g.font = 'bold 13px Arial,Helvetica,sans-serif';
+  g.textAlign = 'center';
+  g.fillText('0 CALORIES PER CAN', W / 2, H * 0.908);
+  g.font = '11px Arial,sans-serif';
+  g.fillStyle = '#444';
+  g.fillText('12 FL OZ (355 mL)', W / 2, H * 0.938);
+
+  // Crimp lines at very top and bottom
+  g.strokeStyle = 'rgba(60,80,90,0.4)'; g.lineWidth = 2;
+  for (let i = 0; i < 4; i++) {
+    g.beginPath(); g.moveTo(0, H*0.025 + i*3); g.lineTo(W, H*0.025 + i*3); g.stroke();
+    g.beginPath(); g.moveTo(0, H*0.975 - i*3); g.lineTo(W, H*0.975 - i*3); g.stroke();
+  }
+
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4; t.userData.own = true; return t;
 }
@@ -15446,56 +15398,178 @@ function drawCabinetInvader(g, cx, cy, s, body = '#0a0a12', eye = '#e8fff0') {
   R(1, 0, 2, 2);
 }
 
-/** Tall inbox-monster silhouette — Space Invaders cabinet side-panel style. */
+/** Space Invaders–style side-panel art for the Inbox Invaders arcade cabinet.
+    Deep-space navy background, yellow lunar terrain, large monster silhouettes,
+    UFOs, and a red edge stripe — inspired by classic 1978 arcade cabinet art. */
 function makeArcadeSideArtTexture(mirror = false) {
-  const W = 128, H = 360, c = cv(W, H), g = c.getContext('2d');
+  const W = 256, H = 512, c = cv(W, H), g = c.getContext('2d');
   if (mirror) { g.translate(W, 0); g.scale(-1, 1); }
 
-  // Dark base
-  g.fillStyle = '#0c1830'; g.fillRect(0, 0, W, H);
-  // Horizontal scan lines
-  for (let y = 0; y < H; y += 10) {
-    g.fillStyle = y % 20 === 0 ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)';
-    g.fillRect(0, y, W, 4);
+  // ── Space background ──────────────────────────────────────────────
+  const skyGrad = g.createLinearGradient(0, 0, 0, H * 0.7);
+  skyGrad.addColorStop(0,    '#050e2a');
+  skyGrad.addColorStop(0.35, '#0a1a4a');
+  skyGrad.addColorStop(1,    '#0d2060');
+  g.fillStyle = skyGrad; g.fillRect(0, 0, W, H);
+
+  // ── Stars ─────────────────────────────────────────────────────────
+  const rng = (seed) => { let x = Math.sin(seed) * 43758.5453; return x - Math.floor(x); };
+  for (let i = 0; i < 80; i++) {
+    const sx = rng(i * 3 + 1) * W;
+    const sy = rng(i * 3 + 2) * H * 0.65;
+    const ss = rng(i * 3 + 3) < 0.2 ? 2.2 : 1.2;
+    const sa = 0.4 + rng(i * 3) * 0.6;
+    g.fillStyle = `rgba(255,255,255,${sa.toFixed(2)})`;
+    g.fillRect(sx, sy, ss, ss);
+  }
+  // A few brighter "planet" dots
+  for (const [px, py, pr, col] of [[W*0.75, H*0.08, 5, 'rgba(255,220,180,0.8)'], [W*0.18, H*0.18, 3.5, 'rgba(180,210,255,0.7)']]) {
+    g.fillStyle = col;
+    g.beginPath(); g.arc(px, py, pr, 0, Math.PI * 2); g.fill();
   }
 
-  // Bold yellow lightning bolt stripe — classic arcade side graphic
-  g.fillStyle = '#f5c800';
+  // ── UFO silhouettes ───────────────────────────────────────────────
+  const drawUFO = (ux, uy, us) => {
+    g.fillStyle = '#0a0a20';
+    g.beginPath(); g.ellipse(ux, uy, us * 18, us * 6, 0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(ux, uy - us * 4, us * 9, us * 7, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(220,80,80,0.85)';
+    for (let d = -1; d <= 1; d += 1) {
+      g.beginPath(); g.arc(ux + d * us * 5, uy, us * 1.5, 0, Math.PI * 2); g.fill();
+    }
+  };
+  drawUFO(W * 0.72, H * 0.10, 1.4);
+  drawUFO(W * 0.25, H * 0.22, 1.0);
+
+  // ── Small invader sprites in the sky ──────────────────────────────
+  drawCabinetInvader(g, W * 0.20, H * 0.06, 1.8, '#0a0a12', '#f5c800');
+  drawCabinetInvader(g, W * 0.60, H * 0.16, 1.5, '#0a0a12', '#39ff62');
+  drawCabinetInvader(g, W * 0.40, H * 0.28, 1.3, '#0a0a12', '#ffffff');
+
+  // ── Yellow lunar terrain (bottom 35%) ─────────────────────────────
+  const groundY = H * 0.65;
+  const groundGrad = g.createLinearGradient(0, groundY, 0, H);
+  groundGrad.addColorStop(0,   '#c8a020');
+  groundGrad.addColorStop(0.3, '#d4b030');
+  groundGrad.addColorStop(1,   '#8a6c10');
+  g.fillStyle = groundGrad;
   g.beginPath();
-  g.moveTo(W * 0.10, 0);
-  g.lineTo(W * 0.52, 0);
-  g.lineTo(W * 0.28, H * 0.46);
-  g.lineTo(W * 0.62, H * 0.46);
-  g.lineTo(W * 0.20, H);
-  g.lineTo(W * 0.00, H);
-  g.lineTo(W * 0.36, H * 0.50);
-  g.lineTo(W * 0.00, H * 0.50);
-  g.closePath(); g.fill();
+  g.moveTo(0, groundY);
+  // Rocky terrain horizon with bumps
+  g.bezierCurveTo(W*0.12, groundY - 22, W*0.22, groundY + 8, W*0.32, groundY - 14);
+  g.bezierCurveTo(W*0.42, groundY - 30, W*0.52, groundY + 4, W*0.62, groundY - 18);
+  g.bezierCurveTo(W*0.72, groundY - 34, W*0.84, groundY - 6, W, groundY - 10);
+  g.lineTo(W, H); g.lineTo(0, H); g.closePath(); g.fill();
 
-  // White border stripes flanking the bolt
-  g.fillStyle = '#ffffff';
-  g.fillRect(W * 0.52, 0, 6, H * 0.46);
-  g.fillRect(W * 0.62, H * 0.46, 6, H * 0.54);
-  g.fillRect(W * 0.00, H * 0.48, W * 0.38, 6);
+  // Darker crevices / rock shadows on terrain
+  g.strokeStyle = 'rgba(60,40,0,0.6)'; g.lineWidth = 3; g.lineCap = 'round';
+  for (const [rx, ry, rw] of [[W*0.15, groundY+20, 30], [W*0.45, groundY+35, 22], [W*0.75, groundY+18, 26]]) {
+    g.beginPath(); g.moveTo(rx, ry - 4); g.quadraticCurveTo(rx + rw/2, ry + 8, rx + rw, ry - 2); g.stroke();
+  }
 
-  // Dark overlay over right panel
-  g.fillStyle = 'rgba(10,16,32,0.72)';
-  g.fillRect(W * 0.60, 0, W * 0.40, H);
+  // ── Large alien monster silhouettes ───────────────────────────────
+  // Monster helper: bipedal creature, standing on terrain
+  const drawMonster = (mx, my, ms, col) => {
+    g.fillStyle = col;
+    g.strokeStyle = '#cc2020';
+    g.lineWidth = 2.5;
+    // Legs
+    for (const lx of [-ms * 14, ms * 4]) {
+      g.beginPath();
+      g.moveTo(mx + lx, my);
+      g.lineTo(mx + lx - ms * 4, my - ms * 36);
+      g.lineTo(mx + lx + ms * 14, my - ms * 36);
+      g.lineTo(mx + lx + ms * 12, my);
+      g.closePath(); g.fill();
+    }
+    // Body
+    g.beginPath();
+    g.moveTo(mx - ms * 30, my - ms * 36);
+    g.lineTo(mx + ms * 30, my - ms * 36);
+    g.lineTo(mx + ms * 26, my - ms * 100);
+    g.lineTo(mx + ms * 18, my - ms * 110);
+    g.lineTo(mx - ms * 18, my - ms * 110);
+    g.lineTo(mx - ms * 26, my - ms * 100);
+    g.closePath(); g.fill();
+    // Arms raised
+    g.beginPath();
+    g.moveTo(mx - ms * 26, my - ms * 82);
+    g.lineTo(mx - ms * 52, my - ms * 64);
+    g.lineTo(mx - ms * 60, my - ms * 56);  // claw tip
+    g.lineTo(mx - ms * 56, my - ms * 44);
+    g.lineTo(mx - ms * 44, my - ms * 58);
+    g.lineTo(mx - ms * 38, my - ms * 70);
+    g.lineTo(mx - ms * 26, my - ms * 72);
+    g.closePath(); g.fill();
+    g.beginPath();
+    g.moveTo(mx + ms * 26, my - ms * 82);
+    g.lineTo(mx + ms * 52, my - ms * 62);
+    g.lineTo(mx + ms * 62, my - ms * 48);
+    g.lineTo(mx + ms * 56, my - ms * 36);
+    g.lineTo(mx + ms * 46, my - ms * 54);
+    g.lineTo(mx + ms * 40, my - ms * 66);
+    g.lineTo(mx + ms * 26, my - ms * 72);
+    g.closePath(); g.fill();
+    // Head with horns
+    g.beginPath();
+    g.moveTo(mx - ms * 18, my - ms * 110);
+    g.lineTo(mx - ms * 20, my - ms * 130);  // left horn
+    g.lineTo(mx - ms * 14, my - ms * 126);
+    g.lineTo(mx - ms * 14, my - ms * 140);
+    g.lineTo(mx - ms * 6, my - ms * 130);
+    g.lineTo(mx, my - ms * 150);             // top of head
+    g.lineTo(mx + ms * 6, my - ms * 130);
+    g.lineTo(mx + ms * 14, my - ms * 140);
+    g.lineTo(mx + ms * 14, my - ms * 126);
+    g.lineTo(mx + ms * 20, my - ms * 130);  // right horn
+    g.lineTo(mx + ms * 18, my - ms * 110);
+    g.closePath(); g.fill();
+    // Glowing eyes
+    g.fillStyle = '#ff3322';
+    g.beginPath(); g.arc(mx - ms * 8, my - ms * 118, ms * 4, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(mx + ms * 8, my - ms * 118, ms * 4, 0, Math.PI * 2); g.fill();
+    // Eye glow halo
+    g.fillStyle = 'rgba(255,60,20,0.3)';
+    g.beginPath(); g.arc(mx - ms * 8, my - ms * 118, ms * 7, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(mx + ms * 8, my - ms * 118, ms * 7, 0, Math.PI * 2); g.fill();
+    // Red outline glow around monster body
+    g.strokeStyle = 'rgba(200,20,20,0.55)';
+    g.lineWidth = ms * 3.5;
+    g.lineJoin = 'round';
+    g.beginPath();
+    g.moveTo(mx - ms * 26, my - ms * 36);
+    g.lineTo(mx + ms * 26, my - ms * 36);
+    g.lineTo(mx + ms * 26, my - ms * 100);
+    g.lineTo(mx + ms * 18, my - ms * 110);
+    g.lineTo(mx - ms * 18, my - ms * 110);
+    g.lineTo(mx - ms * 26, my - ms * 100);
+    g.closePath(); g.stroke();
+  };
 
-  // Big invader in right panel
-  drawCabinetInvader(g, 96, 90,  2.8, '#0a0a12', '#39ff62');
-  drawCabinetInvader(g, 96, 170, 2.4, '#0a0a12', '#f5c800');
-  drawCabinetInvader(g, 96, 240, 2.0, '#0a0a12', '#ffffff');
+  const groundSurface = groundY + 8;
+  drawMonster(W * 0.30, groundSurface, 0.95, '#08080e');
+  drawMonster(W * 0.75, groundSurface - 12, 0.72, '#0a0a14');
 
-  // "INBOX INVADERS" text down the right edge
-  g.save(); g.translate(W - 10, H * 0.72); g.rotate(-Math.PI / 2);
-  g.fillStyle = '#ffffff'; g.font = 'bold 11px Arial,sans-serif';
+  // ── Red edge stripe (cabinet bezel) ───────────────────────────────
+  g.fillStyle = '#cc1818';
+  g.fillRect(0, 0, 9, H);
+  g.fillStyle = '#882020';
+  g.fillRect(9, 0, 3, H);
+
+  // ── Title text ────────────────────────────────────────────────────
+  g.save();
+  g.translate(W - 14, H * 0.30);
+  g.rotate(-Math.PI / 2);
   g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = 'bold 16px "Arial Black",Arial,sans-serif';
+  g.fillStyle = '#f5c800';
+  g.strokeStyle = 'rgba(0,0,0,0.6)'; g.lineWidth = 3;
+  g.strokeText('INBOX INVADERS', 0, 0);
   g.fillText('INBOX INVADERS', 0, 0);
   g.restore();
 
   const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   return t;
 }
 
