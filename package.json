@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
+    "@vercel/analytics": "^2.0.1",
     "jsonwebtoken": "^9.0.2",
     "passkit-generator": "^3.5.7",
     "qrcode": "^1.5.4",
