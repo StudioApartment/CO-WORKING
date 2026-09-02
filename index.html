@@ -1012,7 +1012,6 @@ body.interior-open{cursor:auto;touch-action:auto}
       <button class="tool" id="btnMiiInfo" type="button" aria-label="Co-Worker card" title="Co-Worker card">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="9.2"/>
           <path d="M12 11.2v5.4"/>
           <circle cx="12" cy="8.1" r="1.15" fill="currentColor" stroke="none"/>
         </svg>
@@ -8501,7 +8500,7 @@ const G = {
       fade > 0.50 ? 1.004 : (crest > 0.12 ? 1.006 : 1.010)));
     return { nx, ny, nz };
   }),
-  medium: (r) => geoCache(`mopB${r}`, () => {
+  medium: (r) => geoCache(`mopC${r}`, () => {
     /* Mop-top from the photo library: jagged triangular bangs, mixed tapered points,
        and a few crown tufts added in buildHair. */
     const tl = 2.38;
@@ -8554,8 +8553,8 @@ const G = {
       nz *= 1 + fluff * 0.36;
 
       const bangs = faceWin * Math.pow(Math.max(0, (u - 0.12) / 0.88), 1.02);
-      const notch = Math.exp(-(phi * phi) * 10) * faceWin;
-      ny -= bangs * (0.20 + lobes * 0.38) * (1 - notch * 0.30);
+      const notch = Math.exp(-(phi * phi) * 7) * faceWin;
+      ny -= bangs * (0.20 + lobes * 0.38) * (1 - notch * 0.78);
       nz += bangs * (0.07 - notch * 0.03);
       const frame = hairFrame(ux, uy, azFront, azBack, side);
       ({ nx, ny, nz } = thinHairline(nx, ny, nz, {
@@ -18773,7 +18772,7 @@ function placeMiiDock(m) {
   const cy = r.top + (-_vt.y * 0.5 + 0.5) * r.height;
   const pillRightPx = tagPxW * ((plate.pillRight - plate.W / 2) / plate.W);
   const pillCyOffset = tagPx * ((plate.spriteCy - plate.pillCy) / plate.H);
-  dock.style.left = (cx + pillRightPx + 2) + 'px';
+  dock.style.left = (cx + pillRightPx - iconPx - 2) + 'px';
   dock.style.top = (cy - pillCyOffset) + 'px';
   dock.classList.toggle('mine', m.mine === true);
   dock.classList.add('show');
