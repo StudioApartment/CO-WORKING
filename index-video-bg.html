@@ -5,9 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CO—WORKING</title>
   <meta name="description" content="CO—WORKING — a fictional corporation that accidentally becomes a real one. Enterprise solutions for creative people.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.coworking.fyi/">
   <meta property="og:title" content="CO—WORKING">
   <meta property="og:description" content="A fictional corporation that accidentally becomes a real one. Enterprise solutions for creative people.">
-  <meta property="og:image" content="images/hero-scan.png">
+  <meta property="og:image" content="https://www.coworking.fyi/images/og-plaza.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:alt" content="The CO—WORKING office">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CO—WORKING">
+  <meta name="twitter:description" content="A fictional corporation that accidentally becomes a real one. Enterprise solutions for creative people.">
+  <meta name="twitter:image" content="https://www.coworking.fyi/images/og-plaza.jpg">
   <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="images/favicon-light.png" type="image/png" media="(prefers-color-scheme: light)">
   <link rel="icon" href="images/favicon-dark.png" type="image/png" media="(prefers-color-scheme: dark)">
@@ -54,7 +64,7 @@
       height: auto;
       max-height: 100%;
       width: auto;
-      animation: grow-video 60s linear forwards;
+      animation: grow-video 3.5s linear forwards;
     }
 
     @keyframes grow-video {
@@ -71,7 +81,6 @@
       position: fixed;
       top: 50%;
       left: 2rem;
-      transform: translateY(-50%);
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -80,22 +89,36 @@
       text-decoration: none;
       color: inherit;
       cursor: pointer;
+      animation: brew-drift 2.5s ease-in forwards;
     }
 
+    @keyframes brew-drift {
+      0%   { transform: translateY(-50%); opacity: 1; }
+      70%  { transform: translateY(calc(-50% + 22px)); opacity: 1; }
+      100% { transform: translateY(calc(-50% + 32px)); opacity: 0; }
+    }
+    .logo-overlay { animation-duration: 3.5s; }
+
     .logo-we-are {
-      font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
-      font-size: clamp(1.5rem, 5vw, 3rem);
-      font-weight: 700;
-      letter-spacing: -0.02em;
+      font-family: "Arial Black", Impact, "Franklin Gothic Heavy", sans-serif;
+      font-size: clamp(1.2rem, 3.5vw, 2.2rem);
+      font-weight: 900;
+      letter-spacing: 0.01em;
       color: #fff;
-      margin-bottom: 0.85rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .logo-brewing {
+      font-family: "Arial Black", Impact, "Franklin Gothic Heavy", sans-serif;
+      font-size: clamp(2.5rem, 9vw, 6rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: #fff;
+      line-height: 0.95;
     }
 
     .logo-main {
-      width: auto;
-      height: auto;
-      max-width: min(90vw, 36rem);
-      filter: brightness(0) invert(1);
+      display: none;
     }
 
     .site-nav {
@@ -387,9 +410,65 @@
   <!-- Logo Overlay -->
   <a href="/" class="logo-overlay">
     <p class="logo-we-are">we are</p>
+    <p class="logo-brewing">brewing...</p>
     <img class="logo-main" src="images/logo-lockup.png?v=2" alt="CO—WORKING">
   </a>
 
+  <audio id="brewAudio" src="images/brewing-music.mp3" preload="auto"></audio>
+  <script>
+    (function() {
+      const a = document.getElementById('brewAudio');
+      a.play().catch(() => {});
+
+      function closeOverlay() {
+        try {
+          window.parent.postMessage({ type: 'coworking:close-interior' }, location.origin);
+        } catch (e) {}
+        if (window.parent === window) history.back();
+      }
+
+      function playBrewDone() {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          // Steam hiss burst
+          const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.55), ctx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+          const noise = ctx.createBufferSource();
+          noise.buffer = buf;
+          const filt = ctx.createBiquadFilter();
+          filt.type = 'bandpass'; filt.frequency.value = 1400; filt.Q.value = 0.6;
+          const gNoise = ctx.createGain();
+          gNoise.gain.setValueAtTime(0.35, ctx.currentTime);
+          gNoise.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+          noise.connect(filt); filt.connect(gNoise); gNoise.connect(ctx.destination);
+          noise.start();
+          // Short descending tone
+          const osc = ctx.createOscillator();
+          osc.type = 'sine'; osc.frequency.setValueAtTime(420, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.45);
+          const gOsc = ctx.createGain();
+          gOsc.gain.setValueAtTime(0.18, ctx.currentTime);
+          gOsc.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+          osc.connect(gOsc); gOsc.connect(ctx.destination);
+          osc.start(); osc.stop(ctx.currentTime + 0.45);
+        } catch (e) {}
+      }
+
+      // Close when the zoom animation finishes (video hits full height)
+      const vid = document.querySelector('.video-bg video');
+      if (vid) {
+        vid.addEventListener('animationend', () => {
+          a.pause();
+          playBrewDone();
+          setTimeout(closeOverlay, 700);
+        }, { once: true });
+      }
+      // Fallback
+      setTimeout(closeOverlay, 8000);
+    })();
+  </script>
   <script src="/lib/interior-ui.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

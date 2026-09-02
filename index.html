@@ -299,7 +299,7 @@ body.native-cursor #pointer{display:none}
   from{opacity:0;transform:translate(0,-50%) translateX(-4px) scale(.88)}
   to{opacity:1;transform:translate(0,-50%)}
 }
-#miiInfo{position:relative;z-index:2}
+#miiInfo{position:relative;z-index:2;margin-left:calc(-1 * var(--info-zone,34px))}
 #miiTools{display:none;gap:6px;align-items:center;z-index:1}
 #miiDock.mine #miiTools{display:flex}
 #miiDock .tool{
@@ -309,17 +309,12 @@ body.native-cursor #pointer{display:none}
   box-shadow:inset 0 1px 0 #fff,0 3px 6px rgba(70,100,125,.3),0 0 0 2px #fff,0 0 0 3.5px #ccd8e0;
   transition:transform .13s cubic-bezier(.34,1.7,.5,1),box-shadow .18s,color .18s;
 }
-/* Info icon: naked “i” glyph next to the name tag — no circle. */
+/* Info icon: invisible click target over the “i” drawn in the 3D name tag texture. */
 #btnMiiInfo{
-  width:auto;height:auto;padding:2px;
-  color:var(--blue-dk);opacity:0.65;
-  background:none;box-shadow:none;border-radius:0;
+  width:var(--info-zone,34px);height:var(--info-icon,28px);padding:0;
+  opacity:0;background:none;box-shadow:none;border-radius:0;cursor:pointer;
 }
-#btnMiiInfo svg{width:var(--info-icon,9px);height:var(--info-icon,9px);flex-shrink:0}
-#btnMiiInfo:hover,#btnMiiInfo:focus-visible{
-  transform:scale(1.2);opacity:1;
-  box-shadow:none;outline:0;
-}
+#btnMiiInfo svg{display:none}
 #miiDock .tool:hover,#miiDock .tool:focus-visible{
   transform:translateY(-3px) scale(1.1);
   box-shadow:inset 0 1px 0 #fff,0 6px 12px rgba(70,100,125,.34),0 0 0 2px #fff,0 0 0 3.5px #9fd3ef,0 0 16px rgba(63,169,224,.5)
@@ -928,6 +923,59 @@ body:not(.plaza-ready) #pointer{visibility:hidden;opacity:0}
   border:0;background:#000;
 }
 body.interior-open #pointer{visibility:hidden;opacity:0}
+/* Brewing overlay — Mr. Coffee Sr. style */
+#brewingOverlay{
+  position:fixed;inset:0;z-index:4500;
+  background:rgba(10,10,10,.88);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity .25s;
+}
+#brewingOverlay.show{opacity:1;pointer-events:auto}
+.brew-badge{
+  background:#141414;border:1.5px solid #282828;
+  padding:22px 32px 18px;text-align:center;
+  box-shadow:0 12px 60px rgba(0,0,0,.7);
+  min-width:220px;
+}
+.brew-logo-line{
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:9px;letter-spacing:3.5px;color:#555;
+  text-transform:uppercase;margin-bottom:2px;
+}
+.brew-logo-name{
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:26px;font-weight:900;letter-spacing:-1px;
+  color:#e8e8e8;margin-bottom:16px;
+}
+.brew-switch-row{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:10px}
+.brew-switch{
+  width:36px;height:18px;
+  background:linear-gradient(#ff8c00,#d06000);
+  border-radius:3px;
+  box-shadow:0 0 10px rgba(255,140,0,.8),0 0 3px rgba(255,140,0,1);
+  animation:brew-glow 1s ease-in-out infinite alternate;
+}
+@keyframes brew-glow{
+  from{box-shadow:0 0 6px rgba(255,140,0,.6),0 0 2px rgba(255,140,0,1)}
+  to  {box-shadow:0 0 16px rgba(255,140,0,.95),0 0 5px rgba(255,140,0,1)}
+}
+.brew-status{
+  font-family:"Arial Black",Impact,sans-serif;
+  font-size:13px;letter-spacing:1.5px;color:#ff9a30;
+  font-weight:700;text-transform:uppercase;
+}
+.brew-cups{display:flex;gap:8px;justify-content:center;margin-top:14px}
+.brew-cup{
+  width:11px;height:13px;border:1.5px solid #383838;
+  border-bottom-width:2px;border-radius:0 0 2px 2px;position:relative;
+}
+.brew-cup::after{
+  content:'';position:absolute;right:-5px;top:2px;
+  width:4px;height:6px;border:1.5px solid #383838;
+  border-left:none;border-radius:0 3px 3px 0;
+}
+.brew-model{font-size:8px;color:#383838;letter-spacing:2.5px;text-transform:uppercase;margin-top:14px}
 body.interior-open{cursor:auto;touch-action:auto}
 @media (max-width:600px){
   .loader-content{top:50%;left:1.5rem;transform:translateY(-50%)}
@@ -937,6 +985,7 @@ body.interior-open{cursor:auto;touch-action:auto}
   .logo-main{max-width:min(52vw,11rem)}
 }
 </style>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 <div class="loader" id="loader">
@@ -1081,6 +1130,24 @@ body.interior-open{cursor:auto;touch-action:auto}
      WebGL scene stays mounted. Closed via postMessage or browser back. -->
 <div id="interiorOverlay" hidden aria-hidden="true">
   <iframe title="Interior" allow="autoplay; fullscreen; gamepad"></iframe>
+</div>
+
+<!-- Mr. Coffee Sr. brewing overlay — shown briefly before video opens -->
+<div id="brewingOverlay" aria-hidden="true">
+  <div class="brew-badge">
+    <div class="brew-logo-line">Mr. Coffee</div>
+    <div class="brew-logo-name">SR.</div>
+    <div class="brew-switch-row">
+      <div class="brew-switch"></div>
+      <div class="brew-status">Brewing…</div>
+    </div>
+    <div class="brew-cups">
+      <div class="brew-cup"></div>
+      <div class="brew-cup"></div>
+      <div class="brew-cup"></div>
+    </div>
+    <div class="brew-model">10 Cups &nbsp;✿&nbsp; ✿&nbsp; ✿</div>
+  </div>
 </div>
 
 <!-- ====================== WII HAND POINTER ====================== -->
@@ -4217,10 +4284,11 @@ function makeNameTexture(name, place) {
   _measure.font = TAG_PLACE_FONT;
   const locW = loc ? Math.ceil(_measure.measureText(loc).width) : 0;
 
-  const PAD = 36, M = 26, TAIL = 30, r = 49;
+  const PAD = 36, M = 26, TAIL = 30, r = 49, INFO_ZONE = 34;
   const h = loc ? 124 : 98;
-  // min width keeps the tail clear of the end caps
-  const w = Math.max(150, Math.max(nameW, locW) + PAD * 2);
+  // wText = pill width for name/loc; INFO_ZONE adds the "i" section at right
+  const wText = Math.max(150, Math.max(nameW, locW) + PAD * 2);
+  const w = wText + INFO_ZONE;
   const W = w + M * 2, H = h + M + TAIL + 6;
   const c = cv(W, H), g = c.getContext('2d');
   const x = M, y = M;
@@ -4229,7 +4297,8 @@ function makeNameTexture(name, place) {
   g.beginPath();
   g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r);
   g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  g.lineTo(x + w / 2 + 22, y + h); g.lineTo(x + w / 2, y + h + 30); g.lineTo(x + w / 2 - 22, y + h);
+  // Tail centered on text portion, not full pill width
+  g.lineTo(x + wText / 2 + 22, y + h); g.lineTo(x + wText / 2, y + h + 30); g.lineTo(x + wText / 2 - 22, y + h);
   g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
   g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y);
   g.closePath();
@@ -4241,12 +4310,25 @@ function makeNameTexture(name, place) {
   g.textAlign = 'center'; g.textBaseline = 'middle';
   g.fillStyle = '#4c6070';
   g.font = TAG_FONT;
-  g.fillText(label, x + w / 2, loc ? y + 44 : y + h / 2 + 2);
+  // Name and location centered on text portion of pill
+  g.fillText(label, x + wText / 2, loc ? y + 44 : y + h / 2 + 2);
   if (loc) {
     g.fillStyle = '#1b7fbc';
     g.font = TAG_PLACE_FONT;
-    g.fillText(loc, x + w / 2, y + 90);
+    g.fillText(loc, x + wText / 2, y + 90);
   }
+  // "i" info section — subtle separator + glyph at right of pill
+  g.save();
+  g.strokeStyle = 'rgba(100,140,170,0.22)';
+  g.lineWidth = 1.5; g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(x + wText, y + 14); g.lineTo(x + wText, y + h - 14);
+  g.stroke();
+  g.fillStyle = 'rgba(70,95,120,0.52)';
+  g.font = 'bold 22px "Helvetica Neue",Arial,system-ui,sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('i', x + wText + INFO_ZONE / 2, loc ? y + 44 : y + h / 2 + 2);
+  g.restore();
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
@@ -13361,7 +13443,7 @@ function framePlazaCamera(w, h) {
   controls.update();
 }
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0xc8d6e0, 1.05));
+const hemi = new THREE.HemisphereLight(0xffffff, 0xc8d6e0, 1.05); scene.add(hemi);
 const key = new THREE.DirectionalLight(0xfff6ea, 1.15); key.position.set(4.5, 9, 6.5); scene.add(key);
 const fill = new THREE.DirectionalLight(0xcfe4f7, 0.42); fill.position.set(-6, 4, -4); scene.add(fill);
 const rim = new THREE.DirectionalLight(0xffffff, 0.3); rim.position.set(0, 3, -9); scene.add(rim);
@@ -13828,11 +13910,15 @@ class OfficeDog {
     this.pos = new THREE.Vector3();
     this.facing = rand(0, TAU);
     this.targetFacing = this.facing;
-    this.state = 'idle';
-    this.timer = rand(0.8, 2.4);
+    this.state = 'rest';
+    this.timer = rand(2, 5);   // short initial rest → first zoomie
     this.speed = 0;
     this.walkPhase = rand(0, TAU);
     this.walkTarget = new THREE.Vector3();
+    this.zoomieDir = 1;
+    this.zoomieCount = 0;
+    this._nextState = null;
+    this._nextTimer = 0;
     this.hover = 0;
     this.tagShow = 0;
     this.name = loadDogName();
@@ -13957,6 +14043,16 @@ class OfficeDog {
     this.walkTarget.set(this.pos.x, 0, this.pos.z);
   }
 
+  pickPerimeterWaypoint() {
+    const R = this.world.bounds;
+    const curA = Math.atan2(this.pos.z, this.pos.x);
+    // Advance 90–150° in the chosen zoomie direction around the room
+    const step = (1.5 + rand(0, 0.9)) * (this.zoomieDir || 1);
+    const a = curA + step;
+    const r = rand(5.0, Math.min(7.0, R * 0.90));
+    this.walkTarget.set(Math.cos(a) * r, 0, Math.sin(a) * r);
+  }
+
   update(dt, t) {
     this.t += dt;
     const W = this.world;
@@ -13966,7 +14062,15 @@ class OfficeDog {
         this.speed = damp(this.speed, 0, 9, dt);
         this.timer -= dt;
         if (this.timer <= 0) {
-          if (chance(0.72)) {
+          const r = Math.random();
+          if (r < 0.30) {
+            // Spontaneous zoomie burst
+            this.zoomieDir = chance(0.5) ? 1 : -1;
+            this.zoomieCount = 0;
+            this.pickPerimeterWaypoint();
+            this.state = 'zoomie';
+            this.timer = rand(18, 28);
+          } else if (r < 0.78) {
             this.pickWaypoint();
             this.state = 'walk';
             this.timer = rand(2.5, 6.5);
@@ -13983,8 +14087,12 @@ class OfficeDog {
           const d = Math.hypot(dx, dz);
           this.timer -= dt;
           if (d < 0.22 || this.timer <= 0) {
-            this.state = 'idle';
-            this.timer = rand(0.6, 2.4);
+            if (this._nextState) {
+              this.state = this._nextState; this.timer = this._nextTimer;
+              this._nextState = null;
+            } else {
+              this.state = 'idle'; this.timer = rand(0.6, 2.4);
+            }
             break;
           }
           this.targetFacing = Math.atan2(dx, dz);
@@ -13993,6 +14101,40 @@ class OfficeDog {
           this.pos.x += Math.sin(this.facing) * this.speed * dt;
           this.pos.z += Math.cos(this.facing) * this.speed * dt;
           this.walkPhase += dt * this.speed * 10.5;
+        }
+        break;
+      case 'zoomie':
+        if (this.hover > 0.45) { this.speed = damp(this.speed, 0, 11, dt); break; }
+        {
+          const dx = this.walkTarget.x - this.pos.x, dz = this.walkTarget.z - this.pos.z;
+          const d = Math.hypot(dx, dz);
+          this.timer -= dt;
+          if (this.timer <= 0) {
+            // Zoomies over — trot back near center, then rest
+            const a = rand(0, TAU), rr = rand(0.8, 2.8);
+            this.walkTarget.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
+            this._nextState = 'rest'; this._nextTimer = rand(7, 15);
+            this.state = 'walk'; this.timer = rand(4, 9);
+            break;
+          }
+          if (d < 0.7) { this.zoomieCount++; this.pickPerimeterWaypoint(); }
+          this.targetFacing = Math.atan2(dx, dz);
+          const align = Math.max(0, Math.cos(wrapPi(this.targetFacing - this.facing)));
+          this.speed = damp(this.speed, 2.5 * align, 6, dt);
+          this.pos.x += Math.sin(this.facing) * this.speed * dt;
+          this.pos.z += Math.cos(this.facing) * this.speed * dt;
+          this.walkPhase += dt * this.speed * 14;
+        }
+        break;
+      case 'rest':
+        this.speed = damp(this.speed, 0, 9, dt);
+        this.timer -= dt;
+        if (this.timer <= 0) {
+          this.zoomieDir = chance(0.5) ? 1 : -1;
+          this.zoomieCount = 0;
+          this.pickPerimeterWaypoint();
+          this.state = 'zoomie';
+          this.timer = rand(20, 34);
         }
         break;
       case 'held': {
@@ -14065,21 +14207,36 @@ class OfficeDog {
 
   animate(dt, t) {
     const sp = this.speed;
-    const wag = sp > 0.04 ? Math.sin(t * 12) * 0.45 : Math.sin(t * 4.2 + this.t) * 0.22;
+    const zooming = this.state === 'zoomie';
+    const wag = sp > 0.04
+      ? Math.sin(t * (zooming ? 20 : 12)) * (zooming ? 0.70 : 0.45)
+      : Math.sin(t * 4.2 + this.t) * 0.22;
     this.tailPivot.rotation.y = wag;
 
     for (let i = 0; i < this.legs.length; i++) {
       const hip = this.legs[i];
       const ph = this.walkPhase + (i < 2 ? 0 : Math.PI);
-      const swing = sp > 0.04 ? Math.sin(ph) * 0.38 * sp : 0;
+      const swingAmt = zooming ? 0.60 : 0.38;
+      const swing = sp > 0.04 ? Math.sin(ph) * swingAmt * Math.min(sp, 1) : 0;
       hip.rotation.x = swing;
-      hip.position.y = 0.12 + Math.max(0, -Math.sin(ph)) * 0.018 * sp;
+      hip.position.y = 0.12 + Math.max(0, -Math.sin(ph)) * (zooming ? 0.048 : 0.018) * Math.min(sp, 1);
     }
 
-    const bob = sp > 0.04 ? Math.abs(Math.sin(this.walkPhase)) * 0.022 * sp : Math.sin(t * 2.1 + this.t) * 0.006;
+    let bob;
+    if (zooming && sp > 0.5) {
+      // Irregular big hops — two overlapping sine waves at different offsets
+      const h1 = Math.max(0, Math.sin(this.walkPhase * 0.5)) * 0.10;
+      const h2 = Math.max(0, Math.sin(this.walkPhase * 0.5 + 1.6)) * 0.055;
+      bob = h1 + h2;
+    } else if (this.state === 'rest') {
+      // Subtle breathing bob when sitting
+      bob = Math.sin(t * 1.8 + this.t) * 0.004;
+    } else {
+      bob = sp > 0.04 ? Math.abs(Math.sin(this.walkPhase)) * 0.022 * sp : Math.sin(t * 2.1 + this.t) * 0.006;
+    }
     this.pivot.position.y = bob;
     this.head.rotation.y = Math.sin(t * 1.3 + this.t) * 0.08;
-    this.head.rotation.x = sp > 0.04 ? -0.04 * sp : 0;
+    this.head.rotation.x = sp > 0.04 ? (zooming ? -0.10 : -0.04) * Math.min(sp, 1) : 0;
   }
 
   sync(dt = 0) {
@@ -14348,7 +14505,7 @@ function buildLeafyPlant() {
   }
   g.add(propShadow(0.95, 0.95));
   addPlantHit(g, 0.62, 1.1, 0.58);
-  return tagProp(g, 'plant-leafy', 'Water plants', true);
+  return g;
 }
 
 /** Thick aloe/succulent leaves in a terracotta pot. */
@@ -14367,7 +14524,7 @@ function buildAloePlant() {
   }
   g.add(propShadow(0.85, 0.85));
   addPlantHit(g, 0.55, 1.0, 0.55);
-  return tagProp(g, 'plant-aloe', 'Water plants', true);
+  return g;
 }
 
 /** Low glossy rosette succulent in a round white pot. */
@@ -14390,7 +14547,7 @@ function buildGlossySucculent() {
   addP(g, PG.ball(10), leaf, 0, 0.40, 0, 0.05, 0.04, 0.05);
   g.add(propShadow(0.8, 0.8));
   addPlantHit(g, 0.48, 0.58, 0.32);
-  return tagProp(g, 'plant-succulent', 'Water plants', true);
+  return g;
 }
 
 /** Columnar cactus with arms + tiny spines, white pot. */
@@ -14412,7 +14569,7 @@ function buildCactus() {
   }
   g.add(propShadow(0.75, 0.75));
   addPlantHit(g, 0.48, 1.2, 0.62);
-  return tagProp(g, 'plant-cactus', 'Water plants', true);
+  return g;
 }
 
 /** Tall bamboo stalks with lance leaves in a white pot. */
@@ -14439,7 +14596,7 @@ function buildBamboo() {
   }
   g.add(propShadow(1.05, 1.05));
   addPlantHit(g, 0.58, 1.5, 0.78);
-  return tagProp(g, 'plant-bamboo', 'Bamboo');
+  return g;
 }
 
 /** Arching Boston-style fern — lots of fronds, tiny leaflets. */
@@ -14476,7 +14633,7 @@ function buildFern() {
   }
   g.add(propShadow(0.95, 0.95));
   addPlantHit(g, 0.72, 1.05, 0.52);
-  return tagProp(g, 'plant-fern', 'Water plants', true);
+  return g;
 }
 
 /** World-space point on a prop for particles / SFX. */
@@ -14548,11 +14705,13 @@ const PlazaPropActions = {
   toggleLamp(root) {
     this.lampOn = !this.lampOn;
     const glow = root.userData.lampGlow;
+    const spot = root.userData.lampSpot;
     const bulb = root.userData.lampBulb;
-    if (glow) glow.intensity = this.lampOn ? 0.55 : 0;
+    if (glow) glow.intensity = this.lampOn ? 2.5 : 0;
+    if (spot) spot.intensity = this.lampOn ? 1.8 : 0;
     if (bulb && bulb.material) {
       bulb.material.emissive.setHex(this.lampOn ? 0xffe8c0 : 0x000000);
-      bulb.material.emissiveIntensity = this.lampOn ? 0.65 : 0;
+      bulb.material.emissiveIntensity = this.lampOn ? 2.5 : 0;
     }
     Sound.fx.lampSwitch(this.lampOn);
   },
@@ -14560,6 +14719,7 @@ const PlazaPropActions = {
     const p = propWorldPos(root, 0, 0.78, 0.14);
     PropFx.spawn('smoke', p.x, p.y, p.z, 14);
     Sound.fx.brew();
+    InteriorOverlay.open('/index-video-bg');
   },
   pourWater(root) {
     const p = propWorldPos(root, 0, 0.68, 0.08);
@@ -14585,16 +14745,23 @@ function buildTallLamp() {
     shadeMat, 0, 1.98, 0);
   addP(g, PG.cyl(16), pMat('#f2ebe0', 0.8), 0, 2.15, 0, 0.17, 0.03, 0.17);
   const bulbMat = new THREE.MeshStandardMaterial({
-    color: '#fff8e8', emissive: '#ffe8c0', emissiveIntensity: 0.65, roughness: 0.5
+    color: '#fff8e8', emissive: '#ffe8c0', emissiveIntensity: 2.5, roughness: 0.5
   });
   const bulb = addP(g, PG.cyl(16), bulbMat, 0, 1.82, 0, 0.16, 0.04, 0.16);
-  const glow = new THREE.PointLight(0xffe0b0, 0.55, 4.5, 2);
+  const glow = new THREE.PointLight(0xffe0b0, 2.5, 8.0, 2);
   glow.position.set(0, 1.85, 0);
   g.add(glow);
+  // Downward spot for floor cone
+  const spot = new THREE.SpotLight(0xffe8c0, 1.8, 6.5, Math.PI / 5, 0.5, 2);
+  spot.position.set(0, 1.85, 0);
+  spot.target.position.set(0, 0, 0);
+  g.add(spot);
+  g.add(spot.target);
   g.userData.lampGlow = glow;
+  g.userData.lampSpot = spot;
   g.userData.lampBulb = bulb;
   g.add(propShadow(0.9, 0.9));
-  return tagProp(g, 'lamp', 'Desk lamp', true);
+  return tagProp(g, 'lamp', 'Toggle lamp', true);
 }
 
 /** Puffy Wii-style lounge chair — seat faces local +Z. */
@@ -14614,7 +14781,7 @@ function buildLoungeChair() {
   addP(g, PG.cyl(8), wood, -0.26, 0.16, -0.20, 0.035, 0.32, 0.035);
   addP(g, PG.cyl(8), wood, 0.26, 0.16, -0.20, 0.035, 0.32, 0.035);
   g.add(propShadow(1.15, 1.05));
-  return tagProp(g, 'chair', 'Chair');
+  return g;
 }
 
 /** Round end table with a lower shelf. */
@@ -14636,7 +14803,7 @@ function buildEndTable() {
   addP(g, PG.cyl(18), dcM,  0.12, 0.622, 0.04,  0.082, 0.225, 0.082);  // Diet Coke can
   addP(g, PG.box(),   czM, -0.12, 0.638, -0.02, 0.162, 0.235, 0.080,  0, 0, -0.10);  // Cheez-It bag
   g.add(propShadow(0.95, 0.95));
-  return tagProp(g, 'end-table', 'End table');
+  return g;
 }
 
 /** Interlocking pill bands — pale yellow on soft cream plush pile. */
@@ -15033,7 +15200,50 @@ function addKitchenSnacks(parent) {
   }
 }
 
-/** Kitchen counter: coffee, water, cupboard, fruit. Front faces local +Z. */
+/** Intercom tablet — small screen on counter; opens bouncing-logo screensaver. */
+function buildIntercomTablet() {
+  const g = new THREE.Group();
+  const frameMat = pMat('#141c22', 0.55, 0.15);
+  addP(g, PG.box(), frameMat, 0, 0, 0, 0.24, 0.16, 0.018);
+  const W = 256, H = 168, c = cv(W, H), ctx = c.getContext('2d');
+  ctx.fillStyle = '#0b1620';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#122030';
+  ctx.fillRect(0, 0, W, 42);
+  ctx.font = 'bold 15px "Arial Black",sans-serif';
+  ctx.fillStyle = '#5af0a8';
+  ctx.textAlign = 'center';
+  ctx.fillText('Co—', W / 2, 28);
+  ctx.font = '700 11px Arial,sans-serif';
+  ctx.fillStyle = '#c8dde8';
+  ctx.letterSpacing = '2px';
+  ctx.fillText('INTERCOM', W / 2, 72);
+  ctx.fillStyle = '#1a4060';
+  ctx.beginPath();
+  ctx.roundRect(W / 2 - 44, 84, 88, 42, 5);
+  ctx.fill();
+  ctx.font = '700 10px Arial,sans-serif';
+  ctx.fillStyle = '#5af0a8';
+  ctx.letterSpacing = '1.5px';
+  ctx.fillText('VIEW ▶', W / 2, 110);
+  ctx.strokeStyle = '#1e3040';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < 3; i++) {
+    const y = 144 + i * 7;
+    ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(W - 20, y); ctx.stroke();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  const screenMat = new THREE.MeshStandardMaterial({
+    map: tex, roughness: 0.35, metalness: 0.05,
+    emissive: new THREE.Color(0x0b1a28), emissiveIntensity: 0.55
+  });
+  addP(g, PG.box(), screenMat, 0, 0, 0.010, 0.218, 0.144, 0.001);
+  // Large invisible hitbox so the tablet is easy to hover/click
+  addP(g, PG.box(), new THREE.MeshBasicMaterial({ visible: false }), 0, 0, 0.005, 0.55, 0.38, 0.025);
+  return tagProp(g, 'intercom', 'View Intercom', true, '/index-bounce.html');
+}
+
+/** Kitchen counter: coffee, water, cupboard. Front faces local +Z. */
 function buildKitchenette() {
   const g = new THREE.Group();
   const body = pMat('#eef2f5', 0.72);
@@ -15042,29 +15252,17 @@ function buildKitchenette() {
   const gold = pMat('#c9a14a', 0.4, 0.4);
   const top = pMat('#f4f7f9', 0.62);
 
-  addP(g, PG.box(), body, 0.15, 0.44, 0, 2.10, 0.88, 0.62);
-  addP(g, PG.box(), top, 0.15, 0.90, 0.01, 2.18, 0.06, 0.68);
-  addP(g, PG.box(), wood, 0.15, 0.90, 0.01, 2.20, 0.02, 0.70);
-  addP(g, PG.box(), wood, 0.15, 0.02, 0, 2.12, 0.04, 0.64);
+  // Extended counter (left cabinet removed; counter stretched to fill)
+  addP(g, PG.box(), body, -0.18, 0.44, 0, 2.76, 0.88, 0.62);
+  addP(g, PG.box(), top,  -0.18, 0.90, 0.01, 2.84, 0.06, 0.68);
+  addP(g, PG.box(), wood, -0.18, 0.90, 0.01, 2.86, 0.02, 0.70);
+  addP(g, PG.box(), wood, -0.18, 0.02, 0,    2.78, 0.04, 0.64);
 
-  const doors = [[-0.55, 0.42], [0.05, 0.42], [0.65, 0.42]];
+  const doors = [[-1.05, 0.42], [-0.55, 0.42], [0.05, 0.42], [0.65, 0.42]];
   for (const [dx, dy] of doors) {
     addP(g, PG.box(), door, dx, dy, 0.32, 0.52, 0.62, 0.03);
     addP(g, PG.box(), gold, dx + 0.18, dy, 0.34, 0.03, 0.08, 0.02);
   }
-
-  addP(g, PG.box(), body, -1.22, 0.92, -0.02, 0.58, 1.84, 0.58);
-  addP(g, PG.box(), wood, -1.22, 1.84, -0.02, 0.62, 0.04, 0.62);
-  addP(g, PG.box(), door, -1.38, 1.15, 0.28, 0.22, 0.70, 0.03);
-  addP(g, PG.box(), door, -1.06, 1.15, 0.28, 0.22, 0.70, 0.03);
-  addP(g, PG.box(), gold, -1.30, 1.15, 0.30, 0.025, 0.08, 0.02);
-  addP(g, PG.box(), gold, -1.14, 1.15, 0.30, 0.025, 0.08, 0.02);
-  addP(g, PG.box(), pMat('#dfe6eb', 0.78), -1.22, 0.42, 0.28, 0.48, 0.55, 0.04);
-  addP(g, PG.box(), wood, -1.22, 0.70, 0.12, 0.46, 0.03, 0.42);
-  addP(g, PG.box(), pMat('#f3eee6', 0.7), -1.34, 0.82, 0.10, 0.08, 0.18, 0.08);
-  addP(g, PG.box(), pMat('#e8dcc8', 0.7), -1.22, 0.80, 0.12, 0.10, 0.14, 0.10);
-  addP(g, PG.cyl(10), pMat('#d4453a', 0.45), -1.10, 0.86, 0.16, 0.04, 0.08, 0.04);
-  addP(g, PG.cyl(10), pMat('#5dad3a', 0.5), -1.10, 0.78, 0.08, 0.035, 0.07, 0.035);
 
   addP(g, PG.box(), body, 0.15, 1.28, -0.26, 1.40, 0.04, 0.16);
   addP(g, PG.box(), pMat('#d8e0e6', 0.75), 0.15, 1.48, -0.28, 1.36, 0.36, 0.04);
@@ -15078,11 +15276,17 @@ function buildKitchenette() {
   const water = buildCounterWater();
   water.position.set(0.85, 0.93, 0.02);
   g.add(water);
-  // fruit bowl removed — more counter space for snacks
+
+  // Intercom tablet — propped on extended counter section
+  const tablet = buildIntercomTablet();
+  tablet.position.set(-1.22, 1.00, 0.18);
+  tablet.rotation.x = -Math.PI * 0.08;
+  tablet.rotation.y = Math.PI * 0.06;
+  g.add(tablet);
 
   addKitchenSnacks(g);
-  g.add(propShadow(2.55, 1.15));
-  return tagProp(g, 'kitchenette', 'Kitchen');
+  g.add(propShadow(3.10, 1.15));
+  return g;
 }
 
 /** Tall fridge with a collaborative paint magnet on the door. */
@@ -15280,24 +15484,132 @@ function buildDeskLaptop() {
   addP(g, PG.cyl(14), pMat('#f4f6f8', 0.6), 0.08, 0.74, 0.18, 0.045, 0.10, 0.045);
   addP(g, PG.torus(0.012), pMat('#f4f6f8', 0.6), 0.13, 0.74, 0.18, 0.04, 0.04, 0.04, 0, 0, Math.PI / 2);
   g.add(propShadow(1.55, 0.95));
-  return tagProp(g, 'desk', 'Desk');
+  return g;
 }
 
 /** Stylized invaders cabinet — silhouette + neon green playfield, no trademark logos. */
 function makeInvaderScreenTexture(dashboard = false) {
+  if (dashboard) {
+    // ── Vintage Photoshop 4 (Mac, System 7) ──
+    const W = 512, H = 314, c = cv(W, H), g = c.getContext('2d');
+
+    // Desktop gray
+    g.fillStyle = '#7b7b7b';
+    g.fillRect(0, 0, W, H);
+
+    // ── Mac menu bar ──
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, W, 16);
+    g.fillStyle = '#000000';
+    g.font = 'bold 9px Geneva, Arial, sans-serif';
+    const menus = ['⌘', 'File', 'Edit', 'Mode', 'Image', 'Select', 'Filter', 'Window'];
+    let mx = 5;
+    for (const m of menus) {
+      g.fillText(m, mx, 12);
+      mx += g.measureText(m).width + (m === '⌘' ? 10 : 12);
+    }
+    g.strokeStyle = '#999'; g.lineWidth = 0.5;
+    g.beginPath(); g.moveTo(0,16); g.lineTo(W,16); g.stroke();
+
+    // ── Tool palette ──
+    const tx = 4, ty = 22, tw = 36, th = 210;
+    g.fillStyle = '#d4d0c8'; g.fillRect(tx, ty, tw, th);
+    // Title drag stripes
+    g.fillStyle = '#888888';
+    for (let i = 0; i < 4; i++) {
+      g.fillRect(tx+2, ty+2+i*3, tw-4, 1.5);
+    }
+    // Close box
+    g.fillStyle = '#000'; g.strokeStyle = '#000'; g.lineWidth = 0.7;
+    g.strokeRect(tx+2, ty+2, 10, 10);
+    // Tool buttons (2-column grid)
+    const toolColors = ['#cc3300','#3355cc','#222','#555','#884400','#006633','#333','#222','#555','#007788','#333','#666'];
+    for (let i = 0; i < 12; i++) {
+      const bx = tx + (i%2)*17 + 2, by = ty + 16 + Math.floor(i/2)*17 + 2;
+      g.fillStyle = '#c4c0b8'; g.fillRect(bx, by, 15, 15);
+      g.strokeStyle = '#888'; g.lineWidth = 0.5; g.strokeRect(bx, by, 15, 15);
+      // simple icon dot
+      g.fillStyle = toolColors[i] || '#444';
+      g.fillRect(bx+4, by+4, 7, 7);
+    }
+    // Foreground/background color swatches
+    g.fillStyle = '#000'; g.fillRect(tx+4, ty+110, 18, 18);
+    g.fillStyle = '#fff'; g.strokeStyle = '#888'; g.lineWidth = 0.5;
+    g.fillRect(tx+12, ty+118, 18, 18); g.strokeRect(tx+12, ty+118, 18, 18);
+
+    // ── Window helper ──
+    const psWin = (wx, wy, ww, wh, title) => {
+      // Shadow
+      g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(wx+3, wy+3, ww, wh);
+      // Body
+      g.fillStyle = '#d4d0c8'; g.fillRect(wx, wy, ww, wh);
+      g.strokeStyle = '#888'; g.lineWidth = 0.7; g.strokeRect(wx, wy, ww, wh);
+      // Title bar
+      g.fillStyle = '#2a2a2a'; g.fillRect(wx, wy, ww, 15);
+      // Drag stripes
+      g.fillStyle = 'rgba(255,255,255,0.12)';
+      for (let i=0;i<8;i++) g.fillRect(wx+28+i*6, wy+4, 4, 7);
+      // Close box
+      g.strokeStyle = '#fff'; g.lineWidth = 0.7; g.strokeRect(wx+3, wy+3, 9, 9);
+      // Title text
+      g.fillStyle = '#ffffff'; g.font = 'bold 8px Geneva, Arial, sans-serif';
+      g.textAlign = 'center'; g.fillText(title, wx+ww/2, wy+10); g.textAlign = 'left';
+      // Scrollbar right
+      g.fillStyle = '#b0aca4'; g.fillRect(wx+ww-10, wy+15, 10, wh-25);
+      g.strokeStyle = '#888'; g.strokeRect(wx+ww-10, wy+15, 10, wh-25);
+      // Scrollbar bottom
+      g.fillRect(wx, wy+wh-10, ww-10, 10); g.strokeRect(wx, wy+wh-10, ww-10, 10);
+      // Status bar
+      g.fillStyle = '#c4c0b8'; g.fillRect(wx+1, wy+wh-22, ww-11, 12);
+      g.strokeStyle = '#aaa'; g.strokeRect(wx+1, wy+wh-22, ww-11, 12);
+    };
+
+    // ── Window 1: hero-scan.png ──
+    const w1x=44, w1y=24, w1w=205, w1h=168;
+    psWin(w1x, w1y, w1w, w1h, 'hero-scan.png @ 55%');
+    // Status text
+    g.fillStyle='#333'; g.font='7px Geneva, monospace';
+    g.fillText('Doc: 1.4M/2.8M', w1x+3, w1y+w1h-13);
+    // Content area — B&W photo suggestion
+    const ca1x=w1x+1, ca1y=w1y+15, ca1w=w1w-12, ca1h=w1h-38;
+    g.fillStyle='#f4f4f4'; g.fillRect(ca1x, ca1y, ca1w, ca1h);
+    // Sketchy photo subjects (silhouettes)
+    g.fillStyle='#1a1a1a';
+    // seated figure left
+    g.fillRect(ca1x+25, ca1y+30, 30, 45);
+    g.beginPath(); g.arc(ca1x+40, ca1y+22, 10, 0, Math.PI*2); g.fill();
+    // gear/bag right
+    g.fillRect(ca1x+90, ca1y+35, 40, 50);
+    g.fillRect(ca1x+95, ca1y+20, 30, 20);
+    // Floor shadow
+    g.fillStyle='rgba(0,0,0,0.08)'; g.fillRect(ca1x, ca1y+ca1h-6, ca1w, 6);
+
+    // ── Window 2: bg-office.jpg ──
+    const w2x=175, w2y=108, w2w=182, w2h=148;
+    psWin(w2x, w2y, w2w, w2h, 'bg-office.jpg @ 48%');
+    g.fillStyle='#333'; g.font='7px Geneva, monospace';
+    g.fillText('Doc: 2.1M/4.2M', w2x+3, w2y+w2h-13);
+    const ca2x=w2x+1, ca2y=w2y+15, ca2w=w2w-12, ca2h=w2h-38;
+    // Office photo suggestion
+    g.fillStyle='#d0dde8'; g.fillRect(ca2x, ca2y, ca2w, ca2h);
+    // Floor (dark)
+    g.fillStyle='#4a5c70'; g.fillRect(ca2x, ca2y+ca2h*0.6, ca2w, ca2h*0.4);
+    // Desk surface
+    g.fillStyle='#8fa5b8'; g.fillRect(ca2x+15, ca2y+ca2h*0.45, ca2w-30, ca2h*0.25);
+    // Person (seated, overhead/side view)
+    g.fillStyle='#c8a88a'; g.beginPath(); g.arc(ca2x+ca2w*0.45, ca2y+ca2h*0.38, 10, 0, Math.PI*2); g.fill();
+    g.fillStyle='#fff'; g.fillRect(ca2x+ca2w*0.35, ca2y+ca2h*0.47, ca2w*0.3, 8);
+    // Wall
+    g.fillStyle='#b8c8d8'; g.fillRect(ca2x, ca2y, ca2w, ca2h*0.35);
+
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    return t;
+  }
   const S = 256, c = cv(S), g = c.getContext('2d');
   g.fillStyle = '#05080c';
   g.fillRect(0, 0, S, S);
-  if (dashboard) {
-    g.fillStyle = '#7ec8e8';
-    for (let i = 0; i < 5; i++) g.fillRect(18, 28 + i * 40, 140 - i * 12, 18);
-    g.fillStyle = '#d8eef8';
-    g.fillRect(18, 28, 90, 18);
-    g.fillRect(170, 40, 60, 90);
-    const t = new THREE.CanvasTexture(c);
-    t.colorSpace = THREE.SRGBColorSpace;
-    return t;
-  }
   g.fillStyle = '#9aa4ad';
   g.font = 'bold 18px IBM Plex Mono, monospace';
   g.fillText('SCORE  2400', 16, 28);
@@ -16034,12 +16346,18 @@ function buildArcadeCabinet() {
     emissive: '#ffe8a0', emissiveIntensity: 0.55
   });
   addP(g, PG.box(), marq, 0, 1.72, 0.30, 0.68, 0.14, 0.05);
-  // Filled top — yellow band over the marquee, then solid navy cap
-  addP(g, PG.box(), pMat('#f5c800', 0.72), 0, 1.80, 0.28, 0.72, 0.06, 0.10);
-  addP(g, PG.box(), navy, 0, 1.86, 0.26, 0.74, 0.06, 0.10);
-  addP(g, PG.box(), navy, 0, 1.92, 0.22, 0.72, 0.06, 0.10);
-  // Completely solid top surface
-  addP(g, PG.box(), navy, 0, 1.96, 0.16, 0.74, 0.06, 0.16);
+  // Single flat cap — closes the full top of the cabinet straight across
+  addP(g, PG.box(), navy, 0, 1.82, 0, 0.74, 0.04, 0.66);
+
+  // Back panel — fills hollow look with matching space art
+  const backGeo = geoCache('arcback', () => new THREE.PlaneGeometry(0.72, 1.82));
+  const backMat = new THREE.MeshStandardMaterial({
+    map: makeArcadeSideArtTexture(true), roughness: 0.72, metalness: 0
+  });
+  const backPanel = new THREE.Mesh(backGeo, backMat);
+  backPanel.position.set(0, 0.92, -0.335);
+  backPanel.rotation.y = Math.PI;
+  g.add(backPanel);
 
   g.add(propShadow(1.15, 1.0));
   return tagProp(g, 'arcade', 'Play Inbox Invaders', true, '/index-invaders');
@@ -16095,6 +16413,39 @@ function installPlazaProps() {
 }
 
 installPlazaProps();
+
+/* ── Time-of-day ambiance ────────────────────────────────────────
+   Day (7–17): full office daylight, lamp off.
+   Evening (17–21): golden dusk, lamp on, dimmer ambient.
+   Night (21–7): dark interior, lamp on, minimal ambient. */
+const TimeOfDay = {
+  modes: {
+    day:     { bg:'#dfe8ef', fog:0xdfeaf3, hemiSky:0xffffff, hemiGnd:0xc8d6e0, hemiI:1.05,
+               keyCol:0xfff6ea, keyI:1.15, fillI:0.42, rimI:0.30, faceI:0.22, lamp:false },
+    evening: { bg:'#1c2b3a', fog:0x1c2b3a, hemiSky:0xa0b4cc, hemiGnd:0x38485a, hemiI:0.45,
+               keyCol:0xf09050, keyI:0.38, fillI:0.16, rimI:0.10, faceI:0.13, lamp:true },
+    night:   { bg:'#0b1319', fog:0x0b1319, hemiSky:0x1a2840, hemiGnd:0x0a1018, hemiI:0.18,
+               keyCol:0x253550, keyI:0.16, fillI:0.08, rimI:0.07, faceI:0.07, lamp:true },
+  },
+  current() {
+    const h = new Date().getHours();
+    return h >= 7 && h < 17 ? 'day' : h >= 17 && h < 21 ? 'evening' : 'night';
+  },
+  apply() {
+    const t = this.modes[this.current()];
+    document.body.style.background = t.bg;
+    const tm = document.querySelector('meta[name="theme-color"]');
+    if (tm) tm.content = t.bg;
+    scene.fog.color.setHex(t.fog);
+    hemi.color.setHex(t.hemiSky); hemi.groundColor.setHex(t.hemiGnd); hemi.intensity = t.hemiI;
+    key.color.setHex(t.keyCol); key.intensity = t.keyI;
+    fill.intensity = t.fillI; rim.intensity = t.rimI; faceFill.intensity = t.faceI;
+    // Sync lamp: starts ON (lampOn=true); toggle if state differs
+    const lampRoot = World.props && World.props.find(r => r.name === 'lamp');
+    if (lampRoot && PlazaPropActions.lampOn !== t.lamp) PlazaPropActions.toggleLamp(lampRoot);
+  }
+};
+TimeOfDay.apply();
 World.spawnDog();
 World.spawnRoomba();
 PropFx.init();
@@ -18829,9 +19180,11 @@ function nameTagPlateMetrics(m) {
   if (!_measure) _measure = cv(8, 8).getContext('2d');
   _measure.font = TAG_FONT;
   const nameW = Math.ceil(_measure.measureText(firstName(m.dna)).width);
-  const w = Math.max(150, nameW + NAME_TAG_PAD * 2);
+  const INFO_ZONE = 34;
+  const wText = Math.max(150, nameW + NAME_TAG_PAD * 2);
+  const w = wText + INFO_ZONE;
   const W = w + NAME_TAG_M * 2;
-  return { w, W, h, H, pillRight: NAME_TAG_M + w, pillCy: NAME_TAG_M + h / 2, spriteCy: H / 2 };
+  return { w, W, h, H, wText, INFO_ZONE, pillRight: NAME_TAG_M + w, pillCy: NAME_TAG_M + h / 2, spriteCy: H / 2 };
 }
 
 function placeMiiDock(m) {
@@ -18843,8 +19196,9 @@ function placeMiiDock(m) {
   const plate = nameTagPlateMetrics(m);
   const tagPxW = tagPx * (m.tagAspect || plate.W / plate.H);
   const chipPx = Math.round(tagPx * (plate.h / plate.H));
-  const iconPx = Math.round(chipPx * 0.50);
-  dock.style.setProperty('--info-icon', iconPx + 'px');
+  const infoZonePx = Math.round(tagPxW * (plate.INFO_ZONE / plate.W));
+  dock.style.setProperty('--info-icon', chipPx + 'px');
+  dock.style.setProperty('--info-zone', infoZonePx + 'px');
   m.tag.getWorldPosition(_vt);
   _vt.project(camera);
   const r = canvasEl.getBoundingClientRect();
@@ -18852,7 +19206,8 @@ function placeMiiDock(m) {
   const cy = r.top + (-_vt.y * 0.5 + 0.5) * r.height;
   const pillRightPx = tagPxW * ((plate.pillRight - plate.W / 2) / plate.W);
   const pillCyOffset = tagPx * ((plate.spriteCy - plate.pillCy) / plate.H);
-  dock.style.left = (cx + pillRightPx - iconPx - 2) + 'px';
+  // Dock starts at pill right edge; #miiInfo uses margin-left:-infoZonePx to sit inside the "i" zone
+  dock.style.left = (cx + pillRightPx) + 'px';
   dock.style.top = (cy - pillCyOffset) + 'px';
   dock.classList.toggle('mine', m.mine === true);
   dock.classList.add('show');

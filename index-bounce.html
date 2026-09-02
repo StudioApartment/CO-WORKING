@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CO—WORKING</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/lib/interior-ui.css">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+
+    .sticker-container {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .sticker {
+      position: absolute;
+      width: 440px;
+      height: auto;
+      will-change: transform;
+      filter: drop-shadow(0 15px 35px rgba(0,0,0,0.6));
+      transform-origin: center center;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    .sticker video {
+      width: 100%;
+      height: auto;
+      display: block;
+      pointer-events: none;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="sticker-container">
+  <div class="sticker" id="sticker">
+    <video id="flagVid" autoplay loop muted playsinline disablepictureinpicture>
+      <source src="images/flag.webm" type="video/webm">
+    </video>
+  </div>
+</div>
+
+<a class="wii-back" href="/" onclick="goBack(); return false;" aria-label="Back to the Office" data-tip="Back to the Office">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M15 6l-6 6 6 6"/>
+  </svg>
+</a>
+
+<script>
+  (function() {
+    const sticker = document.getElementById('sticker');
+    const video = document.getElementById('flagVid');
+
+    video.play().catch(() => {});
+
+    let stickerWidth, stickerHeight;
+
+    function initDimensions() {
+      const rect = sticker.getBoundingClientRect();
+      stickerWidth = rect.width;
+      stickerHeight = rect.height;
+    }
+
+    const PADDING_LEFT = 100;
+    const PADDING_RIGHT = 120;
+    const PADDING_TOP = 50;
+    const PADDING_BOTTOM = 50;
+
+    function getBounds() {
+      return {
+        minX: -PADDING_LEFT,
+        maxX: window.innerWidth - stickerWidth + PADDING_RIGHT,
+        minY: -PADDING_TOP,
+        maxY: window.innerHeight - stickerHeight + PADDING_BOTTOM
+      };
+    }
+
+    function initPosition() {
+      initDimensions();
+      const bounds = getBounds();
+      x = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
+      y = bounds.minY + Math.random() * (bounds.maxY - bounds.minY);
+    }
+
+    let x = 100, y = 100;
+
+    const speedPercent = 20;
+
+    function getBaseSpeed() {
+      return (Math.min(window.innerWidth, window.innerHeight) * speedPercent) / 100 / 60;
+    }
+
+    let baseSpeed = getBaseSpeed();
+    let vx = baseSpeed * (Math.random() > 0.5 ? 1 : -1);
+    let vy = baseSpeed * (Math.random() > 0.5 ? 1 : -1);
+
+    let currentRotation = 0;
+    let spinVelocity = 0;
+    const spinFriction = 0.997;
+    const spinImpulse = 1.5;
+
+    const cornerThreshold = 80;
+
+    function isNearCorner(x, y, bounds) {
+      const nearLeft = x < bounds.minX + cornerThreshold;
+      const nearRight = x > bounds.maxX - cornerThreshold;
+      const nearTop = y < bounds.minY + cornerThreshold;
+      const nearBottom = y > bounds.maxY - cornerThreshold;
+      return (nearLeft || nearRight) && (nearTop || nearBottom);
+    }
+
+    function nudgeAwayFromCorner(bounds) {
+      const nudge = baseSpeed * 0.25;
+      const nearLeft = x < bounds.minX + cornerThreshold;
+      const nearRight = x > bounds.maxX - cornerThreshold;
+      const nearTop = y < bounds.minY + cornerThreshold;
+      const nearBottom = y > bounds.maxY - cornerThreshold;
+
+      if (nearLeft && nearTop)         { vx =  Math.abs(vx) + nudge; vy =  Math.abs(vy) + nudge; }
+      else if (nearRight && nearTop)   { vx = -Math.abs(vx) - nudge; vy =  Math.abs(vy) + nudge; }
+      else if (nearLeft && nearBottom) { vx =  Math.abs(vx) + nudge; vy = -Math.abs(vy) - nudge; }
+      else if (nearRight && nearBottom){ vx = -Math.abs(vx) - nudge; vy = -Math.abs(vy) - nudge; }
+
+      const maxSpeed = baseSpeed * 1.6;
+      vx = Math.max(-maxSpeed, Math.min(maxSpeed, vx));
+      vy = Math.max(-maxSpeed, Math.min(maxSpeed, vy));
+    }
+
+    let lastTime = performance.now();
+    const targetFPS = 60;
+    const interval = 1000 / targetFPS;
+
+    function update() {
+      const now = performance.now();
+      const deltaTime = Math.min((now - lastTime) / interval, 3);
+      lastTime = now;
+
+      const bounds = getBounds();
+
+      x += vx * deltaTime;
+      y += vy * deltaTime;
+
+      if (x <= bounds.minX) {
+        x = bounds.minX; vx = Math.abs(vx);
+        vy += (Math.random() - 0.5) * baseSpeed * 0.3;
+        spinVelocity = (Math.random() > 0.5 ? 1 : -1) * spinImpulse * (0.8 + Math.random() * 0.4);
+      } else if (x >= bounds.maxX) {
+        x = bounds.maxX; vx = -Math.abs(vx);
+        vy += (Math.random() - 0.5) * baseSpeed * 0.3;
+        spinVelocity = (Math.random() > 0.5 ? 1 : -1) * spinImpulse * (0.8 + Math.random() * 0.4);
+      }
+
+      if (y <= bounds.minY) {
+        y = bounds.minY; vy = Math.abs(vy);
+        vx += (Math.random() - 0.5) * baseSpeed * 0.3;
+        spinVelocity = (Math.random() > 0.5 ? 1 : -1) * spinImpulse * (0.8 + Math.random() * 0.4);
+      } else if (y >= bounds.maxY) {
+        y = bounds.maxY; vy = -Math.abs(vy);
+        vx += (Math.random() - 0.5) * baseSpeed * 0.3;
+        spinVelocity = (Math.random() > 0.5 ? 1 : -1) * spinImpulse * (0.8 + Math.random() * 0.4);
+      }
+
+      if (isNearCorner(x, y, bounds)) {
+        nudgeAwayFromCorner(bounds);
+      } else {
+        const speedMag = Math.sqrt(vx * vx + vy * vy);
+        if (speedMag > baseSpeed * 1.1) {
+          const decay = Math.pow(0.992, deltaTime);
+          vx *= decay; vy *= decay;
+        }
+      }
+
+      currentRotation += spinVelocity * deltaTime;
+      spinVelocity *= Math.pow(spinFriction, deltaTime);
+      if (Math.abs(spinVelocity) < 0.01) spinVelocity = 0;
+
+      sticker.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${currentRotation}deg)`;
+    }
+
+    if (video.readyState >= 1) {
+      initPosition();
+      sticker.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    } else {
+      video.addEventListener('loadedmetadata', () => {
+        initPosition();
+        sticker.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      });
+    }
+
+    setTimeout(() => {
+      if (!stickerWidth) {
+        initPosition();
+        sticker.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      }
+    }, 100);
+
+    function animateRAF() { update(); requestAnimationFrame(animateRAF); }
+    setInterval(update, interval);
+    requestAnimationFrame(animateRAF);
+
+    window.addEventListener('resize', () => {
+      initDimensions();
+      baseSpeed = getBaseSpeed();
+      const bounds = getBounds();
+      x = Math.max(bounds.minX, Math.min(bounds.maxX, x));
+      y = Math.max(bounds.minY, Math.min(bounds.maxY, y));
+    });
+  })();
+
+  function goBack() {
+    try {
+      window.parent.postMessage({ type: 'coworking:close-interior' }, location.origin);
+    } catch (e) {}
+    if (window.parent === window) history.back();
+  }
+</script>
+<script src="/lib/interior-ui.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
