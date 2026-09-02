@@ -593,13 +593,15 @@
   document.getElementById('menuNew').addEventListener('click', clearCanvas);
 
   btnBack.addEventListener('click', async (e) => {
-    if (!dirty && !saveTimer) return;
+    /* Always intercept when embedded — the parent manages overlay close. */
+    const inFrame = window.self !== window.top;
+    if (!inFrame && !dirty && !saveTimer) return;
     e.preventDefault();
     e.stopImmediatePropagation();
     clearTimeout(saveTimer);
-    await saveCanvas();
+    if (dirty || saving) await saveCanvas();
     try {
-      if (window.self !== window.top) {
+      if (inFrame) {
         parent.postMessage({ type: 'coworking:close-interior' }, location.origin);
       } else {
         location.assign('/');

@@ -9890,7 +9890,7 @@ const G = {
   }),
   /* Cardboard paper crown: full 360° brow circlet whose top edge rises into
      ornamental rounded peaks (front peak tallest). Bottom sits at y=0. */
-  paperCrown: () => geoCache('pcrown8', () => {
+  paperCrown: () => geoCache('pcrown9', () => {
     /* Soft rounded peaks with a mild fleur waist — closer to BK cardboard
        die-cuts than sharp triangular spikes. Radius follows the skull at
        each azimuth so the band wraps the whole head, not a front arc.
@@ -9898,7 +9898,7 @@ const G = {
        crown reads as a continuous band from any camera angle. */
     const SEGS = 168, ROWS = 28, NPEAKS = 8;
     const BAND = 0.28, PEAK = 0.46;
-    const VALLEY = 0.62; /* high floor keeps the band solid between peaks */
+    const VALLEY = 0.88; /* near-solid band — valleys only ~12% shorter than peaks */
     const SEAT_Y = 0.34; /* brow hem — must match buildHair BASE_Y */
     const headHorizR = (ny, az) => {
       const ux = Math.sin(az), uz = Math.cos(az);
@@ -9920,7 +9920,7 @@ const G = {
         const peakAng = (k / NPEAKS) * TAU;
         let d = Math.abs(ang - peakAng);
         if (d > Math.PI) d = TAU - d;
-        const halfW = (Math.PI / NPEAKS) * 1.30;
+        const halfW = (Math.PI / NPEAKS) * 1.45;
         if (d >= halfW) continue;
         const t = 1 - d / halfW;
         /* Smoothstep base + mid bulge + tip soften = rounded fleur. */
@@ -15227,6 +15227,37 @@ function buildFridge() {
     });
     addP(g, PG.box(), mat2, lx, ly, 0.406, 0.040, 0.040, 0.007);
     lx += 0.055;
+  }
+
+  // Upper door magnets — scattered above the art frame area
+  const upperMags = [
+    { x: -0.36, y: 0.88, label: 'NOLA',     bg: '#7c3cbf', fg: '#fff',    shape: 'oval' },
+    { x:  0.32, y: 0.92, label: 'DC',        bg: '#c5282d', fg: '#fff',    shape: 'rect' },
+    { x: -0.28, y: 1.10, label: 'PHILLY',    bg: '#003f8a', fg: '#fff',    shape: 'rect' },
+    { x:  0.38, y: 1.08, label: 'SEATTLE',   bg: '#1a7a3a', fg: '#fff',    shape: 'oval' },
+    { x:  0.26, y: 1.55, label: 'TOKYO',     bg: '#bc0024', fg: '#fff',    shape: 'oval' },
+    { x: -0.38, y: 1.62, label: 'LONDON',    bg: '#d42e2e', fg: '#fff',    shape: 'rect' },
+    { x:  0.36, y: 1.66, label: 'PARIS',     bg: '#002395', fg: '#fff',    shape: 'oval' },
+    { x: -0.16, y: 1.70, label: 'TORONTO',   bg: '#c5282d', fg: '#fff',    shape: 'rect' },
+    { x:  0.10, y: 1.74, label: 'BERLIN',    bg: '#2a2a2a', fg: '#f5d030', shape: 'oval' },
+    { x: -0.38, y: 1.76, label: 'SYDNEY',    bg: '#0057a8', fg: '#fff',    shape: 'rect' },
+  ];
+  for (const cm of upperMags) {
+    const mat = new THREE.MeshStandardMaterial({ map: cityMagTex(cm.label, cm.bg, cm.fg, cm.shape), roughness: 0.6 });
+    const iW = cm.shape === 'oval' ? 0.075 : 0.072, iH = cm.shape === 'oval' ? 0.048 : 0.040;
+    addP(g, PG.box(), mat, cm.x, cm.y, 0.407, iW, iH, 0.008);
+  }
+
+  // Flat magnets lying on the top surface of the fridge
+  const topMags = [
+    { x: -0.22, z: 0.06, label: 'BKLYN',  bg: '#3a3a3a', fg: '#f5d030', shape: 'rect', rz: 0.4  },
+    { x:  0.18, z:-0.08, label: 'MIAMI',  bg: '#e9408c', fg: '#fff',    shape: 'oval', rz: -0.3 },
+    { x: -0.06, z: 0.18, label: 'VEGAS',  bg: '#e9408c', fg: '#fff',    shape: 'rect', rz:  0.7 },
+  ];
+  for (const tm of topMags) {
+    const mat = new THREE.MeshStandardMaterial({ map: cityMagTex(tm.label, tm.bg, tm.fg, tm.shape), roughness: 0.6 });
+    const iW = tm.shape === 'oval' ? 0.075 : 0.072, iH = tm.shape === 'oval' ? 0.048 : 0.040;
+    addP(g, PG.box(), mat, tm.x, 1.875, tm.z, iW, iH, 0.008, -Math.PI / 2, 0, tm.rz);
   }
 
   g.add(propShadow(1.38, 0.95));
