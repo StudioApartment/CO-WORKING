@@ -77,10 +77,18 @@ body.native-cursor button,body.native-cursor input{cursor:pointer}
   position:fixed;inset:0;
   background:
     radial-gradient(125% 95% at 50% 30%,#ffffff 0%,#f6fafc 30%,#e6eff6 60%,#cfdfeb 86%,#c3d6e5 100%);
+  transition:background .6s ease;
 }
 #stage::after{ /* subtle vignette, very Wii */
   content:"";position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(115% 90% at 50% 45%,rgba(255,255,255,0) 55%,rgba(120,150,175,.16) 100%);
+  transition:background .6s ease;
+}
+body.tod-evening #stage::after{
+  background:radial-gradient(115% 90% at 50% 45%,rgba(0,0,0,0) 50%,rgba(8,16,28,.28) 100%);
+}
+body.tod-night #stage::after{
+  background:radial-gradient(115% 90% at 50% 45%,rgba(0,0,0,0) 48%,rgba(4,10,18,.42) 100%);
 }
 canvas#scene{position:absolute;inset:0;display:block;width:100%;height:100%}
 
@@ -480,7 +488,7 @@ body.native-cursor #pointer{display:none}
   position:absolute;left:0;right:0;bottom:7px;text-align:center;
   font-size:9.5px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#9db2c0;
 }
-.rerolls{display:none;gap:12px;justify-content:center;align-items:center;margin-top:16px;flex-wrap:wrap}
+.rerolls{display:none;gap:16px;justify-content:center;align-items:center;margin-top:16px;flex-wrap:wrap}
 .stage.done ~ .rerolls{display:flex}
 .rerolls .wbtn{height:42px;font-size:12.5px;padding:0 16px;width:auto}
 .rerolls .wbtn .lbl{display:inline}
@@ -539,7 +547,7 @@ body.native-cursor #pointer{display:none}
 }
 .camloading:not([hidden]){display:grid}
 .viewport.cam-live .guide{opacity:1}
-.pickers{display:flex;gap:12px;align-items:center;margin-left:10px}
+.pickers{display:flex;gap:16px;align-items:center;margin-left:14px}
 .pick{
   position:relative;width:42px;height:42px;border:0;outline:0;padding:0;border-radius:50%;
   box-shadow:inset 0 -4px 8px rgba(0,0,0,.16),0 2px 4px rgba(90,115,135,.25),0 0 0 3px #fff,0 0 0 4.5px #cfdae2;
@@ -568,13 +576,13 @@ body.native-cursor #pointer{display:none}
 .sw{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:10.5px;font-weight:900;color:#8ba0ad;letter-spacing:.08em;text-transform:uppercase}
 .sw i{width:34px;height:34px;border-radius:50%;box-shadow:inset 0 -4px 8px rgba(0,0,0,.14),0 0 0 3px #fff,0 0 0 4.5px #d3dee5;animation:swIn .4s cubic-bezier(.2,1.6,.4,1) both}
 @keyframes swIn{from{transform:scale(0)}to{transform:scale(1)}}
-.namerow{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:34px 2px 2px}
+.namerow{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:34px 2px 2px}
 .namerow label{
-  flex:0 0 5.2em;font-size:11px;font-weight:900;letter-spacing:.12em;
+  flex:0 0 auto;white-space:nowrap;font-size:10.5px;font-weight:900;letter-spacing:.1em;
   text-transform:uppercase;color:#93a7b4;
 }
 .namerow input{
-  flex:1 1 0;width:50%;max-width:50%;min-width:0;box-sizing:border-box;
+  flex:1 1 0;min-width:0;box-sizing:border-box;
   height:44px;border:0;outline:0;border-radius:999px;padding:0 18px;
   font-size:16px;font-weight:800;color:var(--ink-dk);
   background:linear-gradient(#eef4f7,#fff);
@@ -585,7 +593,7 @@ body.native-cursor #pointer{display:none}
 .namerow + .namerow{margin-top:12px}
 .namerow .locwrap{
   position:relative;z-index:5;
-  flex:1 1 0;width:50%;max-width:50%;min-width:0;
+  flex:1 1 0;min-width:0;
 }
 .namerow .locwrap input{width:100%;max-width:none;flex:none}
 .loclist{
@@ -617,10 +625,10 @@ body.native-cursor #pointer{display:none}
    at once. Each category is a single button instead: tapping it
    steps through options in order. The character is the preview.
    ============================================================ */
-.tray{display:none;margin-top:22px}
+.tray{display:none;margin-top:30px}
 .stage.done ~ .tray{display:block}
 .tray-cycles{
-  display:flex;flex-wrap:wrap;justify-content:center;align-items:stretch;gap:7px;
+  display:flex;flex-wrap:wrap;justify-content:center;align-items:stretch;gap:11px;
 }
 /* One pill per category. The × lives in that same pill, to the right of
    the label — a second chrome box next to Facial hair (and the rest)
@@ -679,7 +687,7 @@ body.native-cursor #pointer{display:none}
 .tray-cell.on .tray-swatch{margin-right:2px}
 
 @media (max-width:560px){
-  .tray-cycles{gap:6px}
+  .tray-cycles{gap:9px}
   .tray-cell{border-radius:11px}
   .cyc{padding:8px 11px 7px}
   .tray-cell.on .cyc-main{padding-right:2px}
@@ -691,7 +699,7 @@ body.native-cursor #pointer{display:none}
    BADGE FLOW — email capture, recovery, wallet handoff
    ============================================================ */
 .namerow + .namerow{margin-top:12px}
-.namerow .fieldnote{flex:1 0 100%;margin:2px 0 0 5.2em;font-size:11px;font-weight:700;color:#a4b6c2;line-height:1.5}
+.namerow .fieldnote{flex:1 0 100%;margin:2px 0 0;padding-left:0;font-size:11px;font-weight:700;color:#a4b6c2;line-height:1.5}
 
 /* inline notices inside the card */
 .banner{
@@ -908,6 +916,10 @@ body.native-cursor #pointer{display:none}
   filter:brightness(0);
   display:block;
 }
+body.tod-night .logo-we-are,
+body.tod-evening .logo-we-are{color:#fff}
+body.tod-night .logo-main,
+body.tod-evening .logo-main{filter:brightness(0) invert(1)}
 body:not(.plaza-ready) #pointer{visibility:hidden;opacity:0}
 
 /* Fullscreen interior overlay — keeps The Office WebGL alive underneath */
@@ -3847,7 +3859,7 @@ function makePaperCrownTexture(base) {
   }
   g.globalAlpha = 1;
 
-  const nPeaks = 8;
+  const nPeaks = 10;
   /* Soft printed peak outlines in darker gold ink (no red rays — those
      read as raised rubies instead of cardboard print). */
   for (let k = 0; k < nPeaks; k++) {
@@ -3857,9 +3869,9 @@ function makePaperCrownTexture(base) {
     g.lineWidth = 1.6;
     g.globalAlpha = 0.5;
     g.beginPath();
-    g.moveTo(x - 24, H * 0.72);
-    g.quadraticCurveTo(x - 11, tipY + 30, x, tipY + 6);
-    g.quadraticCurveTo(x + 11, tipY + 30, x + 24, H * 0.72);
+    g.moveTo(x - 20, H * 0.72);
+    g.quadraticCurveTo(x - 9, tipY + 30, x, tipY + 6);
+    g.quadraticCurveTo(x + 9, tipY + 30, x + 20, H * 0.72);
     g.stroke();
   }
   g.globalAlpha = 1;
@@ -6745,30 +6757,33 @@ const G = {
   /* Flat triangular wedge for mohawk crest chunks (mullet slot). */
   spikeChunk: () => geoCache('spikeChunkC', () => new THREE.ConeGeometry(1, 1, 3)),
   /* Continuous solid mohawk fin — lofted teardrop rings along the sagittal
-     crest. One smooth manifold: front triangle, side spiked ridge, back
-     diamond. Mild tip sawtooth; valleys stay high. */
-  mohawkFin: () => geoCache('mhFinR', () => {
-    const NS = 56;
+     crest. One filled manifold with a dense spiked ridge (not sparse cones). */
+  mohawkFin: () => geoCache('mhFinU', () => {
+    const NS = 64;
     const NC = 20;
     const pos = [], uvs = [], idx = [];
     for (let i = 0; i <= NS; i++) {
       const t = i / NS;
       /* Start further forward so the brow fringe is inside the fin, not
          separate scalp spikes in front of it. */
-      const ang = 0.95 - t * 2.20;
-      const rr = 1.02 + Math.sin(t * Math.PI) * 0.025;
+      const ang = 0.98 - t * 2.28;
+      const rr = 1.02 + Math.sin(t * Math.PI) * 0.028;
       const cy = Math.cos(ang) * rr * 0.98 + 0.06;
       const cz = Math.sin(ang) * rr * 0.98;
       const ny = Math.cos(ang), nz = Math.sin(ang);
-      const tooth = Math.pow(Math.abs(Math.sin(t * 7.5 * Math.PI)), 0.90);
-      const env = 0.55 + 0.45 * Math.sin(Math.pow(t, 0.90) * Math.PI);
-      const frontLift = Math.exp(-Math.pow((t - 0.08) / 0.18, 2)) * 0.18;
-      const backLift = Math.exp(-Math.pow((t - 0.80) / 0.20, 2)) * 0.14;
-      /* Soft tip sawtooth — valleys stay high so the body is one filled ridge. */
-      const h = (0.58 + env * 0.34 + frontLift + backLift) * (0.90 + tooth * 0.10);
-      const halfW = 0.32 + 0.06 * Math.exp(-Math.pow((t - 0.12) / 0.26, 2))
-        - 0.07 * Math.pow(t, 1.35);
-      const seat = 0.04;
+      /* Dense tip sawtooth — many spikes, valleys stay high so it reads as
+         one continuous ridged crest rather than separate plugs. */
+      const tooth = Math.pow(Math.abs(Math.sin(t * 12.0 * Math.PI)), 0.72);
+      const toothB = Math.pow(Math.abs(Math.sin(t * 6.0 * Math.PI + 0.4)), 0.85);
+      const env = 0.58 + 0.42 * Math.sin(Math.pow(t, 0.88) * Math.PI);
+      const frontLift = Math.exp(-Math.pow((t - 0.08) / 0.18, 2)) * 0.20;
+      const backLift = Math.exp(-Math.pow((t - 0.82) / 0.18, 2)) * 0.16;
+      const h = (0.62 + env * 0.38 + frontLift + backLift)
+        * (0.86 + tooth * 0.16 + toothB * 0.06);
+      /* Slightly wider mid-crest so the silhouette fills like a solid ridge. */
+      const halfW = 0.36 + 0.08 * Math.exp(-Math.pow((t - 0.18) / 0.28, 2))
+        - 0.08 * Math.pow(t, 1.30);
+      const seat = 0.045;
       const by = cy - ny * seat;
       const bz = cz - nz * seat;
       for (let k = 0; k < NC; k++) {
@@ -7165,9 +7180,10 @@ const G = {
     ({ nx, ny, nz } = sealSkull(nx, ny, nz, skull, 1.0012 + joinTaper * 0.0014));
     return { nx, ny, nz };
   }),
-  crewCut: (r) => sculptHair(`crewAM${r}`, r, 2.00, 72, 52, (b, tl, rr) => {
-    /* Crown mound — smooth continuous dome on top, tall gradual fade
-       into stubble on sides/nape (no hard shelf). Stubble owns the hem. */
+  crewCut: (r) => sculptHair(`crewAO${r}`, r, 2.00, 72, 52, (b, tl, rr) => {
+    /* Smooth continuous dome — solid coverage over crown AND full occiput
+       down to the nape (no bare scalp / grainy stubble hole on the back).
+       Sides still taper; back stays opaque and smooth. */
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
     const bangY = lineupHemY(b, -0.58);
     const brow = Math.pow(Math.max(0, b.azFront - 0.08) / 0.92, 1.12)
@@ -7176,24 +7192,30 @@ const G = {
       * Math.exp(-Math.pow((b.uy + 0.04) / 0.26, 2) * 1.6)
       * (0.58 + b.azFront * 0.28);
     const napeLow = b.azBack * Math.pow(Math.max(0, (0.04 - b.uy) / 0.52), 0.85);
-    /* Taller fade band — solid top wraps lower on sides/back before dissolving. */
-    const fade = shortCutFadeAmt(b, earWin * 0.68, napeLow * 0.42) * 0.80;
+    /* Fade mainly on sides — suppress nape dissolve so the back stays filled. */
+    const fade = shortCutFadeAmt(b, earWin * 0.68, napeLow * 0.12) * 0.62
+      * (1 - b.azBack * 0.72);
+    const backFill = Math.pow(b.azBack, 0.55)
+      * Math.pow(Math.max(0, (b.uy + 0.55) / 1.35), 0.55)
+      * (1 - Math.pow(Math.min(1, b.side / 0.85), 1.6));
     const top = Math.pow(Math.max(0, (b.uy - 0.02) / 0.98), 0.52)
       * Math.pow(Math.max(0, (0.92 - b.side) / 0.92), 0.82)
-      * (1 - fade * 0.58);
+      * (1 - fade * 0.58)
+      + backFill * 0.85;
     const frontPomp = top * Math.pow(Math.max(0, b.azFront - 0.04) / 0.96, 0.82)
       * Math.pow(Math.max(0, (0.58 - b.side) / 0.58), 1.05)
       * Math.pow(Math.max(0, (0.72 - b.uy) / 0.50), 0.75);
     const sideBack = (b.side * 0.55 + b.azBack * 0.72)
       * Math.pow(Math.max(0, (0.38 - b.uy) / 0.62), 0.48);
-    let maxTh = 1.06
-      + top * 0.24
+    let maxTh = 1.10
+      + top * 0.28
       + frontPomp * 0.04
-      + sideBack * 0.22
+      + sideBack * 0.28
+      + backFill * 0.42
       - brow * 0.14
       - earWin * 0.36
-      - napeLow * 0.28
-      - fade * 0.28
+      - napeLow * 0.08
+      - fade * 0.18
       - frame.faceOpen * 0.10;
     if (b.th > maxTh + 0.02 && (brow > 0.12 || fade > 0.62)) {
       return parkAtHairline(b, rr, bangY, 1.002);
@@ -7987,14 +8009,16 @@ const G = {
     ({ nx, ny, nz } = sealSkull(nx, ny, nz, skull, 1.018));
     return { nx, ny, nz };
   }),
-  spikes: (r) => sculptHair(`spkC${r}`, r, 2.00, 64, 48, (b, tl, rr) => {
-    /* Spiky under-shell: short crown pad + stubble fade. All tall tips come
-       from discrete forehead-band cones — keep this mesh flat (no mohawk). */
+  spikes: (r) => sculptHair(`spkE${r}`, r, 2.00, 64, 48, (b, tl, rr) => {
+    /* Spiky under-shell: short crown pad + stubble fade. Tall tips are
+       discrete cones — keep this mesh flat. High clean forehead opening
+       (above eyes → temples → ears), no low bang shelf. */
     const frame = hairFrame(b.ux, b.uy, b.azFront, b.azBack, b.side);
-    const hem = lineupHemY(b);
-    const brow = Math.pow(Math.max(0, b.azFront - 0.10) / 0.90, 1.12)
-      * (1 - Math.pow(Math.min(1, b.side / 0.50), 2.0));
-    const hairY = Math.max(hem + 0.02, 0.54 - Math.pow(Math.max(0, b.side - 0.14), 1.15) * 0.20);
+    /* High horizontal brow band, then soft drop into the ears. */
+    const hairY = 0.48 - Math.pow(Math.max(0, b.side - 0.12), 1.05) * 0.34
+      - Math.pow(Math.max(0, b.side - 0.42), 1.20) * 0.18;
+    const brow = Math.pow(Math.max(0, b.azFront - 0.06) / 0.94, 1.08)
+      * (1 - Math.pow(Math.min(1, b.side / 0.55), 1.85));
     const earWin = b.side
       * Math.exp(-Math.pow((b.uy - 0.04) / 0.20, 2) * 2.10)
       * (0.72 + b.azFront * 0.28 + b.azBack * 0.18);
@@ -8008,13 +8032,13 @@ const G = {
       * (1 - fade * 0.90);
     let maxTh = 1.02
       + top * 0.045
-      - brow * 0.14
+      - brow * 0.22
       - earWin * 0.48
       - napeLow * 0.62
       - fade * 0.40
       - frame.faceOpen * 0.10;
-    if (b.th > maxTh + 0.03 && brow > 0.16 && fade < 0.42) {
-      return parkAtHairline(b, rr, hem);
+    if (b.th > maxTh + 0.03 && brow > 0.12 && fade < 0.50) {
+      return parkAtHairline(b, rr, hairY);
     }
     let { nx, ny, nz, skull } = superFromTheta(b, Math.min(b.th, maxTh), rr);
     let keep = 1;
@@ -8024,9 +8048,12 @@ const G = {
       keep = faded.keep != null ? faded.keep : (1 - faded.bury);
       if (faded.bury > 0.90) return { nx, ny, nz };
     }
-    if (brow > 0.08 && ny < hairY) {
-      const t = Math.min(1, (hairY - ny) / 0.24) * brow * (1 - fade * 0.25) * keep;
-      ({ nx, ny, nz } = hugToward(nx, ny, nz, t * 0.95, skull * 1.024));
+    /* Snap front panel to the high cut — clear forehead below the red line. */
+    if (brow > 0.06 && ny < hairY) {
+      const t = Math.min(1, (hairY - ny) / 0.28) * Math.pow(brow, 0.80)
+        * (1 - fade * 0.18) * keep;
+      ny += (hairY - ny) * t * 0.96;
+      ({ nx, ny, nz } = hugToward(nx, ny, nz, t * 0.92, skull * 1.020));
     }
     const hug = 0.22 + fade * 0.28 + earWin * 0.14 - top * 0.14;
     ({ nx, ny, nz } = hugToward(nx, ny, nz, Math.max(0, hug) * keep,
@@ -8222,6 +8249,47 @@ const G = {
       skull * 1.022));
     if (ny < 0.36 && cover > 0.14) ny = 0.36 + bangChunk * 0.04;
     ({ nx, ny, nz } = sealSkull(nx, ny, nz, skull, 1.020));
+    return { nx, ny, nz };
+  }),
+  /* One solid fringe mass for space buns — filled forehead + cheek sweeps,
+     not discrete ball bumps. Mild crown serration; hem stays continuous. */
+  spacebunBangs: (r) => sculptHair(`sbBangC${r}`, r, 1.88, 72, 52, (b, tl, rr) => {
+    const front = Math.pow(Math.max(0, b.azFront + 0.04), 1.02);
+    const backKill = Math.pow(Math.max(0, b.azBack - 0.08), 1.20);
+    /* Full-width fringe — stay strong across the centre (no V gap). */
+    const across = 1 - Math.pow(Math.min(1, b.side / 0.92), 2.35);
+    const crownReach = Math.pow(Math.max(0, (0.92 - b.uy) / 1.05), 0.72);
+    /* Side curtains drop past the eyes toward mid-cheek. */
+    const cheek = Math.pow(Math.max(0, b.side - 0.05), 0.55)
+      * Math.pow(Math.max(0, (0.72 - b.uy) / 0.90), 0.85)
+      * front;
+    let cover = front * across * crownReach * (0.78 + cheek * 0.55);
+    cover *= 1 - backKill * 0.95;
+    /* Soft serrated top edge toward the buns — valleys stay filled. */
+    const serr = Math.pow(Math.abs(Math.sin(b.phi * 5.2 + 0.3)), 1.15)
+      * Math.pow(Math.max(0, b.uy - 0.18), 1.10) * front * 0.22;
+    cover += serr * across;
+    if (cover < 0.045) {
+      return parkAtHairline(b, rr, 0.58);
+    }
+    const bangHem = 0.38 - cheek * 0.28 - Math.pow(Math.max(0, b.side - 0.20), 1.10) * 0.10;
+    let maxTh = 1.05 + cover * 0.58 + cheek * 0.16
+      - Math.pow(Math.max(0, bangHem - b.uy), 1.15) * 0.35;
+    if (b.th > maxTh + 0.03 && b.uy < bangHem - 0.02) {
+      return parkAtHairline(b, rr, bangHem);
+    }
+    let { nx, ny, nz, skull } = superFromTheta(b, Math.min(b.th, maxTh), rr);
+    /* Thick forward pad — one cohesive slab, not spikes. */
+    ny -= cover * 0.10;
+    nz += cover * 0.18 + cheek * 0.06;
+    nx += Math.sign(b.ux || 1) * (cheek * 0.12 + cover * 0.04 * b.side);
+    ({ nx, ny, nz } = hugToward(nx, ny, nz, 0.18 + (1 - cover) * 0.35,
+      skull * (1.045 + cover * 0.08)));
+    if (front > 0.20 && ny < bangHem) {
+      const t = Math.min(1, (bangHem - ny) / 0.28) * Math.pow(front, 0.75) * across;
+      ny += (bangHem - ny) * t * 0.92;
+    }
+    ({ nx, ny, nz } = sealSkull(nx, ny, nz, skull, 1.022));
     return { nx, ny, nz };
   }),
   bob: (r) => sculptHair(`bobF${r}`, r, 1.92, 64, 48, (b, tl, rr) => {
@@ -8502,9 +8570,9 @@ const G = {
       fade > 0.50 ? 1.004 : (crest > 0.12 ? 1.006 : 1.010)));
     return { nx, ny, nz };
   }),
-  medium: (r) => geoCache(`mopD${r}`, () => {
-    /* Mop-top from the photo library: jagged triangular bangs, mixed tapered points,
-       and a few crown tufts added in buildHair. */
+  medium: (r) => geoCache(`mopF${r}`, () => {
+    /* Mop-top / bowl: smooth helmet with a HIGH clean forehead cut
+       (horizontal above eyes → down into the ears). No jagged low bangs. */
     const tl = 2.38;
     const g = new THREE.SphereGeometry(r, 88, 64, 0, TAU, 0, tl);
     const p = g.attributes.position, v = new THREE.Vector3();
@@ -8521,18 +8589,21 @@ const G = {
       const phi = Math.atan2(ux, uz);
       const side = Math.abs(ux) / rs0;
 
-      const lobes = hairClumps(phi, 5.2, 8.5, 13.0) * 0.78
-        + 0.32 * Math.pow(Math.abs(Math.sin(phi * 6.8 + 0.4)), 1.45);
+      const lobes = hairClumps(phi, 3.2, 5.5, 8.0) * 0.35
+        + 0.12 * Math.pow(Math.abs(Math.sin(phi * 4.2 + 0.3)), 1.20);
 
-      const bangTh = 1.62 + lobes * 0.48;
-      const sideTh = 1.96 + lobes * 0.34;
-      const napeTh = 2.04 + lobes * 0.26;
-      const faceWin = Math.pow(Math.max(0, azFront - 0.04) / 0.96, 1.15);
+      const faceWin = Math.pow(Math.max(0, azFront - 0.04) / 0.96, 1.10);
+      /* High clean brow band, then soft drop toward ears. */
+      const hairY = 0.50 - Math.pow(Math.max(0, side - 0.10), 1.05) * 0.32
+        - Math.pow(Math.max(0, side - 0.40), 1.15) * 0.16;
+      const sideTh = 1.92 + lobes * 0.18;
+      const napeTh = 2.08 + lobes * 0.14;
+      const bangTh = 1.18 + faceWin * 0.08;
       let maxTh = sideTh
         + (bangTh - sideTh) * faceWin
-        + (napeTh - sideTh) * Math.pow(azBack, 1.15);
+        + (napeTh - sideTh) * Math.pow(azBack, 1.10);
       const hem = Math.pow(Math.max(0, (u - 0.46) / 0.54), 1.12);
-      maxTh += (lobes - 0.40) * 0.48 * (0.45 + hem * 0.55);
+      maxTh += (lobes - 0.20) * 0.22 * (0.35 + hem * 0.55);
 
       const th2 = u * maxTh;
       const rs = Math.sin(th2);
@@ -8545,34 +8616,29 @@ const G = {
       );
       nx *= s * r; ny *= s * r; nz *= s * r;
 
-      ny += Math.max(0, ny - 0.38) * 0.36;
-      const fluff = (0.042 * Math.sin(phi * 3.6 + uy * 4.5)
-        + 0.026 * Math.sin(phi * 6.8 - uy * 3.1 + 0.7)
-        + 0.016 * Math.sin(phi * 12.2 + uy * 5.4 + 1.2))
-        * Math.max(0, uy - 0.04);
-      ny += fluff * 0.80;
-      nx *= 1 + fluff * 0.50;
-      nz *= 1 + fluff * 0.36;
+      ny += Math.max(0, ny - 0.38) * 0.28;
+      const fluff = (0.028 * Math.sin(phi * 3.2 + uy * 3.8)
+        + 0.016 * Math.sin(phi * 5.6 - uy * 2.6 + 0.7))
+        * Math.max(0, uy - 0.08);
+      ny += fluff * 0.55;
+      nx *= 1 + fluff * 0.28;
+      nz *= 1 + fluff * 0.22;
 
-      const bangs = faceWin * Math.pow(Math.max(0, (u - 0.12) / 0.88), 1.02);
-      const notch = Math.exp(-(phi * phi) * 22) * faceWin;
-      ny -= bangs * (0.20 + lobes * 0.38) * (1 - notch * 0.72);
-      nz += bangs * (0.07 - notch * 0.03);
-      const frame = hairFrame(ux, uy, azFront, azBack, side);
-      ({ nx, ny, nz } = thinHairline(nx, ny, nz, {
-        ux, uy, uz, azFront, azBack, side, phi, rs0, th
-      }, frame, s * r, 0.95));
+      if (faceWin > 0.08 && ny < hairY) {
+        const t = Math.min(1, (hairY - ny) / 0.30) * Math.pow(faceWin, 0.75)
+          * (1 - Math.pow(Math.min(1, side / 0.72), 1.6));
+        ny += (hairY - ny) * t * 0.96;
+        const Lf = Math.hypot(nx, ny, nz) || 1;
+        const hug = 1 + (s * r * 1.02 / Lf - 1) * t * 0.55;
+        nx *= hug; ny *= hug; nz *= hug;
+      }
 
-      const hang = hem * (0.50 + side * 0.22 + azBack * 0.28);
-      ny -= hang * (0.14 + lobes * 0.36);
-      const flare = 1 + hang * (0.05 + (lobes - 0.32) * 0.26);
-      nx *= flare * (1 - lobes * hem * 0.18);
-      nz *= flare * (1 - lobes * hem * 0.10);
-      nz -= hang * azBack * 0.12;
-
-      const sway = Math.sin(hem * 2.6 + phi * 0.55) * side * hem;
-      nx *= 1 + sway * 0.07;
-      nz -= sway * 0.04 * azBack;
+      const hang = hem * (0.42 + side * 0.18 + azBack * 0.32) * (1 - faceWin * 0.85);
+      ny -= hang * (0.10 + lobes * 0.16);
+      const flare = 1 + hang * (0.04 + lobes * 0.08);
+      nx *= flare;
+      nz *= flare;
+      nz -= hang * azBack * 0.10;
 
       p.setXYZ(i, nx, Math.max(ny, HAIR_FEET_Y), nz);
     }
@@ -9889,57 +9955,72 @@ const G = {
     g.computeVertexNormals();
     return g;
   }),
-  /* Cardboard paper crown: full 360° brow circlet whose top edge rises into
-     ornamental rounded peaks (front peak tallest). Bottom sits at y=0. */
-  paperCrown: () => geoCache('pcrown12', () => {
-    /* Soft rounded peaks with a mild fleur waist — closer to BK cardboard
-       die-cuts than sharp triangular spikes. Radius follows the skull at
-       each azimuth so the band wraps the whole head, not a front arc.
-       8 peaks: k=0 front (+Z), k=4 exactly at the back (180°) so the
-       crown reads as a continuous band from any camera angle. */
-    const SEGS = 168, ROWS = 28, NPEAKS = 8;
-    const BAND = 0.50, PEAK = 0.36;  /* taller band = solid ring more visible from all angles */
-    const VALLEY = 0.40; /* valleys still visible but band height ensures full wrap */
+  /* Cardboard paper crown: explicit full-360° spiked circlet. Built as a
+     closed azimuth strip (not a morphed cylinder) so front/back cannot
+     collapse into side-only panels. */
+  paperCrown: () => geoCache('pcrown14', () => {
+    /* 10 peaks evenly around the head — front (+Z) and back (−Z) always
+       land on a peak so rear/side cameras never see a hole. Soft fleur
+       tips; valleys stay high so the band reads as one continuous wrap. */
+    const SEGS = 192, ROWS = 24, NPEAKS = 10;
+    const BAND = 0.42, PEAK = 0.38;
+    const VALLEY = 0.55; /* high floor — continuous gold ring, not side fins */
     const SEAT_Y = 0.34; /* brow hem — must match buildHair BASE_Y */
-    const headHorizR = (ny, az) => {
+    /* True horizontal radius of the HEAD_N superball at height y. */
+    const headHorizR = (y, az) => {
+      const yn = Math.min(0.96, Math.max(-0.96, y));
       const ux = Math.sin(az), uz = Math.cos(az);
-      const s = Math.pow(
-        Math.pow(Math.abs(ux), HEAD_N) + Math.pow(Math.abs(ny), HEAD_N) + Math.pow(Math.abs(uz), HEAD_N),
-        -1 / HEAD_N
-      );
-      return Math.hypot(ux * s, uz * s);
+      const denom = Math.pow(Math.abs(ux), HEAD_N) + Math.pow(Math.abs(uz), HEAD_N);
+      const rem = Math.max(0.04, 1 - Math.pow(Math.abs(yn), HEAD_N));
+      return Math.pow(rem / Math.max(1e-6, denom), 1 / HEAD_N);
     };
-    const g = new THREE.CylinderGeometry(1, 1, 1, SEGS, ROWS, true);
-    const p = g.attributes.position;
-    for (let i = 0; i < p.count; i++) {
-      let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-      const ang = Math.atan2(x, z);
-      const u = y + 0.5;
+    const peakAt = (ang) => {
       let peakAmt = 0;
       for (let k = 0; k < NPEAKS; k++) {
-        /* k=0 on +Z (face); k=4 on -Z (back). Peaks tile evenly 360°. */
         const peakAng = (k / NPEAKS) * TAU;
         let d = Math.abs(ang - peakAng);
         if (d > Math.PI) d = TAU - d;
-        const halfW = (Math.PI / NPEAKS) * 1.35;
+        const halfW = (Math.PI / NPEAKS) * 1.28;
         if (d >= halfW) continue;
         const t = 1 - d / halfW;
-        /* Smoothstep base + mid bulge + tip soften = rounded fleur. */
         const s = t * t * (3 - 2 * t);
-        const waist = 1 + 0.22 * Math.sin(s * Math.PI);
-        const tipSoft = Math.pow(s, 0.82) * (1 - 0.22 * Math.pow(s, 3.2));
-        peakAmt = Math.max(peakAmt, Math.min(1.14, tipSoft * waist));
+        const waist = 1 + 0.20 * Math.sin(s * Math.PI);
+        const tipSoft = Math.pow(s, 0.78) * (1 - 0.20 * Math.pow(s, 3.0));
+        peakAmt = Math.max(peakAmt, Math.min(1.12, tipSoft * waist));
       }
-      peakAmt = Math.max(peakAmt, VALLEY);
-      const h = BAND + PEAK * peakAmt;
-      const newY = u * h;
-      const flare = 1 + u * peakAmt * 0.032;
-      const ny = SEAT_Y + newY;
-      const clr = 1.22 + peakAmt * 0.025;
-      const r = headHorizR(ny, ang) * clr * flare;
-      p.setXYZ(i, Math.sin(ang) * r, newY, Math.cos(ang) * r);
+      return Math.max(VALLEY, peakAmt);
+    };
+    const pos = [], uvs = [], idx = [];
+    for (let j = 0; j <= ROWS; j++) {
+      const u = j / ROWS;
+      for (let i = 0; i <= SEGS; i++) {
+        const ang = (i / SEGS) * TAU;
+        const peakAmt = peakAt(ang);
+        const h = BAND + PEAK * peakAmt;
+        const newY = u * h;
+        const flare = 1 + u * peakAmt * 0.028;
+        const ny = SEAT_Y + newY;
+        /* Clearance outside skull + hair so front/back never sink in. */
+        const clr = 1.14 + peakAmt * 0.02 + u * 0.02;
+        const r = Math.max(0.92, headHorizR(ny, ang) * clr) * flare;
+        pos.push(Math.sin(ang) * r, newY, Math.cos(ang) * r);
+        uvs.push(i / SEGS, u);
+      }
     }
-    p.needsUpdate = true;
+    const stride = SEGS + 1;
+    for (let j = 0; j < ROWS; j++) {
+      for (let i = 0; i < SEGS; i++) {
+        const a = j * stride + i;
+        const b = a + 1;
+        const c = a + stride;
+        const d = c + 1;
+        idx.push(a, c, b, b, c, d);
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    g.setIndex(idx);
     g.computeVertexNormals();
     return g;
   }),
@@ -11793,10 +11874,11 @@ function buildHair(dna, mat, extraMats) {
 
       const BASE_Y = 0.34;
       const BAND = 0.28;
+      hatMat.side = THREE.DoubleSide;
       put(G.paperCrown(), hatMat, 0, BASE_Y, 0);
 
-      /* Inner cardboard lip so the open top does not read as a razor edge. */
-      put(G.tube(), accMat, 0, BASE_Y + 0.04, 0, 1.01, 0.08, 0.99);
+      /* Continuous inner cardboard lip under the full circlet. */
+      put(G.tube(), accMat, 0, BASE_Y + 0.04, 0, 1.06, 0.10, 1.04);
 
       /* Stylized BK circular bun logo on the front panel (printed look). */
       const logoMat = new THREE.MeshBasicMaterial({
@@ -12082,67 +12164,74 @@ function buildHair(dna, mat, extraMats) {
     put(G.buzzCut(1.005), stubbleHairMat(mat, dna.hair.color, extraMats), 0, 0, 0);
   }
   else if (st === 'bowl') {
+    /* Smooth helmet mop with raised clean forehead — no crown tuft spikes. */
     add(G.medium(1.07), 0, 0, 0, 1, 1.04, 1);
-    /* Crown tufts from the jagged mop photo — three short spikes at the pole. */
-    for (let k = 0; k < 3; k++) {
-      const a = (k / 3) * TAU;
-      const tuft = add(G.spike(), Math.sin(a) * 0.10, 1.18, Math.cos(a) * 0.08,
-        0.045, 0.16, 0.045);
-      tuft.rotation.z = Math.sin(a) * 0.28;
-      tuft.rotation.x = -Math.cos(a) * 0.18;
-    }
   }
   else if (st === 'swept') {
     add(G.sweptHair(1.05), 0, 0, 0);
   }
   else if (st === 'spiky') {
-    /* Stubble underlayer on sides/back; solid spiked crown with rim fade. */
+    /* Stubble underlayer; solid spiked crown with high forehead opening.
+       Dense cone field across the full crown width (not a sparse centre). */
     put(G.buzzCut(1.005), stubbleHairMat(mat, dna.hair.color, extraMats), 0, 0, 0);
     const spikeGeo = G.spikes(1.05).clone();
     applyStubbleRimFade(spikeGeo, dna.hair.color, dna.skin, 0.85);
     const spikeMat = stubbleFadeShellMat(0.78);
     if (extraMats) extraMats.push(spikeMat);
     put(spikeGeo, spikeMat, 0, 0, 0);
-    /* Chunky crown spikes: full top L→R and front→rear (pink outlines on
-       front/side/back). [x, z, h, tiltX, rad] — y from scalp sphere;
-       ConeGeometry is centered so lift by h/2 puts the base on the surface. */
+    /* [x, z, h, tiltX, rad] — denser L→R rows on the crown; no low
+       forehead-band cones (those covered the brow below the cut). */
     const spikeR = 1.02;
     const spots = [
-      /* Front forehead band */
-      [-0.56, 0.44, 0.58, 0.22, 0.145],
-      [-0.34, 0.50, 0.72, 0.14, 0.155],
-      [-0.10, 0.54, 0.52, 0.06, 0.140],
-      [0.14, 0.54, 0.68, 0.04, 0.150],
-      [0.36, 0.50, 0.60, 0.12, 0.145],
-      [0.56, 0.44, 0.54, 0.20, 0.140],
-      /* Mid-front */
-      [-0.48, 0.24, 0.66, 0.10, 0.150],
-      [-0.22, 0.28, 0.50, 0.04, 0.135],
-      [0.04, 0.30, 0.74, 0.02, 0.160],
-      [0.28, 0.28, 0.58, 0.04, 0.145],
-      [0.50, 0.24, 0.64, 0.10, 0.150],
-      /* Crown peak */
-      [-0.46, 0.02, 0.56, 0.00, 0.140],
-      [-0.20, 0.04, 0.70, -0.04, 0.155],
-      [0.08, 0.00, 0.48, 0.00, 0.135],
-      [0.32, -0.02, 0.72, -0.06, 0.160],
-      [0.52, 0.00, 0.54, 0.00, 0.140],
+      /* Front crown (above the raised hairline) */
+      [-0.58, 0.28, 0.52, 0.10, 0.118],
+      [-0.42, 0.34, 0.64, 0.08, 0.125],
+      [-0.26, 0.38, 0.48, 0.06, 0.112],
+      [-0.10, 0.40, 0.70, 0.04, 0.128],
+      [0.06, 0.40, 0.56, 0.04, 0.118],
+      [0.22, 0.38, 0.66, 0.06, 0.125],
+      [0.38, 0.34, 0.50, 0.08, 0.115],
+      [0.54, 0.28, 0.60, 0.10, 0.122],
+      /* Mid crown — dense zig-zag fill */
+      [-0.62, 0.08, 0.58, 0.02, 0.120],
+      [-0.48, 0.14, 0.72, 0.02, 0.130],
+      [-0.34, 0.06, 0.46, 0.00, 0.112],
+      [-0.20, 0.12, 0.68, 0.00, 0.128],
+      [-0.06, 0.04, 0.54, 0.00, 0.118],
+      [0.08, 0.12, 0.74, 0.00, 0.132],
+      [0.22, 0.06, 0.48, 0.00, 0.112],
+      [0.36, 0.14, 0.66, 0.02, 0.126],
+      [0.50, 0.08, 0.52, 0.02, 0.118],
+      [0.62, 0.02, 0.62, 0.04, 0.122],
+      /* Crown peak row */
+      [-0.56, -0.10, 0.56, -0.04, 0.118],
+      [-0.40, -0.04, 0.70, -0.04, 0.130],
+      [-0.24, -0.12, 0.48, -0.06, 0.112],
+      [-0.08, -0.06, 0.72, -0.04, 0.132],
+      [0.08, -0.12, 0.52, -0.06, 0.116],
+      [0.24, -0.04, 0.68, -0.04, 0.128],
+      [0.40, -0.10, 0.46, -0.06, 0.112],
+      [0.54, -0.06, 0.64, -0.04, 0.124],
       /* Rear crown */
-      [-0.44, -0.24, 0.52, -0.14, 0.140],
-      [-0.16, -0.28, 0.68, -0.18, 0.155],
-      [0.14, -0.28, 0.50, -0.16, 0.140],
-      [0.42, -0.24, 0.62, -0.14, 0.150],
+      [-0.50, -0.28, 0.54, -0.14, 0.118],
+      [-0.32, -0.34, 0.66, -0.16, 0.126],
+      [-0.14, -0.30, 0.48, -0.14, 0.112],
+      [0.04, -0.36, 0.70, -0.18, 0.130],
+      [0.22, -0.30, 0.50, -0.14, 0.115],
+      [0.40, -0.34, 0.62, -0.16, 0.124],
+      [0.54, -0.26, 0.52, -0.12, 0.118],
       /* Upper back */
-      [-0.28, -0.44, 0.46, -0.24, 0.135],
-      [0.02, -0.48, 0.60, -0.28, 0.150],
-      [0.30, -0.44, 0.52, -0.24, 0.140]
+      [-0.36, -0.48, 0.48, -0.24, 0.112],
+      [-0.12, -0.52, 0.60, -0.26, 0.122],
+      [0.12, -0.50, 0.46, -0.24, 0.110],
+      [0.34, -0.48, 0.56, -0.24, 0.118]
     ];
     for (let i = 0; i < spots.length; i++) {
       const [x, z, h, tilt, rad] = spots[i];
       const ySurf = Math.sqrt(Math.max(0.04, spikeR * spikeR - x * x - z * z));
       const m = add(G.spike(), x, ySurf + h * 0.50, z, rad, h, rad);
       m.rotation.x = tilt;
-      m.rotation.z = -Math.sign(x || 0.01) * (0.14 + Math.abs(x) * 0.28);
+      m.rotation.z = -Math.sign(x || 0.01) * (0.12 + Math.abs(x) * 0.24);
     }
   }
   else if (st === 'long') {
@@ -12183,9 +12272,11 @@ function buildHair(dna, mat, extraMats) {
       if (extraMats) extraMats.push(bandMat);
       put(bandGeo, bandMat, 0, 0, 0);
     }
-    /* Stem seats the bun into the scalp so the crown join isn't hollow. */
-    add(G.ball(), 0, 1.14, -0.12, 0.48, 0.36, 0.50);
-    add(G.ball(), 0, 1.34, -0.10, 0.76, 0.70, 0.76);
+    /* Solid round top-knot — stacked balls fill the centre (never a torus hole). */
+    add(G.ball(), 0, 1.12, -0.10, 0.42, 0.34, 0.44);
+    add(G.ball(), 0, 1.28, -0.08, 0.62, 0.52, 0.62);
+    add(G.ball(), 0, 1.40, -0.06, 0.78, 0.72, 0.78);
+    add(G.ball(), 0, 1.48, -0.04, 0.52, 0.48, 0.52);
   }
   else if (st === 'pony') {
     /* Gathered scalp plus one continuous flowy back pony — root seats into
@@ -12488,12 +12579,10 @@ function buildHair(dna, mat, extraMats) {
     add(G.shag(1.08), 0, 0, 0, 1, 1.06, 1);
   }
   else if (st === 'mullet') {
-    /* Mohawk: ~5 large smooth one-chunk triangular wedges along the crest
-       (brow → crown → nape), continuous flush root rail, stubble sides.
-       Heights stay inside the review head frustum (~FOV 30°) so tips are not
-       clipped into ragged flats; chunk read comes from fat Z bases. */
+    /* Mohawk: one continuous spiked fin along the crest (brow → nape) on a
+       flush root rail with stubble sides — not sparse separate wedges. */
     add(G.mullet(1.07), 0, 0, 0, 1, 1.02, 1);
-    /* Few large plugs — continuous root rail (not a bead stipple). */
+    /* Soft root plugs under the fin so the seating rail stays opaque. */
     const plugs = [
       [0.00, 0.70, 0.70, 0.28, 0.20, 0.24],
       [0.00, 0.28, 0.96, 0.32, 0.22, 0.26],
@@ -12504,20 +12593,7 @@ function buildHair(dna, mat, extraMats) {
     for (const [x, z, y, sx, sy, sz] of plugs) {
       add(G.ball(), x, y, z, sx, sy, sz);
     }
-    /* [x, z, y, h, tilt, w] — five solid flat wedges, front → crown → nape.
-       sx = strip thickness, sy = height, sz = fore-aft base (side profile width). */
-    const crest = [
-      [0.00, 0.68, 0.92, 0.72, 1.05, 0.70],
-      [0.00, 0.34, 1.10, 0.82, 0.38, 0.78],
-      [0.00, -0.02, 1.16, 0.90, 0.00, 0.85],
-      [0.00, -0.36, 1.08, 0.80, -0.40, 0.78],
-      [0.00, -0.66, 0.74, 0.74, -1.08, 0.72]
-    ];
-    for (let i = 0; i < crest.length; i++) {
-      const [x, z, y, h, tilt, w] = crest[i];
-      const m = add(G.spikeChunk(), x, y, z, 0.38, h, w);
-      m.rotation.x = tilt;
-    }
+    add(G.mohawkFin(), 0, 0, 0, 1, 1, 1);
   }
   else if (st === 'highpony') {
     /* Pulled-back scalp with a higher centre V, plus a chunky natural
@@ -12552,9 +12628,10 @@ function buildHair(dna, mat, extraMats) {
     add(G.layers(1.09), 0, 0, 0, 1, 1.06, 1);
   }
   else if (st === 'spacebuns') {
-    /* Twin crown buns with hanging pony tails; bangs start at the centre
-       V and mold continuously into the side face panels. Raised nape. */
-    add(G.gatherScalp(1.04), 0, 0, 0);
+    /* Twin crown buns + one solid fringe shell (filled forehead → cheek
+       sweeps). Open scalp under the bangs; no discrete bang balls. */
+    add(G.spacebunScalp(1.04), 0, 0, 0);
+    add(G.spacebunBangs(1.07), 0, 0, 0, 1, 1.02, 1);
     for (const sx of [-1, 1]) {
       /* Bunched bun seated into the scalp + soft bridge toward midline so
          the pair reads as one hair mass, not two floating spheres. */
@@ -12565,13 +12642,6 @@ function buildHair(dna, mat, extraMats) {
       const tail = add(G.smoothPony(), sx * 0.64, 0.48, 0.04, 0.58, 0.92, 0.58);
       tail.rotation.z = sx * 0.38;
       tail.rotation.x = 0.12;
-      /* Bang chunk from crown V → side of face (continuous, not separate balls). */
-      const bangRoot = add(G.ball(), sx * 0.16, 0.82, 0.68, 0.14, 0.26, 0.12);
-      bangRoot.rotation.z = sx * 0.18;
-      bangRoot.rotation.x = 0.32;
-      const bang = add(G.ball(), sx * 0.48, 0.42, 0.78, 0.16, 0.52, 0.14);
-      bang.rotation.z = sx * 0.32;
-      bang.rotation.x = 0.28;
     }
   }
   return { hair: out, hat: hatOut || [] };
@@ -12587,9 +12657,11 @@ function buildMii(dna) {
   const skinMat = makeSkinMaterial(dna.skin, { vertexColors: deep });
   /* Hair is built from open shells, not solids. With front-face culling you
      see straight through the inside wherever a shell edge turns away from the
-     camera — which showed up as a translucent seam across the crown. */
+     camera — which showed up as a translucent seam across the crown.
+     Slight negative polygon offset so hair wins near torso/collar fights. */
   const hairMat  = new THREE.MeshStandardMaterial({
-    color: dna.hair.color, roughness: 0.5, metalness: 0.02, side: THREE.DoubleSide
+    color: dna.hair.color, roughness: 0.5, metalness: 0.02, side: THREE.DoubleSide,
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
   });
   const apparelTex = makeApparelTexture(dna);
   const shirtMat = apparel.bare
@@ -12604,7 +12676,10 @@ function buildMii(dna) {
       : apparel.kind === 'tank' ? 0.78
       : apparel.kind === 'techvest' ? 0.60
       : 0.72,
-    metalness: apparel.kind === 'techvest' ? 0.04 : 0
+    metalness: apparel.kind === 'techvest' ? 0.04 : 0,
+    /* Push shirt slightly back in the depth buffer so bulky hair shells
+       (afro, long, bob, etc.) never lose a near-tie to the upper torso. */
+    polygonOffset: true, polygonOffsetFactor: 3, polygonOffsetUnits: 3
   });
   const legCol = apparel.skirt && apparel.skirtFrom !== 'pants'
     ? skirtColor(dna, apparel) : dna.pants;
@@ -12661,7 +12736,9 @@ function buildMii(dna) {
   const hairParts = buildHair(dna, hairMat, M.mats);
   const faceCoverHair = FACE_COVER_HAIR.has(dna.hair.style);
   for (const h of hairParts.hair) {
-    if (faceCoverHair) h.renderOrder = Math.max(h.renderOrder || 0, 6);
+    /* Hair above shirt/collar in the draw order so nape/side shells win
+       depth fights against the upper torso for every style. */
+    h.renderOrder = Math.max(h.renderOrder || 0, faceCoverHair ? 6 : 2);
     headScale.add(h);
   }
 
@@ -12699,7 +12776,23 @@ function buildMii(dna) {
   }
 
   /* ---- torso ---- */
-  const torso = new THREE.Mesh(G.torso(), shirtMat);
+  /* Pinch the upper torso so shoulder/collar corners stay inside the neck
+     cone and cannot poke through hanging hair volumes (afro, long, bob…). */
+  const torsoGeo = G.torso().clone();
+  ownGeo.push(torsoGeo);
+  {
+    const p = torsoGeo.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const y = p.getY(i);
+      if (y <= 0.12) continue;
+      const t = Math.min(1, (y - 0.12) / 0.88);
+      const pinch = 1 - t * t * 0.48;
+      p.setXYZ(i, p.getX(i) * pinch, y, p.getZ(i) * pinch);
+    }
+    p.needsUpdate = true;
+    torsoGeo.computeVertexNormals();
+  }
+  const torso = new THREE.Mesh(torsoGeo, shirtMat);
   /* A kit is cut closer than streetwear. The same sphere as a hoodie makes
      the jersey look padded, so only football gets a tighter xz — height stays
      so the collar and pants still meet. */
@@ -12713,6 +12806,7 @@ function buildMii(dna) {
   const z = kit ? 0.235 : puffer ? 0.33 : boxy ? 0.29 : tank ? 0.245 : vestFit ? 0.255 : 0.27;
   torso.scale.set(xz * dna.girth, y, z * dna.girth);
   torso.position.y = 0.5;
+  torso.renderOrder = 0;
   body.add(torso);
 
   const neck = new THREE.Mesh(neckGeo, skinMat);
@@ -12749,10 +12843,24 @@ function buildMii(dna) {
       collar.scale.set(0.126, 0.126, 0.22);
       collar.position.y = 0.735;
     } else {
-      collar.scale.set(0.135, 0.135, 0.13);
-      collar.position.y = 0.7;
+      collar.scale.set(0.128, 0.128, 0.12);
+      collar.position.y = 0.695;
     }
     collar.rotation.x = Math.PI / 2;
+    collar.renderOrder = 0;
+    if (collarMat !== whiteMat) {
+      collarMat.polygonOffset = true;
+      collarMat.polygonOffsetFactor = 3;
+      collarMat.polygonOffsetUnits = 3;
+    } else {
+      /* Shared whiteMat — don't mutate globally; clone for collar bias. */
+      const cMat = whiteMat.clone();
+      cMat.polygonOffset = true;
+      cMat.polygonOffsetFactor = 3;
+      cMat.polygonOffsetUnits = 3;
+      collar.material = cMat;
+      M.mats.push(cMat);
+    }
     body.add(collar);
   }
 
@@ -13449,6 +13557,16 @@ const fill = new THREE.DirectionalLight(0xcfe4f7, 0.42); fill.position.set(-6, 4
 const rim = new THREE.DirectionalLight(0xffffff, 0.3); rim.position.set(0, 3, -9); scene.add(rim);
 const faceFill = new THREE.DirectionalLight(0xfff4e6, 0.22); faceFill.position.set(1.4, 2.6, 9); scene.add(faceFill);
 
+/* Soft overhead pool on the rug — night/evening only (intensity set by TimeOfDay). */
+const rugSpot = new THREE.SpotLight(0xffe4c8, 0, 16, Math.PI / 3.1, 0.72, 1.35);
+rugSpot.position.set(0, 7.4, 0.2);
+rugSpot.target.position.set(0, 0, 0);
+scene.add(rugSpot);
+scene.add(rugSpot.target);
+const rugGlow = new THREE.PointLight(0xc8daf0, 0, 11, 2);
+rugGlow.position.set(0, 4.2, 0);
+scene.add(rugGlow);
+
 const floorTex = makeFloorTexture();
 floorTex.repeat.set(60, 60);
 const floor = new THREE.Mesh(
@@ -13458,6 +13576,114 @@ const floor = new THREE.Mesh(
 floor.rotation.x = -Math.PI / 2;
 floor.position.y = 0;
 scene.add(floor);
+
+/** Backdrop sky (fog-disabled). Day = blue sky; night = dark (stars are Points). */
+function makeSkyCanvas(mode) {
+  const W = 2048, H = 1024;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const grad = g.createLinearGradient(0, 0, 0, H);
+  if (mode === 'day') {
+    grad.addColorStop(0, '#6ebef0');
+    grad.addColorStop(0.35, '#8ecff5');
+    grad.addColorStop(0.7, '#b7dff8');
+    grad.addColorStop(1, '#d8ecf8');
+  } else if (mode === 'evening') {
+    grad.addColorStop(0, '#2a3f58');
+    grad.addColorStop(0.45, '#1e3044');
+    grad.addColorStop(1, '#152230');
+  } else {
+    grad.addColorStop(0, '#081018');
+    grad.addColorStop(0.4, '#122030');
+    grad.addColorStop(0.75, '#1a2e40');
+    grad.addColorStop(1, '#243848');
+  }
+  g.fillStyle = grad;
+  g.fillRect(0, 0, W, H);
+  /* Tiny soft dots only at night — Points handle most of the starfield. */
+  if (mode === 'night') {
+    for (let i = 0; i < 220; i++) {
+      const x = Math.random() * W;
+      const y = Math.random() * H * 0.88;
+      const r = 0.35 + Math.random() * 0.55;
+      g.fillStyle = `rgba(230,238,255,${0.35 + Math.random() * 0.45})`;
+      g.beginPath();
+      g.arc(x, y, r, 0, Math.PI * 2);
+      g.fill();
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.generateMipmaps = false;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+const skyMat = new THREE.MeshBasicMaterial({
+  map: makeSkyCanvas('day'),
+  side: THREE.BackSide,
+  depthWrite: false,
+  fog: false
+});
+const sky = new THREE.Mesh(new THREE.SphereGeometry(95, 40, 24), skyMat);
+sky.renderOrder = -10;
+scene.add(sky);
+
+/** Soft circular sprite for night stars (avoids blocky GL_POINTS). */
+function makeSoftStarMap() {
+  const s = 64;
+  const c = document.createElement('canvas');
+  c.width = c.height = s;
+  const g = c.getContext('2d');
+  const grd = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  grd.addColorStop(0, 'rgba(255,255,255,1)');
+  grd.addColorStop(0.28, 'rgba(235,242,255,0.7)');
+  grd.addColorStop(0.55, 'rgba(210,225,255,0.22)');
+  grd.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grd;
+  g.fillRect(0, 0, s, s);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.needsUpdate = true;
+  return t;
+}
+
+/** Night-only tiny soft star points. */
+function makeStarField() {
+  const n = 420;
+  const pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const elev = 0.15 + Math.random() * 1.2;
+    const r = 30 + Math.random() * 58;
+    pos[i * 3] = Math.cos(theta) * Math.cos(elev) * r;
+    pos[i * 3 + 1] = 7 + Math.sin(elev) * r * 0.85;
+    pos[i * 3 + 2] = Math.sin(theta) * Math.cos(elev) * r;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({
+    map: makeSoftStarMap(),
+    color: 0xffffff,
+    size: 0.28,
+    sizeAttenuation: true,
+    transparent: true,
+    opacity: 0.9,
+    depthWrite: false,
+    depthTest: true,
+    fog: false,
+    blending: THREE.AdditiveBlending
+  });
+  const pts = new THREE.Points(geo, mat);
+  pts.visible = false;
+  pts.renderOrder = -8;
+  return pts;
+}
+const starField = makeStarField();
+scene.add(starField);
 
 const World = {
   scene, camera, renderer, controls,
@@ -14702,18 +14928,24 @@ const PropFx = {
 
 const PlazaPropActions = {
   lampOn: true,
-  toggleLamp(root) {
-    this.lampOn = !this.lampOn;
-    const glow = root.userData.lampGlow;
-    const spot = root.userData.lampSpot;
-    const bulb = root.userData.lampBulb;
-    if (glow) glow.intensity = this.lampOn ? 2.5 : 0;
-    if (spot) spot.intensity = this.lampOn ? 1.8 : 0;
-    if (bulb && bulb.material) {
-      bulb.material.emissive.setHex(this.lampOn ? 0xffe8c0 : 0x000000);
-      bulb.material.emissiveIntensity = this.lampOn ? 2.5 : 0;
+  setLamps(on, { silent = false } = {}) {
+    this.lampOn = !!on;
+    for (const root of World.props || []) {
+      if (!(root.userData && root.userData.lampGlow)) continue;
+      const glow = root.userData.lampGlow;
+      const spot = root.userData.lampSpot;
+      const bulb = root.userData.lampBulb;
+      if (glow) glow.intensity = this.lampOn ? 2.0 : 0;
+      if (spot) spot.intensity = this.lampOn ? 1.45 : 0;
+      if (bulb && bulb.material) {
+        bulb.material.emissive.setHex(this.lampOn ? 0xffe8c0 : 0x000000);
+        bulb.material.emissiveIntensity = this.lampOn ? 2.0 : 0;
+      }
     }
-    Sound.fx.lampSwitch(this.lampOn);
+    if (!silent) Sound.fx.lampSwitch(this.lampOn);
+  },
+  toggleLamp() {
+    this.setLamps(!this.lampOn);
   },
   brewCoffee(root) {
     const p = propWorldPos(root, 0, 0.78, 0.14);
@@ -14745,14 +14977,15 @@ function buildTallLamp() {
     shadeMat, 0, 1.98, 0);
   addP(g, PG.cyl(16), pMat('#f2ebe0', 0.8), 0, 2.15, 0, 0.17, 0.03, 0.17);
   const bulbMat = new THREE.MeshStandardMaterial({
-    color: '#fff8e8', emissive: '#ffe8c0', emissiveIntensity: 2.5, roughness: 0.5
+    color: '#fff8e8', emissive: '#ffe8c0', emissiveIntensity: 2.0, roughness: 0.5
   });
   const bulb = addP(g, PG.cyl(16), bulbMat, 0, 1.82, 0, 0.16, 0.04, 0.16);
-  const glow = new THREE.PointLight(0xffe0b0, 2.5, 8.0, 2);
+  /* Slightly softer than the old single-lamp values — three lamps share the room. */
+  const glow = new THREE.PointLight(0xffe0b0, 2.0, 7.5, 2);
   glow.position.set(0, 1.85, 0);
   g.add(glow);
   // Downward spot for floor cone
-  const spot = new THREE.SpotLight(0xffe8c0, 1.8, 6.5, Math.PI / 5, 0.5, 2);
+  const spot = new THREE.SpotLight(0xffe8c0, 1.45, 6.2, Math.PI / 5, 0.5, 2);
   spot.position.set(0, 1.85, 0);
   spot.target.position.set(0, 0, 0);
   g.add(spot);
@@ -16400,10 +16633,12 @@ function installPlazaProps() {
   placeProp(buildKitchenette(), kitX, kitZ, faceIn(kitX, kitZ), 0.92);
   const fridgeX = kitX + 1.72, fridgeZ = kitZ - 0.08;
   placeProp(buildFridge(), fridgeX, fridgeZ, faceIn(kitX, kitZ), 1.0);
+  placeProp(buildTallLamp(), fridgeX + 1.05, fridgeZ + 0.35, R(200), 1.0);
   const kitPlantX = kitX - 1.72, kitPlantZ = kitZ;
   placeProp(buildFern(), kitPlantX, kitPlantZ, faceIn(kitPlantX, kitPlantZ), 0.95);
   placeProp(buildDeskLaptop(), 1.55, 3.55, 0, 1.08);
   placeProp(buildLeafyPlant(), 0.45, 3.55, R(18), 1.05);
+  placeProp(buildTallLamp(), 2.95, 4.15, R(40), 1.0);
   const arcadeX = 3.35, arcadeZ = -0.35;
   placeProp(buildArcadeCabinet(), arcadeX, arcadeZ, faceCam(arcadeX, arcadeZ), 1.0);
   placeProp(buildCactus(), 4.85, 3.35, R(300), 1.05);
@@ -16417,32 +16652,86 @@ installPlazaProps();
 /* ── Time-of-day ambiance ────────────────────────────────────────
    Day (7–17): full office daylight, lamp off.
    Evening (17–21): golden dusk, lamp on, dimmer ambient.
-   Night (21–7): dark interior, lamp on, minimal ambient. */
+   Night (21–7): dark interior, lamp on, starry sky behind the transparent canvas. */
+function nightSkyDataUrl() {
+  if (nightSkyDataUrl._url) return nightSkyDataUrl._url;
+  const W = 1400, H = 900;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const grad = g.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#081018');
+  grad.addColorStop(0.4, '#122030');
+  grad.addColorStop(0.75, '#1a2e40');
+  grad.addColorStop(1, '#243848');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 280; i++) {
+    const x = Math.random() * W;
+    const y = Math.random() * H * 0.88;
+    const r = 0.4 + Math.random() * 0.7;
+    g.fillStyle = `rgba(230,238,255,${0.4 + Math.random() * 0.5})`;
+    g.beginPath();
+    g.arc(x, y, r, 0, Math.PI * 2);
+    g.fill();
+  }
+  nightSkyDataUrl._url = c.toDataURL('image/png');
+  return nightSkyDataUrl._url;
+}
+
 const TimeOfDay = {
   modes: {
-    day:     { bg:'#dfe8ef', fog:0xdfeaf3, hemiSky:0xffffff, hemiGnd:0xc8d6e0, hemiI:1.05,
-               keyCol:0xfff6ea, keyI:1.15, fillI:0.42, rimI:0.30, faceI:0.22, lamp:false },
-    evening: { bg:'#1c2b3a', fog:0x1c2b3a, hemiSky:0xa0b4cc, hemiGnd:0x38485a, hemiI:0.45,
-               keyCol:0xf09050, keyI:0.38, fillI:0.16, rimI:0.10, faceI:0.13, lamp:true },
-    night:   { bg:'#0b1319', fog:0x0b1319, hemiSky:0x1a2840, hemiGnd:0x0a1018, hemiI:0.18,
-               keyCol:0x253550, keyI:0.16, fillI:0.08, rimI:0.07, faceI:0.07, lamp:true },
+    day:     { bg:'#d5e8f6', fog:0xd5e8f6, fogNear:15, fogFar:48,
+               hemiSky:0xffffff, hemiGnd:0xc8d6e0, hemiI:1.05,
+               keyCol:0xfff6ea, keyI:1.15, fillI:0.42, rimI:0.30, faceI:0.22,
+               rugSpotI:0, rugGlowI:0, lamp:false,
+               stage:'radial-gradient(125% 95% at 50% 22%,#7ec8f2 0%,#9fd6f6 32%,#c5e6fa 62%,#dfeaf3 88%,#c8d8e6 100%)' },
+    evening: { bg:'#1c2b3a', fog:0x1c2b3a, fogNear:16, fogFar:44,
+               hemiSky:0xa0b4cc, hemiGnd:0x38485a, hemiI:0.45,
+               keyCol:0xf09050, keyI:0.38, fillI:0.16, rimI:0.10, faceI:0.13,
+               rugSpotI:0.55, rugGlowI:0.28, lamp:true,
+               stage:'radial-gradient(125% 95% at 50% 28%,#3a5470 0%,#24384c 42%,#1c2b3a 78%,#152230 100%)' },
+    night:   { bg:'#243848', fog:0x142430, fogNear:13, fogFar:32,
+               hemiSky:0x5a7890, hemiGnd:0x2a3c4e, hemiI:0.52,
+               keyCol:0x6a90b0, keyI:0.42, fillI:0.26, rimI:0.16, faceI:0.18,
+               rugSpotI:0.95, rugGlowI:0.42, lamp:true,
+               stage:null },
   },
   current() {
     const h = new Date().getHours();
     return h >= 7 && h < 17 ? 'day' : h >= 17 && h < 21 ? 'evening' : 'night';
   },
   apply() {
-    const t = this.modes[this.current()];
+    const mode = this.current();
+    const t = this.modes[mode];
+    document.body.classList.remove('tod-day', 'tod-evening', 'tod-night');
+    document.body.classList.add('tod-' + mode);
     document.body.style.background = t.bg;
     const tm = document.querySelector('meta[name="theme-color"]');
     if (tm) tm.content = t.bg;
+    const stage = document.getElementById('stage');
+    if (stage) {
+      stage.style.background = mode === 'night'
+        ? `url("${nightSkyDataUrl()}") center top / cover no-repeat, #122030`
+        : t.stage;
+    }
     scene.fog.color.setHex(t.fog);
+    scene.fog.near = t.fogNear;
+    scene.fog.far = t.fogFar;
+    if (skyMat.map) skyMat.map.dispose();
+    skyMat.map = makeSkyCanvas(mode);
+    skyMat.needsUpdate = true;
+    /* Dim the bright tile floor at night so the horizon doesn’t read as a white band. */
+    floor.material.color.setHex(mode === 'night' ? 0x8494a4 : mode === 'evening' ? 0xb4c0cc : 0xffffff);
+    floor.scale.setScalar(mode === 'night' ? 0.38 : mode === 'evening' ? 0.62 : 1);
+    starField.visible = mode === 'night';
     hemi.color.setHex(t.hemiSky); hemi.groundColor.setHex(t.hemiGnd); hemi.intensity = t.hemiI;
     key.color.setHex(t.keyCol); key.intensity = t.keyI;
     fill.intensity = t.fillI; rim.intensity = t.rimI; faceFill.intensity = t.faceI;
-    // Sync lamp: starts ON (lampOn=true); toggle if state differs
-    const lampRoot = World.props && World.props.find(r => r.name === 'lamp');
-    if (lampRoot && PlazaPropActions.lampOn !== t.lamp) PlazaPropActions.toggleLamp(lampRoot);
+    rugSpot.intensity = t.rugSpotI;
+    rugGlow.intensity = t.rugGlowI;
+    // Sync every floor lamp (day = off, evening/night = on)
+    PlazaPropActions.setLamps(t.lamp, { silent: true });
   }
 };
 TimeOfDay.apply();
@@ -16598,7 +16887,7 @@ const PlazaProps = {
     const root = entry.root;
     switch (entry.id) {
       case 'lamp':
-        PlazaPropActions.toggleLamp(root);
+        PlazaPropActions.toggleLamp();
         return true;
       case 'coffee':
         PlazaPropActions.brewCoffee(root);
