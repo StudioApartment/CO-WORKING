@@ -36,7 +36,7 @@ if (location.hostname === 'coworking.fyi') {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/lib/interior-ui.css">
-<!-- plaza-client: 501 -->
+<!-- plaza-client: 502 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -85,10 +85,10 @@ body.native-cursor button,body.native-cursor input{cursor:pointer}
   transition:background .6s ease;
 }
 body.tod-evening #stage::after{
-  background:radial-gradient(115% 90% at 50% 45%,rgba(0,0,0,0) 50%,rgba(8,16,28,.28) 100%);
+  background:radial-gradient(115% 90% at 50% 45%,rgba(0,0,0,0) 62%,rgba(8,16,28,.10) 100%);
 }
 body.tod-night #stage::after{
-  background:radial-gradient(115% 90% at 50% 45%,rgba(0,0,0,0) 48%,rgba(4,10,18,.42) 100%);
+  background:radial-gradient(115% 90% at 50% 45%,rgba(0,0,0,0) 64%,rgba(4,10,18,.12) 100%);
 }
 canvas#scene{position:absolute;inset:0;display:block;width:100%;height:100%}
 
@@ -16651,8 +16651,8 @@ installPlazaProps();
 
 /* ── Time-of-day ambiance ────────────────────────────────────────
    Day (7–17): full office daylight, lamp off.
-   Evening (17–21): golden dusk, lamp on, dimmer ambient.
-   Night (21–7): dark interior, lamp on, starry sky behind the transparent canvas. */
+   Evening (17–21): golden dusk, lamp on, near-daylight on the characters.
+   Night (21–7): starry sky, lamp on, scene stays bright enough to read faces. */
 function nightSkyDataUrl() {
   if (nightSkyDataUrl._url) return nightSkyDataUrl._url;
   const W = 1400, H = 900;
@@ -16686,15 +16686,15 @@ const TimeOfDay = {
                keyCol:0xfff6ea, keyI:1.15, fillI:0.42, rimI:0.30, faceI:0.22,
                rugSpotI:0, rugGlowI:0, lamp:false,
                stage:'radial-gradient(125% 95% at 50% 22%,#7ec8f2 0%,#9fd6f6 32%,#c5e6fa 62%,#dfeaf3 88%,#c8d8e6 100%)' },
-    evening: { bg:'#1c2b3a', fog:0x1c2b3a, fogNear:16, fogFar:44,
-               hemiSky:0xa0b4cc, hemiGnd:0x38485a, hemiI:0.45,
-               keyCol:0xf09050, keyI:0.38, fillI:0.16, rimI:0.10, faceI:0.13,
-               rugSpotI:0.55, rugGlowI:0.28, lamp:true,
+    evening: { bg:'#1c2b3a', fog:0xc5d2de, fogNear:22, fogFar:56,
+               hemiSky:0xf4f0ea, hemiGnd:0xc8d0d8, hemiI:0.98,
+               keyCol:0xffe0c4, keyI:1.05, fillI:0.40, rimI:0.26, faceI:0.22,
+               rugSpotI:0.38, rugGlowI:0.18, lamp:true,
                stage:'radial-gradient(125% 95% at 50% 28%,#3a5470 0%,#24384c 42%,#1c2b3a 78%,#152230 100%)' },
-    night:   { bg:'#243848', fog:0x142430, fogNear:13, fogFar:32,
-               hemiSky:0x5a7890, hemiGnd:0x2a3c4e, hemiI:0.52,
-               keyCol:0x6a90b0, keyI:0.42, fillI:0.26, rimI:0.16, faceI:0.18,
-               rugSpotI:0.95, rugGlowI:0.42, lamp:true,
+    night:   { bg:'#243848', fog:0xb8c8d6, fogNear:24, fogFar:58,
+               hemiSky:0xe8eef4, hemiGnd:0xc0ccd6, hemiI:1.00,
+               keyCol:0xf0f4f8, keyI:1.08, fillI:0.40, rimI:0.28, faceI:0.22,
+               rugSpotI:0.42, rugGlowI:0.20, lamp:true,
                stage:null },
   },
   current() {
@@ -16721,9 +16721,9 @@ const TimeOfDay = {
     if (skyMat.map) skyMat.map.dispose();
     skyMat.map = makeSkyCanvas(mode);
     skyMat.needsUpdate = true;
-    /* Dim the bright tile floor at night so the horizon doesn’t read as a white band. */
-    floor.material.color.setHex(mode === 'night' ? 0x8494a4 : mode === 'evening' ? 0xb4c0cc : 0xffffff);
-    floor.scale.setScalar(mode === 'night' ? 0.38 : mode === 'evening' ? 0.62 : 1);
+    /* Keep the tile floor readable after dark — only a light tint, not a shrink. */
+    floor.material.color.setHex(mode === 'night' ? 0xd6dee6 : mode === 'evening' ? 0xe8eef2 : 0xffffff);
+    floor.scale.setScalar(1);
     starField.visible = mode === 'night';
     hemi.color.setHex(t.hemiSky); hemi.groundColor.setHex(t.hemiGnd); hemi.intensity = t.hemiI;
     key.color.setHex(t.keyCol); key.intensity = t.keyI;
@@ -19998,7 +19998,7 @@ document.addEventListener('visibilitychange', () => {
 // expose a little for tinkering in the console — and for the style contact
 // sheets in scripts/style-shots.mjs, which drive the real builder
 window.MiiPlaza = {
-  World, Sound, Store, Preview, randomDNA, normalizeDNA, buildMii, Mii, Cam, Config, Realtime, OfficeSync,
+  World, Sound, Store, Preview, randomDNA, normalizeDNA, buildMii, Mii, Cam, Config, Realtime, OfficeSync, TimeOfDay,
   THREE, styleLabel, locationLabel, Places, InteriorOverlay,
   catalog: {
     EYEWEAR, FACIAL_HAIR, PIERCINGS, TATTOOS, APPAREL,
