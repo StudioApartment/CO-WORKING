@@ -36,7 +36,7 @@ if (location.hostname === 'coworking.fyi') {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/lib/interior-ui.css">
-<!-- plaza-client: 502 -->
+<!-- plaza-client: 503 -->
 <style>
 /* ============================================================
    PALETTE + BASE
@@ -83,12 +83,6 @@ body.native-cursor button,body.native-cursor input{cursor:pointer}
   content:"";position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(115% 90% at 50% 45%,rgba(255,255,255,0) 55%,rgba(120,150,175,.16) 100%);
   transition:background .6s ease;
-}
-body.tod-evening #stage::after{
-  background:radial-gradient(115% 90% at 50% 45%,rgba(0,0,0,0) 62%,rgba(8,16,28,.10) 100%);
-}
-body.tod-night #stage::after{
-  background:radial-gradient(115% 90% at 50% 45%,rgba(0,0,0,0) 64%,rgba(4,10,18,.12) 100%);
 }
 canvas#scene{position:absolute;inset:0;display:block;width:100%;height:100%}
 
@@ -916,10 +910,6 @@ body.native-cursor #pointer{display:none}
   filter:brightness(0);
   display:block;
 }
-body.tod-night .logo-we-are,
-body.tod-evening .logo-we-are{color:#fff}
-body.tod-night .logo-main,
-body.tod-evening .logo-main{filter:brightness(0) invert(1)}
 body:not(.plaza-ready) #pointer{visibility:hidden;opacity:0}
 
 /* Fullscreen interior overlay — keeps The Office WebGL alive underneath */
@@ -16650,35 +16640,8 @@ function installPlazaProps() {
 installPlazaProps();
 
 /* ── Time-of-day ambiance ────────────────────────────────────────
-   Day (7–17): full office daylight, lamp off.
-   Evening (17–21): golden dusk, lamp on, near-daylight on the characters.
-   Night (21–7): starry sky, lamp on, scene stays bright enough to read faces. */
-function nightSkyDataUrl() {
-  if (nightSkyDataUrl._url) return nightSkyDataUrl._url;
-  const W = 1400, H = 900;
-  const c = document.createElement('canvas');
-  c.width = W; c.height = H;
-  const g = c.getContext('2d');
-  const grad = g.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, '#081018');
-  grad.addColorStop(0.4, '#122030');
-  grad.addColorStop(0.75, '#1a2e40');
-  grad.addColorStop(1, '#243848');
-  g.fillStyle = grad;
-  g.fillRect(0, 0, W, H);
-  for (let i = 0; i < 280; i++) {
-    const x = Math.random() * W;
-    const y = Math.random() * H * 0.88;
-    const r = 0.4 + Math.random() * 0.7;
-    g.fillStyle = `rgba(230,238,255,${0.4 + Math.random() * 0.5})`;
-    g.beginPath();
-    g.arc(x, y, r, 0, Math.PI * 2);
-    g.fill();
-  }
-  nightSkyDataUrl._url = c.toDataURL('image/png');
-  return nightSkyDataUrl._url;
-}
-
+   Always daylight. Evening/night dark mode was removed — the office
+   does not change with the clock. */
 const TimeOfDay = {
   modes: {
     day:     { bg:'#d5e8f6', fog:0xd5e8f6, fogNear:15, fogFar:48,
@@ -16686,52 +16649,32 @@ const TimeOfDay = {
                keyCol:0xfff6ea, keyI:1.15, fillI:0.42, rimI:0.30, faceI:0.22,
                rugSpotI:0, rugGlowI:0, lamp:false,
                stage:'radial-gradient(125% 95% at 50% 22%,#7ec8f2 0%,#9fd6f6 32%,#c5e6fa 62%,#dfeaf3 88%,#c8d8e6 100%)' },
-    evening: { bg:'#1c2b3a', fog:0xc5d2de, fogNear:22, fogFar:56,
-               hemiSky:0xf4f0ea, hemiGnd:0xc8d0d8, hemiI:0.98,
-               keyCol:0xffe0c4, keyI:1.05, fillI:0.40, rimI:0.26, faceI:0.22,
-               rugSpotI:0.38, rugGlowI:0.18, lamp:true,
-               stage:'radial-gradient(125% 95% at 50% 28%,#3a5470 0%,#24384c 42%,#1c2b3a 78%,#152230 100%)' },
-    night:   { bg:'#243848', fog:0xb8c8d6, fogNear:24, fogFar:58,
-               hemiSky:0xe8eef4, hemiGnd:0xc0ccd6, hemiI:1.00,
-               keyCol:0xf0f4f8, keyI:1.08, fillI:0.40, rimI:0.28, faceI:0.22,
-               rugSpotI:0.42, rugGlowI:0.20, lamp:true,
-               stage:null },
   },
-  current() {
-    const h = new Date().getHours();
-    return h >= 7 && h < 17 ? 'day' : h >= 17 && h < 21 ? 'evening' : 'night';
-  },
+  current() { return 'day'; },
   apply() {
-    const mode = this.current();
-    const t = this.modes[mode];
+    const t = this.modes.day;
     document.body.classList.remove('tod-day', 'tod-evening', 'tod-night');
-    document.body.classList.add('tod-' + mode);
+    document.body.classList.add('tod-day');
     document.body.style.background = t.bg;
     const tm = document.querySelector('meta[name="theme-color"]');
     if (tm) tm.content = t.bg;
     const stage = document.getElementById('stage');
-    if (stage) {
-      stage.style.background = mode === 'night'
-        ? `url("${nightSkyDataUrl()}") center top / cover no-repeat, #122030`
-        : t.stage;
-    }
+    if (stage) stage.style.background = t.stage;
     scene.fog.color.setHex(t.fog);
     scene.fog.near = t.fogNear;
     scene.fog.far = t.fogFar;
     if (skyMat.map) skyMat.map.dispose();
-    skyMat.map = makeSkyCanvas(mode);
+    skyMat.map = makeSkyCanvas('day');
     skyMat.needsUpdate = true;
-    /* Keep the tile floor readable after dark — only a light tint, not a shrink. */
-    floor.material.color.setHex(mode === 'night' ? 0xd6dee6 : mode === 'evening' ? 0xe8eef2 : 0xffffff);
+    floor.material.color.setHex(0xffffff);
     floor.scale.setScalar(1);
-    starField.visible = mode === 'night';
+    starField.visible = false;
     hemi.color.setHex(t.hemiSky); hemi.groundColor.setHex(t.hemiGnd); hemi.intensity = t.hemiI;
     key.color.setHex(t.keyCol); key.intensity = t.keyI;
     fill.intensity = t.fillI; rim.intensity = t.rimI; faceFill.intensity = t.faceI;
-    rugSpot.intensity = t.rugSpotI;
-    rugGlow.intensity = t.rugGlowI;
-    // Sync every floor lamp (day = off, evening/night = on)
-    PlazaPropActions.setLamps(t.lamp, { silent: true });
+    rugSpot.intensity = 0;
+    rugGlow.intensity = 0;
+    PlazaPropActions.setLamps(false, { silent: true });
   }
 };
 TimeOfDay.apply();
